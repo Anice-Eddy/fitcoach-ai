@@ -16,7 +16,7 @@ export default function ShopPage() {
   const [selected, setSelected] = useState<AffiliateCategory | 'ALL'>('ALL')
   const { profile }             = useUserStore()
 
-  const userGoal = profile?.fitnessGoals?.[0]
+  const userGoal = profile?.fitnessGoal
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {}
@@ -55,7 +55,7 @@ export default function ShopPage() {
 
         {filtered.length === 0 ? (
           <EmptyState
-            icon={ShoppingBag}
+            icon={<ShoppingBag className="size-8" />}
             title="Aucun produit"
             description="Sélectionnez une autre catégorie."
           />

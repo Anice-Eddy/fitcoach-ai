@@ -11,16 +11,16 @@ interface Props {
   onSave:   (macros: Macros) => void
 }
 
-const MACRO_CONFIG = [
-  { key: 'protein' as const, label: 'Protéines', color: '#C8F135', kcalPer: 4 },
-  { key: 'carbs'   as const, label: 'Glucides',  color: '#38bdf8', kcalPer: 4 },
-  { key: 'fat'     as const, label: 'Lipides',   color: '#f472b6', kcalPer: 9 },
+const MACRO_CONFIG: { key: keyof Macros; label: string; color: string; kcalPer: number }[] = [
+  { key: 'proteinG', label: 'Protéines', color: '#C8F135', kcalPer: 4 },
+  { key: 'carbsG',   label: 'Glucides',  color: '#38bdf8', kcalPer: 4 },
+  { key: 'fatG',     label: 'Lipides',   color: '#f472b6', kcalPer: 9 },
 ]
 
 export function MacroAdjuster({ initial, calories, onSave }: Props) {
   const [macros, setMacros] = useState<Macros>(initial)
 
-  const totalKcal = macros.protein * 4 + macros.carbs * 4 + macros.fat * 9
+  const totalKcal = macros.proteinG * 4 + macros.carbsG * 4 + macros.fatG * 9
   const delta     = totalKcal - calories
 
   const update = (key: keyof Macros, val: number) => {

@@ -50,7 +50,7 @@ export async function handleSubscriptionUpsert(sub: Stripe.Subscription): Promis
         cancelAtPeriodEnd:     sub.cancel_at_period_end,
       },
       update: {
-        plan,
+        plan:   planKey,
         status,
         stripeSubscriptionId:  sub.id,
         stripePriceId:         priceId,

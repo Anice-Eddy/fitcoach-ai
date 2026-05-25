@@ -38,7 +38,14 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
     })
     const session = program.sessions.find((s) => s.id === params.sessionId) ?? program.sessions[0]
     if (session) {
-      startSession({ sessionId: session.id, name: session.name, exercises: session.exercises as never, currentExercise: 0 })
+      startSession({
+        sessionId:       session.id,
+        name:            session.name,
+        exercises:       session.exercises,
+        currentExercise: 0,
+        restTimerActive: false,
+        restSecondsLeft: 0,
+      })
     }
   }, [params.sessionId, profile])
 
@@ -86,7 +93,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
         {/* Exercices */}
         <div className="space-y-3 mb-6">
           {activeSession.exercises.map((ex, i) => (
-            <ExerciseItem key={ex.id} exercise={ex} index={i} />
+            <ExerciseItem key={ex.id ?? i} exercise={ex} index={i} />
           ))}
         </div>
 

@@ -104,7 +104,7 @@ export default function SettingsPage() {
           </div>
           {[
             { label: 'Unités de mesure', value: profile?.weightUnit === 'LB' ? 'Livres (lb)' : 'Kilogrammes (kg)' },
-            { label: 'Objectif principal', value: profile?.fitnessGoals?.[0] ?? '—' },
+            { label: 'Objectif principal', value: profile?.fitnessGoal ?? '—' },
           ].map((item) => (
             <div key={item.label} className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 last:border-0">
               <span className="text-sm text-zinc-300">{item.label}</span>

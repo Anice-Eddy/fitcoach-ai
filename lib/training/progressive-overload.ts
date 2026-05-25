@@ -1,36 +1,44 @@
 // Logique de surcharge progressive — calcule la charge de la semaine suivante
-// Règle : si toutes les séries sont complétées → +2.5 kg (haltères) ou +5 kg (barre)
+// Règle : si toutes les séries sont complétées → +2.5 kg (compound) ou +1.25 kg (isolation)
 
-interface OverloadParams {
-  previousWeightKg: number | null
-  previousReps:     number
-  targetReps:       number
-  isCompound:       boolean
-  allSetsCompleted: boolean
+interface ExerciseForOverload {
+  weightKg:    number | null
+  reps?:       number
+  isCompound:  boolean
 }
 
-export function calculateNextWeight(params: OverloadParams): number | null {
-  const { previousWeightKg, previousReps, targetReps, isCompound, allSetsCompleted } = params
+export interface OverloadResult {
+  nextWeightKg: number | null
+  progressed:   boolean
+}
 
-  if (!previousWeightKg) return null
-  if (!allSetsCompleted) return previousWeightKg
+export function calculateNextWeight(
+  exercise:        ExerciseForOverload,
+  allSetsCompleted: boolean,
+): OverloadResult {
+  const { weightKg, isCompound } = exercise
 
-  // Augmentation si le nombre de reps cibles est atteint
-  if (previousReps >= targetReps) {
-    const increment = isCompound ? 2.5 : 1.25
-    return Math.round((previousWeightKg + increment) * 4) / 4 // arrondi au 0.25 kg
+  if (weightKg === null || weightKg === undefined) {
+    return { nextWeightKg: null, progressed: false }
   }
 
-  return previousWeightKg
+  if (!allSetsCompleted) {
+    return { nextWeightKg: weightKg, progressed: false }
+  }
+
+  const increment   = isCompound ? 2.5 : 1.25
+  const nextWeight  = Math.round((weightKg + increment) * 4) / 4 // arrondi au 0.25 kg
+  return { nextWeightKg: nextWeight, progressed: true }
 }
 
 export function getProgressionMessage(
-  currentWeight: number | null,
-  previousWeight: number | null,
+  progressed:    boolean,
+  previousWeight: number,
+  nextWeight:    number,
 ): string {
-  if (!currentWeight || !previousWeight) return ''
-  const delta = currentWeight - previousWeight
-  if (delta > 0)  return `+${delta} kg cette semaine 💪`
-  if (delta < 0)  return `${delta} kg — ajustement`
-  return 'Même charge — continue comme ça !'
+  if (!progressed) {
+    return `Maintien à ${previousWeight} kg — continue comme ça !`
+  }
+  const delta = Math.round((nextWeight - previousWeight) * 100) / 100
+  return `Progression : ${previousWeight} kg → ${nextWeight} kg (+${delta} kg)`
 }

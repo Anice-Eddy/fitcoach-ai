@@ -1,17 +1,17 @@
-// Root layout — providers globaux : SessionProvider, Sonner, QueryClient
+// Root layout — providers globaux : SessionProvider, Sonner
 
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono }       from 'next/font/google'
+import { Inter, JetBrains_Mono }   from 'next/font/google'
 import { SessionProvider }          from 'next-auth/react'
 import { Toaster }                  from 'sonner'
 import './globals.css'
 
-const geistSans = Geist({
+const inter = Inter({
   variable: '--font-geist-sans',
   subsets:  ['latin'],
 })
 
-const geistMono = Geist_Mono({
+const jetbrainsMono = JetBrains_Mono({
   variable: '--font-geist-mono',
   subsets:  ['latin'],
 })
@@ -31,17 +31,17 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor:       '#C8F135',
-  width:            'device-width',
-  initialScale:     1,
-  maximumScale:     1,
-  userScalable:     false,
+  themeColor:   '#C8F135',
+  width:        'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
         <SessionProvider>
           {children}
           <Toaster

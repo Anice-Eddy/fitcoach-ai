@@ -111,7 +111,7 @@ export const bodyMetricSchema = z.object({
 // --- Schéma API : tracking clic affilié ---
 
 export const affiliateClickSchema = z.object({
-  productId: z.string().cuid('ID produit invalide'),
+  productId: z.string().min(1, 'ID produit requis'),
   source:    z.string().max(100).optional(),
 })
 

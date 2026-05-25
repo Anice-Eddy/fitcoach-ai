@@ -29,10 +29,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     // Injecte le plan Stripe et l'ID utilisateur dans le token JWT
     async jwt({ token, user }) {
-      if (user) {
+      if (user?.id) {
         token.userId = user.id
         const dbUser = await prisma.user.findUnique({
-          where:  { id: user.id! },
+          where:  { id: user.id },
           select: { subscriptionPlan: true, subscriptionStatus: true },
         })
         token.plan   = dbUser?.subscriptionPlan   ?? 'FREE'
@@ -44,9 +44,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // Expose le plan dans la session côté client
     async session({ session, token }) {
       if (session.user) {
-        session.user.id     = token.userId as string
-        session.user.plan   = token.plan as string
-        session.user.status = token.status as string
+        session.user.id     = (token.userId ?? '') as string
+        session.user.plan   = (token.plan   ?? 'FREE') as string
+        session.user.status = (token.status ?? 'INACTIVE') as string
       }
       return session
     },

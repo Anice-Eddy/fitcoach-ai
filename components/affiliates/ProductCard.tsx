@@ -18,7 +18,7 @@ export function ProductCard({ product }: Props) {
     <div className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden flex flex-col hover:border-zinc-600 transition-colors">
       <div className="relative h-40 bg-zinc-800 flex items-center justify-center">
         <Image
-          src={product.imageUrl}
+          src={product.imageUrl ?? 'https://via.placeholder.com/200?text=Produit'}
           alt={product.name}
           fill
           className="object-cover"

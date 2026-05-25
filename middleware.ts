@@ -3,14 +3,14 @@
 
 import { auth } from '@/lib/auth/auth'
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import type { NextAuthRequest } from 'next-auth'
 
 // Routes accessibles sans authentification
 const PUBLIC_ROUTES  = ['/', '/pricing', '/auth/signin', '/auth/error']
 // Routes nécessitant un plan Pro ou supérieur
 const PREMIUM_ROUTES = ['/exports', '/nutrition/shopping-list']
 
-export default auth((req: NextRequest & { auth: { user?: { plan?: string } } | null }) => {
+export default auth((req: NextAuthRequest) => {
   const { pathname } = req.nextUrl
   const session      = req.auth
 
@@ -19,14 +19,15 @@ export default auth((req: NextRequest & { auth: { user?: { plan?: string } } | n
     return NextResponse.next()
   }
 
-  // Redirige vers signin si non connecté et route protégée
-  if (!session?.user && pathname.startsWith('/(app)')) {
+  // Redirige vers signin si non connecté et route (app) protégée
+  if (!session?.user && !pathname.startsWith('/coach')) {
     return NextResponse.redirect(new URL('/auth/signin', req.url))
   }
 
   // Vérifie le plan premium pour les routes premium
   const isPremiumRoute = PREMIUM_ROUTES.some((r) => pathname.startsWith(r))
-  if (isPremiumRoute && session?.user?.plan === 'FREE') {
+  const plan = (session?.user as { plan?: string } | undefined)?.plan
+  if (isPremiumRoute && plan === 'FREE') {
     return NextResponse.redirect(new URL('/pricing?reason=premium_required', req.url))
   }
 

@@ -3,22 +3,13 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-
-export interface ExerciseLogEntry {
-  exerciseId:  string
-  name:        string
-  sets:        number
-  reps:        number
-  weightKg:    number | null
-  isCompleted: boolean
-  rpe?:        number
-}
+import type { SessionExercise } from '@/types'
 
 export interface ActiveSession {
-  sessionId:      string
-  name:           string
-  startedAt:      Date
-  exercises:      ExerciseLogEntry[]
+  sessionId:       string
+  name:            string
+  startedAt:       Date
+  exercises:       SessionExercise[]
   currentExercise: number
   restTimerActive: boolean
   restSecondsLeft: number
@@ -30,16 +21,16 @@ interface TrainingState {
   isLoading:       boolean
   error:           string | null
 
-  setActiveProgram:    (id: string | null) => void
-  startSession:        (session: Omit<ActiveSession, 'startedAt'>) => void
-  completeExercise:    (index: number, log: Partial<ExerciseLogEntry>) => void
-  setCurrentExercise:  (index: number) => void
-  startRestTimer:      (seconds: number) => void
-  tickRestTimer:       () => void
-  stopRestTimer:       () => void
-  endSession:          () => void
-  setLoading:          (loading: boolean) => void
-  setError:            (error: string | null) => void
+  setActiveProgram:   (id: string | null) => void
+  startSession:       (session: Omit<ActiveSession, 'startedAt'>) => void
+  completeExercise:   (index: number, log: Partial<SessionExercise>) => void
+  setCurrentExercise: (index: number) => void
+  startRestTimer:     (seconds: number) => void
+  tickRestTimer:      () => void
+  stopRestTimer:      () => void
+  endSession:         () => void
+  setLoading:         (loading: boolean) => void
+  setError:           (error: string | null) => void
 }
 
 export const useTrainingStore = create<TrainingState>()(

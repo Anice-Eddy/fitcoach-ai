@@ -42,11 +42,12 @@ export function ActivityStep({ defaultValues, onNext, onBack }: Props) {
   const days       = watch('trainingDaysPerWeek')
 
   const toggleEquipment = (val: string) => {
-    const current = equipment as string[]
-    setValue(
-      'availableEquipment',
-      current.includes(val) ? current.filter((e) => e !== val) : [...current, val] as never,
-    )
+    const current = (equipment ?? []) as string[]
+    const next    = current.includes(val)
+      ? current.filter((e) => e !== val)
+      : [...current, val]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setValue('availableEquipment', next as any)
   }
 
   return (
