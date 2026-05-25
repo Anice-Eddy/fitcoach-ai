@@ -1,0 +1,29 @@
+// Types partagés pour tous les connecteurs d'intégration
+
+export interface NormalizedActivity {
+  date:          string
+  steps?:        number
+  caloriesBurned?: number
+  heartRateAvg?: number
+  activities?:   { name: string; durationMinutes: number; calories: number }[]
+}
+
+export interface NormalizedBodyComposition {
+  date:         string
+  weightKg?:    number
+  bodyFatPct?:  number
+  muscleMassKg?: number
+  bmr?:         number
+  bioAge?:      number
+  bwi?:         number
+}
+
+export interface IntegrationConnector {
+  service:    string
+  label:      string
+  logoSrc:    string
+  isMocked:   boolean
+  connect:    () => Promise<void>
+  disconnect: () => Promise<void>
+  sync:       () => Promise<NormalizedActivity[]>
+}

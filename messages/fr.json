@@ -1,0 +1,68 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "training": "Entraînement",
+    "nutrition": "Nutrition",
+    "progress": "Progression",
+    "settings": "Paramètres",
+    "shop": "Boutique"
+  },
+  "common": {
+    "loading": "Chargement…",
+    "error": "Une erreur est survenue",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "finish": "Terminer",
+    "upgrade": "Passer Pro",
+    "free": "Gratuit",
+    "pro": "Pro",
+    "elite": "Elite"
+  },
+  "onboarding": {
+    "title": "Configurez votre profil",
+    "steps": {
+      "identity": "Identité",
+      "measurements": "Mensurations",
+      "activity": "Activité",
+      "goals": "Objectifs",
+      "diet": "Alimentation",
+      "summary": "Récapitulatif"
+    }
+  },
+  "dashboard": {
+    "welcome": "Bienvenue",
+    "weight": "Poids",
+    "calories": "Calories",
+    "streak": "Série",
+    "session": "Séance"
+  },
+  "training": {
+    "start": "Démarrer la séance",
+    "resume": "Reprendre",
+    "finish": "Terminer",
+    "rest": "Repos",
+    "skip": "Passer",
+    "sets": "séries",
+    "reps": "répétitions"
+  },
+  "nutrition": {
+    "calories": "kcal",
+    "protein": "Protéines",
+    "carbs": "Glucides",
+    "fat": "Lipides",
+    "log": "Journaliser",
+    "plan": "Plan alimentaire"
+  },
+  "pricing": {
+    "monthly": "Mensuel",
+    "yearly": "Annuel",
+    "popular": "Plus populaire",
+    "start": "Commencer gratuitement",
+    "choose": "Choisir ce plan",
+    "current": "Plan actuel",
+    "soon": "Bientôt disponible"
+  }
+}

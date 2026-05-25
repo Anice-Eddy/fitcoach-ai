@@ -1,0 +1,68 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "training": "Training",
+    "nutrition": "Nutrition",
+    "progress": "Progress",
+    "settings": "Settings",
+    "shop": "Shop"
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "upgrade": "Upgrade to Pro",
+    "free": "Free",
+    "pro": "Pro",
+    "elite": "Elite"
+  },
+  "onboarding": {
+    "title": "Set up your profile",
+    "steps": {
+      "identity": "Identity",
+      "measurements": "Measurements",
+      "activity": "Activity",
+      "goals": "Goals",
+      "diet": "Diet",
+      "summary": "Summary"
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "weight": "Weight",
+    "calories": "Calories",
+    "streak": "Streak",
+    "session": "Session"
+  },
+  "training": {
+    "start": "Start session",
+    "resume": "Resume",
+    "finish": "Finish",
+    "rest": "Rest",
+    "skip": "Skip",
+    "sets": "sets",
+    "reps": "reps"
+  },
+  "nutrition": {
+    "calories": "kcal",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "log": "Log meal",
+    "plan": "Meal plan"
+  },
+  "pricing": {
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "popular": "Most popular",
+    "start": "Start for free",
+    "choose": "Choose this plan",
+    "current": "Current plan",
+    "soon": "Coming soon"
+  }
+}

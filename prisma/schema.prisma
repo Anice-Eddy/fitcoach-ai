@@ -1,0 +1,582 @@
+// ============================================================
+// FITCOACH AI — Schéma Prisma
+// Base de données : PostgreSQL via Neon
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Provider {
+  GOOGLE
+  GITHUB
+  EMAIL
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+  ELITE
+  BUSINESS
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum ActivityLevel {
+  SEDENTARY         // 1.2  — bureau, pas d'exercice
+  LIGHTLY_ACTIVE    // 1.375 — 1-3j/semaine
+  MODERATELY_ACTIVE // 1.55  — 3-5j/semaine
+  VERY_ACTIVE       // 1.725 — 6-7j/semaine
+  EXTREMELY_ACTIVE  // 1.9   — athlète 2x/jour
+}
+
+enum FitnessGoal {
+  WEIGHT_LOSS
+  MUSCLE_GAIN
+  MAINTENANCE
+  ENDURANCE
+  FLEXIBILITY
+  GENERAL_FITNESS
+}
+
+enum FitnessLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  ATHLETE
+}
+
+enum WeightUnit {
+  KG
+  LB
+}
+
+enum HeightUnit {
+  CM
+  FT_IN
+}
+
+enum WorkoutStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+enum MealType {
+  BREAKFAST
+  MORNING_SNACK
+  LUNCH
+  PRE_WORKOUT
+  DINNER
+  POST_WORKOUT
+}
+
+enum ExportType {
+  PDF_TRAINING
+  PDF_NUTRITION
+  PDF_PROFILE
+  JSON_ALL
+}
+
+enum IntegrationService {
+  GOOGLE_FIT
+  STRAVA
+  FITBIT
+  GARMIN
+  APPLE_HEALTH
+  EVOLT_ACTIVE
+}
+
+enum AffiliateCategory {
+  SUPPLEMENTS
+  EQUIPMENT
+  CLOTHING
+  BOOKS
+}
+
+enum MuscleGroup {
+  CHEST
+  BACK
+  SHOULDERS
+  BICEPS
+  TRICEPS
+  FOREARMS
+  CORE
+  QUADS
+  HAMSTRINGS
+  GLUTES
+  CALVES
+  FULL_BODY
+}
+
+enum Equipment {
+  BARBELL
+  DUMBBELL
+  KETTLEBELL
+  RESISTANCE_BAND
+  PULL_UP_BAR
+  BENCH
+  CABLE_MACHINE
+  SMITH_MACHINE
+  BODYWEIGHT
+  CARDIO_MACHINE
+}
+
+// ============================================================
+// MODÈLES
+// ============================================================
+
+// Compte utilisateur principal
+model User {
+  id                 String             @id @default(cuid())
+  email              String             @unique
+  name               String?
+  image              String?
+  provider           Provider           @default(GOOGLE)
+  stripeCustomerId   String?            @unique
+  subscriptionPlan   SubscriptionPlan   @default(FREE)
+  subscriptionStatus SubscriptionStatus @default(INACTIVE)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  profile             Profile?
+  bodyMetrics         BodyMetric[]
+  workoutPrograms     WorkoutProgram[]
+  workoutSessions     WorkoutSession[]
+  nutritionPlans      NutritionPlan[]
+  shoppingLists       ShoppingList[]
+  integrationAccounts IntegrationAccount[]
+  exportHistory       ExportHistory[]
+  subscription        Subscription?
+  affiliateClicks     AffiliateClick[]
+  coachProfile        CoachProfile?
+
+  @@index([email])
+  @@index([stripeCustomerId])
+  @@map("users")
+}
+
+// Profil physique et préférences de l'utilisateur
+model Profile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Identité
+  firstName String
+  age       Int
+  gender    Gender
+
+  // Mensurations
+  weightKg   Float
+  heightCm   Float
+  waistCm    Float?
+  hipsCm     Float?
+  weightUnit WeightUnit @default(KG)
+  heightUnit HeightUnit @default(CM)
+
+  // Activité
+  activityLevel       ActivityLevel
+  availableEquipment  Equipment[]
+  trainingDaysPerWeek Int          @default(3)
+
+  // Objectifs
+  fitnessGoal    FitnessGoal
+  targetWeightKg Float?
+  fitnessLevel   FitnessLevel
+
+  // Alimentation
+  dietaryRestrictions String[]
+  foodPreferences     String[]
+
+  // Calculs automatiques (mis à jour à chaque modification du profil)
+  bmi                 Float?
+  bmr                 Float?
+  tdee                Float?
+  recommendedCalories Float?
+  recommendedProteinG Float?
+  recommendedCarbsG   Float?
+  recommendedFatG     Float?
+
+  // Préférences app
+  language            String  @default("fr")
+  darkMode            Boolean @default(true)
+  onboardingCompleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("profiles")
+}
+
+// Historique des mesures corporelles
+model BodyMetric {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date         DateTime @default(now())
+  weightKg     Float
+  bodyFatPct   Float?
+  muscleMassKg Float?
+  waistCm      Float?
+  hipsCm       Float?
+  chestCm      Float?
+  armCm        Float?
+
+  // Données Evolt Active (composition corporelle avancée)
+  evoltBioAge Float?
+  evoltBwi    Float?
+  evoltBmr    Float?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+  @@map("body_metrics")
+}
+
+// Programme d'entraînement (multi-semaines)
+model WorkoutProgram {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name         String
+  description  String?
+  fitnessGoal  FitnessGoal
+  fitnessLevel FitnessLevel
+  weeksTotal   Int          @default(8)
+  currentWeek  Int          @default(1)
+  isActive     Boolean      @default(true)
+
+  sessions WorkoutSession[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, isActive])
+  @@map("workout_programs")
+}
+
+// Séance d'entraînement individuelle
+model WorkoutSession {
+  id      String  @id @default(cuid())
+  userId  String
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program WorkoutProgram? @relation(fields: [programId], references: [id], onDelete: SetNull)
+  programId String?
+
+  name            String
+  dayOfWeek       Int?          // 0=lundi … 6=dimanche
+  weekNumber      Int?
+  scheduledAt     DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  durationMinutes Int?
+  status          WorkoutStatus @default(PLANNED)
+  notes           String?
+  caloriesBurned  Int?
+
+  exerciseLogs ExerciseLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([userId, scheduledAt])
+  @@map("workout_sessions")
+}
+
+// Bibliothèque d'exercices (partagée entre tous les utilisateurs)
+model Exercise {
+  id           String       @id @default(cuid())
+  name         String
+  nameEn       String?
+  description  String?
+  instructions String[]
+  muscleGroups MuscleGroup[]
+  equipment    Equipment[]
+  imageUrl     String?
+  videoUrl     String?
+  isCompound   Boolean      @default(false)
+
+  exerciseLogs ExerciseLog[]
+
+  createdAt DateTime @default(now())
+
+  @@index([name])
+  @@map("exercises")
+}
+
+// Log d'un exercice au sein d'une séance
+model ExerciseLog {
+  id         String         @id @default(cuid())
+  sessionId  String
+  session    WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise       @relation(fields: [exerciseId], references: [id])
+
+  order            Int
+  sets             Int
+  reps             Int
+  weightKg         Float?
+  restSeconds      Int?
+  tempo            String?  // ex: "3-1-2-0" (excentrique-pause-concentrique-pause)
+  rpe              Int?     // Rate of Perceived Exertion 1-10
+  isCompleted      Boolean  @default(false)
+  notes            String?
+
+  // Référence semaine précédente pour surcharge progressive
+  previousWeightKg Float?
+  previousReps     Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([exerciseId])
+  @@map("exercise_logs")
+}
+
+// Plan nutritionnel hebdomadaire
+model NutritionPlan {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name           String   @default("Mon plan nutritionnel")
+  targetCalories Float
+  targetProteinG Float
+  targetCarbsG   Float
+  targetFatG     Float
+  weekStartDate  DateTime
+  isActive       Boolean  @default(true)
+
+  meals         Meal[]
+  shoppingLists ShoppingList[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, isActive])
+  @@map("nutrition_plans")
+}
+
+// Repas au sein d'un plan nutritionnel
+model Meal {
+  id     String        @id @default(cuid())
+  planId String
+  plan   NutritionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  dayOfWeek     Int       // 0=lundi … 6=dimanche
+  type          MealType
+  name          String
+  scheduledTime String?   // ex: "08:00"
+  totalCalories Float
+  totalProteinG Float
+  totalCarbsG   Float
+  totalFatG     Float
+  isLogged      Boolean   @default(false)
+
+  foodItems FoodItem[]
+
+  createdAt DateTime @default(now())
+
+  @@index([planId, dayOfWeek])
+  @@map("meals")
+}
+
+// Aliment au sein d'un repas
+model FoodItem {
+  id     String @id @default(cuid())
+  mealId String
+  meal   Meal   @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  name        String
+  brand       String?
+  gramsAmount Float
+  calories    Float
+  proteinG    Float
+  carbsG      Float
+  fatG        Float
+  fiberG      Float?
+  sugarG      Float?
+
+  // Lien affilié optionnel (complément recommandé dans le repas)
+  affiliateProductId String?
+  affiliateProduct   AffiliateProduct? @relation(fields: [affiliateProductId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([mealId])
+  @@map("food_items")
+}
+
+// Liste de courses générée depuis le plan nutritionnel
+model ShoppingList {
+  id     String  @id @default(cuid())
+  userId String
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId String?
+  plan   NutritionPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+
+  weekOf   DateTime
+  // [{ name, amount, unit, category, checked, affiliateUrl? }]
+  items    Json
+  isActive Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("shopping_lists")
+}
+
+// Compte d'intégration externe (Strava, Fitbit, etc.)
+model IntegrationAccount {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  service      IntegrationService
+  accessToken  String?
+  refreshToken String?
+  tokenExpiry  DateTime?
+  isConnected  Boolean            @default(false)
+  lastSyncedAt DateTime?
+  metadata     Json?              // données spécifiques au service
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, service])
+  @@index([userId])
+  @@map("integration_accounts")
+}
+
+// Historique des exports (PDF / JSON)
+model ExportHistory {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      ExportType
+  fileName  String
+  sizeBytes Int?
+  url       String?    // URL temporaire si stocké sur cloud
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("export_history")
+}
+
+// Abonnement Stripe de l'utilisateur
+model Subscription {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  plan                   SubscriptionPlan   @default(FREE)
+  status                 SubscriptionStatus @default(INACTIVE)
+  stripeSubscriptionId   String?            @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+  cancelAtPeriodEnd      Boolean            @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([stripeSubscriptionId])
+  @@map("subscriptions")
+}
+
+// Produit affilié (complément, équipement, vêtement, livre)
+model AffiliateProduct {
+  id          String            @id @default(cuid())
+  name        String
+  brand       String?
+  description String?
+  category    AffiliateCategory
+  affiliateUrl String
+  imageUrl    String?
+  price       Float?
+  commissionRateMin Float       // %
+  commissionRateMax Float       // %
+  fitnessGoals FitnessGoal[]
+  isActive    Boolean           @default(true)
+  tags        String[]
+
+  clicks    AffiliateClick[]
+  foodItems FoodItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+  @@map("affiliate_products")
+}
+
+// Clic sur un lien affilié (tracking RGPD)
+model AffiliateClick {
+  id        String  @id @default(cuid())
+  userId    String?
+  user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  productId String
+  product   AffiliateProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  category  AffiliateCategory
+  source    String?            // page d'origine du clic
+  userAgent String?
+  ipHash    String?            // IP hashée pour conformité RGPD
+
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("affiliate_clicks")
+}
+
+// Mocké MVP — structure prête pour Phase 2 B2B Coach
+model CoachProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bio         String?
+  specialties String[]
+  isVerified  Boolean @default(false)
+  memberLimit Int     @default(10)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("coach_profiles")
+}
