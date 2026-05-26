@@ -52,7 +52,7 @@ export function ProductCard({ product }: Props) {
           </div>
         )}
 
-        <p className="text-xs text-zinc-500 mb-3">Prix disponible sur Amazon</p>
+        <p className="text-xs text-zinc-500 mb-3">Voir le prix sur Amazon</p>
 
         {/* <a> tag — never blocked by popup blockers, works on all devices */}
         <a

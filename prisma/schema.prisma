@@ -601,6 +601,26 @@ enum CoachVerificationStatus {
   REJECTED
 }
 
+enum AIAgentType {
+  TRAINING
+  NUTRITION
+  PROGRESSION
+  MOTIVATION
+  COACH_REPORT
+}
+
+enum AIProvider {
+  GEMINI
+  GROQ
+}
+
+enum AIReportType {
+  MEMBER_ANALYSIS
+  WORKOUT_PLAN
+  NUTRITION_PLAN
+  COACH_REPORT
+}
+
 // Profil Coach — structure pour Phase 2 B2B Coach
 model CoachProfile {
   id     String @id @default(cuid())
@@ -772,6 +792,70 @@ model UserNote {
   @@index([userId])
   @@index([isPinned])
   @@map("user_notes")
+}
+
+model AIConversation {
+  id        String      @id @default(cuid())
+  userId    String
+  memberId  String
+  coachId   String?
+  agentType AIAgentType
+  title     String?
+
+  messages AIMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([memberId, createdAt])
+  @@index([coachId, createdAt])
+  @@index([agentType])
+  @@map("ai_conversations")
+}
+
+model AIMessage {
+  id             String          @id @default(cuid())
+  conversationId String
+  conversation   AIConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  memberId       String
+  coachId        String?
+  role           String
+  content        String          @db.Text
+  prompt         String?         @db.Text
+  response       String?         @db.Text
+  provider       AIProvider?
+  agentType      AIAgentType
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([userId, createdAt])
+  @@index([memberId, createdAt])
+  @@index([coachId, createdAt])
+  @@map("ai_messages")
+}
+
+model AIReport {
+  id        String       @id @default(cuid())
+  userId    String
+  memberId  String
+  coachId   String?
+  type      AIReportType
+  agentType AIAgentType
+  prompt    String       @db.Text
+  response  String       @db.Text
+  provider  AIProvider
+  metadata  Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([memberId, createdAt])
+  @@index([coachId, createdAt])
+  @@index([type])
+  @@map("ai_reports")
 }
 
 model PasswordResetToken {

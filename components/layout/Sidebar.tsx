@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Dumbbell, UtensilsCrossed, TrendingUp,
-  Download, Settings, ShoppingBag, Plug, X, Users, CalendarDays, NotebookPen,
+  Download, Settings, ShoppingBag, Plug, X, Users, CalendarDays, NotebookPen, Bot,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
@@ -20,6 +20,7 @@ const NAV_KEYS = [
   { href: '/progress',     key: 'nav.progress',     icon: TrendingUp },
   { href: '/appointments', key: 'nav.appointments', icon: CalendarDays },
   { href: '/notes',        key: 'nav.notes',        icon: NotebookPen },
+  { href: '/ai',           key: 'nav.ai',           icon: Bot },
   { href: '/exports',      key: 'nav.exports',      icon: Download },
   { href: '/shop',         key: 'nav.shop',         icon: ShoppingBag },
   { href: '/integrations', key: 'nav.integrations', icon: Plug },

@@ -10,7 +10,8 @@
     "integrations": "Integrations",
     "coaching": "Coaching",
     "appointments": "Appointments",
-    "notes": "Notes"
+    "notes": "Notes",
+    "ai": "AI Assistant"
   },
   "common": {
     "loading": "Loading…",

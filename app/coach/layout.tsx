@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, Users, BarChart2, Calendar, MessageSquare } from 'lucide-react'
+import { Bot, LayoutDashboard, Users, BarChart2, Calendar, MessageSquare } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
@@ -13,6 +13,7 @@ const NAV = [
   { href: '/coach/members',   label: 'Membres',         icon: Users },
   { href: '/coach/appointments', label: 'Agenda',       icon: Calendar },
   { href: '/coach/notes',     label: 'Notes',           icon: MessageSquare },
+  { href: '/coach/ai',        label: 'Assistant IA',    icon: Bot },
 
   { href: '/coach/reports',   label: 'Rapports',        icon: BarChart2 },
 ]

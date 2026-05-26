@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import {
   BarChart2, TrendingUp, TrendingDown, Users, Calendar, MessageSquare,
-  CheckCircle, Award, Activity, RefreshCw, Minus,
+  CheckCircle, Award, Activity, RefreshCw, Minus, Bot, Loader2,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -51,6 +51,9 @@ export default function CoachReports() {
   const [data, setData]       = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState<string | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState('')
+  const [aiReport, setAiReport] = useState<{ response: string; provider?: string } | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -67,6 +70,26 @@ export default function CoachReports() {
   }
 
   useEffect(() => { load() }, [])
+
+  const generateAIReport = async () => {
+    setAiLoading(true)
+    setAiError('')
+    setAiReport(null)
+    try {
+      const res = await fetch('/api/ai/coach-report', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ memberId: data?.recentActivity[0]?.memberId ?? '' }),
+      })
+      const payload = await res.json()
+      if (!res.ok) throw new Error(payload?.error ?? 'Erreur IA')
+      setAiReport({ response: payload.response, provider: payload.provider })
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Impossible de générer l’analyse IA.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -203,6 +226,45 @@ export default function CoachReports() {
             <EmptySection message="Pas assez de données de poids pour calculer la progression." />
           )}
         </div>
+      </div>
+
+      {/* ── Top performers ce mois ── */}
+      <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <Bot className="size-5 text-[#C8F135]" />
+            <div>
+              <h2 className="text-base font-semibold">Analyse IA</h2>
+              <p className="text-xs text-zinc-500">Basée uniquement sur les vraies données du membre le plus récemment actif.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={generateAIReport}
+            disabled={aiLoading || data.recentActivity.length === 0}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 py-2.5 text-sm font-bold text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {aiLoading ? <Loader2 className="size-4 animate-spin" /> : <Bot className="size-4" />}
+            Générer une analyse IA
+          </button>
+        </div>
+
+        {data.recentActivity.length === 0 ? (
+          <EmptySection message="Données insuffisantes pour générer une analyse IA fiable." />
+        ) : aiError ? (
+          <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            {aiError}
+          </div>
+        ) : aiReport ? (
+          <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">{aiReport.response}</p>
+            {aiReport.provider && <p className="mt-3 text-[10px] uppercase tracking-wider text-zinc-600">Provider: {aiReport.provider}</p>}
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-zinc-500">
+            Lancez l’analyse pour obtenir une synthèse coach générée par l’agent IA Rapport Coach.
+          </p>
+        )}
       </div>
 
       {/* ── Top performers ce mois ── */}
