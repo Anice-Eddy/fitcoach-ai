@@ -27,7 +27,7 @@ export default defineConfig({
 
   // Démarre le serveur Next.js avant les tests E2E
   webServer: {
-    command: 'npm run dev',
+    command: process.env.CI ? 'npm start' : 'npm run dev',
     url:     'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

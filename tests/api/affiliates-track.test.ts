@@ -16,7 +16,7 @@ vi.mock('@/lib/prisma/client', () => ({
   },
 }))
 
-process.env.NEXTAUTH_SECRET = 'test-secret'
+process.env.AUTH_SECRET = 'test-secret'
 
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
