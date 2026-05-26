@@ -37,7 +37,7 @@ export default function ChoosePage() {
   }
 
   const chooseCoach = () => {
-    router.push('/coaches/coach-1')
+    router.push('/coaches')
   }
 
   return (
