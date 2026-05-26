@@ -20,9 +20,15 @@ export async function POST(req: Request) {
 
   const { name, email, password } = parsed.data
 
-  const existing = await prisma.user.findUnique({ where: { email } })
+  const existing = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, coachProfile: { select: { id: true } } },
+  })
   if (existing) {
-    return NextResponse.json({ error: { email: ['Cet email est déjà utilisé'] } }, { status: 409 })
+    const msg = existing.coachProfile
+      ? 'Un compte avec cet email existe déjà. Connectez-vous pour accéder à votre espace coach ou membre.'
+      : 'Cet email est déjà utilisé. Connectez-vous pour accéder à votre compte.'
+    return NextResponse.json({ error: { email: [msg] } }, { status: 409 })
   }
 
   const hashed = await hash(password, 12)

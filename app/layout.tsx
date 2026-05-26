@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono }   from 'next/font/google'
 import { SessionProvider }          from 'next-auth/react'
 import { Toaster }                  from 'sonner'
+import { LocaleProvider }           from '@/contexts/LocaleContext'
 import './globals.css'
 
 const inter = Inter({
@@ -43,14 +44,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className="dark">
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
         <SessionProvider>
-          {children}
-          <Toaster
-            theme="dark"
-            position="top-right"
-            toastOptions={{
-              style: { background: '#18181b', border: '1px solid #27272a', color: '#fafafa' },
-            }}
-          />
+          <LocaleProvider>
+            {children}
+            <Toaster
+              theme="dark"
+              position="top-right"
+              toastOptions={{
+                style: { background: '#18181b', border: '1px solid #27272a', color: '#fafafa' },
+              }}
+            />
+          </LocaleProvider>
         </SessionProvider>
       </body>
     </html>

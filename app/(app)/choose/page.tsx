@@ -37,9 +37,7 @@ export default function ChoosePage() {
   }
 
   const chooseCoach = () => {
-    setAccompanimentMode('COACH')
-    setCoach({ name: 'Coach Sarah Martin', nextSession: 'Mardi 18:30' })
-    router.push('/coaches/coach-1')
+    router.push('/coaches')
   }
 
   return (

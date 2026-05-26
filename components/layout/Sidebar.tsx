@@ -1,6 +1,4 @@
 'use client'
-// Sidebar fixe desktop — navigation principale + logos intégrations connectées
-// deps: npm install lucide-react
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -12,20 +10,23 @@ import {
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
 import { Logo } from '@/components/ui/Logo'
-const NAV_ITEMS = [
-  { href: '/dashboard',  label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/training',   label: 'Entraînement', icon: Dumbbell },
-  { href: '/nutrition',  label: 'Nutrition',    icon: UtensilsCrossed },
-  { href: '/progress',   label: 'Progression',  icon: TrendingUp },
-  { href: '/exports',      label: 'Exports',       icon: Download },
-  { href: '/shop',         label: 'Boutique',      icon: ShoppingBag },
-  { href: '/integrations', label: 'Intégrations',  icon: Plug },
-  { href: '/settings',     label: 'Paramètres',    icon: Settings },
+import { useLocale } from '@/contexts/LocaleContext'
+
+const NAV_KEYS = [
+  { href: '/dashboard',    key: 'nav.dashboard',    icon: LayoutDashboard },
+  { href: '/training',     key: 'nav.training',     icon: Dumbbell },
+  { href: '/nutrition',    key: 'nav.nutrition',    icon: UtensilsCrossed },
+  { href: '/progress',     key: 'nav.progress',     icon: TrendingUp },
+  { href: '/exports',      key: 'nav.exports',      icon: Download },
+  { href: '/shop',         key: 'nav.shop',         icon: ShoppingBag },
+  { href: '/integrations', key: 'nav.integrations', icon: Plug },
+  { href: '/settings',     key: 'nav.settings',     icon: Settings },
 ]
 
 export function Sidebar() {
   const pathname       = usePathname()
   const { sidebarOpen, toggleSidebar } = useUIStore()
+  const { t } = useLocale()
 
   return (
     <>
@@ -53,7 +54,7 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          {NAV_KEYS.map(({ href, key, icon: Icon }) => {
             const active = pathname.startsWith(href)
             return (
               <Link
@@ -67,7 +68,7 @@ export function Sidebar() {
                 )}
               >
                 <Icon className="size-4 shrink-0" />
-                {label}
+                {t(key)}
               </Link>
             )
           })}

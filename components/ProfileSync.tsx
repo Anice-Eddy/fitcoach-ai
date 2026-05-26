@@ -3,11 +3,13 @@
 import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useUserStore } from '@/stores/userStore'
+import { useLocale } from '@/contexts/LocaleContext'
 import type { UserProfile } from '@/lib/storage/StorageAdapter'
 
 export function ProfileSync() {
   const { data: session, status } = useSession()
   const { profile, setProfile }   = useUserStore()
+  const { setLocale }             = useLocale()
 
   useEffect(() => {
     if (status !== 'authenticated') return
@@ -48,6 +50,9 @@ export function ProfileSync() {
           onboardingCompleted: (p.onboardingCompleted as boolean) ?? false,
         }
         setProfile(up)
+        // Sync locale from user preference
+        const lang = up.language as 'fr' | 'en'
+        if (lang === 'fr' || lang === 'en') setLocale(lang)
       })
       .catch(() => {})
   }, [status, session?.user?.id])

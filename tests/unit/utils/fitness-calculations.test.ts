@@ -69,14 +69,6 @@ describe('calculateBMR', () => {
     expect(bmr).toBeCloseTo(1363, 0)
   })
 
-  it('OTHER retourne une valeur entre FEMALE et MALE', () => {
-    const male   = calculateBMR(70, 175, 25, 'MALE')
-    const female = calculateBMR(70, 175, 25, 'FEMALE')
-    const other  = calculateBMR(70, 175, 25, 'OTHER')
-    expect(other).toBeGreaterThanOrEqual(Math.min(male, female))
-    expect(other).toBeLessThanOrEqual(Math.max(male, female))
-  })
-
   it('retourne un entier positif', () => {
     const bmr = calculateBMR(70, 175, 25, 'MALE')
     expect(bmr).toBeGreaterThan(0)

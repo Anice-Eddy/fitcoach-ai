@@ -1,12 +1,26 @@
 'use client'
-// Item d'exercice dans une séance active — sets, reps, charge, complétion
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, CheckCircle2, Circle, RefreshCw } from 'lucide-react'
 import type { SessionExercise } from '@/types'
 import { useTrainingStore } from '@/stores/trainingStore'
+import { useUserStore } from '@/stores/userStore'
 import { EXERCISE_DATABASE } from '@/lib/training/exercise-database'
+
+// Rest time based on fitness goal and exercise type
+function calcRestSeconds(goal: string | undefined, isCompound: boolean): number {
+  const base: Record<string, number> = {
+    MUSCLE_GAIN:     120,
+    WEIGHT_LOSS:     45,
+    ENDURANCE:       30,
+    GENERAL_FITNESS: 75,
+    MAINTENANCE:     60,
+    FLEXIBILITY:     45,
+  }
+  const b = base[goal ?? 'GENERAL_FITNESS'] ?? 75
+  return isCompound ? b + 30 : b
+}
 
 interface Props { exercise: SessionExercise; index: number }
 
@@ -14,12 +28,32 @@ export function ExerciseItem({ exercise, index }: Props) {
   const [expanded, setExpanded] = useState(false)
   const [showAlternatives, setShowAlternatives] = useState(false)
   const [weight, setWeight]     = useState(exercise.weightKg ?? 0)
+  const [weightInput, setWeightInput] = useState(String(exercise.weightKg ?? 0))
   const [reps, setReps]         = useState(exercise.reps)
+  const [repsInput, setRepsInput] = useState(String(exercise.reps))
   const { toggleExercise, replaceExercise, startRestTimer } = useTrainingStore()
+  const { profile } = useUserStore()
 
   const handleComplete = () => {
     toggleExercise(index, { weightKg: weight, reps })
-    if (!exercise.isCompleted) startRestTimer(exercise.restSeconds ?? 90)
+    if (!exercise.isCompleted) {
+      const restSecs = exercise.restSeconds && exercise.restSeconds > 0
+        ? exercise.restSeconds
+        : calcRestSeconds(profile?.fitnessGoal, exercise.isCompound)
+      startRestTimer(restSecs)
+    }
+  }
+
+  const handleWeightInput = (val: string) => {
+    setWeightInput(val)
+    const n = parseFloat(val)
+    if (!isNaN(n) && n >= 0) setWeight(n)
+  }
+
+  const handleRepsInput = (val: string) => {
+    setRepsInput(val)
+    const n = parseInt(val, 10)
+    if (!isNaN(n) && n >= 1) setReps(n)
   }
 
   const alternatives = EXERCISE_DATABASE.filter((item) =>
@@ -77,18 +111,38 @@ export function ExerciseItem({ exercise, index }: Props) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">Charge (kg)</label>
-                  <div className="flex items-center gap-2">
-                    <button type="button" aria-label="Diminuer la charge" onClick={() => setWeight(Math.max(0, weight - 2.5))} className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 disabled:opacity-50">−</button>
-                    <span className="flex-1 text-center text-sm font-bold text-white">{weight}</span>
-                    <button type="button" aria-label="Augmenter la charge" onClick={() => setWeight(weight + 2.5)} className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 disabled:opacity-50">+</button>
+                  <div className="flex items-center gap-1.5">
+                    <button type="button" aria-label="Diminuer la charge"
+                      onClick={() => { const v = Math.max(0, weight - 2.5); setWeight(v); setWeightInput(String(v)) }}
+                      className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 shrink-0">−</button>
+                    <input
+                      type="number" min="0" step="0.5"
+                      value={weightInput}
+                      onChange={e => handleWeightInput(e.target.value)}
+                      onBlur={() => setWeightInput(String(weight))}
+                      className="flex-1 min-w-0 text-center text-sm font-bold text-white bg-zinc-800 border border-zinc-700 rounded-lg py-1.5 focus:outline-none focus:border-[#C8F135]"
+                    />
+                    <button type="button" aria-label="Augmenter la charge"
+                      onClick={() => { const v = weight + 2.5; setWeight(v); setWeightInput(String(v)) }}
+                      className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 shrink-0">+</button>
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">Répétitions</label>
-                  <div className="flex items-center gap-2">
-                    <button type="button" aria-label="Diminuer les répétitions" onClick={() => setReps(Math.max(1, reps - 1))} className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 disabled:opacity-50">−</button>
-                    <span className="flex-1 text-center text-sm font-bold text-white">{reps}</span>
-                    <button type="button" aria-label="Augmenter les répétitions" onClick={() => setReps(reps + 1)} className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 disabled:opacity-50">+</button>
+                  <div className="flex items-center gap-1.5">
+                    <button type="button" aria-label="Diminuer les répétitions"
+                      onClick={() => { const v = Math.max(1, reps - 1); setReps(v); setRepsInput(String(v)) }}
+                      className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 shrink-0">−</button>
+                    <input
+                      type="number" min="1" step="1"
+                      value={repsInput}
+                      onChange={e => handleRepsInput(e.target.value)}
+                      onBlur={() => setRepsInput(String(reps))}
+                      className="flex-1 min-w-0 text-center text-sm font-bold text-white bg-zinc-800 border border-zinc-700 rounded-lg py-1.5 focus:outline-none focus:border-[#C8F135]"
+                    />
+                    <button type="button" aria-label="Augmenter les répétitions"
+                      onClick={() => { const v = reps + 1; setReps(v); setRepsInput(String(v)) }}
+                      className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 shrink-0">+</button>
                   </div>
                 </div>
               </div>

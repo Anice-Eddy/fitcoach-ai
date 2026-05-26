@@ -3,19 +3,22 @@
 import { Header } from '@/components/layout/Header'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { useUserStore } from '@/stores/userStore'
+import { useLocale } from '@/contexts/LocaleContext'
 import { toast } from 'sonner'
 
 export default function PreferencesPage() {
   const { profile, updateProfile, setStorageMode, storageMode } = useUserStore()
+  const { locale, setLocale } = useLocale()
 
   const setLanguage = async (language: 'fr' | 'en') => {
     updateProfile({ language })
+    setLocale(language)
     await fetch('/api/user/profile', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ language }),
     }).catch(() => null)
-    toast.success('Préférences mises à jour')
+    toast.success(language === 'fr' ? 'Langue mise à jour en français' : 'Language updated to English')
   }
 
   return (
@@ -36,7 +39,7 @@ export default function PreferencesPage() {
                       onClick={() => setLanguage(lang)}
                       aria-label={`Passer l'application en ${lang === 'fr' ? 'français' : 'anglais'}`}
                       className={`rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
-                        (profile?.language ?? 'fr') === lang
+                        locale === lang
                           ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]'
                           : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600 hover:text-white'
                       }`}

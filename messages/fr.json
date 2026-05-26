@@ -1,11 +1,15 @@
 {
   "nav": {
-    "dashboard": "Dashboard",
+    "dashboard": "Tableau de bord",
     "training": "Entraînement",
     "nutrition": "Nutrition",
     "progress": "Progression",
     "settings": "Paramètres",
-    "shop": "Boutique"
+    "shop": "Boutique",
+    "exports": "Exports",
+    "integrations": "Intégrations",
+    "coaching": "Coaching",
+    "appointments": "Rendez-vous"
   },
   "common": {
     "loading": "Chargement…",
@@ -19,7 +23,13 @@
     "upgrade": "Passer Pro",
     "free": "Gratuit",
     "pro": "Pro",
-    "elite": "Elite"
+    "elite": "Elite",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "close": "Fermer",
+    "retry": "Réessayer",
+    "send": "Envoyer"
   },
   "onboarding": {
     "title": "Configurez votre profil",
@@ -33,20 +43,37 @@
     }
   },
   "dashboard": {
+    "greeting": "Bonjour",
     "welcome": "Bienvenue",
-    "weight": "Poids",
+    "weight": "Poids actuel",
     "calories": "Calories",
     "streak": "Série",
-    "session": "Séance"
+    "session": "Séance",
+    "objective": "Objectif",
+    "progression": "Progression",
+    "bmi": "IMC",
+    "todaySession": "Séance du jour",
+    "weeklyGoal": "Objectif semaine",
+    "noProfile": "Complète ton profil d'abord",
+    "startOnboarding": "Commencer l'onboarding"
   },
   "training": {
+    "title": "Entraînement",
     "start": "Démarrer la séance",
     "resume": "Reprendre",
-    "finish": "Terminer",
+    "finish": "Terminer la séance",
     "rest": "Repos",
     "skip": "Passer",
     "sets": "séries",
-    "reps": "répétitions"
+    "reps": "répétitions",
+    "remaining": "restant(s)",
+    "completed": "complétés",
+    "duration": "Durée",
+    "regenerate": "Régénérer",
+    "week": "Semaine",
+    "sessions": "Séances",
+    "noProfile": "Complète ton profil d'abord",
+    "program": "Programme"
   },
   "nutrition": {
     "calories": "kcal",
@@ -54,7 +81,58 @@
     "carbs": "Glucides",
     "fat": "Lipides",
     "log": "Journaliser",
-    "plan": "Plan alimentaire"
+    "plan": "Plan alimentaire",
+    "target": "Cible",
+    "consumed": "Consommé",
+    "remaining": "Restant"
+  },
+  "progress": {
+    "title": "Progression",
+    "currentWeight": "Poids actuel",
+    "objective": "Objectif",
+    "progression": "Progression",
+    "bmi": "IMC",
+    "history": "Historique",
+    "addWeight": "Ajouter un poids",
+    "deleteWeight": "Supprimer cette entrée",
+    "noData": "Aucune donnée enregistrée",
+    "fitnessGoal": "Objectif fitness",
+    "targetWeight": "Poids cible",
+    "tdee": "Dépense énergétique",
+    "calories": "Calories recommandées",
+    "macros": "Macronutriments"
+  },
+  "coaching": {
+    "title": "Coaching",
+    "chooseTitle": "Comment veux-tu être coaché ?",
+    "ai": "Coaching IA",
+    "coach": "Coach réel",
+    "book": "Prendre rendez-vous",
+    "discovery": "Entretien découverte",
+    "pending": "En attente",
+    "confirmed": "Confirmé",
+    "completed": "Terminé",
+    "cancelled": "Annulé"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "profile": "Profil",
+    "body": "Corps & Santé",
+    "plan": "Abonnement",
+    "preferences": "Préférences",
+    "logout": "Déconnexion",
+    "deleteAccount": "Supprimer le compte"
+  },
+  "auth": {
+    "signIn": "Se connecter",
+    "signUp": "Créer un compte",
+    "signOut": "Se déconnecter",
+    "email": "Adresse email",
+    "password": "Mot de passe",
+    "name": "Prénom / Nom",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Pas encore de compte ?",
+    "hasAccount": "Déjà un compte ?"
   },
   "pricing": {
     "monthly": "Mensuel",
