@@ -53,7 +53,7 @@ function SignInForm() {
 
   const handleGoogle = async () => {
     setLoadingGoogle(true)
-    await signIn('google', { callbackUrl })
+    await signIn('google', { callbackUrl: isCoach ? '/auth/coach/complete' : callbackUrl })
   }
 
   return (
