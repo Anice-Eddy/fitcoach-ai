@@ -26,7 +26,6 @@ export default async function CoachLayout({ children }: { children: React.ReactN
     where:  { id: session.user.id },
     select: {
       name: true,
-      profile: { select: { id: true } },
       coachProfile: {
         select: {
           id: true,
@@ -45,8 +44,6 @@ export default async function CoachLayout({ children }: { children: React.ReactN
   if (!user?.coachProfile) redirect('/dashboard')
   if (!isCoachProfileComplete(user.coachProfile)) redirect('/auth/coach/complete')
 
-  const hasMemberSpace = !!user.profile
-
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
       <header className="h-16 border-b border-zinc-800 bg-zinc-900 flex items-center justify-between px-6">
@@ -55,7 +52,7 @@ export default async function CoachLayout({ children }: { children: React.ReactN
         </span>
         <div className="flex items-center gap-3">
           <NotificationBell />
-          <CoachDropdown hasMemberSpace={hasMemberSpace} />
+          <CoachDropdown />
         </div>
       </header>
 

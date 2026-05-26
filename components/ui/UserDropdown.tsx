@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
-import { ChevronDown, LogOut, User, Ruler, Sparkles, SlidersHorizontal, Users } from 'lucide-react'
+import { ChevronDown, LogOut, User, Ruler, Sparkles, SlidersHorizontal } from 'lucide-react'
 import { useUserStore } from '@/stores/userStore'
 
 const MEMBER_LINKS = [
@@ -17,7 +17,6 @@ const MEMBER_LINKS = [
 export function UserDropdown() {
   const { data: session } = useSession()
   const { profile } = useUserStore()
-  const isCoach = session?.user?.isCoach ?? false
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const name = session?.user?.name ?? profile?.firstName ?? 'Utilisateur BodyOps'
@@ -64,16 +63,6 @@ export function UserDropdown() {
           </div>
           <div className="h-px bg-zinc-800" />
           <div className="py-1">
-            {isCoach && (
-              <Link
-                href="/coach/dashboard"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#C8F135] transition-colors hover:bg-zinc-900"
-              >
-                <Users className="size-4" />
-                Espace coach
-              </Link>
-            )}
             {MEMBER_LINKS.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}

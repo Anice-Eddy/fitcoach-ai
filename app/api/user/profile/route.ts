@@ -15,6 +15,10 @@ export async function GET() {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
+  if (session.user.isCoach) {
+    return NextResponse.json({ error: 'Profil membre réservé aux comptes membres.' }, { status: 403 })
+  }
+
   const profile = await prisma.profile.findUnique({ where: { userId: session.user.id } })
   if (!profile) return NextResponse.json(null, { status: 200 })
 
@@ -24,6 +28,10 @@ export async function GET() {
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+
+  if (session.user.isCoach) {
+    return NextResponse.json({ error: 'Un compte coach ne peut pas créer ou modifier un profil membre.' }, { status: 403 })
+  }
 
   const body   = await req.json()
   const parsed = updateProfileSchema.safeParse(body)

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { AlertTriangle, FileUp, Save } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -23,12 +24,13 @@ type CoachProfileFormProps = {
 
 export function CoachCompletionForm({ initialProfile }: CoachProfileFormProps) {
   const router = useRouter()
+  const { update: updateSession } = useSession()
   const [form, setForm] = useState(initialProfile)
   const [document, setDocument] = useState<File | null>(null)
   const [issues, setIssues] = useState<Issue[]>(initialProfile.verificationIssues)
   const [saving, setSaving] = useState(false)
 
-  const update = (field: keyof typeof form, value: string) => {
+  const updateField = (field: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
@@ -58,6 +60,7 @@ export function CoachCompletionForm({ initialProfile }: CoachProfileFormProps) {
 
     setIssues(Array.isArray(data.verificationIssues) ? data.verificationIssues : [])
     toast.success('Profil coach envoyé en vérification')
+    await updateSession()
     router.push('/coach/dashboard')
   }
 
@@ -74,31 +77,31 @@ export function CoachCompletionForm({ initialProfile }: CoachProfileFormProps) {
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <label className="grid gap-1.5">
             <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Prénom</span>
-            <input required value={form.firstName} onChange={(e) => update('firstName', e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
+            <input required value={form.firstName} onChange={(e) => updateField('firstName', e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <label className="grid gap-1.5">
             <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Nom de famille</span>
-            <input required value={form.lastName} onChange={(e) => update('lastName', e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
+            <input required value={form.lastName} onChange={(e) => updateField('lastName', e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <label className="grid gap-1.5">
             <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Date de naissance</span>
-            <input required type="date" value={form.birthDate} onChange={(e) => update('birthDate', e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
+            <input required type="date" value={form.birthDate} onChange={(e) => updateField('birthDate', e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <label className="grid gap-1.5">
             <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Spécialité</span>
-            <input required value={form.specialty} onChange={(e) => update('specialty', e.target.value)} placeholder="Musculation, nutrition, mobilité..." className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
+            <input required value={form.specialty} onChange={(e) => updateField('specialty', e.target.value)} placeholder="Musculation, nutrition, mobilité..." className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <label className="grid gap-1.5">
             <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Expérience</span>
-            <input required min={0} max={60} type="number" value={form.experience} onChange={(e) => update('experience', e.target.value)} placeholder="5" className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
+            <input required min={0} max={60} type="number" value={form.experience} onChange={(e) => updateField('experience', e.target.value)} placeholder="5" className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <label className="grid gap-1.5">
             <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Certifications</span>
-            <input required value={form.certifications} onChange={(e) => update('certifications', e.target.value)} placeholder="BPJEPS, NASM, nutrition sportive" className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
+            <input required value={form.certifications} onChange={(e) => updateField('certifications', e.target.value)} placeholder="BPJEPS, NASM, nutrition sportive" className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <label className="grid gap-1.5 sm:col-span-2">
             <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Description professionnelle</span>
-            <textarea required minLength={30} rows={5} value={form.description} onChange={(e) => update('description', e.target.value)} className="resize-none rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
+            <textarea required minLength={30} rows={5} value={form.description} onChange={(e) => updateField('description', e.target.value)} className="resize-none rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <label className="grid gap-2 sm:col-span-2">
             <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Diplôme, certification ou document officiel</span>

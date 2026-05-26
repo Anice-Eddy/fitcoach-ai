@@ -4,13 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
-import { ChevronDown, LogOut, UserCircle, Settings, LayoutDashboard } from 'lucide-react'
+import { ChevronDown, LogOut, UserCircle } from 'lucide-react'
 
-interface Props {
-  hasMemberSpace: boolean
-}
-
-export function CoachDropdown({ hasMemberSpace }: Props) {
+export function CoachDropdown() {
   const { data: session } = useSession()
   const [open, setOpen]   = useState(false)
   const ref               = useRef<HTMLDivElement>(null)
@@ -71,25 +67,6 @@ export function CoachDropdown({ hasMemberSpace }: Props) {
               Mon profil coach
             </Link>
 
-            <Link
-              href="/settings/preferences"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-white"
-            >
-              <Settings className="size-4 text-zinc-500" />
-              Préférences
-            </Link>
-
-            {hasMemberSpace && (
-              <Link
-                href="/dashboard"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#C8F135] transition-colors hover:bg-zinc-900"
-              >
-                <LayoutDashboard className="size-4" />
-                Espace membre
-              </Link>
-            )}
           </div>
 
           <div className="h-px bg-zinc-800" />
