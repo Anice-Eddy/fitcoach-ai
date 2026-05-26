@@ -1,4 +1,23 @@
 /** @type {import('next').NextConfig} */
+
+// Validation des variables d'environnement obligatoires au moment du build
+if (process.env.NODE_ENV === 'production') {
+  const REQUIRED = [
+    'DATABASE_URL',
+    'AUTH_SECRET',
+    'GOOGLE_CLIENT_ID',
+    'GOOGLE_CLIENT_SECRET',
+    'NEXT_PUBLIC_APP_URL',
+  ]
+  const missing = REQUIRED.filter((k) => !process.env[k])
+  if (missing.length > 0) {
+    console.error('\n❌ Variables d\'environnement manquantes — build annulé :')
+    missing.forEach((k) => console.error(`   ✗  ${k}`))
+    console.error('\nAjoute-les dans Vercel → Settings → Environment Variables\n')
+    process.exit(1)
+  }
+}
+
 const withPWA = require('next-pwa')({
   dest:            'public',
   disable:         process.env.NODE_ENV === 'development',
