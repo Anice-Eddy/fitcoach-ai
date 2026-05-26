@@ -10,18 +10,26 @@ export default function ForgotPasswordPage() {
   const [email,   setEmail]   = useState('')
   const [loading, setLoading] = useState(false)
   const [sent,    setSent]    = useState(false)
+  const [error,   setError]   = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
 
     try {
-      await fetch('/api/auth/forgot-password', {
+      const res = await fetch('/api/auth/forgot-password', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email }),
       })
-      // Toujours afficher succès (sécurité : ne pas révéler si l'email existe)
+
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        setError(data?.message ?? "Impossible d'envoyer le lien de réinitialisation.")
+        return
+      }
+
       setSent(true)
     } catch {
       toast.error('Erreur réseau, réessaie.')
@@ -55,6 +63,12 @@ export default function ForgotPasswordPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-center text-sm text-red-400">
+                {error}
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                 Adresse email
@@ -62,7 +76,10 @@ export default function ForgotPasswordPage() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  setError('')
+                }}
                 placeholder="jean@example.com"
                 required
                 autoComplete="email"

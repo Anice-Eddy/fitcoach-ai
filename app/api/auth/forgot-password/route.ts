@@ -17,10 +17,32 @@ export async function POST(req: Request) {
 
   const { email } = parsed.data
 
-  // Toujours renvoyer succès pour ne pas révéler si l'email existe
-  const user = await prisma.user.findUnique({ where: { email } })
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, password: true, provider: true },
+  })
+
   if (!user) {
-    return NextResponse.json({ ok: true })
+    return NextResponse.json(
+      {
+        ok: false,
+        reason: 'EMAIL_NOT_FOUND',
+        message: "Aucun compte n'existe avec cette adresse email.",
+      },
+      { status: 404 },
+    )
+  }
+
+  if (!user.password) {
+    const provider = user.provider === 'GOOGLE' ? 'Google' : 'un fournisseur externe'
+    return NextResponse.json(
+      {
+        ok: false,
+        reason: 'NO_PASSWORD',
+        message: `Ce compte utilise ${provider}. Connectez-vous avec ${provider}, aucun mot de passe BodyOps n'est configuré.`,
+      },
+      { status: 409 },
+    )
   }
 
   // Supprimer les anciens tokens de cet utilisateur
