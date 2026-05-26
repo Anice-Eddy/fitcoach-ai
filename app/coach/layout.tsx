@@ -5,6 +5,7 @@ import { Logo } from '@/components/ui/Logo'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { NotificationBell } from '@/components/coach/NotificationBell'
+import { isCoachProfileComplete } from '@/lib/coach/verification'
 
 const NAV = [
   { href: '/coach/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
@@ -21,9 +22,25 @@ export default async function CoachLayout({ children }: { children: React.ReactN
 
   const user = await prisma.user.findUnique({
     where:  { id: session.user.id },
-    select: { name: true, coachProfile: { select: { id: true } } },
+    select: {
+      name: true,
+      coachProfile: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          birthDate: true,
+          bio: true,
+          specialties: true,
+          certifications: true,
+          yearsExperience: true,
+          documentFileName: true,
+        },
+      },
+    },
   })
   if (!user?.coachProfile) redirect('/dashboard')
+  if (!isCoachProfileComplete(user.coachProfile)) redirect('/auth/coach/complete')
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">

@@ -1,12 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { Header } from '@/components/layout/Header'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { useUserStore } from '@/stores/userStore'
 import { toast } from 'sonner'
-import { Save } from 'lucide-react'
+import { AlertTriangle, Save } from 'lucide-react'
+
+type CoachVerificationIssue = { field: string; message: string }
+
+type CoachProfileVerification = {
+  verificationStatus: 'PENDING_VERIFICATION' | 'NEEDS_CORRECTION' | 'VERIFIED' | 'REJECTED'
+  verificationIssues: CoachVerificationIssue[] | null
+  documentFileName: string | null
+  firstName: string | null
+  lastName: string | null
+  birthDate: string | null
+  bio: string | null
+  specialties: string[]
+  certifications: string[]
+}
 
 export default function ProfileSettingsPage() {
   const { data: session, update } = useSession()
@@ -18,6 +32,34 @@ export default function ProfileSettingsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>((profile?.language as 'fr' | 'en') ?? 'fr')
   const [tz, setTz] = useState(timezone)
   const [saving, setSaving] = useState(false)
+  const [coachProfile, setCoachProfile] = useState<CoachProfileVerification | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    fetch('/api/coach/profile')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (mounted) setCoachProfile(data)
+      })
+      .catch(() => undefined)
+    return () => { mounted = false }
+  }, [])
+
+  const coachIssues = coachProfile?.verificationIssues ?? []
+  const missingCoachFields = coachProfile ? [
+    !coachProfile.documentFileName ? 'Document officiel non envoyé.' : '',
+    !coachProfile.firstName ? 'Prénom coach manquant.' : '',
+    !coachProfile.lastName ? 'Nom de famille coach manquant.' : '',
+    !coachProfile.birthDate ? 'Date de naissance coach manquante.' : '',
+    !coachProfile.bio ? 'Description professionnelle manquante.' : '',
+    coachProfile.specialties.length === 0 ? 'Spécialité manquante.' : '',
+    coachProfile.certifications.length === 0 ? 'Certification manquante.' : '',
+  ].filter(Boolean) : []
+  const showCoachVerificationBanner = Boolean(
+    coachProfile
+      && coachProfile.verificationStatus !== 'VERIFIED'
+      && (coachIssues.length > 0 || missingCoachFields.length > 0 || coachProfile.verificationStatus !== 'PENDING_VERIFICATION'),
+  )
 
   const save = async () => {
     setSaving(true)
@@ -52,6 +94,29 @@ export default function ProfileSettingsPage() {
       <Header title="Mon profil" />
       <PageWrapper>
         <div className="max-w-2xl space-y-6">
+          {showCoachVerificationBanner && (
+            <section className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5">
+              <div className="flex gap-3">
+                <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-200" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-100">
+                    Votre profil coach est en cours de vérification.
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-amber-100/90">
+                    Certaines informations ou documents doivent être validés avant certification complète.
+                  </p>
+                  {(missingCoachFields.length > 0 || coachIssues.length > 0) && (
+                    <ul className="mt-3 space-y-1 text-xs leading-5 text-amber-100/90">
+                      {[...missingCoachFields, ...coachIssues.map((issue) => issue.message)].map((message) => (
+                        <li key={message}>{message}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
             <div className="flex items-center justify-between gap-4">
               <h1 className="text-[22px] font-medium text-white">Mon profil</h1>

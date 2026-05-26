@@ -589,12 +589,22 @@ enum NotificationType {
   SYSTEM
 }
 
+enum CoachVerificationStatus {
+  PENDING_VERIFICATION
+  NEEDS_CORRECTION
+  VERIFIED
+  REJECTED
+}
+
 // Profil Coach — structure pour Phase 2 B2B Coach
 model CoachProfile {
   id     String @id @default(cuid())
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  firstName       String?
+  lastName        String?
+  birthDate       DateTime?
   bio             String?
   specialties     String[]
   certifications  String[]
@@ -603,6 +613,14 @@ model CoachProfile {
   phone           String?
   isVerified      Boolean  @default(false)
   memberLimit     Int      @default(10)
+  verificationStatus CoachVerificationStatus @default(NEEDS_CORRECTION)
+  verificationIssues Json?
+  verificationAnalysis Json?
+  documentFileName   String?
+  documentMimeType   String?
+  documentSize       Int?
+  documentUploadedAt DateTime?
+  adminFeedback      String?
 
   coachMembers  CoachMember[]
   appointments  CoachAppointment[]

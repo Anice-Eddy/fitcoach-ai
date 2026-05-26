@@ -61,7 +61,7 @@ function SignInForm() {
 
     if (result?.ok) {
       sessionStorage.removeItem('bodyops:last-auth-context')
-      router.push(callbackUrl)
+      router.push(isCoach ? '/auth/coach/complete' : callbackUrl)
     } else {
       setError('Email ou mot de passe incorrect')
       setLoading(false)

@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { NextResponse } from 'next/server'
-import { compare, hash } from 'bcryptjs'
+import { hash } from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma/client'
 
@@ -56,52 +56,12 @@ export async function POST(req: Request) {
 
   const existing = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, password: true, coachProfile: { select: { id: true } } },
+    select: { id: true },
   })
   if (existing) {
-    if (!isCoach) {
-      return NextResponse.json({ error: { email: ['Cet email est déjà utilisé. Connectez-vous pour accéder à votre compte.'] } }, { status: 409 })
-    }
-
-    if (existing.coachProfile) {
-      return NextResponse.json({ error: { email: ['Un espace coach existe déjà avec cet email. Connectez-vous pour accéder à votre tableau de bord coach.'] } }, { status: 409 })
-    }
-
-    if (!existing.password) {
-      return NextResponse.json({
-        error: {
-          email: ['Ce compte existe déjà avec Google. Connectez-vous avec Google depuis la page coach pour créer votre espace coach.'],
-        },
-      }, { status: 409 })
-    }
-
-    const validPassword = await compare(password, existing.password)
-    if (!validPassword) {
-      return NextResponse.json({
-        error: {
-          password: ['Entrez le mot de passe de votre compte client pour ajouter l’espace coach à cette adresse email.'],
-        },
-      }, { status: 401 })
-    }
-
-    await prisma.user.update({
-      where: { id: existing.id },
-      data: {
-        subscriptionPlan: 'BUSINESS',
-        coachProfile: {
-          create: {
-            bio:             parsed.data.bio?.trim(),
-            specialties:     splitList(parsed.data.specialties),
-            certifications:  splitList(parsed.data.certifications),
-            yearsExperience: parsed.data.yearsExperience ?? null,
-            city:            parsed.data.city?.trim() || null,
-            phone:           parsed.data.phone?.trim() || null,
-          },
-        },
-      },
-    })
-
-    return NextResponse.json({ success: true }, { status: 200 })
+    return NextResponse.json({
+      error: { email: ['Cet email est déjà utilisé. Connectez-vous pour accéder à votre compte.'] },
+    }, { status: 409 })
   }
 
   const hashed = await hash(password, 12)
