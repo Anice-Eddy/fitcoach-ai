@@ -4,8 +4,10 @@ test.describe('Parcours accompagnement', () => {
   test('le choix coach réel ouvre la réservation puis la confirmation', async ({ page }) => {
     await page.goto('/choose')
     await page.getByRole('button', { name: /coach réel/i }).click()
-    await expect(page).toHaveURL(/\/coaches\/coach-1/)
+    await expect(page).toHaveURL(/\/coaches/)
     await expect(page.getByText('Sarah B.')).toBeVisible()
+    await page.getByRole('link', { name: /Sarah B\./i }).click()
+    await expect(page).toHaveURL(/\/coaches\/coach-1/)
 
     await page.getByRole('button', { name: /confirmer le rendez-vous/i }).click()
     await expect(page).toHaveURL(/\/coaching\/status/)

@@ -5,18 +5,20 @@ import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Dumbbell, UtensilsCrossed, TrendingUp,
-  Download, Settings, ShoppingBag, Plug, X,
+  Download, Settings, ShoppingBag, Plug, X, Users, CalendarDays,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
 import { Logo } from '@/components/ui/Logo'
 import { useLocale } from '@/contexts/LocaleContext'
+import { useSession } from 'next-auth/react'
 
 const NAV_KEYS = [
   { href: '/dashboard',    key: 'nav.dashboard',    icon: LayoutDashboard },
   { href: '/training',     key: 'nav.training',     icon: Dumbbell },
   { href: '/nutrition',    key: 'nav.nutrition',    icon: UtensilsCrossed },
   { href: '/progress',     key: 'nav.progress',     icon: TrendingUp },
+  { href: '/appointments', key: 'nav.appointments', icon: CalendarDays },
   { href: '/exports',      key: 'nav.exports',      icon: Download },
   { href: '/shop',         key: 'nav.shop',         icon: ShoppingBag },
   { href: '/integrations', key: 'nav.integrations', icon: Plug },
@@ -27,6 +29,8 @@ export function Sidebar() {
   const pathname       = usePathname() ?? ''
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const { t } = useLocale()
+  const { data: session } = useSession()
+  const isCoach = session?.user?.isCoach ?? false
 
   return (
     <>
@@ -73,6 +77,18 @@ export function Sidebar() {
             )
           })}
         </nav>
+
+        {isCoach && (
+          <div className="px-3 pb-2 border-t border-zinc-800 pt-3">
+            <Link
+              href="/coach/dashboard"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#C8F135] hover:bg-zinc-800 transition-colors"
+            >
+              <Users className="size-4 shrink-0" />
+              Espace coach
+            </Link>
+          </div>
+        )}
 
         <div className="px-4 py-4 border-t border-zinc-800">
           <p className="text-xs text-zinc-600 text-center">BodyOps · v1.0</p>

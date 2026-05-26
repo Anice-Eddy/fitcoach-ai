@@ -1,0 +1,4 @@
+DO $$ BEGIN
+  ALTER TYPE "AppointmentStatus" ADD VALUE 'PROPOSED' AFTER 'PENDING';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;

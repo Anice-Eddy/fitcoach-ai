@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -19,15 +19,29 @@ function SignInForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const callbackParam = searchParams?.get('callbackUrl')
+  const authError     = searchParams?.get('error') ?? ''
 
   const [mode, setMode] = useState<'member' | 'coach'>(
-    callbackParam?.includes('/coach') ? 'coach' : 'member',
+    callbackParam?.includes('/coach') || searchParams?.get('role') === 'coach' ? 'coach' : 'member',
   )
   const [showPassword, setShowPassword]   = useState(false)
   const [loading, setLoading]             = useState(false)
   const [loadingGoogle, setLoadingGoogle] = useState(false)
   const [form, setForm]                   = useState({ email: '', password: '' })
   const [error, setError]                 = useState('')
+
+  useEffect(() => {
+    if (authError === 'OAuthAccountNotLinked' && sessionStorage.getItem('bodyops:last-auth-context') === 'coach') {
+      setMode('coach')
+    }
+  }, [authError])
+
+  const oauthErrorMessage = authError === 'OAuthAccountNotLinked'
+    ? mode === 'coach'
+      ? "Un utilisateur existe déjà avec cette adresse email. Connectez-vous avec la méthode utilisée à l'inscription pour accéder à votre espace coach."
+      : "Un utilisateur existe déjà avec cette adresse email. Connectez-vous avec la méthode utilisée à l'inscription."
+    : ''
+  const displayedError = error || oauthErrorMessage
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
@@ -46,7 +60,8 @@ function SignInForm() {
     })
 
     if (result?.ok) {
-      router.push(mode === 'coach' ? '/coach/dashboard' : '/dashboard')
+      sessionStorage.removeItem('bodyops:last-auth-context')
+      router.push(mode === 'coach' ? '/auth/coach/complete' : '/dashboard')
     } else {
       // Check if this account uses Google/social login (no password)
       const check = await fetch(`/api/auth/check-provider?email=${encodeURIComponent(form.email)}`)
@@ -62,7 +77,8 @@ function SignInForm() {
 
   const handleGoogle = async () => {
     setLoadingGoogle(true)
-    await signIn('google', { callbackUrl: mode === 'coach' ? '/coach/dashboard' : '/dashboard' })
+    sessionStorage.setItem('bodyops:last-auth-context', mode)
+    await signIn('google', { callbackUrl: mode === 'coach' ? '/auth/coach/complete' : '/dashboard' })
   }
 
   return (
@@ -73,8 +89,12 @@ function SignInForm() {
           <div className="mb-6 flex justify-center">
             <Logo href="/" size="lg" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Connexion</h1>
-          <p className="text-sm text-zinc-400 mt-1">Accédez à votre espace BodyOps</p>
+          <h1 className="text-2xl font-bold text-white">
+            {mode === 'coach' ? 'Connexion coach' : 'Connexion'}
+          </h1>
+          <p className="text-sm text-zinc-400 mt-1">
+            {mode === 'coach' ? 'Accédez à votre espace coach' : 'Accédez à votre espace BodyOps'}
+          </p>
         </div>
 
         {/* Mode toggle — membre vs coach */}
@@ -119,16 +139,16 @@ function SignInForm() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
+          {displayedError && (
             <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
-              {error}
+              {displayedError}
             </div>
           )}
 
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-1.5">Adresse email</label>
             <input name="email" type="email" autoComplete="email" value={form.email} onChange={handleChange}
-              placeholder="vous@example.com"
+              placeholder="jean@example.com"
               className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
           </div>
 

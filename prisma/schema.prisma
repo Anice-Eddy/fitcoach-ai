@@ -575,6 +575,7 @@ model AffiliateClick {
 // Enums pour Coach
 enum AppointmentStatus {
   PENDING
+  PROPOSED
   CONFIRMED
   COMPLETED
   CANCELLED
@@ -665,7 +666,9 @@ model CoachAppointment {
   scheduledAt DateTime
   duration    Int      @default(60)  // en minutes
   status      AppointmentStatus @default(PENDING)
-  meetLink    String?  // Zoom, Teams, etc.
+  meetLink    String?
+  coachNote   String?
+  memberNote  String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
