@@ -10,7 +10,7 @@ interface LogoProps {
 
 const sizes = {
   sm: { badge: 'size-7',  icon: 'size-3.5', text: 'text-base',  gap: 'gap-2' },
-  md: { badge: 'size-9',  icon: 'size-4.5', text: 'text-lg',   gap: 'gap-2.5' },
+  md: { badge: 'size-9',  icon: 'size-5',   text: 'text-lg',   gap: 'gap-2.5' },
   lg: { badge: 'size-12', icon: 'size-6',   text: 'text-2xl',  gap: 'gap-3' },
   xl: { badge: 'size-16', icon: 'size-8',   text: 'text-4xl',  gap: 'gap-4' },
 }

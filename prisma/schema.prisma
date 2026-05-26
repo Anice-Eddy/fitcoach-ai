@@ -164,6 +164,7 @@ model User {
   updatedAt          DateTime           @updatedAt
 
   profile             Profile?
+  passwordResetTokens PasswordResetToken[]
   bodyMetrics         BodyMetric[]
   workoutPrograms     WorkoutProgram[]
   workoutSessions     WorkoutSession[]
@@ -692,6 +693,19 @@ model CoachNote {
   @@index([coachId])
   @@index([memberId])
   @@map("coach_notes")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 
 // ============================================================

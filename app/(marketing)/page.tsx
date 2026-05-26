@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Zap, BarChart2, ShoppingBag, Star, ArrowRight, Check, Dumbbell } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
+import { CurrentYear } from '@/components/ui/CurrentYear'
 
 const FEATURES = [
   { icon: Zap,        title: 'Programmes IA',       desc: 'Plans d\'entraînement générés selon votre profil et vos objectifs.' },
@@ -111,7 +112,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-zinc-800 px-6 py-8 text-center text-sm text-zinc-500">
-        © 2025 BodyOps · <a href="mailto:hello@BodyOpsai.app" className="hover:text-zinc-300">Contact</a>
+        © <CurrentYear /> BodyOps · <a href="mailto:hello@bodyops.app" className="hover:text-zinc-300">Contact</a>
       </footer>
     </div>
   )

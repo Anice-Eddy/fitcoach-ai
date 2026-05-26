@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const query: any = { coachId: coach.coachProfile.id }
+    const query: { coachId: string; isRead?: boolean } = { coachId: coach.coachProfile.id }
     if (unreadOnly) query.isRead = false
 
     const notifications = await prisma.notification.findMany({

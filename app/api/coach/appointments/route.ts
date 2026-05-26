@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const query: any = { coachId: coach.coachProfile.id }
+    const query: { coachId: string; memberId?: string } = { coachId: coach.coachProfile.id }
     if (memberId) query.memberId = memberId
 
     const appointments = await prisma.coachAppointment.findMany({

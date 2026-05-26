@@ -123,9 +123,9 @@ function SignInForm() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm font-medium text-zinc-300">Mot de passe</label>
-              <span className="text-xs text-zinc-500 hover:text-[#C8F135] cursor-pointer">
+              <Link href="/auth/forgot-password" className="text-xs text-zinc-500 hover:text-[#C8F135] transition-colors">
                 Mot de passe oublié ?
-              </span>
+              </Link>
             </div>
             <div className="relative">
               <input
