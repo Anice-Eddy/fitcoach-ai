@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 
-// Validation des variables d'environnement obligatoires au moment du build
-if (process.env.NODE_ENV === 'production') {
+// Validation des variables d'environnement — uniquement pendant next build, pas pendant lint/test
+if (process.env.NEXT_PHASE === 'phase-production-build') {
   const REQUIRED = [
     'DATABASE_URL',
     'AUTH_SECRET',

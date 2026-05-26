@@ -5,6 +5,7 @@ import { Logo } from '@/components/ui/Logo'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { NotificationBell } from '@/components/coach/NotificationBell'
+import { CoachDropdown } from '@/components/coach/CoachDropdown'
 import { isCoachProfileComplete } from '@/lib/coach/verification'
 
 const NAV = [
@@ -47,17 +48,13 @@ export default async function CoachLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
-      <header className="border-b border-zinc-800 bg-zinc-900 flex items-center justify-between px-6 py-3">
-        <span className="text-sm text-zinc-400">
-          Connecté en tant que <span className="text-white font-medium">{user.name ?? session.user.email}</span>
+      <header className="h-16 border-b border-zinc-800 bg-zinc-900 flex items-center justify-between px-6">
+        <span className="text-xs text-zinc-500 font-medium uppercase tracking-widest">
+          Espace Coach
         </span>
-        <div className="flex items-center gap-4">
-          {hasMemberSpace && (
-            <Link href="/dashboard" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
-              Espace membre
-            </Link>
-          )}
+        <div className="flex items-center gap-3">
           <NotificationBell />
+          <CoachDropdown hasMemberSpace={hasMemberSpace} />
         </div>
       </header>
 

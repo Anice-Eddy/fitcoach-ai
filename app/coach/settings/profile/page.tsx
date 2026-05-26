@@ -1,0 +1,258 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import Image from 'next/image'
+import { useSession } from 'next-auth/react'
+import { UserCircle, Save, Camera } from 'lucide-react'
+import { toast } from 'sonner'
+
+interface CoachProfile {
+  id:              string
+  bio:             string | null
+  specialties:     string[]
+  certifications:  string[]
+  yearsExperience: number | null
+  city:            string | null
+  phone:           string | null
+  memberLimit:     number
+  avatarUrl:       string | null
+}
+
+export default function CoachSettingsProfilePage() {
+  const { data: session, update: updateSession } = useSession()
+  const [profile, setProfile]   = useState<CoachProfile | null>(null)
+  const [loading, setLoading]   = useState(true)
+  const [saving, setSaving]     = useState(false)
+
+  // User fields
+  const [name, setName]         = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
+
+  // Coach profile fields
+  const [bio, setBio]                   = useState('')
+  const [specialties, setSpecialties]   = useState('')
+  const [certifications, setCertifications] = useState('')
+  const [yearsExp, setYearsExp]         = useState('')
+  const [city, setCity]                 = useState('')
+  const [phone, setPhone]               = useState('')
+  const [memberLimit, setMemberLimit]   = useState(10)
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/coach/profile').then(r => r.ok ? r.json() : null),
+    ]).then(([p]) => {
+      if (p) {
+        setProfile(p)
+        setBio(p.bio ?? '')
+        setSpecialties((p.specialties ?? []).join(', '))
+        setCertifications((p.certifications ?? []).join(', '))
+        setYearsExp(p.yearsExperience?.toString() ?? '')
+        setCity(p.city ?? '')
+        setPhone(p.phone ?? '')
+        setMemberLimit(p.memberLimit ?? 10)
+        setAvatarUrl(p.avatarUrl ?? '')
+      }
+      setLoading(false)
+    })
+    if (session?.user?.name)  setName(session.user.name)
+    if (session?.user?.image) setAvatarUrl(prev => prev || session.user!.image!)
+  }, [session])
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      // 1. Update User.name and User.image (avatarUrl)
+      await fetch('/api/user/account', {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name: name.trim(), image: avatarUrl.trim() || null }),
+      })
+
+      // 2. Update CoachProfile fields
+      await fetch('/api/coach/settings', {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          bio:             bio.trim(),
+          specialties:     specialties.split(',').map(s => s.trim()).filter(Boolean),
+          certifications:  certifications.split(',').map(s => s.trim()).filter(Boolean),
+          yearsExperience: yearsExp ? parseInt(yearsExp) : null,
+          city:            city.trim() || null,
+          phone:           phone.trim() || null,
+          memberLimit,
+          avatarUrl:       avatarUrl.trim() || null,
+        }),
+      })
+
+      await updateSession()
+      toast.success('Profil mis à jour')
+    } catch {
+      toast.error('Erreur lors de la sauvegarde')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto py-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-48 bg-zinc-800 rounded" />
+          <div className="h-64 bg-zinc-800 rounded-2xl" />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+          <UserCircle className="size-6 text-[#C8F135]" />
+          Mon profil coach
+        </h1>
+        <p className="text-sm text-zinc-400 mt-1">Informations visibles par vos membres</p>
+      </div>
+
+      <div className="space-y-6">
+
+        {/* Photo + nom */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <h2 className="text-sm font-semibold text-white mb-5">Identité</h2>
+
+          <div className="flex items-center gap-5 mb-5">
+            <div className="relative">
+              {avatarUrl ? (
+                <Image src={avatarUrl} alt={name} width={72} height={72}
+                  className="rounded-full ring-2 ring-zinc-700 object-cover" />
+              ) : (
+                <div className="flex size-[72px] items-center justify-center rounded-full bg-zinc-700 ring-2 ring-zinc-600 text-2xl font-bold text-white">
+                  {name[0]?.toUpperCase() ?? '?'}
+                </div>
+              )}
+              <div className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full bg-zinc-800 border border-zinc-700">
+                <Camera className="size-3 text-zinc-400" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">URL de la photo de profil</label>
+              <input
+                type="url"
+                value={avatarUrl}
+                onChange={e => setAvatarUrl(e.target.value)}
+                placeholder="https://exemple.com/photo.jpg"
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Nom affiché</label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Prénom Nom"
+              className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
+            />
+          </div>
+        </div>
+
+        {/* Bio + spécialités */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <h2 className="text-sm font-semibold text-white mb-5">Présentation</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Bio / description</label>
+              <textarea
+                value={bio}
+                onChange={e => setBio(e.target.value)}
+                rows={5}
+                placeholder="Décrivez votre approche, votre méthode, votre philosophie…"
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135] resize-none"
+              />
+              <p className="text-[10px] text-zinc-600 mt-1">{bio.length} caractères (min. 30)</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Spécialités <span className="text-zinc-600">(séparées par des virgules)</span></label>
+              <input
+                type="text"
+                value={specialties}
+                onChange={e => setSpecialties(e.target.value)}
+                placeholder="Musculation, Perte de poids, Nutrition sportive"
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Certifications <span className="text-zinc-600">(séparées par des virgules)</span></label>
+              <input
+                type="text"
+                value={certifications}
+                onChange={e => setCertifications(e.target.value)}
+                placeholder="BPJEPS, CQP, Coach NSCA"
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Infos pratiques */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <h2 className="text-sm font-semibold text-white mb-5">Informations pratiques</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Années d'expérience</label>
+              <input
+                type="number" min={0} max={60}
+                value={yearsExp}
+                onChange={e => setYearsExp(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-[#C8F135]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Limite de membres</label>
+              <input
+                type="number" min={1} max={500}
+                value={memberLimit}
+                onChange={e => setMemberLimit(parseInt(e.target.value) || 10)}
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-[#C8F135]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Ville</label>
+              <input
+                type="text"
+                value={city}
+                onChange={e => setCity(e.target.value)}
+                placeholder="Paris"
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Téléphone</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                placeholder="+33 6 00 00 00 00"
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={save}
+            disabled={saving}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50"
+          >
+            <Save className="size-4" />
+            {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  )
+}
