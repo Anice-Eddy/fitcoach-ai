@@ -53,6 +53,16 @@ function SignInForm() {
     setLoading(true)
     setError('')
 
+    const provider = await fetch(`/api/auth/check-provider?email=${encodeURIComponent(form.email)}`)
+      .then((r) => r.json())
+      .catch(() => ({ provider: null }))
+
+    if (provider.provider === 'GOOGLE') {
+      setError('Ce compte utilise la connexion Google. Cliquez sur "Continuer avec Google" ci-dessus.')
+      setLoading(false)
+      return
+    }
+
     const result = await signIn('credentials', {
       email:    form.email,
       password: form.password,
@@ -63,14 +73,7 @@ function SignInForm() {
       sessionStorage.removeItem('bodyops:last-auth-context')
       router.push(mode === 'coach' ? '/auth/coach/complete' : '/dashboard')
     } else {
-      // Check if this account uses Google/social login (no password)
-      const check = await fetch(`/api/auth/check-provider?email=${encodeURIComponent(form.email)}`)
-        .then((r) => r.json()).catch(() => ({ provider: null }))
-      if (check.provider === 'GOOGLE') {
-        setError('Ce compte utilise la connexion Google. Cliquez sur "Continuer avec Google" ci-dessus.')
-      } else {
-        setError('Email ou mot de passe incorrect.')
-      }
+      setError('Email ou mot de passe incorrect.')
       setLoading(false)
     }
   }

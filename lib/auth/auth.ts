@@ -6,8 +6,9 @@ import { compare } from 'bcryptjs'
 import { prisma } from '@/lib/prisma/client'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret:  process.env.AUTH_SECRET,
-  adapter: PrismaAdapter(prisma),
+  secret:    process.env.AUTH_SECRET,
+  trustHost: true,
+  adapter:   PrismaAdapter(prisma),
 
   providers: [
     Google({
@@ -23,18 +24,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: 'Mot de passe', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
+        try {
+          if (!credentials?.email || !credentials?.password) return null
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-        })
+          const user = await prisma.user.findUnique({
+            where:  { email: credentials.email as string },
+            select: { id: true, email: true, name: true, image: true, password: true },
+          })
 
-        if (!user?.password) return null
+          if (!user?.password) return null
 
-        const valid = await compare(credentials.password as string, user.password)
-        if (!valid) return null
+          const valid = await compare(credentials.password as string, user.password)
+          if (!valid) return null
 
-        return { id: user.id, email: user.email, name: user.name, image: user.image }
+          return { id: user.id, email: user.email, name: user.name, image: user.image }
+        } catch (err) {
+          console.error('[auth] authorize error:', err)
+          return null
+        }
       },
     }),
   ],
