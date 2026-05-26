@@ -24,7 +24,7 @@ const NAV_KEYS = [
 ]
 
 export function Sidebar() {
-  const pathname       = usePathname()
+  const pathname       = usePathname() ?? ''
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const { t } = useLocale()
 
@@ -45,7 +45,7 @@ export function Sidebar() {
         className="fixed left-0 top-0 z-30 flex h-full w-64 flex-col bg-zinc-950 border-r border-zinc-800 lg:translate-x-0 lg:static lg:z-auto"
       >
         {/* Logo */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-800">
+        <div className="flex h-16 items-center justify-between px-6 border-b border-zinc-800">
           <Logo href="/dashboard" size="md" />
           <button onClick={toggleSidebar} className="text-zinc-400 hover:text-white lg:hidden">
             <X className="size-5" />

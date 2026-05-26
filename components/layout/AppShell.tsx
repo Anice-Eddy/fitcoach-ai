@@ -9,7 +9,7 @@ const FULLSCREEN_ROUTES = ['/choose', '/coaching/status', '/coaches']
 const FULLSCREEN_PREFIXES = ['/coaches/']
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ''
   const fullscreen = FULLSCREEN_ROUTES.includes(pathname) || FULLSCREEN_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 
   if (fullscreen) {

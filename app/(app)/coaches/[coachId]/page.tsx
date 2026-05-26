@@ -51,7 +51,8 @@ const SLOTS = ['09:00', '10:30', '13:00', '14:30', '16:00', '17:30']
 
 export default function CoachBookingPage() {
   const router      = useRouter()
-  const { coachId } = useParams<{ coachId: string }>()
+  const params      = useParams<{ coachId: string }>()
+  const coachId     = params?.coachId
   const { profile, setAccompanimentMode, setCoach } = useUserStore()
 
   const [coachData, setCoachData] = useState<CoachData | null>(null)
@@ -64,6 +65,10 @@ export default function CoachBookingPage() {
   const days = useMemo(() => buildNextDays(14), [])
 
   useEffect(() => {
+    if (!coachId) {
+      setLoading(false)
+      return
+    }
     fetch(`/api/coaches/${coachId}`)
       .then(r => r.ok ? r.json() as Promise<CoachData> : null)
       .then(data => { setCoachData(data); setLoading(false) })

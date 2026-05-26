@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, CheckCircle2, Circle, RefreshCw } from 'lucide-react'
+import { ChevronDown, CheckCircle2, Circle, ExternalLink, RefreshCw, Youtube } from 'lucide-react'
 import type { SessionExercise } from '@/types'
 import { useTrainingStore } from '@/stores/trainingStore'
 import { useUserStore } from '@/stores/userStore'
@@ -160,6 +160,22 @@ export function ExerciseItem({ exercise, index }: Props) {
                     ))}
                   </ol>
                 </div>
+              )}
+
+              {exercise.videoUrl && (
+                <a
+                  href={exercise.videoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Voir une vidéo explicative YouTube pour ${exercise.name}`}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-left transition-colors hover:border-red-400/50 hover:bg-red-500/15"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Youtube className="size-4 shrink-0 text-red-400" />
+                    <span className="truncate text-sm font-medium text-white">Vidéo explicative YouTube</span>
+                  </span>
+                  <ExternalLink className="size-4 shrink-0 text-red-300" />
+                </a>
               )}
 
               <button

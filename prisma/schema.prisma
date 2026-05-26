@@ -595,10 +595,14 @@ model CoachProfile {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  bio         String?
-  specialties String[]
-  isVerified  Boolean @default(false)
-  memberLimit Int     @default(10)
+  bio             String?
+  specialties     String[]
+  certifications  String[]
+  yearsExperience Int?
+  city            String?
+  phone           String?
+  isVerified      Boolean  @default(false)
+  memberLimit     Int      @default(10)
 
   coachMembers  CoachMember[]
   appointments  CoachAppointment[]

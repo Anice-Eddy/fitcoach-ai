@@ -15,7 +15,7 @@ const TABS = [
 ]
 
 export function BottomNav() {
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ''
   const { t }    = useLocale()
 
   return (

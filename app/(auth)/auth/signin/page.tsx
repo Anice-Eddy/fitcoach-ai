@@ -4,7 +4,7 @@ import { Suspense, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Eye, EyeOff } from 'lucide-react'
+import { BriefcaseBusiness, Eye, EyeOff, ShieldCheck } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 
 export default function SignInPage() {
@@ -18,7 +18,8 @@ export default function SignInPage() {
 function SignInForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl  = searchParams.get('callbackUrl') ?? '/dashboard'
+  const callbackUrl  = searchParams?.get('callbackUrl') ?? '/dashboard'
+  const isCoach      = callbackUrl.startsWith('/coach') || searchParams?.get('role') === 'coach'
 
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading]           = useState(false)
@@ -64,8 +65,18 @@ function SignInForm() {
           <div className="mb-6 flex justify-center">
             <Logo href="/" size="lg" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Connexion</h1>
-          <p className="text-sm text-zinc-400 mt-1">Accédez à votre espace BodyOps</p>
+          <div className="mb-3 flex justify-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-3 py-1 text-xs font-semibold text-[#C8F135]">
+              {isCoach ? <BriefcaseBusiness className="size-3.5" /> : <ShieldCheck className="size-3.5" />}
+              {isCoach ? 'Espace coach' : 'Espace membre'}
+            </span>
+          </div>
+          <h1 className="text-2xl font-bold text-white">
+            {isCoach ? 'Connexion coach' : 'Connexion'}
+          </h1>
+          <p className="text-sm text-zinc-400 mt-1">
+            {isCoach ? 'Accédez au suivi de vos membres et à votre agenda' : 'Accédez à votre espace BodyOps'}
+          </p>
         </div>
 
         {/* Google */}
@@ -159,9 +170,15 @@ function SignInForm() {
         </form>
 
         <p className="text-center text-sm text-zinc-400 mt-5">
-          Pas encore de compte ?{' '}
-          <Link href="/auth/register" className="text-[#C8F135] hover:underline font-medium">
-            Créer un compte gratuit
+          {isCoach ? 'Pas encore de compte coach ?' : 'Pas encore de compte ?'}{' '}
+          <Link href={isCoach ? '/auth/register?role=coach' : '/auth/register'} className="text-[#C8F135] hover:underline font-medium">
+            {isCoach ? 'Créer un espace coach' : 'Créer un compte gratuit'}
+          </Link>
+        </p>
+        <p className="text-center text-sm text-zinc-500 mt-3">
+          {isCoach ? 'Vous êtes membre ?' : 'Vous êtes coach ?'}{' '}
+          <Link href={isCoach ? '/auth/signin' : '/auth/signin?callbackUrl=/coach/dashboard'} className="text-zinc-300 hover:text-[#C8F135] transition-colors">
+            {isCoach ? 'Connexion membre' : 'Connexion coach'}
           </Link>
         </p>
       </div>

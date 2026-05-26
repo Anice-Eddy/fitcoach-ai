@@ -22,10 +22,38 @@ function buildSession(
   level: string,
 ): WorkoutSession {
   const available = filterByEquipment(EXERCISE_DATABASE, equipment)
-  const exercises: SessionExercise[] = muscleGroups
-    .flatMap((muscle) => available.filter((ex) => ex.muscleGroups.includes(muscle as never)))
-    .slice(0, level === 'BEGINNER' ? 4 : level === 'INTERMEDIATE' ? 5 : 6)
-    .map((ex, i) => ({
+  const target = level === 'BEGINNER' ? 4 : level === 'INTERMEDIATE' ? 5 : 6
+  const seen = new Set<string>()
+  const picked: typeof EXERCISE_DATABASE = []
+
+  // Pass 1: primary muscle match only (first element of muscleGroups array)
+  for (const muscle of muscleGroups) {
+    const perGroup = Math.max(1, Math.round(target / muscleGroups.length))
+    const matches = available.filter(
+      (ex) => ex.muscleGroups[0] === muscle && !seen.has(ex.id),
+    )
+    for (const ex of matches.slice(0, perGroup)) {
+      seen.add(ex.id)
+      picked.push(ex)
+    }
+  }
+
+  // Pass 2: fill remaining slots with secondary muscle matches
+  if (picked.length < target) {
+    for (const muscle of muscleGroups) {
+      const matches = available.filter(
+        (ex) => ex.muscleGroups.includes(muscle as never) && !seen.has(ex.id),
+      )
+      for (const ex of matches) {
+        if (picked.length >= target) break
+        seen.add(ex.id)
+        picked.push(ex)
+      }
+      if (picked.length >= target) break
+    }
+  }
+
+  const exercises: SessionExercise[] = picked.slice(0, target).map((ex, i) => ({
       ...ex,
       order:       i,
       sets:        level === 'BEGINNER' ? 3 : 4,
