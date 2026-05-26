@@ -1,10 +1,8 @@
-// NextAuth v5 — configuration Google + GitHub
-// deps: npm install next-auth@beta @auth/prisma-adapter
-
 import NextAuth from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import Google from 'next-auth/providers/google'
-import GitHub from 'next-auth/providers/github'
+import Credentials from 'next-auth/providers/credentials'
+import { compare } from 'bcryptjs'
 import { prisma } from '@/lib/prisma/client'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -15,9 +13,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId:     process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    GitHub({
-      clientId:     process.env.GITHUB_ID!,
-      clientSecret: process.env.GITHUB_SECRET!,
+
+    Credentials({
+      name: 'credentials',
+      credentials: {
+        email:    { label: 'Email',        type: 'email' },
+        password: { label: 'Mot de passe', type: 'password' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null
+
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string },
+        })
+
+        if (!user?.password) return null
+
+        const valid = await compare(credentials.password as string, user.password)
+        if (!valid) return null
+
+        return { id: user.id, email: user.email, name: user.name, image: user.image }
+      },
     }),
   ],
 
@@ -27,7 +43,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 
   callbacks: {
-    // Injecte le plan Stripe et l'ID utilisateur dans le token JWT
     async jwt({ token, user }) {
       if (user?.id) {
         token.userId = user.id
@@ -41,7 +56,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token
     },
 
-    // Expose le plan dans la session côté client
     async session({ session, token }) {
       if (session.user) {
         session.user.id     = (token.userId ?? '') as string
@@ -55,7 +69,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: 'jwt' },
 
   events: {
-    // Crée un profil vide + abonnement FREE à la première connexion
     async createUser({ user }) {
       await prisma.subscription.create({
         data: { userId: user.id!, plan: 'FREE', status: 'INACTIVE' },

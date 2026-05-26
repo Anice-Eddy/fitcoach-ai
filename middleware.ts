@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server'
 import type { NextAuthRequest } from 'next-auth'
 
 // Routes accessibles sans authentification
-const PUBLIC_ROUTES  = ['/', '/pricing', '/auth/signin', '/auth/error']
+const PUBLIC_ROUTES  = ['/', '/pricing', '/auth/signin', '/auth/register', '/auth/error']
 // Routes nécessitant un plan Pro ou supérieur
 const PREMIUM_ROUTES = ['/exports', '/nutrition/shopping-list']
 

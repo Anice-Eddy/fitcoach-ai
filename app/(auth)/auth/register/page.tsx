@@ -3,52 +3,71 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Dumbbell, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 
-export default function SignInPage() {
-  const router       = useRouter()
-  const searchParams = useSearchParams()
-  const callbackUrl  = searchParams.get('callbackUrl') ?? '/dashboard'
-
+export default function RegisterPage() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading]           = useState(false)
+  const [loading, setLoading] = useState(false)
   const [loadingGoogle, setLoadingGoogle] = useState(false)
-  const [form, setForm]                 = useState({ email: '', password: '' })
-  const [error, setError]               = useState('')
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
-    setError('')
+    setErrors((err) => ({ ...err, [e.target.name]: '' }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError('')
+    setErrors({})
 
+    const res = await fetch('/api/auth/register', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(form),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      const fieldErrors: Record<string, string> = {}
+      if (data.error && typeof data.error === 'object') {
+        Object.entries(data.error).forEach(([k, v]) => {
+          fieldErrors[k] = (v as string[])[0]
+        })
+      }
+      setErrors(fieldErrors)
+      setLoading(false)
+      return
+    }
+
+    // Connexion automatique après inscription
     const result = await signIn('credentials', {
-      email:    form.email,
-      password: form.password,
-      redirect: false,
+      email:       form.email,
+      password:    form.password,
+      redirect:    false,
     })
 
     if (result?.ok) {
-      router.push(callbackUrl)
+      toast.success('Compte créé ! Bienvenue sur FitCoachAI')
+      router.push('/onboarding')
     } else {
-      setError('Email ou mot de passe incorrect')
-      setLoading(false)
+      toast.error('Compte créé mais connexion échouée — connectez-vous manuellement')
+      router.push('/auth/signin')
     }
   }
 
   const handleGoogle = async () => {
     setLoadingGoogle(true)
-    await signIn('google', { callbackUrl })
+    await signIn('google', { callbackUrl: '/onboarding' })
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
 
         {/* Logo */}
@@ -59,8 +78,8 @@ export default function SignInPage() {
             </div>
             <span className="text-white font-bold text-lg">FitCoachAI</span>
           </Link>
-          <h1 className="text-2xl font-bold text-white">Connexion</h1>
-          <p className="text-sm text-zinc-400 mt-1">Accédez à votre espace FitCoachAI</p>
+          <h1 className="text-2xl font-bold text-white">Créer un compte</h1>
+          <p className="text-sm text-zinc-400 mt-1">Gratuit, sans carte bancaire</p>
         </div>
 
         {/* Google */}
@@ -94,11 +113,21 @@ export default function SignInPage() {
 
         {/* Formulaire */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
-              {error}
-            </div>
-          )}
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              Prénom / Nom
+            </label>
+            <input
+              name="name"
+              type="text"
+              autoComplete="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Jean Dupont"
+              className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm"
+            />
+            {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-1.5">
@@ -113,23 +142,21 @@ export default function SignInPage() {
               placeholder="jean@example.com"
               className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm"
             />
+            {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email}</p>}
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-medium text-zinc-300">Mot de passe</label>
-              <span className="text-xs text-zinc-500 hover:text-[#C8F135] cursor-pointer">
-                Mot de passe oublié ?
-              </span>
-            </div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              Mot de passe
+            </label>
             <div className="relative">
               <input
                 name="password"
                 type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
+                autoComplete="new-password"
                 value={form.password}
                 onChange={handleChange}
-                placeholder="••••••••"
+                placeholder="8 caractères minimum"
                 className="w-full px-4 py-3 pr-11 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm"
               />
               <button
@@ -140,23 +167,30 @@ export default function SignInPage() {
                 {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
             </div>
+            {errors.password && <p className="mt-1 text-xs text-red-400">{errors.password}</p>}
           </div>
 
           <button
             type="submit"
             disabled={loading || loadingGoogle}
-            className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50 flex items-center justify-center"
+            className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
               <span className="size-5 rounded-full border-2 border-zinc-600 border-t-zinc-900 animate-spin" />
-            ) : 'Se connecter'}
+            ) : 'Créer mon compte gratuit'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-zinc-400 mt-5">
-          Pas encore de compte ?{' '}
-          <Link href="/auth/register" className="text-[#C8F135] hover:underline font-medium">
-            Créer un compte gratuit
+        <p className="text-center text-xs text-zinc-500 mt-5">
+          En créant un compte, vous acceptez nos{' '}
+          <span className="text-zinc-400 cursor-pointer hover:underline">CGU</span> et notre{' '}
+          <span className="text-zinc-400 cursor-pointer hover:underline">politique de confidentialité</span>.
+        </p>
+
+        <p className="text-center text-sm text-zinc-400 mt-4">
+          Déjà un compte ?{' '}
+          <Link href="/auth/signin" className="text-[#C8F135] hover:underline font-medium">
+            Se connecter
           </Link>
         </p>
       </div>

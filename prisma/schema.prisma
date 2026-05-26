@@ -155,7 +155,8 @@ model User {
   email              String             @unique
   name               String?
   image              String?
-  provider           Provider           @default(GOOGLE)
+  password           String?
+  provider           Provider           @default(EMAIL)
   stripeCustomerId   String?            @unique
   subscriptionPlan   SubscriptionPlan   @default(FREE)
   subscriptionStatus SubscriptionStatus @default(INACTIVE)
