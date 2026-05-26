@@ -17,13 +17,13 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title:       { default: 'FitCoachAI', template: '%s · FitCoachAI' },
+  title:       { default: 'fitcoach', template: '%s · fitcoach' },
   description: 'Votre coach fitness personnalisé alimenté par l\'IA — programmes, nutrition, progression.',
   keywords:    ['fitness', 'coach', 'IA', 'nutrition', 'musculation', 'entraînement'],
   manifest:    '/manifest.json',
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'FitCoachAI' },
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'fitcoach' },
   openGraph: {
-    title:       'FitCoachAI',
+    title:       'fitcoach',
     description: 'Votre coach fitness personnalisé alimenté par l\'IA',
     type:        'website',
     locale:      'fr_FR',

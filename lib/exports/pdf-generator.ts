@@ -14,7 +14,7 @@ export async function exportProfilePDF(profile: UserProfile): Promise<void> {
   doc.setTextColor(30, 30, 30)
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
-  doc.text('FitCoach AI — Profil & Métriques', 14, 14)
+  doc.text('fitcoach — Profil & Métriques', 14, 14)
 
   doc.setTextColor(80, 80, 80)
   doc.setFontSize(10)

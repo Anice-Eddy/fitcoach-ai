@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -14,6 +14,11 @@ import { SummaryStep }      from './steps/SummaryStep'
 import { useUserStore }     from '@/stores/userStore'
 import { LocalStorageAdapter } from '@/lib/storage/LocalStorageAdapter'
 import type { OnboardingData } from '@/utils/validators'
+import { getInitialOnboardingStep, profileToOnboardingData } from '@/utils/onboarding-profile'
+import type { UserProfile } from '@/lib/storage/StorageAdapter'
+
+// This component can be used both for first onboarding and profile updates.
+// It therefore hydrates its form from the current profile before showing steps.
 
 const STEPS = [
   { title: 'Unités de mesure', desc: 'Kg ou lb ? Cm ou ft ?' },
@@ -33,16 +38,56 @@ const slideVariants = {
 
 export function OnboardingStepper() {
   const router         = useRouter()
-  const { setProfile } = useUserStore()
+  const { profile, setProfile } = useUserStore()
   const [step, setStep]     = useState(0)
   const [direction, setDir] = useState(1)
   const [saving, setSaving] = useState(false)
+  const [hydrating, setHydrating] = useState(true)
   const [data, setData]     = useState<Partial<OnboardingData & { weightUnit: 'KG'|'LB'; heightUnit: 'CM'|'FT_IN' }>>({
     weightUnit: 'KG',
     heightUnit: 'CM',
   })
 
   const storage = new LocalStorageAdapter()
+
+  useEffect(() => {
+    let mounted = true
+
+    async function hydrateOnboarding() {
+      const progress = await storage.getOnboardingProgress()
+      const localProfile = await storage.getProfile()
+      let cloudProfile = null
+
+      try {
+        const response = await fetch('/api/user/profile')
+        cloudProfile = response.ok ? await response.json() : null
+      } catch {
+        cloudProfile = null
+      }
+
+      const source = (profile ?? cloudProfile ?? localProfile) as UserProfile | null
+      const nextData = {
+        weightUnit: 'KG' as const,
+        heightUnit: 'CM' as const,
+        ...(source ? profileToOnboardingData(source) : {}),
+        ...(progress?.data ?? {}),
+      }
+
+      if (!mounted) return
+      if (source) setProfile(source)
+      setData(nextData)
+      setStep(getInitialOnboardingStep({
+        completed: source?.onboardingCompleted,
+        savedStep: progress?.step ?? null,
+        totalSteps: STEPS.length,
+      }))
+      setHydrating(false)
+    }
+
+    hydrateOnboarding()
+    return () => { mounted = false }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const goNext = async (stepData: Partial<OnboardingData>) => {
     const merged = { ...data, ...stepData }
@@ -60,16 +105,29 @@ export function OnboardingStepper() {
   const finish = async () => {
     setSaving(true)
     try {
-      const profile = await storage.saveProfile({
+      const payload = {
         ...(data as OnboardingData),
         onboardingCompleted: true,
         language: 'fr',
         darkMode: true,
         id:       crypto.randomUUID(),
-      })
-      setProfile(profile)
+      }
+      let savedProfile = await storage.saveProfile(payload)
+
+      try {
+        const response = await fetch('/api/user/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        if (response.ok) savedProfile = await response.json()
+      } catch {
+        // Local mode is valid when the API is unavailable.
+      }
+
+      setProfile(savedProfile)
       await storage.clearOnboardingProgress()
-      toast.success('Profil créé ! Bienvenue sur FitCoach AI')
+      toast.success('Profil prêt. Choisis maintenant ton accompagnement.')
       router.push('/choose')
     } catch {
       toast.error('Erreur lors de la sauvegarde. Réessaie.')
@@ -82,9 +140,17 @@ export function OnboardingStepper() {
   const progress  = Math.round(((step + 1) / total) * 100)
   const current   = STEPS[step]
 
+  if (hydrating) {
+    return (
+      <div className="w-full max-w-lg mx-auto rounded-xl border border-zinc-800 bg-zinc-900 p-6 text-sm text-zinc-400">
+        Chargement de ton profil...
+      </div>
+    )
+  }
+
   return (
     <div className="w-full max-w-lg mx-auto">
-      {/* Barre de progression */}
+      {/* Progress indicator */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-zinc-400">
@@ -101,7 +167,7 @@ export function OnboardingStepper() {
           />
         </div>
 
-        {/* Indicateurs par étape */}
+        {/* Step indicators */}
         <div className="flex gap-1.5 mt-3">
           {STEPS.map((_, i) => (
             <div
@@ -119,7 +185,7 @@ export function OnboardingStepper() {
         </div>
       </div>
 
-      {/* Contenu animé */}
+      {/* Animated step content */}
       <AnimatePresence custom={direction} mode="wait">
         <motion.div
           key={step}

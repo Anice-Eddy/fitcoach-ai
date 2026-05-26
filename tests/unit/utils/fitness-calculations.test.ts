@@ -12,18 +12,16 @@ import {
 describe('calculateBMI', () => {
   it('calcule le BMI correctement', () => {
     const bmi = calculateBMI(70, 175)
-    expect(bmi).toBeCloseTo(22.86, 1)
+    expect(bmi).toBe(23)
   })
 
-  it('retourne 0 si la taille est 0', () => {
-    expect(calculateBMI(70, 0)).toBe(0)
+  it('retourne une erreur claire si la taille est hors limites', () => {
+    expect(() => calculateBMI(70, 0)).toThrow(/Taille hors limites/)
   })
 
-  it('arrondit à 1 décimale', () => {
+  it('arrondit à l’entier le plus proche', () => {
     const bmi = calculateBMI(80, 180)
-    const str = bmi.toString()
-    const decimals = str.split('.')[1]?.length ?? 0
-    expect(decimals).toBeLessThanOrEqual(1)
+    expect(Number.isInteger(bmi)).toBe(true)
   })
 })
 
@@ -179,7 +177,7 @@ describe('calculateFitnessProfile', () => {
 
   it('BMI cohérent avec le poids et la taille', () => {
     const result = calculateFitnessProfile(input)
-    expect(result.bmi).toBeCloseTo(22.86, 1)
+    expect(result.bmi).toBe(23)
   })
 
   it('TDEE > BMR toujours', () => {

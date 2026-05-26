@@ -4,8 +4,7 @@
 import { useUIStore } from '@/stores/uiStore'
 import { useUserStore } from '@/stores/userStore'
 import { Menu, Wifi, WifiOff, Bell } from 'lucide-react'
-import { useSession } from 'next-auth/react'
-import Image from 'next/image'
+import { UserDropdown } from '@/components/ui/UserDropdown'
 
 interface HeaderProps {
   title?: string
@@ -14,7 +13,6 @@ interface HeaderProps {
 export function Header({ title }: HeaderProps) {
   const { toggleSidebar }     = useUIStore()
   const { storageMode }       = useUserStore()
-  const { data: session }     = useSession()
   const isOffline = storageMode === 'local'
 
   return (
@@ -47,25 +45,16 @@ export function Header({ title }: HeaderProps) {
         </span>
 
         {/* Notifications (mockées) */}
-        <button className="relative text-zinc-400 hover:text-white" aria-label="Notifications">
+        <button
+          type="button"
+          className="relative rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white disabled:opacity-50"
+          aria-label="Notifications"
+        >
           <Bell className="size-5" />
           <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-[#C8F135]" />
         </button>
 
-        {/* Avatar utilisateur */}
-        {session?.user?.image ? (
-          <Image
-            src={session.user.image}
-            alt={session.user.name ?? 'Avatar'}
-            width={32}
-            height={32}
-            className="rounded-full ring-2 ring-zinc-700 hover:ring-[#C8F135] transition-all"
-          />
-        ) : (
-          <div className="size-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold text-white">
-            {session?.user?.name?.[0]?.toUpperCase() ?? '?'}
-          </div>
-        )}
+        <UserDropdown />
       </div>
     </header>
   )

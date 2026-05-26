@@ -1,10 +1,10 @@
-// Layout coach — barre latérale dédiée, séparé du layout app utilisateur
+// Coach layout: dedicated sidebar, separate from the member app shell.
 
 import Link from 'next/link'
 import { Dumbbell, LayoutDashboard, Users, FileText, BarChart2 } from 'lucide-react'
 
 const NAV = [
-  { href: '/coach/dashboard', label: 'Dashboard',   icon: LayoutDashboard },
+  { href: '/coach/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/coach/members',   label: 'Membres',     icon: Users },
   { href: '/coach/programs',  label: 'Programmes',  icon: FileText },
   { href: '/coach/reports',   label: 'Rapports',    icon: BarChart2 },

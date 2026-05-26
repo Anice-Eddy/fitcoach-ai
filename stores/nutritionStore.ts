@@ -23,6 +23,7 @@ interface NutritionState {
 
   setActivePlan:  (id: string | null) => void
   logMeal:        (meal: LoggedMeal) => void
+  toggleMeal:     (meal: LoggedMeal) => void
   removeMeal:     (mealId: string) => void
   clearTodayLog:  () => void
   setLoading:     (loading: boolean) => void
@@ -44,6 +45,11 @@ export const useNutritionStore = create<NutritionState>()(
 
       logMeal: (meal) =>
         set((s) => ({ todayMeals: [...s.todayMeals.filter((m) => m.mealId !== meal.mealId), meal] })),
+
+      toggleMeal: (meal) =>
+        set((s) => s.todayMeals.some((m) => m.mealId === meal.mealId)
+          ? { todayMeals: s.todayMeals.filter((m) => m.mealId !== meal.mealId) }
+          : { todayMeals: [...s.todayMeals, meal] }),
 
       removeMeal: (mealId) =>
         set((s) => ({ todayMeals: s.todayMeals.filter((m) => m.mealId !== mealId) })),

@@ -1,4 +1,4 @@
-// Dashboard coach — métriques globales mockées
+// Coach dashboard: mocked global metrics.
 
 import { Users, TrendingUp, Calendar, Star } from 'lucide-react'
 
@@ -13,7 +13,7 @@ export default function CoachDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard Coach</h1>
+        <h1 className="text-2xl font-bold">Tableau de bord coach</h1>
         <p className="text-zinc-400 text-sm mt-1">Vue d&apos;ensemble de vos membres et programmes.</p>
       </div>
 
@@ -30,7 +30,7 @@ export default function CoachDashboard() {
       <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-6">
         <h2 className="text-base font-semibold mb-4">Activité récente</h2>
         <div className="space-y-3">
-          {['Alice Martin a terminé sa séance Push', 'Bob Durand a atteint son objectif poids', 'Clara Petit a démarré le programme PPL'].map((msg) => (
+          {['Alice Martin a terminé sa séance pectoraux', 'Bob Durand a atteint son objectif poids', 'Clara Petit a démarré son programme'].map((msg) => (
             <div key={msg} className="flex items-center gap-3 text-sm text-zinc-300 py-2 border-b border-zinc-800 last:border-0">
               <div className="size-2 rounded-full bg-[#C8F135] shrink-0" />
               {msg}
@@ -40,7 +40,7 @@ export default function CoachDashboard() {
       </div>
 
       <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-5 text-sm text-amber-300">
-        🚧 Interface coach en développement — disponible dans la version Business.
+        Interface coach en développement — disponible dans l'offre entreprise.
       </div>
     </div>
   )

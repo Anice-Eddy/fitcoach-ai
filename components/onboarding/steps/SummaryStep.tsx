@@ -1,5 +1,5 @@
 'use client'
-// Étape 6 : résumé calculé — IMC, BMR, TDEE, calories, macros
+// Final onboarding step: calculated BMI, daily calories, and macros.
 
 import { motion } from 'framer-motion'
 import { calculateFitnessProfile, getBMICategory } from '@/utils/fitness-calculations'
@@ -57,8 +57,8 @@ export function SummaryStep({ data, onFinish, onBack, isLoading }: Props) {
         className="grid grid-cols-2 gap-3"
       >
         {[
-          { label: 'BMR (repos)',  value: result.bmr,  unit: 'kcal/j', desc: 'Métabolisme de base' },
-          { label: 'TDEE (total)', value: result.tdee, unit: 'kcal/j', desc: 'Dépense totale' },
+          { label: 'Calories au repos',  value: result.bmr,  unit: 'kcal/j', desc: 'Énergie utilisée sans activité' },
+          { label: 'Dépense quotidienne', value: result.tdee, unit: 'kcal/j', desc: 'Calories brûlées par jour' },
         ].map((item) => (
           <div key={item.label} className="rounded-xl bg-zinc-800 p-4 border border-zinc-700">
             <p className="text-xs text-zinc-500 mb-1">{item.label}</p>

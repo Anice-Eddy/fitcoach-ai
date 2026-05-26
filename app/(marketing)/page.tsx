@@ -1,18 +1,18 @@
-// Landing page marketing — hero, features, pricing CTA, social proof
+// Marketing landing page: hero, features, pricing CTA, and social proof.
 
 import Link from 'next/link'
 import { Dumbbell, Zap, BarChart2, ShoppingBag, Star, ArrowRight, Check } from 'lucide-react'
 
 const FEATURES = [
   { icon: Zap,        title: 'Programmes IA',       desc: 'Plans d\'entraînement générés selon votre profil et vos objectifs.' },
-  { icon: BarChart2,  title: 'Suivi intelligent',   desc: 'Graphiques de progression, overload progressif automatique.' },
+  { icon: BarChart2,  title: 'Suivi intelligent',   desc: 'Graphiques de progression et augmentation progressive des charges.' },
   { icon: ShoppingBag,title: 'Nutrition adaptée',   desc: 'Plans nutritionnels personnalisés et liste de courses générée.' },
-  { icon: Dumbbell,   title: 'Multi-appareils',     desc: 'PWA installable — fonctionnel hors ligne sur mobile et desktop.' },
+  { icon: Dumbbell,   title: 'Multi-appareils',     desc: 'Application installable, utilisable hors ligne sur mobile et ordinateur.' },
 ]
 
 const TESTIMONIALS = [
   { name: 'Marie L.', role: 'Coureuse semi-marathon', text: 'J\'ai amélioré mon endurance de 30% en 3 mois grâce au suivi nutritionnel.', stars: 5 },
-  { name: 'Thomas B.', role: 'Pratiquant CrossFit',  text: 'Les programmes PPL générés sont parfaitement adaptés à mon niveau.', stars: 5 },
+  { name: 'Thomas B.', role: 'Pratiquant CrossFit',  text: 'Les programmes générés sont parfaitement adaptés à mon niveau.', stars: 5 },
   { name: 'Sarah K.', role: 'Perte de poids',        text: '-8kg en 4 mois avec les recettes et les calculs macro automatiques.', stars: 5 },
 ]
 
@@ -25,7 +25,7 @@ export default function LandingPage() {
           <div className="size-8 rounded-lg bg-[#C8F135] flex items-center justify-center">
             <Dumbbell className="size-4 text-zinc-900" />
           </div>
-          <span className="font-bold text-lg">FitCoach<span className="text-[#C8F135]">AI</span></span>
+          <span className="font-bold text-lg">fitcoach</span>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/auth/signin" className="text-sm px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors">Connexion</Link>
@@ -103,7 +103,7 @@ export default function LandingPage() {
       {/* CTA */}
       <section className="max-w-2xl mx-auto px-6 py-20 text-center">
         <h2 className="text-3xl font-bold mb-4">Prêt à transformer votre corps ?</h2>
-        <p className="text-zinc-400 mb-8">Rejoignez des milliers de membres qui atteignent leurs objectifs avec FitCoachAI.</p>
+        <p className="text-zinc-400 mb-8">Rejoignez des milliers de membres qui atteignent leurs objectifs avec fitcoach.</p>
         <Link
           href="/onboarding"
           className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-[#C8F135] text-zinc-900 font-bold text-lg hover:bg-[#d4f54d] transition-colors"
@@ -114,7 +114,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-zinc-800 px-6 py-8 text-center text-sm text-zinc-500">
-        © 2025 FitCoachAI · <a href="mailto:hello@fitcoachai.app" className="hover:text-zinc-300">Contact</a>
+        © 2025 fitcoach · <a href="mailto:hello@fitcoachai.app" className="hover:text-zinc-300">Contact</a>
       </footer>
     </div>
   )

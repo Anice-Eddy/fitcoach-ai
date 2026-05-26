@@ -10,7 +10,7 @@ const PLAN_CONFIG = {
   FREE:     { label: 'Free',     icon: null,     color: 'text-zinc-400 bg-zinc-800 border-zinc-700' },
   PRO:      { label: 'Pro',      icon: Sparkles, color: 'text-[#C8F135] bg-[#C8F135]/10 border-[#C8F135]/20' },
   ELITE:    { label: 'Elite',    icon: Zap,      color: 'text-purple-400 bg-purple-400/10 border-purple-400/20' },
-  BUSINESS: { label: 'Business', icon: Building2, color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
+  BUSINESS: { label: 'Entreprise', icon: Building2, color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
 }
 
 interface PlanBadgeProps { className?: string }

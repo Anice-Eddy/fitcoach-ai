@@ -4,7 +4,7 @@ import { Header }        from '@/components/layout/Header'
 import { PageWrapper }   from '@/components/layout/PageWrapper'
 import { NutritionClient } from './NutritionClient'
 
-export const metadata: Metadata = { title: 'Nutrition — FitCoach AI' }
+export const metadata: Metadata = { title: 'Nutrition — fitcoach' }
 
 export default function NutritionPage() {
   return (

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -26,6 +28,35 @@
 
   body {
     @apply bg-zinc-950 text-white;
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 500;
+  }
+
+  h2,
+  h3 {
+    font-weight: 500;
+  }
+
+  label {
+    letter-spacing: 0.5px;
+  }
+
+  button {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  code,
+  kbd,
+  samp,
+  .font-mono {
+    font-family: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
   /* Scrollbar personnalisée */

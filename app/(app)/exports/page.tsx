@@ -83,7 +83,7 @@ export default function ExportsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <ExportCard
               icon={FileText} id="pdf" title="Export PDF — Profil"
-              desc="Profil, métriques, IMC, TDEE, macros"
+              desc="Profil, mesures, IMC, calories et macros"
               action={handleExportPDF}
             />
             <ExportCard
@@ -96,7 +96,7 @@ export default function ExportsPage() {
           {/* Import JSON */}
           <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
             <h3 className="text-sm font-semibold text-white mb-1">Import JSON</h3>
-            <p className="text-xs text-zinc-400 mb-4">Restaurez vos données depuis un export FitCoach AI.</p>
+            <p className="text-xs text-zinc-400 mb-4">Restaurez vos données depuis un export fitcoach.</p>
 
             {preview ? (
               <div className="space-y-3">

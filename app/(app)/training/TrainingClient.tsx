@@ -27,6 +27,16 @@ export function TrainingClient() {
     setLoading(false)
   }, [profile])
 
+  const regenerateProgram = () => {
+    if (!profile) return
+    setProgram(generateProgram({
+      fitnessGoal:         profile.fitnessGoal,
+      fitnessLevel:        profile.fitnessLevel,
+      trainingDaysPerWeek: profile.trainingDaysPerWeek,
+      availableEquipment:  profile.availableEquipment,
+    }))
+  }
+
   if (loading) return <ListSkeleton rows={4} />
 
   if (!profile?.onboardingCompleted) {
@@ -50,7 +60,13 @@ export function TrainingClient() {
               <h2 className="text-base font-bold text-white">{program.name}</h2>
               <p className="text-sm text-zinc-400 mt-0.5">Semaine {program.currentWeek} / {program.weeksTotal}</p>
             </div>
-            <button className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors">
+            <button
+              type="button"
+              onClick={regenerateProgram}
+              disabled={!profile}
+              aria-label="Régénérer le programme d'entraînement"
+              className="flex items-center gap-1.5 text-xs text-zinc-400 transition-colors hover:text-white disabled:opacity-50"
+            >
               <RefreshCw className="size-3.5" /> Régénérer
             </button>
           </div>

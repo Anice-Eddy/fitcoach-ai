@@ -10,10 +10,10 @@ export const PLANS: PricingPlan[] = [
     plan:         'FREE',
     monthlyPrice: 0,
     yearlyPrice:  0,
-    description:  'Pour découvrir FitCoach AI sans engagement',
+    description:  'Pour découvrir fitcoach sans engagement',
     highlighted:  false,
     features: [
-      'Onboarding complet (IMC, TDEE, macros)',
+      'Profil complet (IMC, calories, macros)',
       '1 programme d\'entraînement basique',
       'Plan nutritionnel 3 jours',
       'Stockage local uniquement',
@@ -58,7 +58,7 @@ export const PLANS: PricingPlan[] = [
   },
   {
     id:           'business',
-    name:         'Business',
+    name:         'Entreprise',
     plan:         'BUSINESS',
     monthlyPrice: 199,
     yearlyPrice:  1990,
@@ -67,7 +67,7 @@ export const PLANS: PricingPlan[] = [
     stripePriceIdMonthly: process.env.STRIPE_BUSINESS_ID,
     features: [
       'Tout le plan Elite',
-      'Dashboard coach avec suivi des membres',
+      'Tableau de bord coach avec suivi des membres',
       'Programmes personnalisés par membre',
       'Rapports et analytics avancés',
       'API d\'intégration',

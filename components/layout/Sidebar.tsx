@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
 const NAV_ITEMS = [
-  { href: '/dashboard',  label: 'Dashboard',   icon: LayoutDashboard },
+  { href: '/dashboard',  label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/training',   label: 'Entraînement', icon: Dumbbell },
   { href: '/nutrition',  label: 'Nutrition',    icon: UtensilsCrossed },
   { href: '/progress',   label: 'Progression',  icon: TrendingUp },
@@ -48,8 +48,7 @@ export function Sidebar() {
             <div className="size-8 rounded-lg bg-[#C8F135] flex items-center justify-center">
               <Dumbbell className="size-4 text-zinc-900" />
             </div>
-            <span className="font-bold text-white text-lg tracking-tight">FitCoach</span>
-            <span className="text-[#C8F135] font-bold">AI</span>
+            <span className="font-bold text-white text-lg tracking-tight">fitcoach</span>
           </Link>
           <button onClick={toggleSidebar} className="text-zinc-400 hover:text-white lg:hidden">
             <X className="size-5" />
@@ -79,7 +78,7 @@ export function Sidebar() {
         </nav>
 
         <div className="px-4 py-4 border-t border-zinc-800">
-          <p className="text-xs text-zinc-600 text-center">FitCoach AI · v1.0</p>
+          <p className="text-xs text-zinc-600 text-center">fitcoach · v1.0</p>
         </div>
       </motion.aside>
     </>

@@ -3,25 +3,49 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, CheckCircle2, Circle } from 'lucide-react'
+import { ChevronDown, CheckCircle2, Circle, RefreshCw } from 'lucide-react'
 import type { SessionExercise } from '@/types'
 import { useTrainingStore } from '@/stores/trainingStore'
+import { EXERCISE_DATABASE } from '@/lib/training/exercise-database'
 
 interface Props { exercise: SessionExercise; index: number }
 
 export function ExerciseItem({ exercise, index }: Props) {
   const [expanded, setExpanded] = useState(false)
+  const [showAlternatives, setShowAlternatives] = useState(false)
   const [weight, setWeight]     = useState(exercise.weightKg ?? 0)
   const [reps, setReps]         = useState(exercise.reps)
-  const { completeExercise, startRestTimer } = useTrainingStore()
+  const { toggleExercise, replaceExercise, startRestTimer } = useTrainingStore()
 
   const handleComplete = () => {
-    completeExercise(index, { weightKg: weight, reps, isCompleted: true })
-    startRestTimer(exercise.restSeconds ?? 90)
+    toggleExercise(index, { weightKg: weight, reps })
+    if (!exercise.isCompleted) startRestTimer(exercise.restSeconds ?? 90)
+  }
+
+  const alternatives = EXERCISE_DATABASE.filter((item) =>
+    item.id !== exercise.id && item.muscleGroups.some((group) => exercise.muscleGroups.includes(group)),
+  ).slice(0, 5)
+
+  const chooseAlternative = (item: typeof EXERCISE_DATABASE[number]) => {
+    replaceExercise(index, {
+      ...item,
+      order: exercise.order,
+      sets: exercise.sets,
+      reps: exercise.reps,
+      weightKg: exercise.weightKg,
+      restSeconds: exercise.restSeconds,
+      tempo: exercise.tempo,
+      isCompleted: false,
+    })
+    setShowAlternatives(false)
   }
 
   return (
-    <div className={`rounded-xl border transition-colors ${exercise.isCompleted ? 'border-[#C8F135]/30 bg-[#C8F135]/5' : 'border-zinc-800 bg-zinc-900'}`}>
+    <motion.div
+      layout
+      animate={{ backgroundColor: exercise.isCompleted ? 'rgba(200, 241, 53, 0.06)' : 'rgb(24, 24, 27)' }}
+      className={`rounded-xl border transition-colors ${exercise.isCompleted ? 'border-[#C8F135]/30' : 'border-zinc-800'}`}
+    >
       {/* En-tête */}
       <button
         onClick={() => setExpanded(!expanded)}
@@ -54,17 +78,17 @@ export function ExerciseItem({ exercise, index }: Props) {
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">Charge (kg)</label>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setWeight(Math.max(0, weight - 2.5))} className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700">−</button>
+                    <button type="button" aria-label="Diminuer la charge" onClick={() => setWeight(Math.max(0, weight - 2.5))} className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 disabled:opacity-50">−</button>
                     <span className="flex-1 text-center text-sm font-bold text-white">{weight}</span>
-                    <button onClick={() => setWeight(weight + 2.5)} className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700">+</button>
+                    <button type="button" aria-label="Augmenter la charge" onClick={() => setWeight(weight + 2.5)} className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 disabled:opacity-50">+</button>
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">Répétitions</label>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setReps(Math.max(1, reps - 1))} className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700">−</button>
+                    <button type="button" aria-label="Diminuer les répétitions" onClick={() => setReps(Math.max(1, reps - 1))} className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 disabled:opacity-50">−</button>
                     <span className="flex-1 text-center text-sm font-bold text-white">{reps}</span>
-                    <button onClick={() => setReps(reps + 1)} className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700">+</button>
+                    <button type="button" aria-label="Augmenter les répétitions" onClick={() => setReps(reps + 1)} className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 disabled:opacity-50">+</button>
                   </div>
                 </div>
               </div>
@@ -85,16 +109,51 @@ export function ExerciseItem({ exercise, index }: Props) {
               )}
 
               <button
-                onClick={handleComplete}
-                disabled={exercise.isCompleted}
-                className="w-full py-2 rounded-xl bg-[#C8F135] text-zinc-900 text-sm font-bold disabled:opacity-50 hover:bg-[#d4f54d] transition-colors"
+                type="button"
+                onClick={() => setShowAlternatives(true)}
+                aria-label={`Remplacer exercice ${exercise.name}`}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white disabled:opacity-50"
               >
-                {exercise.isCompleted ? '✓ Terminé' : 'Marquer terminé'}
+                <RefreshCw className="size-4" /> Remplacer exercice
+              </button>
+
+              <button
+                type="button"
+                onClick={handleComplete}
+                aria-label={exercise.isCompleted ? `Marquer ${exercise.name} comme à faire` : `Marquer ${exercise.name} comme terminé`}
+                className={`w-full py-2 rounded-xl text-sm font-bold transition-colors ${
+                  exercise.isCompleted
+                    ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'
+                    : 'bg-[#C8F135] text-zinc-900 hover:bg-[#d4f54d]'
+                }`}
+              >
+                {exercise.isCompleted ? 'À faire' : 'Marquer comme terminé'}
               </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+
+      <AnimatePresence>
+        {showAlternatives && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+            <motion.div initial={{ y: 16 }} animate={{ y: 0 }} exit={{ y: 16 }} className="w-full max-w-md rounded-2xl border border-zinc-700 bg-zinc-900 p-5">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h3 className="text-base font-medium text-white">Exercices alternatifs</h3>
+                <button type="button" onClick={() => setShowAlternatives(false)} aria-label="Fermer les alternatives" className="rounded-lg px-2 py-1 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-white">Fermer</button>
+              </div>
+              <div className="space-y-2">
+                {alternatives.map((item) => (
+                  <button key={item.id} type="button" onClick={() => chooseAlternative(item)} aria-label={`Choisir ${item.name}`} className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-left transition-colors hover:border-[#C8F135]/50 hover:bg-zinc-800">
+                    <p className="text-sm font-medium text-white">{item.name}</p>
+                    <p className="mt-1 text-xs text-zinc-500">{item.muscleGroups.join(', ')}</p>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   )
 }

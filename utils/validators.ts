@@ -103,7 +103,11 @@ export const onboardingSchema = identitySchema
 
 // --- Schéma API : mise à jour du profil ---
 
-export const updateProfileSchema = onboardingSchema.partial()
+export const updateProfileSchema = onboardingSchema.partial().extend({
+  language: z.enum(['fr', 'en']).optional(),
+  darkMode: z.boolean().optional(),
+  onboardingCompleted: z.boolean().optional(),
+})
 
 // --- Schéma API : ajout d'une métrique corporelle ---
 

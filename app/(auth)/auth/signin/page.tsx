@@ -1,13 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Dumbbell, Eye, EyeOff } from 'lucide-react'
-import { toast } from 'sonner'
 
 export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
+      <SignInForm />
+    </Suspense>
+  )
+}
+
+function SignInForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl  = searchParams.get('callbackUrl') ?? '/dashboard'
@@ -57,10 +64,10 @@ export default function SignInPage() {
             <div className="size-10 rounded-xl bg-[#C8F135] flex items-center justify-center">
               <Dumbbell className="size-5 text-zinc-900" />
             </div>
-            <span className="text-white font-bold text-lg">FitCoachAI</span>
+            <span className="text-white font-bold text-lg">fitcoach</span>
           </Link>
           <h1 className="text-2xl font-bold text-white">Connexion</h1>
-          <p className="text-sm text-zinc-400 mt-1">Accédez à votre espace FitCoachAI</p>
+          <p className="text-sm text-zinc-400 mt-1">Accédez à votre espace fitcoach</p>
         </div>
 
         {/* Google */}

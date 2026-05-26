@@ -14,8 +14,8 @@ const config: Config = {
         brand: { DEFAULT: '#C8F135', dark: '#9ec214' },
       },
       fontFamily: {
-        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-geist-mono)', 'monospace'],
+        sans: ['Outfit', 'system-ui', 'sans-serif'],
+        mono: ['DM Mono', 'ui-monospace', 'monospace'],
       },
       borderRadius: {
         '4xl': '2rem',

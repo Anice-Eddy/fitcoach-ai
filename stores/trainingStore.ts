@@ -24,6 +24,8 @@ interface TrainingState {
   setActiveProgram:   (id: string | null) => void
   startSession:       (session: Omit<ActiveSession, 'startedAt'>) => void
   completeExercise:   (index: number, log: Partial<SessionExercise>) => void
+  toggleExercise:     (index: number, log?: Partial<SessionExercise>) => void
+  replaceExercise:    (index: number, exercise: SessionExercise) => void
   setCurrentExercise: (index: number) => void
   startRestTimer:     (seconds: number) => void
   tickRestTimer:      () => void
@@ -51,6 +53,23 @@ export const useTrainingStore = create<TrainingState>()(
           if (!s.activeSession) return s
           const exercises = [...s.activeSession.exercises]
           exercises[index] = { ...exercises[index], ...log, isCompleted: true }
+          return { activeSession: { ...s.activeSession, exercises } }
+        }),
+
+      toggleExercise: (index, log = {}) =>
+        set((s) => {
+          if (!s.activeSession) return s
+          const exercises = [...s.activeSession.exercises]
+          const current = exercises[index]
+          exercises[index] = { ...current, ...log, isCompleted: !current.isCompleted }
+          return { activeSession: { ...s.activeSession, exercises } }
+        }),
+
+      replaceExercise: (index, exercise) =>
+        set((s) => {
+          if (!s.activeSession) return s
+          const exercises = [...s.activeSession.exercises]
+          exercises[index] = exercise
           return { activeSession: { ...s.activeSession, exercises } }
         }),
 

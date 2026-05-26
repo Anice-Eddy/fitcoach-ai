@@ -7,26 +7,36 @@ const PUBLIC_ROUTES = [
   '/auth/signin',
   '/auth/register',
   '/auth/error',
+  '/pricing',
+  '/onboarding',
+  '/choose',
+  '/coaching/status',
+]
+
+const PUBLIC_PREFIXES = [
+  '/coaches/',
 ]
 
 export default auth((req: NextAuthRequest) => {
   const { pathname } = req.nextUrl
   const session      = req.auth
 
-  // Assets statiques et routes API auth
+  // Static assets and auth API routes stay public.
   if (pathname.startsWith('/api/auth')) return NextResponse.next()
 
-  // Routes publiques
-  if (PUBLIC_ROUTES.includes(pathname)) return NextResponse.next()
+  // Public routes are needed for local-first onboarding.
+  if (PUBLIC_ROUTES.includes(pathname) || PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return NextResponse.next()
+  }
 
-  // Redirige vers signin si non connecté
+  // Authenticated app routes redirect to sign-in.
   if (!session?.user) {
     const url = new URL('/auth/signin', req.url)
     url.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(url)
   }
 
-  // Toutes les fonctionnalités sont gratuites — pas de gate premium
+  // All features are free for now, so there is no premium gate here.
   return NextResponse.next()
 })
 

@@ -14,7 +14,7 @@ interface Props {
 const GOAL_OPTIONS = [
   { value: 'WEIGHT_LOSS',     emoji: '🔥', label: 'Perte de poids',     desc: 'Déficit de 500 kcal/jour' },
   { value: 'MUSCLE_GAIN',     emoji: '💪', label: 'Prise de masse',      desc: 'Surplus de 300 kcal/jour' },
-  { value: 'MAINTENANCE',     emoji: '⚖️', label: 'Maintien',            desc: 'Calories = TDEE' },
+  { value: 'MAINTENANCE',     emoji: '⚖️', label: 'Maintien',            desc: 'Calories de stabilité' },
   { value: 'ENDURANCE',       emoji: '🏃', label: 'Endurance',           desc: 'Performance cardio' },
   { value: 'GENERAL_FITNESS', emoji: '🎯', label: 'Forme générale',      desc: 'Santé et bien-être' },
   { value: 'FLEXIBILITY',     emoji: '🧘', label: 'Souplesse / Mobilité', desc: 'Yoga, étirements' },

@@ -8,20 +8,20 @@ test.describe('Page Pricing', () => {
   test('affiche au moins 2 plans tarifaires', async ({ page }) => {
     // Cards with price amounts
     await page.waitForLoadState('networkidle')
-    const planCards = page.locator('[data-testid="plan-card"], .plan-card, [class*="card"]:has-text("FREE"), [class*="card"]:has-text("PRO")')
+    const planCards = page.locator('[data-testid="plan-card"]')
     const count = await planCards.count()
     expect(count).toBeGreaterThanOrEqual(1)
   })
 
   test('affiche un plan FREE', async ({ page }) => {
     await page.waitForLoadState('networkidle')
-    const freeText = page.locator(':text("FREE"), :text("Gratuit"), :text("0 €"), :text("0€")')
+    const freeText = page.locator(':text("Free"), :text("Gratuit"), :text("0 $"), :text("0$")')
     await expect(freeText.first()).toBeVisible()
   })
 
   test('affiche un plan PRO avec un prix', async ({ page }) => {
     await page.waitForLoadState('networkidle')
-    const proText = page.locator(':text("PRO")')
+    const proText = page.locator(':text("Pro")')
     await expect(proText.first()).toBeVisible()
   })
 
@@ -41,7 +41,7 @@ test.describe('Page Pricing', () => {
 
   test('les plans ont des boutons d\'action', async ({ page }) => {
     await page.waitForLoadState('networkidle')
-    const actionButtons = page.locator('button:has-text("Commencer"), button:has-text("Choisir"), button:has-text("S\'abonner"), a:has-text("Commencer")')
+    const actionButtons = page.locator('button:has-text("Commencer"), button:has-text("Choisir"), button:has-text("Bientôt disponible")')
     const count = await actionButtons.count()
     expect(count).toBeGreaterThanOrEqual(1)
   })

@@ -42,7 +42,7 @@ export default function CoachReports() {
       </div>
 
       <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-5 text-sm text-amber-300">
-        🚧 Export PDF des rapports en développement — disponible dans la version Business.
+        Export PDF des rapports en développement — disponible dans l'offre entreprise.
       </div>
     </div>
   )

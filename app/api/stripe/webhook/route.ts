@@ -49,6 +49,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ received: true })
 }
-
-// Désactive le body parsing automatique de Next.js (Stripe a besoin du raw body)
-export const config = { api: { bodyParser: false } }

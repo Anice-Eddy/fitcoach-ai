@@ -7,7 +7,7 @@ import { LayoutDashboard, Dumbbell, UtensilsCrossed, TrendingUp, Settings } from
 import { cn } from '@/lib/utils'
 
 const TABS = [
-  { href: '/dashboard', label: 'Home',       icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Accueil',    icon: LayoutDashboard },
   { href: '/training',  label: 'Training',   icon: Dumbbell },
   { href: '/nutrition', label: 'Nutrition',  icon: UtensilsCrossed },
   { href: '/progress',  label: 'Progress',   icon: TrendingUp },

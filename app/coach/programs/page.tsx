@@ -36,7 +36,7 @@ export default function CoachPrograms() {
       </div>
 
       <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-5 text-sm text-amber-300">
-        🚧 Éditeur de programme en développement — disponible dans la version Business.
+        Éditeur de programme en développement — disponible dans l'offre entreprise.
       </div>
     </div>
   )

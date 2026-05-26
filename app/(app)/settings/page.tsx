@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { signOut, useSession }  from 'next-auth/react'
+import Link from 'next/link'
 import { useUserStore }         from '@/stores/userStore'
 import { PageWrapper }          from '@/components/layout/PageWrapper'
 import { toast }                from 'sonner'
 import { kgToLb, lbToKg, cmToFtIn, ftInToCm } from '@/utils/unit-conversions'
-import { Home, Dumbbell, Building2, TreePine, LogOut, Trash2, Save, User, X } from 'lucide-react'
+import { Home, Dumbbell, Building2, TreePine, LogOut, Trash2, Save, User, X, Sparkles, ArrowRight } from 'lucide-react'
 
 // ─── constantes (mirrors onboarding steps) ──────────────────────────────────
 
@@ -28,7 +29,7 @@ const ACTIVITY_OPTIONS = [
 const GOAL_OPTIONS = [
   { value: 'WEIGHT_LOSS',     emoji: '🔥', label: 'Perte de poids',      desc: 'Déficit de 500 kcal/jour' },
   { value: 'MUSCLE_GAIN',     emoji: '💪', label: 'Prise de masse',       desc: 'Surplus de 300 kcal/jour' },
-  { value: 'MAINTENANCE',     emoji: '⚖️', label: 'Maintien',             desc: 'Calories = TDEE' },
+  { value: 'MAINTENANCE',     emoji: '⚖️', label: 'Maintien',             desc: 'Calories de stabilité' },
   { value: 'ENDURANCE',       emoji: '🏃', label: 'Endurance',            desc: 'Performance cardio' },
   { value: 'GENERAL_FITNESS', emoji: '🎯', label: 'Forme générale',       desc: 'Santé et bien-être' },
   { value: 'FLEXIBILITY',     emoji: '🧘', label: 'Souplesse / Mobilité', desc: 'Yoga, étirements' },
@@ -125,7 +126,7 @@ function DeleteModal({
 
 export default function SettingsPage() {
   const { data: session }       = useSession()
-  const { profile, setProfile } = useUserStore()
+  const { profile, setProfile, accompanimentMode, coachName, nextCoachSession } = useUserStore()
 
   const [saving,  setSaving]  = useState(false)
   const [showDel, setShowDel] = useState(false)
@@ -306,6 +307,50 @@ export default function SettingsPage() {
             <div>
               <div className="font-medium text-white">{session?.user?.name ?? profile?.firstName ?? 'Utilisateur'}</div>
               <div className="text-sm text-zinc-400">{session?.user?.email ?? '—'}</div>
+            </div>
+          </div>
+        </section>
+
+        {/* Mon accompagnement */}
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
+          <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-zinc-300">Mon accompagnement</h2>
+            <span className="rounded-full bg-[#C8F135]/10 px-2.5 py-1 text-xs font-medium text-[#C8F135]">
+              {accompanimentMode === 'COACH' ? 'Coach réel' : 'IA'}
+            </span>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[#C8F135]/10">
+                <Sparkles className="size-5 text-[#C8F135]" />
+              </div>
+              <div>
+                {accompanimentMode === 'COACH' ? (
+                  <>
+                    <p className="text-sm font-medium text-white">{coachName ?? 'Coach à confirmer'}</p>
+                    <p className="text-xs text-zinc-500">Prochaine séance : {nextCoachSession ?? 'à planifier'}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-white">Programme IA en cours</p>
+                    <p className="text-xs text-zinc-500">{profile?.fitnessGoal ?? 'Objectif à finaliser'}</p>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Link
+                href="/choose"
+                className="flex items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 py-2.5 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d]"
+              >
+                Changer de mode <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                href={accompanimentMode === 'COACH' ? '/choose' : '/coaches/coach-1'}
+                className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white"
+              >
+                {accompanimentMode === 'COACH' ? 'Changer de coach' : 'Passer à un coach réel'}
+              </Link>
             </div>
           </div>
         </section>
@@ -620,15 +665,6 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        {/* Enregistrer (sticky bottom shortcut) */}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full py-3.5 rounded-xl bg-[#C8F135] text-zinc-900 font-bold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-60"
-        >
-          {saving ? 'Sauvegarde en cours…' : 'Enregistrer les modifications'}
-        </button>
-
         {/* Danger zone */}
         <section className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
           <div className="px-5 py-4 border-b border-zinc-800">
@@ -650,7 +686,7 @@ export default function SettingsPage() {
           </button>
         </section>
 
-        <p className="text-xs text-center text-zinc-600">FitCoachAI v1.0 · Made with ❤️</p>
+        <p className="text-xs text-center text-zinc-600">fitcoach v1.0</p>
       </div>
     </PageWrapper>
   )

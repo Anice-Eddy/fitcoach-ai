@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Calendar, Clock } from 'lucide-react'
+import { Calendar, Square } from 'lucide-react'
 
 const BOOKING = {
   coach:  'Sarah',
@@ -31,7 +31,7 @@ function downloadICS() {
     'BEGIN:VEVENT',
     `DTSTART:${fmt(start)}`, `DTEND:${fmt(end)}`,
     `SUMMARY:Coaching avec ${BOOKING.coach}`,
-    'DESCRIPTION:Entretien découverte — FitCoach AI',
+    'DESCRIPTION:Entretien découverte — fitcoach',
     'END:VEVENT', 'END:VCALENDAR',
   ].join('\r\n')
   const a  = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([ics], { type: 'text/calendar' })), download: 'coaching.ics' })
@@ -42,29 +42,28 @@ export default function CoachingStatusPage() {
   const router = useRouter()
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-screen bg-black px-0 py-10 text-white">
+      <section className="mx-auto flex min-h-[620px] max-w-6xl flex-col items-center justify-center rounded-lg bg-[#0b0d09] px-4 py-16">
+      <div className="w-full max-w-[670px] space-y-7">
 
         {/* Icon */}
         <div className="flex justify-center">
-          <div className="size-20 rounded-full border-2 border-[#C8F135]/40 bg-[#C8F135]/5 flex items-center justify-center">
-            <div className="size-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center">
-              <div className="size-5 rounded-md border-2 border-zinc-500" />
-            </div>
+          <div className="flex size-[92px] items-center justify-center rounded-full border border-[#C8F135]/45 bg-[#C8F135]/10">
+            <Square className="size-7 text-[#C8F135]" />
           </div>
         </div>
 
         {/* Title */}
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-white">Demande envoyée !</h1>
-          <p className="text-sm text-zinc-400 leading-relaxed">
+          <h1 className="text-[28px] font-medium text-white">Demande envoyée !</h1>
+          <p className="mx-auto max-w-xl text-base leading-relaxed text-zinc-400">
             {BOOKING.coach} a reçu ta demande. Elle confirmera ton entretien sous 48h. Tu
             recevras un email et un SMS de confirmation.
           </p>
         </div>
 
         {/* Summary table */}
-        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
+        <div className="overflow-hidden rounded-xl border border-zinc-700 bg-[#1a1d17]">
           {[
             { label: 'Coach',   value: BOOKING.coach,  color: '' },
             { label: 'Date',    value: BOOKING.date,   color: '' },
@@ -76,9 +75,9 @@ export default function CoachingStatusPage() {
               color: 'text-amber-400',
             },
           ].map(r => (
-            <div key={r.label} className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 last:border-0">
-              <span className="text-xs text-zinc-500 w-20 shrink-0">{r.label}</span>
-              <span className={`text-sm font-medium text-right flex-1 ${r.color || 'text-zinc-200'}`}>
+            <div key={r.label} className="flex items-center justify-between px-7 py-2.5">
+              <span className="w-24 shrink-0 text-sm text-zinc-500">{r.label}</span>
+              <span className={`flex-1 text-right text-sm font-medium ${r.color || 'text-white'}`}>
                 {r.value}
               </span>
             </div>
@@ -94,23 +93,28 @@ export default function CoachingStatusPage() {
           ].map(b => (
             <button
               key={b.label}
+              type="button"
               onClick={b.action}
-              className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors"
+              aria-label={`Ajouter à ${b.label}`}
+              className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-[#1a1d17] py-4 text-xs text-zinc-400 transition-colors hover:border-zinc-600 hover:text-white disabled:opacity-50"
             >
-              <Calendar className="size-4 text-zinc-400" />
-              <span className="text-[11px] text-zinc-400 text-center leading-tight">{b.label}</span>
+              <Calendar className="size-4" />
+              <span className="text-center leading-tight">{b.label}</span>
             </button>
           ))}
         </div>
 
         {/* Main CTA */}
         <button
+          type="button"
           onClick={() => router.push('/dashboard')}
-          className="w-full py-4 rounded-xl bg-[#C8F135] text-zinc-900 font-bold text-base hover:bg-[#d4f54d] transition-colors"
+          aria-label="Aller sur mon dashboard"
+          className="w-full rounded-xl bg-[#C8F135] py-5 text-base font-medium text-black transition-colors hover:bg-[#d4f54d] disabled:opacity-50"
         >
           Aller sur mon dashboard →
         </button>
       </div>
+      </section>
     </div>
   )
 }

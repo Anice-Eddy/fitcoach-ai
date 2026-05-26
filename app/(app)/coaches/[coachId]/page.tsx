@@ -4,9 +4,9 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/stores/userStore'
 import { toast } from 'sonner'
-import { Star, ChevronLeft, ChevronRight, Video, Clock } from 'lucide-react'
+import { Star, Square } from 'lucide-react'
 
-// ─── Mock coach ───────────────────────────────────────────────────────────────
+// Mock coach data.
 
 const COACH = {
   initials: 'SB',
@@ -14,8 +14,6 @@ const COACH = {
   title:    'Coach certifiée · Nutrition & Perte de poids',
   rating:   4.8,
   reviews:  89,
-  // days of the month that have slots
-  available: [2, 5, 6, 9, 12, 13, 16, 19, 20, 23, 26, 27, 28],
   slots: [
     { time: '9h00',  disabled: false },
     { time: '11h30', disabled: false },
@@ -27,58 +25,26 @@ const COACH = {
 }
 
 const DOW = ['L', 'M', 'Me', 'J', 'V', 'S', 'D']
-const MONTHS = [
-  'Janvier','Février','Mars','Avril','Mai','Juin',
-  'Juillet','Août','Septembre','Octobre','Novembre','Décembre',
+const CALENDAR_CELLS = [
+  { day: 26, muted: true }, { day: 27, muted: true }, { day: 28 }, { day: 29 }, { day: 30 }, { day: 31, muted: true }, { day: 1, muted: true },
+  { day: 2 }, { day: 3 }, { day: 4 }, { day: 5 }, { day: 6 }, { day: 7, muted: true }, { day: 8, muted: true },
 ]
 
-function getDaysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate() }
-function getFirstDow(y: number, m: number) {
-  const d = new Date(y, m, 1).getDay()
-  return d === 0 ? 6 : d - 1
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
+// Booking page component.
 
 export default function CoachBookingPage() {
   const router      = useRouter()
   const { profile } = useUserStore()
-  const tz          = Intl.DateTimeFormat().resolvedOptions().timeZone
 
-  const now = new Date()
-  const [year,  setYear]  = useState(now.getFullYear())
-  const [month, setMonth] = useState(now.getMonth())
-  const [day,   setDay]   = useState<number | null>(null)
-  const [slot,  setSlot]  = useState<string | null>(null)
+  const [day,   setDay]   = useState<number | null>(28)
+  const [slot,  setSlot]  = useState<string | null>('11h30')
   const [msg,   setMsg]   = useState('')
   const [busy,  setBusy]  = useState(false)
 
-  const daysCount = getDaysInMonth(year, month)
-  const firstDow  = getFirstDow(year, month)
-
-  const prevMonth = () => {
-    if (month === 0) { setYear(y => y - 1); setMonth(11) } else setMonth(m => m - 1)
-    setDay(null); setSlot(null)
-  }
-  const nextMonth = () => {
-    if (month === 11) { setYear(y => y + 1); setMonth(0) } else setMonth(m => m + 1)
-    setDay(null); setSlot(null)
-  }
-
-  const isPast = (d: number) => {
-    const dt = new Date(year, month, d); dt.setHours(0,0,0,0)
-    const t  = new Date(); t.setHours(0,0,0,0)
-    return dt < t
-  }
-
-  const isAvail = (d: number) => COACH.available.includes(d) && !isPast(d)
-
   const selectedLabel = useMemo(() => {
     if (!day) return null
-    return new Date(year, month, day).toLocaleDateString('fr-FR', {
-      weekday: 'long', day: 'numeric', month: 'long',
-    })
-  }, [day, month, year])
+    return `Mercredi ${day} mai`
+  }, [day])
 
   const handleConfirm = async () => {
     if (!day || !slot) return
@@ -89,8 +55,7 @@ export default function CoachBookingPage() {
     router.push('/coaching/status')
   }
 
-  // calendar grid cells
-  const cells = [...Array(firstDow).fill(null), ...Array.from({length: daysCount}, (_, i) => i + 1)]
+  const pickable = new Set([28, 29, 30, 2, 3, 4, 5, 6])
 
   const goalLabel: Record<string, string> = {
     WEIGHT_LOSS: 'Perte de poids', MUSCLE_GAIN: 'Prise de masse',
@@ -101,13 +66,6 @@ export default function CoachBookingPage() {
     BEGINNER: 'Débutant', INTERMEDIATE: 'Intermédiaire',
     ADVANCED: 'Avancé', ATHLETE: 'Athlète',
   }
-  const equipLabel: Record<string, string> = {
-    BODYWEIGHT: 'Poids du corps', DUMBBELL: 'Haltères',
-    BARBELL: 'Barre', KETTLEBELL: 'Kettlebell',
-    BENCH: 'Banc', CABLE_MACHINE: 'Poulie', PULL_UP_BAR: 'Barre traction',
-    SMITH_MACHINE: 'Smith machine', CARDIO_MACHINE: 'Cardio', RESISTANCE_BAND: 'Bandes',
-  }
-
   const placeFromEquip = () => {
     const eq = profile?.availableEquipment as string[] | undefined
     if (!eq?.length) return '—'
@@ -118,25 +76,25 @@ export default function CoachBookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
+    <div className="min-h-screen bg-black text-white">
+      <section className="mx-auto max-w-6xl rounded-lg bg-[#0b0d09] px-9 py-10">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[470px_1fr]">
 
-          {/* ── LEFT PANEL ─────────────────────────────────────────────────── */}
+          {/* Left panel */}
           <div className="space-y-4">
 
             {/* Coach card */}
-            <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="size-12 rounded-full bg-zinc-700 flex items-center justify-center text-base font-bold text-white shrink-0">
+            <div className="border-b border-zinc-700 pb-7">
+              <div className="flex items-center gap-4">
+                <div className="flex size-[58px] shrink-0 items-center justify-center rounded-full border border-blue-400/50 bg-blue-500/10 text-xl font-medium text-blue-300">
                   {COACH.initials}
                 </div>
                 <div>
-                  <p className="font-semibold text-white text-sm">{COACH.name}</p>
+                  <p className="text-xl font-medium text-white">{COACH.name}</p>
                   <p className="text-xs text-zinc-400">{COACH.title}</p>
                   <div className="flex items-center gap-1 mt-0.5">
                     {Array.from({length: 5}).map((_,i) => (
-                      <Star key={i} className={`size-3 ${i < Math.floor(COACH.rating) ? 'fill-amber-400 text-amber-400' : 'text-zinc-600'}`} />
+                      <Star key={i} className={`size-3.5 ${i < Math.floor(COACH.rating) ? 'fill-[#C8F135] text-[#C8F135]' : 'text-zinc-600'}`} />
                     ))}
                     <span className="text-xs text-zinc-500 ml-1">{COACH.reviews} avis</span>
                   </div>
@@ -144,31 +102,22 @@ export default function CoachBookingPage() {
               </div>
             </div>
 
-            {/* Entretien découverte */}
-            <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
-              <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-3">Entretien découverte</p>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-zinc-300">
-                  <Clock className="size-3.5 text-zinc-500 shrink-0" />
-                  30 minutes
-                </div>
-                <div className="flex items-center gap-2 text-sm text-zinc-300">
-                  <Video className="size-3.5 text-zinc-500 shrink-0" />
-                  Visio · <span className="text-[#C8F135] font-medium">Gratuit</span>
-                </div>
-              </div>
-              <p className="text-xs text-zinc-500 mt-3 leading-relaxed">
+            {/* Discovery call */}
+            <div className="rounded-xl border border-[#C8F135]/25 bg-[#C8F135]/5 p-6">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[1px] text-[#C8F135]">Entretien découverte</p>
+              <p className="text-sm font-medium text-white">30 minutes · Visio · Gratuit</p>
+              <p className="mt-3 text-xs leading-relaxed text-zinc-400">
                 Le coach analyse ton profil et définit ton plan avec toi.
               </p>
             </div>
 
-            {/* Profile shared */}
+            {/* Shared profile */}
             {profile && (
-              <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
-                <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-3">
+              <div>
+                <p className="mb-4 text-xs font-semibold uppercase tracking-[2px] text-zinc-500">
                   Ton profil partagé avec le coach
                 </p>
-                <div className="space-y-2">
+                <div className="rounded-xl border border-zinc-700 bg-[#1a1d17] p-5">
                   {[
                     { label: 'Objectif',       value: goalLabel[profile.fitnessGoal] ?? profile.fitnessGoal },
                     { label: 'Niveau',         value: levelLabel[profile.fitnessLevel] ?? profile.fitnessLevel },
@@ -176,9 +125,9 @@ export default function CoachBookingPage() {
                     { label: 'Équipement',     value: placeFromEquip() },
                     { label: 'Disponibilités', value: `${profile.trainingDaysPerWeek} jours / semaine` },
                   ].map(r => (
-                    <div key={r.label} className="flex justify-between text-xs py-1 border-b border-zinc-800 last:border-0">
+                    <div key={r.label} className="flex justify-between py-1.5 text-xs">
                       <span className="text-zinc-500">{r.label}</span>
-                      <span className="text-zinc-200 font-medium text-right max-w-[55%]">{r.value}</span>
+                      <span className="max-w-[55%] text-right font-medium text-white">{r.value}</span>
                     </div>
                   ))}
                 </div>
@@ -186,53 +135,35 @@ export default function CoachBookingPage() {
             )}
           </div>
 
-          {/* ── RIGHT PANEL ────────────────────────────────────────────────── */}
+          {/* Right panel */}
           <div className="space-y-4">
-            <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
-
-              {/* Month nav */}
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">
-                  Disponibilités — {MONTHS[month]} {year}
+            <div>
+              <div className="mb-6">
+                <p className="text-base font-medium uppercase tracking-[2px] text-zinc-400">
+                  Disponibilités — Juin 2025
                 </p>
-                <div className="flex items-center gap-1">
-                  <button onClick={prevMonth} className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-white transition-colors">
-                    <ChevronLeft className="size-4" />
-                  </button>
-                  <button onClick={nextMonth} className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-white transition-colors">
-                    <ChevronRight className="size-4" />
-                  </button>
-                </div>
               </div>
-
-              {/* DOW header */}
-              <div className="grid grid-cols-7 mb-1">
+              <div className="grid grid-cols-7 gap-2">
                 {DOW.map(d => (
-                  <div key={d} className="text-center text-[11px] text-zinc-600 font-medium py-1">{d}</div>
+                  <div key={d} className="py-1 text-center text-xs font-medium text-zinc-600">{d}</div>
                 ))}
-              </div>
-
-              {/* Calendar grid */}
-              <div className="grid grid-cols-7 gap-0.5">
-                {cells.map((d, i) => {
-                  if (!d) return <div key={`e-${i}`} className="aspect-square" />
-                  const avail    = isAvail(d)
-                  const past     = isPast(d)
-                  const selected = day === d
+                {CALENDAR_CELLS.map((cell, i) => {
+                  const avail = pickable.has(cell.day) && !cell.muted
+                  const selected = day === cell.day && !cell.muted
                   return (
                     <button
-                      key={d}
+                      key={`${cell.day}-${i}`}
                       type="button"
                       disabled={!avail}
-                      onClick={() => { setDay(d); setSlot(null) }}
-                      className={`aspect-square rounded-lg text-xs font-medium flex items-center justify-center transition-all ${
-                        selected ? 'bg-[#C8F135] text-zinc-900 font-bold'
-                        : avail  ? 'hover:bg-zinc-800 text-white'
-                        : past   ? 'text-zinc-700 cursor-default'
-                                 : 'text-zinc-700 cursor-default'
+                      onClick={() => { setDay(cell.day); setSlot(null) }}
+                      aria-label={`Choisir le ${cell.day}`}
+                      className={`h-10 rounded-lg text-sm font-medium transition-all ${
+                        selected ? 'bg-[#C8F135] text-black'
+                        : avail ? 'border border-zinc-700 bg-[#1a1d17] text-white hover:border-[#C8F135]/50'
+                        : 'text-zinc-800'
                       }`}
                     >
-                      {d}
+                      {cell.day}
                     </button>
                   )
                 })}
@@ -241,26 +172,27 @@ export default function CoachBookingPage() {
 
             {/* Time slots */}
             {day && (
-              <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
-                <p className="text-sm font-semibold text-white mb-4 capitalize">
+              <div>
+                <p className="mb-4 text-sm font-medium capitalize text-[#C8F135]">
                   {selectedLabel} — Créneaux disponibles
                 </p>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-3">
                   {COACH.slots.map(s => (
                     <button
                       key={s.time}
                       type="button"
                       disabled={s.disabled}
                       onClick={() => setSlot(s.time)}
-                      className={`py-3 rounded-xl border text-center transition-all ${
+                      aria-label={`Choisir le créneau ${s.time}`}
+                      className={`rounded-xl border py-4 text-center transition-all ${
                         s.disabled
-                          ? 'border-zinc-800 bg-zinc-900 text-zinc-700 cursor-not-allowed'
+                          ? 'border-zinc-800 bg-[#1a1d17] text-zinc-700 cursor-not-allowed'
                           : slot === s.time
                           ? 'border-[#C8F135] bg-[#C8F135]/10'
-                          : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
+                          : 'border-zinc-700 bg-[#1a1d17] hover:border-zinc-600'
                       }`}
                     >
-                      <p className={`text-sm font-bold ${s.disabled ? 'text-zinc-700' : slot === s.time ? 'text-[#C8F135]' : 'text-white'}`}>
+                      <p className={`text-base font-medium ${s.disabled ? 'text-zinc-700' : slot === s.time ? 'text-[#C8F135]' : 'text-white'}`}>
                         {s.time}
                       </p>
                       <p className={`text-[11px] mt-0.5 ${s.disabled ? 'text-zinc-800' : 'text-zinc-500'}`}>30 min</p>
@@ -273,16 +205,15 @@ export default function CoachBookingPage() {
               </div>
             )}
 
-            {/* Confirmation + message + CTA */}
+            {/* Confirmation, message, and CTA */}
             {day && slot && (
-              <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5 space-y-4">
+              <div className="space-y-4">
                 {/* Summary box */}
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-zinc-800/70 border border-zinc-700">
-                  <div className="size-2 rounded-full bg-[#C8F135] shrink-0" />
+                <div className="flex items-center gap-4 rounded-xl border border-[#C8F135]/35 bg-[#C8F135]/5 p-5">
+                  <Square className="size-4 shrink-0 text-[#C8F135]" />
                   <div className="text-sm">
-                    <span className="text-white font-medium">Rendez-vous sélectionné</span>
-                    <span className="text-zinc-400 ml-2 capitalize">{selectedLabel} à {slot}</span>
-                    <span className="text-zinc-600 text-xs ml-2">({tz})</span>
+                    <p className="font-medium text-[#C8F135]">Rendez-vous sélectionné</p>
+                    <p className="text-white capitalize">{selectedLabel} à {slot} (heure de Montréal)</p>
                   </div>
                 </div>
 
@@ -292,14 +223,15 @@ export default function CoachBookingPage() {
                   onChange={e => setMsg(e.target.value)}
                   rows={3}
                   placeholder="Message optionnel pour le coach…"
-                  className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135] transition-colors resize-none"
+                  className="w-full resize-none rounded-xl border border-zinc-700 bg-[#1a1d17] px-4 py-3 text-sm text-white placeholder-zinc-500 transition-colors focus:border-[#C8F135] focus:outline-none"
                 />
 
                 {/* CTA */}
                 <button
                   onClick={handleConfirm}
                   disabled={busy}
-                  className="w-full py-4 rounded-xl bg-[#C8F135] text-zinc-900 font-bold text-base hover:bg-[#d4f54d] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                  aria-label="Confirmer le rendez-vous"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#C8F135] py-4 text-base font-medium text-black transition-colors hover:bg-[#d4f54d] disabled:opacity-60"
                 >
                   {busy ? 'Envoi en cours…' : 'Confirmer le rendez-vous →'}
                 </button>
@@ -310,7 +242,7 @@ export default function CoachBookingPage() {
             )}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   )
 }

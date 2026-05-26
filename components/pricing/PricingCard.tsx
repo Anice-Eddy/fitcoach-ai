@@ -1,5 +1,5 @@
 'use client'
-// Carte de plan tarifaire — highlight, features, bouton checkout
+// Pricing plan card with checkout action.
 
 import { motion } from 'framer-motion'
 import { Check, Sparkles } from 'lucide-react'
@@ -25,7 +25,7 @@ export function PricingCard({ plan, isYearly, index }: Props) {
 
   const handleCheckout = async () => {
     if (isFree || isCurrent) return
-    if (isBusinessMocked) { toast.info('Le plan Business arrive bientôt !'); return }
+    if (isBusinessMocked) { toast.info('Le plan Entreprise arrive bientôt !'); return }
     if (!priceId) { toast.error('Plan non configuré'); return }
 
     setLoading(true)
@@ -47,6 +47,7 @@ export function PricingCard({ plan, isYearly, index }: Props) {
 
   return (
     <motion.div
+      data-testid="plan-card"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08 }}
@@ -97,8 +98,10 @@ export function PricingCard({ plan, isYearly, index }: Props) {
       </ul>
 
       <button
+        type="button"
         onClick={handleCheckout}
         disabled={loading || isCurrent}
+        aria-label={`Choisir le plan ${plan.name}`}
         className={`w-full py-3 rounded-xl text-sm font-bold transition-all ${
           isCurrent
             ? 'bg-zinc-800 text-zinc-400 cursor-default'

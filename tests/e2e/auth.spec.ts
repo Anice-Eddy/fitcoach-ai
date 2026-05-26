@@ -16,10 +16,10 @@ test.describe('Page de connexion', () => {
     await expect(googleBtn.first()).toBeVisible()
   })
 
-  test('affiche le bouton GitHub', async ({ page }) => {
+  test('affiche la connexion par email', async ({ page }) => {
     await page.waitForLoadState('networkidle')
-    const githubBtn = page.locator('button:has-text("GitHub"), a:has-text("GitHub")')
-    await expect(githubBtn.first()).toBeVisible()
+    await expect(page.getByPlaceholder('jean@example.com')).toBeVisible()
+    await expect(page.getByPlaceholder('••••••••')).toBeVisible()
   })
 
   test('redirige vers la landing si on clique sur retour', async ({ page }) => {

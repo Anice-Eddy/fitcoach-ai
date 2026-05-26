@@ -53,7 +53,7 @@ export default function RegisterPage() {
     })
 
     if (result?.ok) {
-      toast.success('Compte créé ! Bienvenue sur FitCoachAI')
+      toast.success('Compte créé ! Bienvenue sur fitcoach')
       router.push('/onboarding')
     } else {
       toast.error('Compte créé mais connexion échouée — connectez-vous manuellement')
@@ -76,7 +76,7 @@ export default function RegisterPage() {
             <div className="size-10 rounded-xl bg-[#C8F135] flex items-center justify-center">
               <Dumbbell className="size-5 text-zinc-900" />
             </div>
-            <span className="text-white font-bold text-lg">FitCoachAI</span>
+            <span className="text-white font-bold text-lg">fitcoach</span>
           </Link>
           <h1 className="text-2xl font-bold text-white">Créer un compte</h1>
           <p className="text-sm text-zinc-400 mt-1">Gratuit, sans carte bancaire</p>

@@ -1,5 +1,5 @@
 'use client'
-// Client du dashboard — récupère les données et orchestre les widgets
+// Dashboard client: loads local data and renders the main widgets.
 
 import { useEffect, useState } from 'react'
 import { useUserStore } from '@/stores/userStore'
@@ -67,7 +67,7 @@ export function DashboardClient() {
                 <Dumbbell className="size-5 text-[#C8F135]" />
               </div>
               <div>
-                <p className="text-sm font-medium text-white">Push Day — Pectoraux</p>
+                <p className="text-sm font-medium text-white">Séance haut du corps — Pectoraux</p>
                 <p className="text-xs text-zinc-400">6 exercices · ~55 min</p>
               </div>
             </div>

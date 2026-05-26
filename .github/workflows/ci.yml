@@ -31,7 +31,7 @@ jobs:
         run: npm run lint
 
   test-unit:
-    name: Unit & API Tests
+    name: Unit and API tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
         run: npm run test:unit -- --reporter=verbose
 
   test-e2e:
-    name: E2E Tests (Playwright)
+    name: E2E tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -95,7 +95,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [lint-typecheck, test-unit]
+    needs: [lint-typecheck, test-unit, test-e2e]
     env:
       DATABASE_URL: postgresql://test:test@localhost:5432/fitcoachai_test
       NEXTAUTH_SECRET: ci-secret-placeholder-32-chars-long

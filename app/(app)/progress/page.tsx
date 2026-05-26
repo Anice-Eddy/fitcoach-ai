@@ -64,10 +64,14 @@ export default function ProgressPage() {
                 onChange={(e) => setWeight(e.target.value)}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-[#C8F135] transition-colors"
               />
-              <button onClick={handleAddWeight} disabled={saving || !weight}
+              <button
+                type="button"
+                onClick={handleAddWeight}
+                disabled={saving || !weight}
+                aria-label="Enregistrer mon poids"
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C8F135] text-zinc-900 font-bold disabled:opacity-50 hover:bg-[#d4f54d] transition-colors"
               >
-                <Plus className="size-4" /> Ajouter
+                <Plus className="size-4" /> Enregistrer mon poids
               </button>
             </div>
           </div>
