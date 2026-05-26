@@ -18,6 +18,10 @@ function buildPrompt(task: string, contextJson: string, message?: string) {
   return [
     `Tâche: ${task}`,
     message ? `Message utilisateur: ${message}` : null,
+    'Consignes de personnalisation:',
+    '- Utilise les données userFacts avant toute recommandation.',
+    '- Si missingData contient des éléments nécessaires à la demande, pose ces questions avant de proposer un programme, une nutrition ou un plan d’action.',
+    '- Donne des conseils courts, pratiques et personnalisés. Pas de réponse générique.',
     'Données réelles disponibles:',
     contextJson,
     'Réponds en français. Ne mentionne pas de données qui ne sont pas présentes.',

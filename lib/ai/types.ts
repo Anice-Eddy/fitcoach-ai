@@ -19,6 +19,27 @@ export type MemberAIContext = {
     id: string
     name: string | null
   }
+  userFacts: {
+    currentWeightKg: number | null
+    heightCm: number | null
+    age: number | null
+    gender: string | null
+    primaryGoal: string | null
+    targetWeightKg: number | null
+    fitnessLevel: string | null
+    trainingDaysPerWeek: number | null
+    availableEquipment: string[]
+    dietaryRestrictions: string[]
+    foodPreferences: string[]
+    currentProgram: string | null
+    progressHistory: string[]
+    injuryOrRestrictionSignals: string[]
+  }
+  missingData: {
+    workoutPlan: string[]
+    nutritionPlan: string[]
+    actionPlan: string[]
+  }
   profile: unknown
   bodyMetrics: unknown[]
   workoutPrograms: unknown[]
