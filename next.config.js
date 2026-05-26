@@ -18,9 +18,11 @@ if (process.env.NEXT_PHASE === 'phase-production-build') {
   }
 }
 
+const enablePWA = process.env.ENABLE_PWA === 'true'
+
 const withPWA = require('next-pwa')({
   dest:            'public',
-  disable:         process.env.NODE_ENV === 'development',
+  disable:         !enablePWA,
   register:        true,
   skipWaiting:     true,
   runtimeCaching:  [],

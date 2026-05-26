@@ -57,6 +57,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const userId = typeof rawUserId === 'string' ? rawUserId : undefined
       if (userId) {
         token.userId = userId
+        const isEdgeRuntime = typeof (globalThis as { EdgeRuntime?: string }).EdgeRuntime === 'string'
+        if (isEdgeRuntime) return token
+
         const dbUser = await prisma.user.findUnique({
           where:  { id: userId },
           select: {
