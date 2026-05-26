@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -19,13 +19,29 @@ function SignInForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl  = searchParams?.get('callbackUrl') ?? '/dashboard'
-  const isCoach      = callbackUrl.startsWith('/coach') || searchParams?.get('role') === 'coach'
+  const authError    = searchParams?.get('error') ?? ''
+  const wantsCoach   = callbackUrl.startsWith('/coach') || callbackUrl.startsWith('/auth/coach') || searchParams?.get('role') === 'coach'
 
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading]           = useState(false)
   const [loadingGoogle, setLoadingGoogle] = useState(false)
   const [form, setForm]                 = useState({ email: '', password: '' })
   const [error, setError]               = useState('')
+  const [rememberedCoach, setRememberedCoach] = useState(false)
+
+  useEffect(() => {
+    if (authError === 'OAuthAccountNotLinked') {
+      setRememberedCoach(sessionStorage.getItem('bodyops:last-auth-context') === 'coach')
+    }
+  }, [authError])
+
+  const isCoach = wantsCoach || rememberedCoach
+  const oauthErrorMessage = authError === 'OAuthAccountNotLinked'
+    ? isCoach
+      ? "Un utilisateur existe déjà avec cette adresse email. Connectez-vous avec la méthode utilisée à l'inscription pour accéder à votre espace coach."
+      : "Un utilisateur existe déjà avec cette adresse email. Connectez-vous avec la méthode utilisée à l'inscription."
+    : ''
+  const displayedError = error || oauthErrorMessage
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
@@ -44,6 +60,7 @@ function SignInForm() {
     })
 
     if (result?.ok) {
+      sessionStorage.removeItem('bodyops:last-auth-context')
       router.push(callbackUrl)
     } else {
       setError('Email ou mot de passe incorrect')
@@ -53,6 +70,7 @@ function SignInForm() {
 
   const handleGoogle = async () => {
     setLoadingGoogle(true)
+    sessionStorage.setItem('bodyops:last-auth-context', isCoach ? 'coach' : 'member')
     await signIn('google', { callbackUrl: isCoach ? '/auth/coach/complete' : callbackUrl })
   }
 
@@ -110,9 +128,9 @@ function SignInForm() {
 
         {/* Formulaire */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
+          {displayedError && (
             <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
-              {error}
+              {displayedError}
             </div>
           )}
 

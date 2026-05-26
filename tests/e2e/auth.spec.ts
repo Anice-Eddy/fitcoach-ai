@@ -22,6 +22,13 @@ test.describe('Page de connexion', () => {
     await expect(page.getByPlaceholder('••••••••')).toBeVisible()
   })
 
+  test('explique quand le compte Google existe déjà en contexte coach', async ({ page }) => {
+    await page.evaluate(() => sessionStorage.setItem('bodyops:last-auth-context', 'coach'))
+    await page.goto('/auth/signin?error=OAuthAccountNotLinked')
+    await expect(page.getByText('Connexion coach')).toBeVisible()
+    await expect(page.getByText("Un utilisateur existe déjà avec cette adresse email. Connectez-vous avec la méthode utilisée à l'inscription pour accéder à votre espace coach.")).toBeVisible()
+  })
+
   test('redirige vers la landing si on clique sur retour', async ({ page }) => {
     await page.waitForLoadState('networkidle')
     const backLink = page.locator('a[href="/"], a:has-text("Retour"), a:has-text("Accueil")')
