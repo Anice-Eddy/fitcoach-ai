@@ -47,7 +47,7 @@ export function DashboardClient() {
   }, [])
 
   const streak    = 7
-  const firstName = profile?.firstName ?? session?.user?.name?.split(' ')[0] ?? 'Athlète'
+  const firstName = profile?.firstName ?? session?.user?.name?.split(' ')[0] ?? 'Membre'
   const nextSession = profile?.fitnessGoal ? GOAL_SESSION[profile.fitnessGoal] : 'Séance du jour'
 
   return (

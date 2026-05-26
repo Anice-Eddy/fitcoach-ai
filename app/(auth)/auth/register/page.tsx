@@ -27,7 +27,7 @@ export default function RegisterChoicePage() {
             </div>
             <div>
               <p className="font-semibold text-white group-hover:text-[#C8F135] transition-colors">
-                Je suis un athlète
+                Je suis un membre
               </p>
               <p className="mt-1 text-sm text-zinc-400">
                 Suivez vos séances d&apos;entraînement, votre nutrition et vos progrès. Accès gratuit.

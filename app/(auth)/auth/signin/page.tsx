@@ -20,8 +20,8 @@ function SignInForm() {
   const searchParams = useSearchParams()
   const callbackParam = searchParams?.get('callbackUrl')
 
-  const [mode, setMode] = useState<'athlete' | 'coach'>(
-    callbackParam?.includes('/coach') ? 'coach' : 'athlete',
+  const [mode, setMode] = useState<'member' | 'coach'>(
+    callbackParam?.includes('/coach') ? 'coach' : 'member',
   )
   const [showPassword, setShowPassword]   = useState(false)
   const [loading, setLoading]             = useState(false)
@@ -77,13 +77,13 @@ function SignInForm() {
           <p className="text-sm text-zinc-400 mt-1">Accédez à votre espace BodyOps</p>
         </div>
 
-        {/* Mode toggle — athlete vs coach */}
+        {/* Mode toggle — membre vs coach */}
         <div className="flex rounded-xl border border-zinc-800 bg-zinc-900 p-1 mb-6">
-          <button type="button" onClick={() => setMode('athlete')}
+          <button type="button" onClick={() => setMode('member')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors ${
-              mode === 'athlete' ? 'bg-[#C8F135] text-zinc-900' : 'text-zinc-400 hover:text-white'
+              mode === 'member' ? 'bg-[#C8F135] text-zinc-900' : 'text-zinc-400 hover:text-white'
             }`}>
-            <Dumbbell className="size-4" /> Athlète
+            <Dumbbell className="size-4" /> Membre
           </button>
           <button type="button" onClick={() => setMode('coach')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors ${
@@ -154,7 +154,7 @@ function SignInForm() {
             className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50 flex items-center justify-center">
             {loading
               ? <span className="size-5 rounded-full border-2 border-zinc-600 border-t-zinc-900 animate-spin" />
-              : `Se connecter — ${mode === 'coach' ? 'Espace Coach' : 'Espace Athlète'}`}
+              : `Se connecter — ${mode === 'coach' ? 'Espace Coach' : 'Espace Membre'}`}
           </button>
         </form>
 
@@ -162,7 +162,7 @@ function SignInForm() {
           Pas encore de compte ?{' '}
           <Link href={mode === 'coach' ? '/auth/register/coach' : '/auth/register/member'}
             className="text-[#C8F135] hover:underline font-medium">
-            Créer un compte {mode === 'coach' ? 'coach' : 'athlète'}
+            Créer un compte {mode === 'coach' ? 'coach' : 'membre'}
           </Link>
         </p>
       </div>

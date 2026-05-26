@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   if (existing) {
     const msg = existing.coachProfile
       ? 'Un compte coach existe déjà avec cet email. Connectez-vous directement.'
-      : 'Cet email est déjà utilisé pour un compte athlète. Connectez-vous pour créer un espace coach depuis votre profil.'
+      : 'Cet email est déjà utilisé pour un compte membre. Connectez-vous pour créer un espace coach depuis votre profil.'
     return NextResponse.json({ error: { email: [msg] } }, { status: 409 })
   }
 

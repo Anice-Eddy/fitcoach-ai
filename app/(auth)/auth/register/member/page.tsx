@@ -74,7 +74,7 @@ export default function MemberRegisterPage() {
           <div className="mb-6 flex justify-center">
             <Logo href="/" size="lg" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Créer un compte athlète</h1>
+          <h1 className="text-2xl font-bold text-white">Créer un compte membre</h1>
           <p className="text-sm text-zinc-400 mt-1">Gratuit, sans carte bancaire</p>
         </div>
 

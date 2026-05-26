@@ -45,7 +45,7 @@ export const PLANS: PricingPlan[] = [
     plan:         'ELITE',
     monthlyPrice: 19.99,
     yearlyPrice:  159,
-    description:  'Pour les athlètes qui veulent la performance maximale',
+    description:  'Pour les membres qui veulent la performance maximale',
     highlighted:  false,
     stripePriceIdMonthly: process.env.STRIPE_ELITE_MONTHLY_ID ?? 'price_elite_monthly',
     stripePriceIdYearly:  process.env.STRIPE_ELITE_YEARLY_ID ?? 'price_elite_yearly',
