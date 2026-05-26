@@ -3,303 +3,314 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/stores/userStore'
-import { PageWrapper } from '@/components/layout/PageWrapper'
 import { toast } from 'sonner'
-import {
-  ChevronLeft, ChevronRight, Clock, Globe,
-  Bell, Mail, MessageSquare, Star, ArrowLeft,
-} from 'lucide-react'
+import { Star, ChevronLeft, ChevronRight, Video, Clock } from 'lucide-react'
 
-// ─── Mock coach data ──────────────────────────────────────────────────────────
+// ─── Mock coach ───────────────────────────────────────────────────────────────
 
-const MOCK_COACH = {
-  id:         'coach-1',
-  name:       'Alexandre Moreau',
-  title:      'Coach sportif certifié',
-  rating:     4.9,
-  reviews:    127,
-  bio:        'Spécialisé en prise de masse et en rééducation sportive. 8 ans d\'expérience auprès de clients allant du débutant à l\'athlète de haut niveau.',
-  avatar:     null as null,
-  languages:  ['Français', 'English'],
-  // Days with available slots: map day-of-month to true
-  availableDays: [2, 3, 5, 6, 9, 10, 12, 13, 16, 17, 19, 20, 23, 24, 26, 27, 30],
-  slots: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'],
+const COACH = {
+  initials: 'SB',
+  name:     'Sarah B.',
+  title:    'Coach certifiée · Nutrition & Perte de poids',
+  rating:   4.8,
+  reviews:  89,
+  // days of the month that have slots
+  available: [2, 5, 6, 9, 12, 13, 16, 19, 20, 23, 26, 27, 28],
+  slots: [
+    { time: '9h00',  disabled: false },
+    { time: '11h30', disabled: false },
+    { time: '14h00', disabled: false },
+    { time: '15h30', disabled: false },
+    { time: '17h00', disabled: true  },
+    { time: '18h30', disabled: false },
+  ],
 }
 
-const DAYS_OF_WEEK = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+const DOW = ['L', 'M', 'Me', 'J', 'V', 'S', 'D']
 const MONTHS = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+  'Janvier','Février','Mars','Avril','Mai','Juin',
+  'Juillet','Août','Septembre','Octobre','Novembre','Décembre',
 ]
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getDaysInMonth(year: number, month: number) {
-  return new Date(year, month + 1, 0).getDate()
-}
-
-function getFirstDayOfMonth(year: number, month: number) {
-  // 0=Sun → convert to Mon-first: (0→6, 1→0, ..., 6→5)
-  const d = new Date(year, month, 1).getDay()
+function getDaysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate() }
+function getFirstDow(y: number, m: number) {
+  const d = new Date(y, m, 1).getDay()
   return d === 0 ? 6 : d - 1
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CoachBookingPage() {
-  const router        = useRouter()
-  const { profile }   = useUserStore()
-  const userTz        = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const router      = useRouter()
+  const { profile } = useUserStore()
+  const tz          = Intl.DateTimeFormat().resolvedOptions().timeZone
 
   const now = new Date()
-  const [viewYear,  setViewYear]  = useState(now.getFullYear())
-  const [viewMonth, setViewMonth] = useState(now.getMonth())
-  const [selectedDay,  setSelectedDay]  = useState<number | null>(null)
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
-  const [message,   setMessage]   = useState('')
-  const [reminders, setReminders] = useState<string[]>(['email'])
-  const [submitting, setSubmitting] = useState(false)
+  const [year,  setYear]  = useState(now.getFullYear())
+  const [month, setMonth] = useState(now.getMonth())
+  const [day,   setDay]   = useState<number | null>(null)
+  const [slot,  setSlot]  = useState<string | null>(null)
+  const [msg,   setMsg]   = useState('')
+  const [busy,  setBusy]  = useState(false)
 
-  const daysInMonth  = getDaysInMonth(viewYear, viewMonth)
-  const firstDayOfMn = getFirstDayOfMonth(viewYear, viewMonth)
+  const daysCount = getDaysInMonth(year, month)
+  const firstDow  = getFirstDow(year, month)
 
   const prevMonth = () => {
-    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) }
-    else setViewMonth(m => m - 1)
-    setSelectedDay(null); setSelectedSlot(null)
+    if (month === 0) { setYear(y => y - 1); setMonth(11) } else setMonth(m => m - 1)
+    setDay(null); setSlot(null)
   }
   const nextMonth = () => {
-    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) }
-    else setViewMonth(m => m + 1)
-    setSelectedDay(null); setSelectedSlot(null)
+    if (month === 11) { setYear(y => y + 1); setMonth(0) } else setMonth(m => m + 1)
+    setDay(null); setSlot(null)
   }
 
-  const isPast = (day: number) => {
-    const d = new Date(viewYear, viewMonth, day)
-    d.setHours(0, 0, 0, 0)
-    const today = new Date(); today.setHours(0, 0, 0, 0)
-    return d < today
+  const isPast = (d: number) => {
+    const dt = new Date(year, month, d); dt.setHours(0,0,0,0)
+    const t  = new Date(); t.setHours(0,0,0,0)
+    return dt < t
   }
 
-  const isAvailable = (day: number) =>
-    MOCK_COACH.availableDays.includes(day) && !isPast(day)
+  const isAvail = (d: number) => COACH.available.includes(d) && !isPast(d)
 
-  const toggleReminder = (val: string) => {
-    setReminders(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val])
-  }
-
-  const selectedDate = useMemo(() => {
-    if (!selectedDay) return null
-    return new Date(viewYear, viewMonth, selectedDay).toLocaleDateString('fr-FR', {
-      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  const selectedLabel = useMemo(() => {
+    if (!day) return null
+    return new Date(year, month, day).toLocaleDateString('fr-FR', {
+      weekday: 'long', day: 'numeric', month: 'long',
     })
-  }, [selectedDay, viewMonth, viewYear])
+  }, [day, month, year])
 
   const handleConfirm = async () => {
-    if (!selectedDay || !selectedSlot) return
-    setSubmitting(true)
-    await new Promise(r => setTimeout(r, 800)) // simulate API
-    toast.success('Demande envoyée ! Le coach confirmera sous 24h.')
-    setSubmitting(false)
+    if (!day || !slot) return
+    setBusy(true)
+    await new Promise(r => setTimeout(r, 700))
+    toast.success('Demande envoyée avec succès !')
+    setBusy(false)
     router.push('/coaching/status')
   }
 
-  // Grid cells: empty prefix + day cells
-  const cells = [
-    ...Array(firstDayOfMn).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ]
+  // calendar grid cells
+  const cells = [...Array(firstDow).fill(null), ...Array.from({length: daysCount}, (_, i) => i + 1)]
+
+  const goalLabel: Record<string, string> = {
+    WEIGHT_LOSS: 'Perte de poids', MUSCLE_GAIN: 'Prise de masse',
+    MAINTENANCE: 'Maintien', ENDURANCE: 'Endurance',
+    GENERAL_FITNESS: 'Forme générale', FLEXIBILITY: 'Flexibilité',
+  }
+  const levelLabel: Record<string, string> = {
+    BEGINNER: 'Débutant', INTERMEDIATE: 'Intermédiaire',
+    ADVANCED: 'Avancé', ATHLETE: 'Athlète',
+  }
+  const equipLabel: Record<string, string> = {
+    BODYWEIGHT: 'Poids du corps', DUMBBELL: 'Haltères',
+    BARBELL: 'Barre', KETTLEBELL: 'Kettlebell',
+    BENCH: 'Banc', CABLE_MACHINE: 'Poulie', PULL_UP_BAR: 'Barre traction',
+    SMITH_MACHINE: 'Smith machine', CARDIO_MACHINE: 'Cardio', RESISTANCE_BAND: 'Bandes',
+  }
+
+  const placeFromEquip = () => {
+    const eq = profile?.availableEquipment as string[] | undefined
+    if (!eq?.length) return '—'
+    if (eq.includes('BARBELL')) return 'Salle de sport'
+    if (eq.includes('DUMBBELL')) return 'Maison (matériel)'
+    if (eq.length === 1 && eq[0] === 'BODYWEIGHT') return 'Maison (poids du corps)'
+    return 'Extérieur'
+  }
 
   return (
-    <PageWrapper>
-      <div className="max-w-2xl mx-auto space-y-6 pb-10">
-        {/* Back */}
-        <button onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors">
-          <ArrowLeft className="size-4" /> Retour
-        </button>
+    <div className="min-h-screen bg-zinc-950 text-white">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
 
-        {/* Coach header */}
-        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5 flex items-start gap-4">
-          <div className="size-14 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0 text-2xl font-bold text-zinc-400">
-            {MOCK_COACH.name[0]}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-lg font-bold text-white">{MOCK_COACH.name}</h1>
-              <div className="flex items-center gap-1 text-xs text-amber-400">
-                <Star className="size-3 fill-amber-400" />
-                {MOCK_COACH.rating} ({MOCK_COACH.reviews} avis)
+          {/* ── LEFT PANEL ─────────────────────────────────────────────────── */}
+          <div className="space-y-4">
+
+            {/* Coach card */}
+            <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="size-12 rounded-full bg-zinc-700 flex items-center justify-center text-base font-bold text-white shrink-0">
+                  {COACH.initials}
+                </div>
+                <div>
+                  <p className="font-semibold text-white text-sm">{COACH.name}</p>
+                  <p className="text-xs text-zinc-400">{COACH.title}</p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {Array.from({length: 5}).map((_,i) => (
+                      <Star key={i} className={`size-3 ${i < Math.floor(COACH.rating) ? 'fill-amber-400 text-amber-400' : 'text-zinc-600'}`} />
+                    ))}
+                    <span className="text-xs text-zinc-500 ml-1">{COACH.reviews} avis</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <p className="text-sm text-[#C8F135] font-medium">{MOCK_COACH.title}</p>
-            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{MOCK_COACH.bio}</p>
-          </div>
-        </div>
 
-        {/* Timezone notice */}
-        <div className="flex items-center gap-2 text-xs text-zinc-500">
-          <Globe className="size-3.5" />
-          Horaires affichés en <span className="text-zinc-300 font-medium ml-1">{userTz}</span>
-        </div>
-
-        {/* Calendar */}
-        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
-          {/* Month nav */}
-          <div className="flex items-center justify-between mb-5">
-            <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
-              <ChevronLeft className="size-5" />
-            </button>
-            <span className="text-base font-semibold text-white">
-              {MONTHS[viewMonth]} {viewYear}
-            </span>
-            <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
-              <ChevronRight className="size-5" />
-            </button>
-          </div>
-
-          {/* Day-of-week header */}
-          <div className="grid grid-cols-7 mb-2">
-            {DAYS_OF_WEEK.map(d => (
-              <div key={d} className="text-center text-xs text-zinc-600 font-medium py-1">{d}</div>
-            ))}
-          </div>
-
-          {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {cells.map((day, i) => {
-              if (!day) return <div key={`e-${i}`} />
-              const avail   = isAvailable(day)
-              const past    = isPast(day)
-              const selected = selectedDay === day
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  disabled={!avail}
-                  onClick={() => { setSelectedDay(day); setSelectedSlot(null) }}
-                  className={`aspect-square rounded-lg text-sm font-medium transition-all ${
-                    selected
-                      ? 'bg-[#C8F135] text-zinc-900'
-                      : avail
-                      ? 'hover:bg-zinc-800 text-white'
-                      : past
-                      ? 'text-zinc-700 cursor-not-allowed'
-                      : 'text-zinc-600 cursor-not-allowed'
-                  }`}
-                >
-                  {day}
-                  {avail && !selected && (
-                    <div className="w-1 h-1 rounded-full bg-[#C8F135] mx-auto mt-0.5" />
-                  )}
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="flex items-center gap-2 mt-4 text-xs text-zinc-500">
-            <div className="size-2 rounded-full bg-[#C8F135]" />
-            Disponible
-          </div>
-        </div>
-
-        {/* Time slots */}
-        {selectedDay && (
-          <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Clock className="size-4 text-zinc-400" />
-              <h2 className="text-sm font-semibold text-white">
-                Créneaux disponibles — {selectedDate}
-              </h2>
+            {/* Entretien découverte */}
+            <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
+              <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-3">Entretien découverte</p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-zinc-300">
+                  <Clock className="size-3.5 text-zinc-500 shrink-0" />
+                  30 minutes
+                </div>
+                <div className="flex items-center gap-2 text-sm text-zinc-300">
+                  <Video className="size-3.5 text-zinc-500 shrink-0" />
+                  Visio · <span className="text-[#C8F135] font-medium">Gratuit</span>
+                </div>
+              </div>
+              <p className="text-xs text-zinc-500 mt-3 leading-relaxed">
+                Le coach analyse ton profil et définit ton plan avec toi.
+              </p>
             </div>
-            <div className="grid grid-cols-4 gap-2">
-              {MOCK_COACH.slots.map(slot => (
-                <button
-                  key={slot}
-                  type="button"
-                  onClick={() => setSelectedSlot(slot)}
-                  className={`py-2.5 rounded-xl border text-sm font-medium transition-all ${
-                    selectedSlot === slot
-                      ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]'
-                      : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600'
-                  }`}
-                >
-                  {slot}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
-        {/* Summary + message + reminders */}
-        {selectedDay && selectedSlot && (
-          <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5 space-y-4">
-            {/* Summary */}
-            <div className="p-4 rounded-xl bg-zinc-800/60 border border-zinc-700 space-y-1.5">
-              <p className="text-xs text-zinc-500 uppercase tracking-wide font-semibold">Récapitulatif</p>
-              <p className="text-sm text-white font-medium">{MOCK_COACH.name}</p>
-              <p className="text-sm text-zinc-300">{selectedDate} à {selectedSlot}</p>
-              <p className="text-xs text-zinc-500">Fuseau : {userTz}</p>
-              {profile && (
-                <p className="text-xs text-zinc-500">
-                  Profil partagé : {profile.firstName}, {profile.age} ans · {profile.fitnessGoal}
+            {/* Profile shared */}
+            {profile && (
+              <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
+                <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-3">
+                  Ton profil partagé avec le coach
                 </p>
-              )}
-            </div>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Objectif',       value: goalLabel[profile.fitnessGoal] ?? profile.fitnessGoal },
+                    { label: 'Niveau',         value: levelLabel[profile.fitnessLevel] ?? profile.fitnessLevel },
+                    { label: 'Poids / Taille', value: `${profile.weightKg} kg · ${profile.heightCm} cm` },
+                    { label: 'Équipement',     value: placeFromEquip() },
+                    { label: 'Disponibilités', value: `${profile.trainingDaysPerWeek} jours / semaine` },
+                  ].map(r => (
+                    <div key={r.label} className="flex justify-between text-xs py-1 border-b border-zinc-800 last:border-0">
+                      <span className="text-zinc-500">{r.label}</span>
+                      <span className="text-zinc-200 font-medium text-right max-w-[55%]">{r.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
-            {/* Message */}
-            <div>
-              <label className="block text-xs text-zinc-500 mb-1.5 flex items-center gap-1.5">
-                <MessageSquare className="size-3.5" /> Message au coach <span className="text-zinc-600">(optionnel)</span>
-              </label>
-              <textarea
-                value={message}
-                onChange={e => setMessage(e.target.value)}
-                rows={3}
-                placeholder="Présente-toi, parle de tes objectifs ou pose une question…"
-                className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors resize-none"
-              />
-            </div>
+          {/* ── RIGHT PANEL ────────────────────────────────────────────────── */}
+          <div className="space-y-4">
+            <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
 
-            {/* Reminders */}
-            <div>
-              <label className="block text-xs text-zinc-500 mb-2 flex items-center gap-1.5">
-                <Bell className="size-3.5" /> Rappels
-              </label>
-              <div className="flex gap-3">
-                {[
-                  { id: 'email', label: 'Email', icon: Mail },
-                  { id: 'sms',   label: 'SMS',   icon: MessageSquare },
-                ].map(r => {
-                  const active = reminders.includes(r.id)
+              {/* Month nav */}
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">
+                  Disponibilités — {MONTHS[month]} {year}
+                </p>
+                <div className="flex items-center gap-1">
+                  <button onClick={prevMonth} className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-white transition-colors">
+                    <ChevronLeft className="size-4" />
+                  </button>
+                  <button onClick={nextMonth} className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-white transition-colors">
+                    <ChevronRight className="size-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* DOW header */}
+              <div className="grid grid-cols-7 mb-1">
+                {DOW.map(d => (
+                  <div key={d} className="text-center text-[11px] text-zinc-600 font-medium py-1">{d}</div>
+                ))}
+              </div>
+
+              {/* Calendar grid */}
+              <div className="grid grid-cols-7 gap-0.5">
+                {cells.map((d, i) => {
+                  if (!d) return <div key={`e-${i}`} className="aspect-square" />
+                  const avail    = isAvail(d)
+                  const past     = isPast(d)
+                  const selected = day === d
                   return (
-                    <button key={r.id} type="button"
-                      onClick={() => toggleReminder(r.id)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all ${
-                        active ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]' : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600'
+                    <button
+                      key={d}
+                      type="button"
+                      disabled={!avail}
+                      onClick={() => { setDay(d); setSlot(null) }}
+                      className={`aspect-square rounded-lg text-xs font-medium flex items-center justify-center transition-all ${
+                        selected ? 'bg-[#C8F135] text-zinc-900 font-bold'
+                        : avail  ? 'hover:bg-zinc-800 text-white'
+                        : past   ? 'text-zinc-700 cursor-default'
+                                 : 'text-zinc-700 cursor-default'
                       }`}
                     >
-                      <r.icon className="size-3.5" /> {r.label}
+                      {d}
                     </button>
                   )
                 })}
               </div>
             </div>
 
-            {/* Confirm */}
-            <button
-              onClick={handleConfirm}
-              disabled={submitting}
-              className="w-full py-4 rounded-xl bg-[#C8F135] text-zinc-900 font-bold hover:bg-[#d4f54d] transition-colors disabled:opacity-60 text-base"
-            >
-              {submitting ? 'Envoi en cours…' : 'Confirmer la demande'}
-            </button>
-            <p className="text-xs text-center text-zinc-600">
-              Entretien découverte 30 min · Aucun engagement
-            </p>
+            {/* Time slots */}
+            {day && (
+              <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
+                <p className="text-sm font-semibold text-white mb-4 capitalize">
+                  {selectedLabel} — Créneaux disponibles
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {COACH.slots.map(s => (
+                    <button
+                      key={s.time}
+                      type="button"
+                      disabled={s.disabled}
+                      onClick={() => setSlot(s.time)}
+                      className={`py-3 rounded-xl border text-center transition-all ${
+                        s.disabled
+                          ? 'border-zinc-800 bg-zinc-900 text-zinc-700 cursor-not-allowed'
+                          : slot === s.time
+                          ? 'border-[#C8F135] bg-[#C8F135]/10'
+                          : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
+                      }`}
+                    >
+                      <p className={`text-sm font-bold ${s.disabled ? 'text-zinc-700' : slot === s.time ? 'text-[#C8F135]' : 'text-white'}`}>
+                        {s.time}
+                      </p>
+                      <p className={`text-[11px] mt-0.5 ${s.disabled ? 'text-zinc-800' : 'text-zinc-500'}`}>30 min</p>
+                      {slot === s.time && (
+                        <p className="text-[10px] text-[#C8F135] font-medium mt-0.5">Sélectionné</p>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Confirmation + message + CTA */}
+            {day && slot && (
+              <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5 space-y-4">
+                {/* Summary box */}
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-zinc-800/70 border border-zinc-700">
+                  <div className="size-2 rounded-full bg-[#C8F135] shrink-0" />
+                  <div className="text-sm">
+                    <span className="text-white font-medium">Rendez-vous sélectionné</span>
+                    <span className="text-zinc-400 ml-2 capitalize">{selectedLabel} à {slot}</span>
+                    <span className="text-zinc-600 text-xs ml-2">({tz})</span>
+                  </div>
+                </div>
+
+                {/* Message */}
+                <textarea
+                  value={msg}
+                  onChange={e => setMsg(e.target.value)}
+                  rows={3}
+                  placeholder="Message optionnel pour le coach…"
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135] transition-colors resize-none"
+                />
+
+                {/* CTA */}
+                <button
+                  onClick={handleConfirm}
+                  disabled={busy}
+                  className="w-full py-4 rounded-xl bg-[#C8F135] text-zinc-900 font-bold text-base hover:bg-[#d4f54d] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {busy ? 'Envoi en cours…' : 'Confirmer le rendez-vous →'}
+                </button>
+                <p className="text-center text-xs text-zinc-600">
+                  Confirmation par email et SMS · 100% gratuit
+                </p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
-    </PageWrapper>
+    </div>
   )
 }

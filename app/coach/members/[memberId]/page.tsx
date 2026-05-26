@@ -2,110 +2,81 @@
 
 import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import {
-  ArrowLeft, Target, Calendar, TrendingUp, Dumbbell,
-  UtensilsCrossed, FileText, ChevronDown, ChevronUp,
-  CheckCircle2, XCircle, Minus, Edit3, Save,
-} from 'lucide-react'
+import { ArrowLeft, Check, X, Minus, Edit3, Save, MessageSquare, ClipboardEdit, Plus } from 'lucide-react'
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
-const MOCK_MEMBERS: Record<string, {
-  name: string; age: number; weight: number; height: number; goal: string
-  activityLevel: string; fitnessLevel: string; equipment: string
-  bmi: number; tdee: number; proteinG: number; carbsG: number; fatG: number
-  restrictions: string[]; trainingDays: number; targetWeight: number
-  sessions: { id: string; name: string; exercises: { name: string; sets: number; reps: string; rest: string }[] }[]
-  weekCalendar: { day: string; session: string | null; status: 'done' | 'rest' | 'missed' | 'planned' }[]
+const MEMBERS: Record<string, {
+  name: string; since: string; lastSeen: string
+  age: number; weight: number; height: number; bmi: number; tdee: number
+  goal: string; level: string; equipment: string; days: number; restrictions: string
+  program: { day: string; session: string }[]
+  week: { day: string; date: string; session: string | null; status: 'done' | 'rest' | 'active' | 'planned' | 'missed'; kcal?: number; time?: number }[]
+  tasks: { label: string; done: boolean }[]
+  calories: number; protein: number; carbs: number; fat: number
   coachNotes: string; sharedNotes: string
 }> = {
   m1: {
-    name: 'Alice Martin', age: 28, weight: 62, height: 165, goal: 'Prise de masse',
-    activityLevel: 'Modérément actif', fitnessLevel: 'Intermédiaire', equipment: 'Salle de sport',
-    bmi: 22.8, tdee: 2200, proteinG: 155, carbsG: 280, fatG: 65,
-    restrictions: ['Sans gluten'], trainingDays: 4, targetWeight: 68,
-    sessions: [
-      {
-        id: 's1', name: 'Push — Pectoraux / Épaules / Triceps',
-        exercises: [
-          { name: 'Développé couché barre',    sets: 4, reps: '6–8',   rest: '3 min' },
-          { name: 'Développé incliné haltères', sets: 3, reps: '8–10',  rest: '2 min' },
-          { name: 'Élévations latérales',       sets: 3, reps: '12–15', rest: '90 s'  },
-          { name: 'Extensions triceps poulie',  sets: 3, reps: '12–15', rest: '90 s'  },
-        ],
-      },
-      {
-        id: 's2', name: 'Pull — Dos / Biceps',
-        exercises: [
-          { name: 'Tractions pronation',        sets: 4, reps: '6–8',   rest: '3 min' },
-          { name: 'Rowing barre',               sets: 3, reps: '8–10',  rest: '2 min' },
-          { name: 'Curl haltères alternés',     sets: 3, reps: '10–12', rest: '90 s'  },
-        ],
-      },
-      {
-        id: 's3', name: 'Legs — Quadriceps / Ischio / Fessiers',
-        exercises: [
-          { name: 'Squat barre',                sets: 4, reps: '6–8',   rest: '3 min' },
-          { name: 'Presse à cuisses',           sets: 3, reps: '10–12', rest: '2 min' },
-          { name: 'Leg curl assis',             sets: 3, reps: '12–15', rest: '90 s'  },
-          { name: 'Hip thrust',                 sets: 3, reps: '12–15', rest: '90 s'  },
-        ],
-      },
+    name: 'Alex L.', since: '28 mai', lastSeen: '2 juin',
+    age: 28, weight: 78.4, height: 178, bmi: 24.7, tdee: 2614,
+    goal: 'Prise de masse', level: 'Intermédiaire', equipment: 'Salle de sport',
+    days: 4, restrictions: 'Aucune',
+    program: [
+      { day: 'Lundi',    session: 'Push — Pectoraux' },
+      { day: 'Mardi',    session: 'Pull — Dos' },
+      { day: 'Jeudi',    session: 'Legs — Jambes' },
+      { day: 'Vendredi', session: 'Full body' },
     ],
-    weekCalendar: [
-      { day: 'Lun', session: 'Push', status: 'done' },
-      { day: 'Mar', session: null,   status: 'rest' },
-      { day: 'Mer', session: 'Pull', status: 'done' },
-      { day: 'Jeu', session: null,   status: 'rest' },
-      { day: 'Ven', session: 'Legs', status: 'planned' },
-      { day: 'Sam', session: 'Push', status: 'planned' },
-      { day: 'Dim', session: null,   status: 'rest' },
+    week: [
+      { day: 'Lundi',    date: '2 juin',  session: 'Push',  status: 'done',    kcal: 2914, time: 55 },
+      { day: 'Mardi',    date: '3 juin',  session: 'Pull',  status: 'done',    kcal: 2780, time: 50 },
+      { day: 'Mercredi', date: '4 juin',  session: null,    status: 'rest'  },
+      { day: 'Jeudi',    date: '5 juin',  session: 'Legs',  status: 'active' },
+      { day: 'Vendredi', date: '6 juin',  session: 'Full',  status: 'planned' },
+      { day: 'Samedi',   date: '7 juin',  session: null,    status: 'rest'  },
+      { day: 'Dimanche', date: '8 juin',  session: null,    status: 'rest'  },
     ],
-    coachNotes: 'Alice a du mal avec les tractions — suggérer bandes de résistance pour assistance.',
-    sharedNotes: 'Augmenter les charges au développé couché la semaine prochaine.',
+    tasks: [
+      { label: 'Boire 2L d\'eau',         done: true  },
+      { label: 'Prendre sa créatine',      done: true  },
+      { label: 'Séance Legs (planifiée)', done: false },
+      { label: 'Saisir poids du jour',    done: false },
+    ],
+    calories: 2914, protein: 176, carbs: 370, fat: 80,
+    coachNotes: 'Motivation élevée. Bonne connaissance des bases. A tendance à négliger le sommeil. Insister sur la récupération.',
+    sharedNotes: '',
   },
 }
 
-// ─── Status helpers ──────────────────────────────────────────────────────────
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-const DAY_STATUS: Record<string, { icon: typeof CheckCircle2; color: string; label: string }> = {
-  done:    { icon: CheckCircle2, color: 'text-emerald-400', label: 'Complété' },
-  rest:    { icon: Minus,        color: 'text-zinc-500',    label: 'Repos' },
-  missed:  { icon: XCircle,      color: 'text-red-400',     label: 'Manqué' },
-  planned: { icon: Calendar,     color: 'text-[#C8F135]',   label: 'Planifié' },
+function Label({ children }: { children: ReactNode }) {
+  return <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-3">{children}</p>
 }
 
-// ─── Section wrapper ─────────────────────────────────────────────────────────
-
-function Section({ title, icon: Icon, children, defaultOpen = true }: {
-  title: string; icon: typeof Dumbbell; children: ReactNode; defaultOpen?: boolean
-}) {
-  const [open, setOpen] = useState(defaultOpen)
+function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 py-4 border-b border-zinc-800"
-      >
-        <div className="flex items-center gap-2">
-          <Icon className="size-4 text-[#C8F135]" />
-          <h2 className="text-sm font-semibold text-zinc-300">{title}</h2>
-        </div>
-        {open ? <ChevronUp className="size-4 text-zinc-500" /> : <ChevronDown className="size-4 text-zinc-500" />}
-      </button>
-      {open && <div className="p-5">{children}</div>}
+    <div className={`rounded-xl bg-zinc-900 border border-zinc-800 ${className}`}>
+      {children}
     </div>
   )
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+const STATUS_STYLE = {
+  done:    { dot: 'bg-emerald-400', text: 'text-emerald-400', badge: 'Complété',    bg: 'bg-emerald-400/8' },
+  rest:    { dot: 'bg-zinc-600',    text: 'text-zinc-500',    badge: 'Repos actif', bg: '' },
+  active:  { dot: 'bg-[#C8F135]',  text: 'text-[#C8F135]',  badge: 'En cours',    bg: 'bg-[#C8F135]/5' },
+  planned: { dot: 'bg-zinc-600',    text: 'text-zinc-400',   badge: 'Planifié',    bg: '' },
+  missed:  { dot: 'bg-red-400',     text: 'text-red-400',    badge: 'Manqué',      bg: 'bg-red-400/5' },
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MemberDetail({ params }: { params: { memberId: string } }) {
-  const member = MOCK_MEMBERS[params.memberId]
-  const [editingNotes, setEditingNotes] = useState(false)
-  const [coachNotes,   setCoachNotes]   = useState(member?.coachNotes ?? '')
-  const [sharedNotes,  setSharedNotes]  = useState(member?.sharedNotes ?? '')
+  const member = MEMBERS[params.memberId]
+  const [editing,     setEditing]     = useState(false)
+  const [coachNotes,  setCoachNotes]  = useState(member?.coachNotes ?? '')
+  const [sharedNotes, setSharedNotes] = useState(member?.sharedNotes ?? '')
 
   if (!member) {
     return (
@@ -117,176 +88,185 @@ export default function MemberDetail({ params }: { params: { memberId: string } 
   }
 
   return (
-    <div className="space-y-6 max-w-2xl pb-10">
-      <Link href="/coach/members" className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors">
-        <ArrowLeft className="size-4" /> Retour aux membres
-      </Link>
-
+    <div className="space-y-6 pb-10">
       {/* Header */}
-      <div className="flex items-start gap-4">
-        <div className="size-14 rounded-xl bg-zinc-800 flex items-center justify-center text-xl font-bold text-zinc-400 shrink-0">
-          {member.name[0]}
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-white">{member.name}</h1>
-          <p className="text-sm text-zinc-400 mt-0.5">{member.goal} · {member.fitnessLevel}</p>
+      <div>
+        <Link href="/coach/members" className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white mb-4 transition-colors">
+          <ArrowLeft className="size-3.5" /> Retour aux membres
+        </Link>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-white">Fiche client — {member.name}</h1>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              Entretien effectué le {member.since} · Suivi actif depuis le {member.lastSeen}
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-800 border border-zinc-700 text-xs text-zinc-300 hover:text-white hover:border-zinc-600 transition-colors">
+              <MessageSquare className="size-3.5" /> Envoyer un message
+            </button>
+            <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#C8F135] text-zinc-900 text-xs font-bold hover:bg-[#d4f54d] transition-colors">
+              <ClipboardEdit className="size-3.5" /> Modifier le plan
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Profil physique */}
-      <Section title="Profil complet" icon={Target}>
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: 'Âge',          value: `${member.age} ans` },
-            { label: 'Poids',        value: `${member.weight} kg` },
-            { label: 'Taille',       value: `${member.height} cm` },
-            { label: 'IMC',          value: member.bmi.toFixed(1) },
-            { label: 'TDEE',         value: `${member.tdee} kcal` },
-            { label: 'Protéines',    value: `${member.proteinG}g` },
-            { label: 'Glucides',     value: `${member.carbsG}g` },
-            { label: 'Lipides',      value: `${member.fatG}g` },
-            { label: 'Niveau',       value: member.fitnessLevel },
-            { label: 'Activité',     value: member.activityLevel },
-            { label: 'Jours/sem.',   value: `${member.trainingDays} j` },
-            { label: 'Équipement',   value: member.equipment },
-            { label: 'Poids cible',  value: `${member.targetWeight} kg` },
-            { label: 'Restrictions', value: member.restrictions.join(', ') || 'Aucune' },
-          ].map(r => (
-            <div key={r.label} className="rounded-xl bg-zinc-800/60 border border-zinc-700 p-3">
-              <p className="text-xs text-zinc-500 mb-0.5">{r.label}</p>
-              <p className="text-sm font-semibold text-white">{r.value}</p>
-            </div>
-          ))}
-        </div>
-      </Section>
+      {/* 3-column grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-      {/* Programme IA */}
-      <Section title="Programme suggéré par l'IA" icon={Dumbbell}>
+        {/* ── COL 1: PROFIL CLIENT ──────────────────────────────────────── */}
         <div className="space-y-4">
-          {member.sessions.map(session => (
-            <div key={session.id} className="rounded-xl bg-zinc-800/60 border border-zinc-700 overflow-hidden">
-              <div className="px-4 py-3 border-b border-zinc-700 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-white">{session.name}</h3>
-                <button className="text-xs text-zinc-500 hover:text-[#C8F135] flex items-center gap-1 transition-colors">
+          <Card className="p-4">
+            <Label>Profil client</Label>
+            <div className="space-y-0">
+              {[
+                { k: 'Objectif',    v: member.goal,                  highlight: true },
+                { k: 'Âge',         v: `${member.age} ans` },
+                { k: 'Poids',       v: `${member.weight} kg` },
+                { k: 'Taille',      v: `${member.height} cm` },
+                { k: 'IMC',         v: `${member.bmi} — Normal` },
+                { k: 'TDEE',        v: `${member.tdee.toLocaleString('fr-FR')} kcal` },
+                { k: 'Niveau',      v: member.level },
+                { k: 'Équipement',  v: member.equipment },
+                { k: 'Jours dispo', v: `${member.days} / semaine` },
+                { k: 'Restrictions',v: member.restrictions },
+              ].map(r => (
+                <div key={r.k} className="flex items-center justify-between py-2 border-b border-zinc-800/60 last:border-0">
+                  <span className="text-xs text-zinc-500">{r.k}</span>
+                  <span className={`text-xs font-semibold text-right ${r.highlight ? 'text-[#C8F135]' : 'text-zinc-200'}`}>
+                    {r.v}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Notes coach privées */}
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <Label>Notes coach (privées)</Label>
+              {editing ? (
+                <button onClick={() => setEditing(false)} className="flex items-center gap-1 text-[10px] text-[#C8F135]">
+                  <Save className="size-3" /> Enregistrer
+                </button>
+              ) : (
+                <button onClick={() => setEditing(true)} className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-white">
                   <Edit3 className="size-3" /> Modifier
                 </button>
-              </div>
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-zinc-700">
-                    <th className="px-4 py-2 text-left text-zinc-500 font-medium">Exercice</th>
-                    <th className="px-3 py-2 text-center text-zinc-500 font-medium">Séries</th>
-                    <th className="px-3 py-2 text-center text-zinc-500 font-medium">Reps</th>
-                    <th className="px-3 py-2 text-center text-zinc-500 font-medium">Repos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {session.exercises.map((ex, i) => (
-                    <tr key={i} className="border-b border-zinc-700/50 last:border-0">
-                      <td className="px-4 py-2.5 text-zinc-300">{ex.name}</td>
-                      <td className="px-3 py-2.5 text-center text-zinc-400">{ex.sets}</td>
-                      <td className="px-3 py-2.5 text-center text-zinc-400">{ex.reps}</td>
-                      <td className="px-3 py-2.5 text-center text-zinc-400">{ex.rest}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              )}
             </div>
-          ))}
+            {editing ? (
+              <textarea value={coachNotes} onChange={e => setCoachNotes(e.target.value)} rows={4}
+                className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135] resize-none transition-colors" />
+            ) : (
+              <p className="text-xs text-zinc-400 leading-relaxed">{coachNotes || '—'}</p>
+            )}
+            <button className="mt-3 flex items-center gap-1 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors">
+              <Plus className="size-3" /> Ajouter une note
+            </button>
+          </Card>
         </div>
-      </Section>
 
-      {/* Nutrition */}
-      <Section title="Plan nutrition" icon={UtensilsCrossed} defaultOpen={false}>
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: 'Calories cibles', value: `${member.tdee} kcal/j`, highlight: true },
-            { label: 'Protéines',       value: `${member.proteinG}g/j` },
-            { label: 'Glucides',        value: `${member.carbsG}g/j` },
-            { label: 'Lipides',         value: `${member.fatG}g/j` },
-          ].map(r => (
-            <div key={r.label} className={`rounded-xl p-3 border ${r.highlight ? 'bg-[#C8F135]/5 border-[#C8F135]/20' : 'bg-zinc-800/60 border-zinc-700'}`}>
-              <p className="text-xs text-zinc-500 mb-0.5">{r.label}</p>
-              <p className={`text-sm font-bold ${r.highlight ? 'text-[#C8F135]' : 'text-white'}`}>{r.value}</p>
-            </div>
-          ))}
-        </div>
-        {member.restrictions.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {member.restrictions.map(r => (
-              <span key={r} className="px-2.5 py-1 rounded-lg bg-red-400/10 border border-red-400/20 text-xs text-red-400">{r}</span>
-            ))}
-          </div>
-        )}
-      </Section>
-
-      {/* Calendrier semaine */}
-      <Section title="Suivi de la semaine" icon={Calendar}>
-        <div className="grid grid-cols-7 gap-1.5">
-          {member.weekCalendar.map(({ day, session, status }) => {
-            const cfg = DAY_STATUS[status]
-            const Icon = cfg.icon
-            return (
-              <div key={day} className="flex flex-col items-center gap-1.5">
-                <span className="text-xs text-zinc-500">{day}</span>
-                <div className={`w-full aspect-square rounded-xl flex items-center justify-center ${
-                  status === 'done'    ? 'bg-emerald-400/10 border border-emerald-400/20' :
-                  status === 'planned' ? 'bg-[#C8F135]/10 border border-[#C8F135]/20' :
-                  status === 'missed'  ? 'bg-red-400/10 border border-red-400/20' :
-                  'bg-zinc-800 border border-zinc-700'
-                }`}>
-                  <Icon className={`size-4 ${cfg.color}`} />
-                </div>
-                {session && <span className="text-[10px] text-zinc-500 text-center leading-tight">{session}</span>}
-              </div>
-            )
-          })}
-        </div>
-      </Section>
-
-      {/* Notes */}
-      <Section title="Notes coach" icon={FileText}>
+        {/* ── COL 2: PROGRAMME + NUTRITION ─────────────────────────────── */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-xs text-zinc-500">Gérer les notes ci-dessous</p>
-            {editingNotes ? (
-              <button onClick={() => setEditingNotes(false)}
-                className="flex items-center gap-1.5 text-xs text-[#C8F135] hover:text-white transition-colors">
-                <Save className="size-3.5" /> Enregistrer
-              </button>
-            ) : (
-              <button onClick={() => setEditingNotes(true)}
-                className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors">
-                <Edit3 className="size-3.5" /> Modifier
-              </button>
-            )}
-          </div>
+          <Card className="p-4">
+            <Label>Programme suggéré par l'IA</Label>
+            <p className="text-xs text-zinc-400 mb-3 font-medium">PPL — Push / Pull / Legs</p>
+            <div className="space-y-0 mb-4">
+              {member.program.map(p => (
+                <div key={p.day} className="flex items-center justify-between py-2 border-b border-zinc-800/60 last:border-0">
+                  <span className="text-xs text-zinc-500 w-20 shrink-0">{p.day}</span>
+                  <span className="text-xs text-zinc-200 font-medium">{p.session}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/5 border border-amber-500/15">
+              <Edit3 className="size-3 text-amber-400 mt-0.5 shrink-0" />
+              <p className="text-[11px] text-amber-300 leading-snug">
+                Modifiable par le coach — Clique sur un jour pour modifier les exercices, séries, répétitions et charges.
+              </p>
+            </div>
+          </Card>
 
-          <div>
-            <label className="block text-xs text-zinc-500 mb-1.5">
-              Notes privées <span className="text-zinc-700">(invisibles du client)</span>
-            </label>
-            {editingNotes ? (
-              <textarea value={coachNotes} onChange={e => setCoachNotes(e.target.value)} rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-[#C8F135] transition-colors resize-none" />
-            ) : (
-              <p className="text-sm text-zinc-300 p-3 rounded-xl bg-zinc-800/60 border border-zinc-700">{coachNotes || '—'}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-xs text-zinc-500 mb-1.5">
-              Notes partagées <span className="text-zinc-700">(visibles du client)</span>
-            </label>
-            {editingNotes ? (
-              <textarea value={sharedNotes} onChange={e => setSharedNotes(e.target.value)} rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-[#C8F135] transition-colors resize-none" />
-            ) : (
-              <p className="text-sm text-zinc-300 p-3 rounded-xl bg-zinc-800/60 border border-zinc-700">{sharedNotes || '—'}</p>
-            )}
-          </div>
+          <Card className="p-4">
+            <Label>Plan nutrition suggéré</Label>
+            <div className="mb-3">
+              <p className="text-xs text-zinc-500 mb-0.5">Calories cibles</p>
+              <p className="text-lg font-bold text-white">
+                {member.calories.toLocaleString('fr-FR')} kcal
+                <span className="text-xs text-[#C8F135] font-normal ml-1">(+300)</span>
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'Protéines', value: member.protein, unit: 'g', color: 'text-[#C8F135]' },
+                { label: 'Glucides',  value: member.carbs,   unit: 'g', color: 'text-blue-400' },
+                { label: 'Lipides',   value: member.fat,     unit: 'g', color: 'text-pink-400' },
+              ].map(m => (
+                <div key={m.label} className="text-center p-2.5 rounded-lg bg-zinc-800/60 border border-zinc-700">
+                  <p className={`text-base font-bold ${m.color}`}>{m.value}{m.unit}</p>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">{m.label}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
-      </Section>
+
+        {/* ── COL 3: CALENDRIER + TÂCHES ──────────────────────────────── */}
+        <div className="space-y-4">
+          <Card className="p-4">
+            <Label>Calendrier de suivi</Label>
+            <p className="text-xs text-zinc-500 mb-3">
+              Semaine du {member.week[0].date} au {member.week[6].date}
+            </p>
+            <div className="space-y-1.5">
+              {member.week.map(w => {
+                const s = STATUS_STYLE[w.status]
+                return (
+                  <div key={w.day} className={`flex items-center justify-between px-3 py-2 rounded-lg ${s.bg}`}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className={`size-1.5 rounded-full shrink-0 ${s.dot}`} />
+                      <div className="min-w-0">
+                        <p className="text-xs text-zinc-300 font-medium truncate">
+                          {w.day} {w.date}
+                          {w.session && <span className="text-zinc-500 ml-1">· {w.session}</span>}
+                        </p>
+                        {w.time && (
+                          <p className="text-[10px] text-zinc-600">
+                            {w.time} min · {w.kcal?.toLocaleString('fr-FR')} kcal
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-semibold shrink-0 ml-2 ${s.text}`}>
+                      {s.badge}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <Label>Tâches du jour assignées</Label>
+            <div className="space-y-2">
+              {member.tasks.map((t, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <div className={`size-4 rounded flex items-center justify-center shrink-0 ${
+                    t.done ? 'bg-[#C8F135]/20 border border-[#C8F135]/40' : 'bg-zinc-800 border border-zinc-700'
+                  }`}>
+                    {t.done && <Check className="size-2.5 text-[#C8F135]" />}
+                  </div>
+                  <span className={`text-xs ${t.done ? 'text-zinc-500 line-through' : 'text-zinc-300'}`}>
+                    {t.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }
