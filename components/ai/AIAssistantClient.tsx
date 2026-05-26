@@ -158,7 +158,11 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
           <button
             key={value}
             type="button"
-            onClick={() => setAgent(value)}
+            onClick={() => {
+              setAgent(value)
+              setMessages([])
+              setConversationId(null)
+            }}
             className={`rounded-xl border p-4 text-left transition-colors ${
               agent === value
                 ? 'border-[#C8F135] bg-[#C8F135]/10'

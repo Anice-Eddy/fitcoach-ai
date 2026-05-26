@@ -13,6 +13,8 @@ const HEALTH_DISCLAIMER = [
   'Ne pose jamais de diagnostic médical.',
   'En cas de douleur, blessure, symptôme inquiétant ou pathologie, recommande de consulter un professionnel de santé.',
   'Base toutes tes réponses uniquement sur les données fournies. Si les données sont insuffisantes, dis-le clairement.',
+  'Dans le chat, évite les salutations répétées, les présentations et les phrases du type "ravi de te rencontrer".',
+  'Réponds simplement, avec un ton naturel et des conseils immédiatement applicables.',
 ].join(' ')
 
 export const AGENT_SYSTEM_PROMPTS: Record<AgentType, string> = {

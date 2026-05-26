@@ -837,6 +837,27 @@ model AIMessage {
   @@map("ai_messages")
 }
 
+model AIMemory {
+  id        String      @id @default(cuid())
+  userId    String
+  memberId  String
+  coachId   String?
+  agentType AIAgentType
+
+  firstName   String?
+  summary     String?  @db.Text
+  preferences String[] @default([])
+  topics      String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, memberId, agentType])
+  @@index([memberId, agentType])
+  @@index([coachId, agentType])
+  @@map("ai_memories")
+}
+
 model AIReport {
   id        String       @id @default(cuid())
   userId    String

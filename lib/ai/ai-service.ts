@@ -3,7 +3,14 @@ import { prisma } from '@/lib/prisma/client'
 import { AGENT_LABELS, AGENT_SYSTEM_PROMPTS } from '@/lib/ai/agents'
 import { AIProviderService } from '@/lib/ai/provider-service'
 import { getMemberAIContext, hasEnoughDataForAnalysis, serializeContext } from '@/lib/ai/context'
-import type { MemberAccess } from '@/lib/ai/types'
+import {
+  buildMemoryInstruction,
+  getAIMemory,
+  getContextFirstName,
+  getRecentConversationMessages,
+  updateAIMemory,
+} from '@/lib/ai/memory'
+import type { AIMessageInput, MemberAccess } from '@/lib/ai/types'
 
 const providerService = new AIProviderService()
 
@@ -34,6 +41,7 @@ export class AIService {
             id: conversationId,
             userId: access.requesterId,
             memberId: access.memberId,
+            agentType,
           },
         })
       : null
@@ -48,6 +56,25 @@ export class AIService {
       },
     })
 
+    const memoryScope = {
+      userId:    access.requesterId,
+      memberId:  access.memberId,
+      coachId:   access.coachId,
+      agentType,
+    }
+    const [memory, recentMessages] = await Promise.all([
+      getAIMemory(memoryScope),
+      conversation ? getRecentConversationMessages(conversation.id) : Promise.resolve([]),
+    ])
+    const firstName = getContextFirstName(context)
+    const memoryInstruction = buildMemoryInstruction({ memory, firstName, recentMessages })
+    const conversationMessages: AIMessageInput[] = recentMessages
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .map(m => ({
+        role:    m.role as 'user' | 'assistant',
+        content: m.content,
+      }))
+
     await prisma.aIMessage.create({
       data: {
         conversationId: currentConversation.id,
@@ -61,7 +88,8 @@ export class AIService {
     })
 
     const result = await providerService.generate([
-      { role: 'system', content: AGENT_SYSTEM_PROMPTS[agentType] },
+      { role: 'system', content: `${AGENT_SYSTEM_PROMPTS[agentType]}\n\n${memoryInstruction}` },
+      ...conversationMessages,
       { role: 'user', content: prompt },
     ])
 
@@ -78,6 +106,14 @@ export class AIService {
         provider:       result.provider,
         agentType,
       },
+    })
+
+    await updateAIMemory({
+      scope: memoryScope,
+      firstName,
+      previousMemory: memory,
+      userMessage: message,
+      assistantResponse: result.text,
     })
 
     return { conversationId: currentConversation.id, provider: result.provider, response: result.text }
