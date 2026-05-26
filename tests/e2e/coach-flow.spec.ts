@@ -14,7 +14,7 @@ test.describe('Parcours accompagnement', () => {
 
   test('un profil local complet ouvre directement le résumé onboarding', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('fitcoach:profile', JSON.stringify({
+      localStorage.setItem('BodyOps:profile', JSON.stringify({
         id: 'profile-e2e',
         firstName: 'Alex',
         age: 28,

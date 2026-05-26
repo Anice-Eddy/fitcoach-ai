@@ -48,7 +48,7 @@ export function Sidebar() {
             <div className="size-8 rounded-lg bg-[#C8F135] flex items-center justify-center">
               <Dumbbell className="size-4 text-zinc-900" />
             </div>
-            <span className="font-bold text-white text-lg tracking-tight">fitcoach</span>
+            <span className="font-bold text-white text-lg tracking-tight">BodyOps</span>
           </Link>
           <button onClick={toggleSidebar} className="text-zinc-400 hover:text-white lg:hidden">
             <X className="size-5" />
@@ -78,7 +78,7 @@ export function Sidebar() {
         </nav>
 
         <div className="px-4 py-4 border-t border-zinc-800">
-          <p className="text-xs text-zinc-600 text-center">fitcoach · v1.0</p>
+          <p className="text-xs text-zinc-600 text-center">BodyOps · v1.0</p>
         </div>
       </motion.aside>
     </>

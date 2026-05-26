@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 // POST /api/stripe/webhook — reçoit et traite les événements Stripe
 // IMPORTANT : le body doit être lu comme raw buffer (pas JSON.parse)
 

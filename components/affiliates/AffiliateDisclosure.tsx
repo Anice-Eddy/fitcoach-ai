@@ -8,7 +8,7 @@ export function AffiliateDisclosure() {
       <Info className="size-3.5 shrink-0 mt-0.5 text-zinc-500" />
       <p>
         <span className="font-medium text-zinc-300">Liens sponsorisés</span> — Certains liens de cette page sont des liens d&apos;affiliation.
-        En cliquant, vous soutenez fitcoach sans frais supplémentaires.
+        En cliquant, vous soutenez BodyOps sans frais supplémentaires.
         Nous percevons une commission sur les ventes.
       </p>
     </div>

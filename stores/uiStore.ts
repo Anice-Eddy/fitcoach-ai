@@ -31,6 +31,6 @@ export const useUIStore = create<UIState>()(
       toggleSidebar:     () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
       setOnboardingStep: (onboardingStep) => set({ onboardingStep }),
     }),
-    { name: 'fitcoach:ui' },
+    { name: 'BodyOps:ui' },
   ),
 )

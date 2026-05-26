@@ -686,7 +686,7 @@ export default function SettingsPage() {
           </button>
         </section>
 
-        <p className="text-xs text-center text-zinc-600">fitcoach v1.0</p>
+        <p className="text-xs text-center text-zinc-600">BodyOps v1.0</p>
       </div>
     </PageWrapper>
   )

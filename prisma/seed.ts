@@ -40,10 +40,10 @@ async function main() {
 
   // --- User Alice (Pro) ---
   const alice = await prisma.user.upsert({
-    where:  { email: 'alice@fitcoachai.app' },
+    where:  { email: 'alice@BodyOpsai.app' },
     update: {},
     create: {
-      email: 'alice@fitcoachai.app',
+      email: 'alice@BodyOpsai.app',
       name:  'Alice Demo',
       subscription: {
         create: {
@@ -77,10 +77,10 @@ async function main() {
 
   // --- User Bob (Free) ---
   await prisma.user.upsert({
-    where:  { email: 'bob@fitcoachai.app' },
+    where:  { email: 'bob@BodyOpsai.app' },
     update: {},
     create: {
-      email: 'bob@fitcoachai.app',
+      email: 'bob@BodyOpsai.app',
       name:  'Bob Demo',
       subscription: {
         create: {
@@ -114,10 +114,10 @@ async function main() {
 
   // --- Coach (Business) ---
   await prisma.user.upsert({
-    where:  { email: 'coach@fitcoachai.app' },
+    where:  { email: 'coach@BodyOpsai.app' },
     update: {},
     create: {
-      email: 'coach@fitcoachai.app',
+      email: 'coach@BodyOpsai.app',
       name:  'Coach Demo',
       subscription: {
         create: {

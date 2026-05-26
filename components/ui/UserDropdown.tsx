@@ -19,7 +19,7 @@ export function UserDropdown() {
   const { profile } = useUserStore()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const name = session?.user?.name ?? profile?.firstName ?? 'Utilisateur fitcoach'
+  const name = session?.user?.name ?? profile?.firstName ?? 'Utilisateur BodyOps'
   const email = session?.user?.email ?? 'Email non renseigné'
 
   useEffect(() => {

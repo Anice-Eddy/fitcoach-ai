@@ -31,7 +31,7 @@ function downloadICS() {
     'BEGIN:VEVENT',
     `DTSTART:${fmt(start)}`, `DTEND:${fmt(end)}`,
     `SUMMARY:Coaching avec ${BOOKING.coach}`,
-    'DESCRIPTION:Entretien découverte — fitcoach',
+    'DESCRIPTION:Entretien découverte — BodyOps',
     'END:VEVENT', 'END:VCALENDAR',
   ].join('\r\n')
   const a  = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([ics], { type: 'text/calendar' })), download: 'coaching.ics' })

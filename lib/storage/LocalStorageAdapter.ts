@@ -6,9 +6,9 @@ import { openDB, type IDBPDatabase } from 'idb'
 import type { StorageAdapter, UserProfile } from './StorageAdapter'
 import type { OnboardingData, BodyMetricInput } from '@/utils/validators'
 
-const LS_PROFILE_KEY    = 'fitcoach:profile'
-const LS_ONBOARDING_KEY = 'fitcoach:onboarding'
-const DB_NAME           = 'fitcoach-db'
+const LS_PROFILE_KEY    = 'BodyOps:profile'
+const LS_ONBOARDING_KEY = 'BodyOps:onboarding'
+const DB_NAME           = 'BodyOps-db'
 const DB_VERSION        = 1
 const STORE_METRICS     = 'body_metrics'
 

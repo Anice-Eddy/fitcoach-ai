@@ -14,7 +14,7 @@ export async function exportProfilePDF(profile: UserProfile): Promise<void> {
   doc.setTextColor(30, 30, 30)
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
-  doc.text('fitcoach — Profil & Métriques', 14, 14)
+  doc.text('BodyOps — Profil & Métriques', 14, 14)
 
   doc.setTextColor(80, 80, 80)
   doc.setFontSize(10)
@@ -70,7 +70,7 @@ export async function exportProfilePDF(profile: UserProfile): Promise<void> {
     y += 7
   })
 
-  doc.save(`fitcoach-profil-${profile.firstName.toLowerCase()}.pdf`)
+  doc.save(`BodyOps-profil-${profile.firstName.toLowerCase()}.pdf`)
 }
 
 export async function exportProgramPDF(program: WorkoutProgram, firstName: string): Promise<void> {
@@ -103,5 +103,5 @@ export async function exportProgramPDF(program: WorkoutProgram, firstName: strin
     y += 4
   })
 
-  doc.save(`fitcoach-programme-${firstName.toLowerCase()}.pdf`)
+  doc.save(`BodyOps-programme-${firstName.toLowerCase()}.pdf`)
 }

@@ -14,7 +14,7 @@ interface Props {
   storageKey?: string
 }
 
-export function DailyTaskChecklist({ tasks, storageKey = 'fitcoach:daily-tasks' }: Props) {
+export function DailyTaskChecklist({ tasks, storageKey = 'BodyOps:daily-tasks' }: Props) {
   const [completed, setCompleted] = useState<string[]>([])
 
   useEffect(() => {

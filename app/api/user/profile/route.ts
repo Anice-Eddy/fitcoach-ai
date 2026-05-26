@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 // API : GET /api/user/profile — récupère le profil
 // API : PATCH /api/user/profile — met à jour le profil
 // Sécurité : session requise + validation Zod

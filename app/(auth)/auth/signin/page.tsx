@@ -64,10 +64,10 @@ function SignInForm() {
             <div className="size-10 rounded-xl bg-[#C8F135] flex items-center justify-center">
               <Dumbbell className="size-5 text-zinc-900" />
             </div>
-            <span className="text-white font-bold text-lg">fitcoach</span>
+            <span className="text-white font-bold text-lg">BodyOps</span>
           </Link>
           <h1 className="text-2xl font-bold text-white">Connexion</h1>
-          <p className="text-sm text-zinc-400 mt-1">Accédez à votre espace fitcoach</p>
+          <p className="text-sm text-zinc-400 mt-1">Accédez à votre espace BodyOps</p>
         </div>
 
         {/* Google */}

@@ -6,7 +6,7 @@ import { PageWrapper } from '@/components/layout/PageWrapper'
 import { DashboardClient } from './DashboardClient'
 import { PageSkeleton } from '@/components/ui/LoadingSkeleton'
 
-export const metadata: Metadata = { title: 'Tableau de bord — fitcoach' }
+export const metadata: Metadata = { title: 'Tableau de bord — BodyOps' }
 
 export default function DashboardPage() {
   return (

@@ -18,7 +18,7 @@ export default function PricingPage() {
             <div className="flex size-8 items-center justify-center rounded-lg bg-[#C8F135]">
               <Dumbbell className="size-4 text-zinc-900" />
             </div>
-            <span className="text-lg font-semibold">fitcoach</span>
+            <span className="text-lg font-semibold">BodyOps</span>
           </Link>
           <Link href="/auth/signin" className="rounded-xl border border-zinc-800 px-4 py-2 text-sm text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-white">
             Connexion

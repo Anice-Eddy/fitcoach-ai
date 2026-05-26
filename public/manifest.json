@@ -1,6 +1,6 @@
 {
-  "name": "FitCoachAI",
-  "short_name": "FitCoach",
+  "name": "BodyOps",
+  "short_name": "BodyOps",
   "description": "Votre coach fitness personnalisé alimenté par l'IA",
   "start_url": "/dashboard",
   "display": "standalone",

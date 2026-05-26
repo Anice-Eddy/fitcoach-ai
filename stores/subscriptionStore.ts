@@ -48,6 +48,6 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       canSyncCloud:       () => get().isPro(),
       canUseIntegrations: () => get().isPro(),
     }),
-    { name: 'fitcoach:subscription', partialize: (s) => ({ plan: s.plan, status: s.status, currentPeriodEnd: s.currentPeriodEnd }) },
+    { name: 'BodyOps:subscription', partialize: (s) => ({ plan: s.plan, status: s.status, currentPeriodEnd: s.currentPeriodEnd }) },
   ),
 )

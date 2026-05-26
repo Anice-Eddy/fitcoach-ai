@@ -47,7 +47,7 @@ export class CloudStorageAdapter implements StorageAdapter {
   // --- Onboarding (stocké localement même en mode cloud — pas besoin d'une route dédiée) ---
 
   async saveOnboardingProgress(step: number, data: Partial<OnboardingData>): Promise<void> {
-    const key = 'fitcoach:onboarding:cloud'
+    const key = 'BodyOps:onboarding:cloud'
     const current = this.getLocalOnboarding()
     localStorage.setItem(key, JSON.stringify({ step, data: { ...current?.data, ...data } }))
   }
@@ -57,7 +57,7 @@ export class CloudStorageAdapter implements StorageAdapter {
   }
 
   async clearOnboardingProgress(): Promise<void> {
-    localStorage.removeItem('fitcoach:onboarding:cloud')
+    localStorage.removeItem('BodyOps:onboarding:cloud')
   }
 
   async clear(): Promise<void> {
@@ -67,7 +67,7 @@ export class CloudStorageAdapter implements StorageAdapter {
 
   private getLocalOnboarding() {
     if (typeof window === 'undefined') return null
-    const raw = localStorage.getItem('fitcoach:onboarding:cloud')
+    const raw = localStorage.getItem('BodyOps:onboarding:cloud')
     return raw ? JSON.parse(raw) : null
   }
 }

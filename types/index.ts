@@ -1,5 +1,5 @@
 // ============================================================
-// Types TypeScript centralisés — FitCoach AI
+// Types TypeScript centralisés — BodyOps AI
 // Tous les types partagés entre composants, stores et API
 // ============================================================
 

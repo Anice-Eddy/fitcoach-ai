@@ -96,7 +96,7 @@ export default function ExportsPage() {
           {/* Import JSON */}
           <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
             <h3 className="text-sm font-semibold text-white mb-1">Import JSON</h3>
-            <p className="text-xs text-zinc-400 mb-4">Restaurez vos données depuis un export fitcoach.</p>
+            <p className="text-xs text-zinc-400 mb-4">Restaurez vos données depuis un export BodyOps.</p>
 
             {preview ? (
               <div className="space-y-3">

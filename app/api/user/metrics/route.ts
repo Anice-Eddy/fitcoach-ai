@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 // API : GET /api/user/metrics — historique métriques corporelles
 // API : POST /api/user/metrics — ajoute une mesure
 

@@ -4,7 +4,6 @@
 import { motion } from 'framer-motion'
 import { Check, Sparkles } from 'lucide-react'
 import type { PricingPlan } from '@/types'
-import { useState } from 'react'
 import { toast } from 'sonner'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 
@@ -15,34 +14,14 @@ interface Props {
 }
 
 export function PricingCard({ plan, isYearly, index }: Props) {
-  const [loading, setLoading] = useState(false)
   const { plan: currentPlan } = useSubscriptionStore()
   const isCurrent = currentPlan === plan.plan
   const price     = isYearly ? plan.yearlyPrice : plan.monthlyPrice
-  const priceId   = isYearly ? plan.stripePriceIdYearly : plan.stripePriceIdMonthly
   const isFree    = plan.monthlyPrice === 0
-  const isBusinessMocked = plan.plan === 'BUSINESS'
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (isFree || isCurrent) return
-    if (isBusinessMocked) { toast.info('Le plan Entreprise arrive bientôt !'); return }
-    if (!priceId) { toast.error('Plan non configuré'); return }
-
-    setLoading(true)
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ priceId, interval: isYearly ? 'year' : 'month' }),
-      })
-      const data = await res.json()
-      if (data.url) window.location.href = data.url
-      else toast.error('Erreur lors de la création de la session')
-    } catch {
-      toast.error('Erreur réseau')
-    } finally {
-      setLoading(false)
-    }
+    toast.info('Les paiements arrivent bientôt !')
   }
 
   return (
@@ -100,7 +79,7 @@ export function PricingCard({ plan, isYearly, index }: Props) {
       <button
         type="button"
         onClick={handleCheckout}
-        disabled={loading || isCurrent}
+        disabled={!isFree || isCurrent}
         aria-label={`Choisir le plan ${plan.name}`}
         className={`w-full py-3 rounded-xl text-sm font-bold transition-all ${
           isCurrent
@@ -110,7 +89,7 @@ export function PricingCard({ plan, isYearly, index }: Props) {
             : 'bg-zinc-800 text-white hover:bg-zinc-700'
         }`}
       >
-        {loading ? 'Chargement…' : isCurrent ? 'Plan actuel' : isFree ? 'Commencer gratuitement' : isBusinessMocked ? 'Bientôt disponible' : 'Choisir ce plan'}
+        {isCurrent ? 'Plan actuel' : isFree ? 'Commencer gratuitement' : 'Bientôt disponible'}
       </button>
     </motion.div>
   )

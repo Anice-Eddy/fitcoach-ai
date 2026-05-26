@@ -72,7 +72,7 @@ export const useNutritionStore = create<NutritionState>()(
       },
     }),
     {
-      name: 'fitcoach:nutrition',
+      name: 'BodyOps:nutrition',
       partialize: (s) => ({ activePlanId: s.activePlanId, todayMeals: s.todayMeals }),
     },
   ),

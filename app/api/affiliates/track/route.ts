@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 // POST /api/affiliates/track — enregistre un clic affilié (RGPD : IP hashée)
 
 import { NextResponse } from 'next/server'
@@ -19,7 +21,7 @@ export async function POST(req: Request) {
 
   // Hash de l'IP pour conformité RGPD (pas de stockage en clair)
   const ip      = req.headers.get('x-forwarded-for') ?? 'unknown'
-  const ipHash  = createHash('sha256').update(ip + process.env.NEXTAUTH_SECRET!).digest('hex')
+  const ipHash  = createHash('sha256').update(ip + (process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? '')).digest('hex')
   const ua      = req.headers.get('user-agent') ?? undefined
 
   await prisma.affiliateClick.create({

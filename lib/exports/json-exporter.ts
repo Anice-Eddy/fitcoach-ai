@@ -18,7 +18,7 @@ export function buildJsonExport(profile: UserProfile | null, metrics: unknown[])
   }
 }
 
-export function downloadJson(data: ExportPayload, filename = 'fitcoach-export.json'): void {
+export function downloadJson(data: ExportPayload, filename = 'BodyOps-export.json'): void {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement('a')

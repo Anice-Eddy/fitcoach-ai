@@ -49,7 +49,7 @@ export const useUserStore = create<UserState>()(
       reset:         ()        => set({ profile: null, error: null, storageMode: 'local', accompanimentMode: 'AI', coachName: null, nextCoachSession: null }),
     }),
     {
-      name: 'fitcoach:user',
+      name: 'BodyOps:user',
       partialize: (s) => ({
         profile: s.profile,
         storageMode: s.storageMode,

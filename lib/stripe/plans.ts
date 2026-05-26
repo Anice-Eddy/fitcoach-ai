@@ -10,7 +10,7 @@ export const PLANS: PricingPlan[] = [
     plan:         'FREE',
     monthlyPrice: 0,
     yearlyPrice:  0,
-    description:  'Pour découvrir fitcoach sans engagement',
+    description:  'Pour découvrir BodyOps sans engagement',
     highlighted:  false,
     features: [
       'Profil complet (IMC, calories, macros)',
@@ -28,8 +28,8 @@ export const PLANS: PricingPlan[] = [
     yearlyPrice:  79,
     description:  'Pour les sportifs sérieux qui veulent progresser',
     highlighted:  true,
-    stripePriceIdMonthly: process.env.STRIPE_PRO_MONTHLY_ID,
-    stripePriceIdYearly:  process.env.STRIPE_PRO_YEARLY_ID,
+    stripePriceIdMonthly: process.env.STRIPE_PRO_MONTHLY_ID ?? 'price_pro_monthly',
+    stripePriceIdYearly:  process.env.STRIPE_PRO_YEARLY_ID ?? 'price_pro_yearly',
     features: [
       'Programmes illimités',
       'Plan nutritionnel 7 jours + liste de courses',
@@ -47,8 +47,8 @@ export const PLANS: PricingPlan[] = [
     yearlyPrice:  159,
     description:  'Pour les athlètes qui veulent la performance maximale',
     highlighted:  false,
-    stripePriceIdMonthly: process.env.STRIPE_ELITE_MONTHLY_ID,
-    stripePriceIdYearly:  process.env.STRIPE_ELITE_YEARLY_ID,
+    stripePriceIdMonthly: process.env.STRIPE_ELITE_MONTHLY_ID ?? 'price_elite_monthly',
+    stripePriceIdYearly:  process.env.STRIPE_ELITE_YEARLY_ID ?? 'price_elite_yearly',
     features: [
       'Tout le plan Pro',
       'Ajustements IA automatiques du programme',
@@ -64,7 +64,7 @@ export const PLANS: PricingPlan[] = [
     yearlyPrice:  1990,
     description:  'Pour les coachs et les salles de sport (bientôt disponible)',
     highlighted:  false,
-    stripePriceIdMonthly: process.env.STRIPE_BUSINESS_ID,
+    stripePriceIdMonthly: process.env.STRIPE_BUSINESS_ID ?? 'price_business',
     features: [
       'Tout le plan Elite',
       'Tableau de bord coach avec suivi des membres',
