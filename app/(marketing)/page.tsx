@@ -1,7 +1,8 @@
 // Marketing landing page: hero, features, pricing CTA, and social proof.
 
 import Link from 'next/link'
-import { Dumbbell, Zap, BarChart2, ShoppingBag, Star, ArrowRight, Check } from 'lucide-react'
+import { Zap, BarChart2, ShoppingBag, Star, ArrowRight, Check, Dumbbell } from 'lucide-react'
+import { Logo } from '@/components/ui/Logo'
 
 const FEATURES = [
   { icon: Zap,        title: 'Programmes IA',       desc: 'Plans d\'entraînement générés selon votre profil et vos objectifs.' },
@@ -21,12 +22,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-zinc-950 text-white">
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-5 border-b border-zinc-800 max-w-6xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="size-8 rounded-lg bg-[#C8F135] flex items-center justify-center">
-            <Dumbbell className="size-4 text-zinc-900" />
-          </div>
-          <span className="font-bold text-lg">BodyOps</span>
-        </div>
+        <Logo href="/" size="md" />
         <div className="flex items-center gap-3">
           <Link href="/auth/signin?callbackUrl=/coach/dashboard" className="text-sm px-4 py-2 rounded-xl border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-colors">Espace Coach</Link>
           <Link href="/auth/signin" className="text-sm px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors">Connexion</Link>

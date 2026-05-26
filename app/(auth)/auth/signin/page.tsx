@@ -4,7 +4,8 @@ import { Suspense, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Dumbbell, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
+import { Logo } from '@/components/ui/Logo'
 
 export default function SignInPage() {
   return (
@@ -60,12 +61,9 @@ function SignInForm() {
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="size-10 rounded-xl bg-[#C8F135] flex items-center justify-center">
-              <Dumbbell className="size-5 text-zinc-900" />
-            </div>
-            <span className="text-white font-bold text-lg">BodyOps</span>
-          </Link>
+          <div className="mb-6 flex justify-center">
+            <Logo href="/" size="lg" />
+          </div>
           <h1 className="text-2xl font-bold text-white">Connexion</h1>
           <p className="text-sm text-zinc-400 mt-1">Accédez à votre espace BodyOps</p>
         </div>

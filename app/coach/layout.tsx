@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Dumbbell, LayoutDashboard, Users, FileText, BarChart2, Calendar, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, Users, FileText, BarChart2, Calendar, MessageSquare } from 'lucide-react'
+import { Logo } from '@/components/ui/Logo'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { NotificationBell } from '@/components/coach/NotificationBell'
@@ -40,12 +41,9 @@ export default async function CoachLayout({ children }: { children: React.ReactN
 
       <div className="flex flex-1">
         <aside className="w-60 shrink-0 border-r border-zinc-800 flex flex-col p-4 gap-2">
-          <Link href="/coach/dashboard" className="flex items-center gap-2 mb-6">
-            <div className="size-8 rounded-lg bg-[#C8F135] flex items-center justify-center">
-              <Dumbbell className="size-4 text-zinc-900" />
-            </div>
-            <span className="font-bold text-white">Coach<span className="text-[#C8F135]">Panel</span></span>
-          </Link>
+          <div className="mb-6">
+            <Logo href="/coach/dashboard" size="md" />
+          </div>
 
           {NAV.map(({ href, label, icon: Icon }) => (
             <Link

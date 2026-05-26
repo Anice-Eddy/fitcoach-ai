@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Dumbbell } from 'lucide-react'
 import { PLANS } from '@/lib/stripe/plans'
+import { Logo } from '@/components/ui/Logo'
 import { PricingCard } from '@/components/pricing/PricingCard'
 import { PricingToggle } from '@/components/pricing/PricingToggle'
 
@@ -14,12 +14,7 @@ export default function PricingPage() {
     <main className="min-h-screen bg-zinc-950 px-4 py-8 text-white">
       <div className="mx-auto max-w-6xl">
         <nav className="mb-12 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-[#C8F135]">
-              <Dumbbell className="size-4 text-zinc-900" />
-            </div>
-            <span className="text-lg font-semibold">BodyOps</span>
-          </Link>
+          <Logo href="/" size="md" />
           <Link href="/auth/signin" className="rounded-xl border border-zinc-800 px-4 py-2 text-sm text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-white">
             Connexion
           </Link>

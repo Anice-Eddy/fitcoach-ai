@@ -7,10 +7,11 @@ import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Dumbbell, UtensilsCrossed, TrendingUp,
-  Download, Settings, ShoppingBag, Plug, X, ChevronLeft,
+  Download, Settings, ShoppingBag, Plug, X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
+import { Logo } from '@/components/ui/Logo'
 const NAV_ITEMS = [
   { href: '/dashboard',  label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/training',   label: 'Entraînement', icon: Dumbbell },
@@ -44,12 +45,7 @@ export function Sidebar() {
       >
         {/* Logo */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-800">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="size-8 rounded-lg bg-[#C8F135] flex items-center justify-center">
-              <Dumbbell className="size-4 text-zinc-900" />
-            </div>
-            <span className="font-bold text-white text-lg tracking-tight">BodyOps</span>
-          </Link>
+          <Logo href="/dashboard" size="md" />
           <button onClick={toggleSidebar} className="text-zinc-400 hover:text-white lg:hidden">
             <X className="size-5" />
           </button>
