@@ -5,6 +5,7 @@ import { Inter, JetBrains_Mono }   from 'next/font/google'
 import { SessionProvider }          from 'next-auth/react'
 import { Toaster }                  from 'sonner'
 import { LocaleProvider }           from '@/contexts/LocaleContext'
+import { StoreHydrator }            from '@/components/StoreHydrator'
 import './globals.css'
 
 const inter = Inter({
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
         <SessionProvider>
           <LocaleProvider>
+            <StoreHydrator />
             {children}
             <Toaster
               theme="dark"

@@ -73,6 +73,7 @@ export const useNutritionStore = create<NutritionState>()(
     }),
     {
       name: 'BodyOps:nutrition',
+      skipHydration: true,
       partialize: (s) => ({ activePlanId: s.activePlanId, todayMeals: s.todayMeals }),
     },
   ),

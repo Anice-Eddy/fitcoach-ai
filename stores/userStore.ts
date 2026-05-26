@@ -50,6 +50,7 @@ export const useUserStore = create<UserState>()(
     }),
     {
       name: 'BodyOps:user',
+      skipHydration: true,
       partialize: (s) => ({
         profile: s.profile,
         storageMode: s.storageMode,

@@ -103,6 +103,6 @@ export const useTrainingStore = create<TrainingState>()(
       setLoading:  (isLoading) => set({ isLoading }),
       setError:    (error) => set({ error }),
     }),
-    { name: 'BodyOps:training', partialize: (s) => ({ activeProgramId: s.activeProgramId, activeSession: s.activeSession }) },
+    { name: 'BodyOps:training', skipHydration: true, partialize: (s) => ({ activeProgramId: s.activeProgramId, activeSession: s.activeSession }) },
   ),
 )
