@@ -55,7 +55,7 @@ export async function PATCH(req: Request) {
 
   const profile = await prisma.profile.upsert({
     where:  { userId: session.user.id },
-    create: { userId: session.user.id, firstName: 'Utilisateur', age: 25, gender: 'OTHER', weightKg: 70, heightCm: 170, activityLevel: 'MODERATELY_ACTIVE', fitnessGoal: 'MAINTENANCE', fitnessLevel: 'BEGINNER', ...data, ...calculatedFields } as never,
+    create: { userId: session.user.id, firstName: 'Utilisateur', age: 25, gender: 'MALE', weightKg: 70, heightCm: 170, activityLevel: 'MODERATELY_ACTIVE', fitnessGoal: 'MAINTENANCE', fitnessLevel: 'BEGINNER', ...data, ...calculatedFields } as never,
     update: { ...data, ...calculatedFields } as never,
   })
 

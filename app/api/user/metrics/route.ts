@@ -1,8 +1,5 @@
 export const dynamic = 'force-dynamic'
 
-// API : GET /api/user/metrics — historique métriques corporelles
-// API : POST /api/user/metrics — ajoute une mesure
-
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
@@ -37,4 +34,21 @@ export async function POST(req: Request) {
   })
 
   return NextResponse.json(metric, { status: 201 })
+}
+
+export async function DELETE(req: Request) {
+  const session = await auth()
+  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+
+  const { searchParams } = new URL(req.url)
+  const metricId = searchParams.get('id')
+  if (!metricId) return NextResponse.json({ error: 'id manquant' }, { status: 400 })
+
+  const existing = await prisma.bodyMetric.findFirst({
+    where: { id: metricId, userId: session.user.id },
+  })
+  if (!existing) return NextResponse.json({ error: 'Mesure introuvable' }, { status: 404 })
+
+  await prisma.bodyMetric.delete({ where: { id: metricId } })
+  return NextResponse.json({ ok: true })
 }

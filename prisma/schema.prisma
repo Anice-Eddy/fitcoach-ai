@@ -41,7 +41,6 @@ enum SubscriptionStatus {
 enum Gender {
   MALE
   FEMALE
-  OTHER
 }
 
 enum ActivityLevel {
@@ -750,5 +749,3 @@ model VerificationToken {
   @@unique([identifier, token])
   @@map("verification_tokens")
 }
-// appointmentsAsMember CoachAppointment[] @relation("AppointmentsAsMember")
-// coachNotes CoachNote[] @relation("CoachNotes")

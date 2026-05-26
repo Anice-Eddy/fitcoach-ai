@@ -36,7 +36,7 @@ function buildSession(
     }))
 
   return {
-    id:              `session-${name.toLowerCase().replace(/\s/g, '-')}-${Date.now()}`,
+    id:              `local-${name.toLowerCase().replace(/[\s/—]+/g, '-').replace(/[^a-z0-9-]/g, '')}`,
     name,
     status:          'PLANNED',
     exercises,
@@ -78,7 +78,7 @@ export function generateProgram(params: ProgramParams): WorkoutProgram {
   }
 
   return {
-    id:          `program-${Date.now()}`,
+    id:          `local-program`,
     name:        `Programme ${fitnessLevel} — ${fitnessGoal === 'MUSCLE_GAIN' ? 'Prise de masse' : fitnessGoal === 'WEIGHT_LOSS' ? 'Perte de poids' : 'Fitness général'}`,
     fitnessGoal: fitnessGoal as never,
     fitnessLevel: fitnessLevel as never,

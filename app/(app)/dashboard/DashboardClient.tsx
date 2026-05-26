@@ -1,65 +1,78 @@
 'use client'
-// Dashboard client: loads local data and renders the main widgets.
 
 import { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { useUserStore } from '@/stores/userStore'
-import { LocalStorageAdapter } from '@/lib/storage/LocalStorageAdapter'
 import { MetricsGrid }      from '@/components/dashboard/MetricsGrid'
 import { WeightChart }      from '@/components/dashboard/WeightChart'
 import { NutritionSummary } from '@/components/dashboard/NutritionSummary'
 import { QuickActions }     from '@/components/dashboard/QuickActions'
-import { MacroRing }        from '@/components/ui/MacroRing'
 import Link from 'next/link'
 import { Dumbbell, ArrowRight } from 'lucide-react'
 
-// Données mockées poids pour la démo
-const MOCK_WEIGHT_DATA = Array.from({ length: 30 }, (_, i) => ({
-  date:   new Date(Date.now() - (29 - i) * 86400000).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
-  weight: Math.round((80 - i * 0.12 + (Math.random() - 0.5) * 0.8) * 10) / 10,
-}))
+interface WeightPoint { date: string; weight: number }
+interface Metric { id: string; weightKg: number; date: string }
+
+const GOAL_SESSION: Record<string, string> = {
+  WEIGHT_LOSS:     'Cardio + circuit training',
+  MUSCLE_GAIN:     'Séance de force',
+  MAINTENANCE:     'Séance équilibrée',
+  ENDURANCE:       'Séance cardio-endurance',
+  FLEXIBILITY:     'Mobilité & étirements',
+  GENERAL_FITNESS: 'Séance complète',
+}
 
 export function DashboardClient() {
-  const { profile }  = useUserStore()
-  const [loading, setLoading]     = useState(true)
+  const { data: session }           = useSession()
+  const { profile }                 = useUserStore()
+  const [weightData, setWeightData] = useState<WeightPoint[]>([])
   const [lastWeight, setLastWeight] = useState<number | null>(null)
+  const [loading, setLoading]       = useState(true)
 
   useEffect(() => {
-    const storage = new LocalStorageAdapter()
-    storage.getBodyMetrics(1).then((metrics) => {
-      if (metrics[0]) setLastWeight(metrics[0].weightKg)
-      setLoading(false)
-    })
+    fetch('/api/user/metrics?limit=30')
+      .then(res => res.json())
+      .then((metrics: Metric[]) => {
+        if (Array.isArray(metrics) && metrics.length > 0) {
+          setLastWeight(metrics[0].weightKg)
+          const sorted = [...metrics].reverse()
+          setWeightData(sorted.map(m => ({
+            date:   new Date(m.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+            weight: m.weightKg,
+          })))
+        }
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
   }, [])
 
-  // Calcul du streak (mocké à 7 jours pour la démo)
-  const streak = 7
+  const streak    = 7
+  const firstName = profile?.firstName ?? session?.user?.name?.split(' ')[0] ?? 'Athlète'
+  const nextSession = profile?.fitnessGoal ? GOAL_SESSION[profile.fitnessGoal] : 'Séance du jour'
 
   return (
     <div className="space-y-6">
-      {/* Message de bienvenue */}
       <div>
         <h2 className="text-xl font-bold text-white">
-          Bonjour {profile?.firstName ?? 'Athlète'} 👋
+          Bonjour {firstName} 👋
         </h2>
         <p className="text-sm text-zinc-400 mt-0.5">
           {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
       </div>
 
-      {/* Métriques */}
       <MetricsGrid profile={profile} lastWeight={lastWeight} streak={streak} isLoading={loading} />
 
-      {/* Graphique poids */}
-      <WeightChart data={MOCK_WEIGHT_DATA} targetWeight={profile?.targetWeightKg} />
+      {weightData.length > 0 && (
+        <WeightChart data={weightData} targetWeight={profile?.targetWeightKg} />
+      )}
 
-      {/* Grid : nutrition + prochaine séance + actions rapides */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <NutritionSummary />
         </div>
 
         <div className="space-y-4">
-          {/* Prochaine séance */}
           <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
             <h3 className="text-sm font-semibold text-white mb-3">Prochaine séance</h3>
             <div className="flex items-center gap-3 mb-3">
@@ -67,8 +80,10 @@ export function DashboardClient() {
                 <Dumbbell className="size-5 text-[#C8F135]" />
               </div>
               <div>
-                <p className="text-sm font-medium text-white">Séance haut du corps — Pectoraux</p>
-                <p className="text-xs text-zinc-400">6 exercices · ~55 min</p>
+                <p className="text-sm font-medium text-white">{nextSession}</p>
+                <p className="text-xs text-zinc-400">
+                  Niveau {profile?.fitnessLevel?.toLowerCase() ?? 'débutant'}
+                </p>
               </div>
             </div>
             <Link
