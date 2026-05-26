@@ -17,13 +17,17 @@ export function ProductCard({ product }: Props) {
   return (
     <div className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden flex flex-col hover:border-zinc-600 transition-colors">
       <div className="relative h-40 bg-zinc-800 flex items-center justify-center">
-        <Image
-          src={product.imageUrl ?? 'https://via.placeholder.com/200?text=Produit'}
-          alt={product.name}
-          fill
-          className="object-cover"
-          sizes="(max-width: 640px) 100vw, 300px"
-        />
+        {product.imageUrl ? (
+          <Image
+            src={product.imageUrl}
+            alt={product.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, 300px"
+          />
+        ) : (
+          <span className="text-4xl">{meta?.emoji ?? '📦'}</span>
+        )}
         <span className="absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full bg-zinc-900/80 text-zinc-300">
           {meta?.emoji} {meta?.label}
         </span>

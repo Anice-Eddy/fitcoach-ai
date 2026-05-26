@@ -1,10 +1,10 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { BriefcaseBusiness, Eye, EyeOff, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, Dumbbell, Users } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 
 export default function SignInPage() {
@@ -18,30 +18,16 @@ export default function SignInPage() {
 function SignInForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl  = searchParams?.get('callbackUrl') ?? '/dashboard'
-  const authError    = searchParams?.get('error') ?? ''
-  const wantsCoach   = callbackUrl.startsWith('/coach') || callbackUrl.startsWith('/auth/coach') || searchParams?.get('role') === 'coach'
+  const callbackParam = searchParams?.get('callbackUrl')
 
-  const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading]           = useState(false)
+  const [mode, setMode] = useState<'athlete' | 'coach'>(
+    callbackParam?.includes('/coach') ? 'coach' : 'athlete',
+  )
+  const [showPassword, setShowPassword]   = useState(false)
+  const [loading, setLoading]             = useState(false)
   const [loadingGoogle, setLoadingGoogle] = useState(false)
-  const [form, setForm]                 = useState({ email: '', password: '' })
-  const [error, setError]               = useState('')
-  const [rememberedCoach, setRememberedCoach] = useState(false)
-
-  useEffect(() => {
-    if (authError === 'OAuthAccountNotLinked') {
-      setRememberedCoach(sessionStorage.getItem('bodyops:last-auth-context') === 'coach')
-    }
-  }, [authError])
-
-  const isCoach = wantsCoach || rememberedCoach
-  const oauthErrorMessage = authError === 'OAuthAccountNotLinked'
-    ? isCoach
-      ? "Un utilisateur existe déjà avec cette adresse email. Connectez-vous avec la méthode utilisée à l'inscription pour accéder à votre espace coach."
-      : "Un utilisateur existe déjà avec cette adresse email. Connectez-vous avec la méthode utilisée à l'inscription."
-    : ''
-  const displayedError = error || oauthErrorMessage
+  const [form, setForm]                   = useState({ email: '', password: '' })
+  const [error, setError]                 = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
@@ -60,8 +46,7 @@ function SignInForm() {
     })
 
     if (result?.ok) {
-      sessionStorage.removeItem('bodyops:last-auth-context')
-      router.push(isCoach ? '/auth/coach/complete' : callbackUrl)
+      router.push(mode === 'coach' ? '/coach/dashboard' : '/dashboard')
     } else {
       setError('Email ou mot de passe incorrect')
       setLoading(false)
@@ -70,39 +55,40 @@ function SignInForm() {
 
   const handleGoogle = async () => {
     setLoadingGoogle(true)
-    sessionStorage.setItem('bodyops:last-auth-context', isCoach ? 'coach' : 'member')
-    await signIn('google', { callbackUrl: isCoach ? '/auth/coach/complete' : callbackUrl })
+    await signIn('google', { callbackUrl: mode === 'coach' ? '/coach/dashboard' : '/dashboard' })
   }
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
 
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="mb-6 flex justify-center">
             <Logo href="/" size="lg" />
           </div>
-          <div className="mb-3 flex justify-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-3 py-1 text-xs font-semibold text-[#C8F135]">
-              {isCoach ? <BriefcaseBusiness className="size-3.5" /> : <ShieldCheck className="size-3.5" />}
-              {isCoach ? 'Espace coach' : 'Espace membre'}
-            </span>
-          </div>
-          <h1 className="text-2xl font-bold text-white">
-            {isCoach ? 'Connexion coach' : 'Connexion'}
-          </h1>
-          <p className="text-sm text-zinc-400 mt-1">
-            {isCoach ? 'Accédez au suivi de vos membres et à votre agenda' : 'Accédez à votre espace BodyOps'}
-          </p>
+          <h1 className="text-2xl font-bold text-white">Connexion</h1>
+          <p className="text-sm text-zinc-400 mt-1">Accédez à votre espace BodyOps</p>
+        </div>
+
+        {/* Mode toggle — athlete vs coach */}
+        <div className="flex rounded-xl border border-zinc-800 bg-zinc-900 p-1 mb-6">
+          <button type="button" onClick={() => setMode('athlete')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors ${
+              mode === 'athlete' ? 'bg-[#C8F135] text-zinc-900' : 'text-zinc-400 hover:text-white'
+            }`}>
+            <Dumbbell className="size-4" /> Athlète
+          </button>
+          <button type="button" onClick={() => setMode('coach')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors ${
+              mode === 'coach' ? 'bg-[#C8F135] text-zinc-900' : 'text-zinc-400 hover:text-white'
+            }`}>
+            <Users className="size-4" /> Coach
+          </button>
         </div>
 
         {/* Google */}
-        <button
-          onClick={handleGoogle}
-          disabled={loadingGoogle || loading}
-          className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white text-zinc-900 font-medium text-sm hover:bg-zinc-100 transition-colors disabled:opacity-50 mb-4"
-        >
+        <button onClick={handleGoogle} disabled={loadingGoogle || loading}
+          className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white text-zinc-900 font-medium text-sm hover:bg-zinc-100 transition-colors disabled:opacity-50 mb-4">
           {loadingGoogle ? (
             <span className="size-5 rounded-full border-2 border-zinc-300 border-t-zinc-700 animate-spin" />
           ) : (
@@ -116,7 +102,6 @@ function SignInForm() {
           Continuer avec Google
         </button>
 
-        {/* Séparateur */}
         <div className="relative mb-4">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-zinc-800" />
@@ -126,27 +111,18 @@ function SignInForm() {
           </div>
         </div>
 
-        {/* Formulaire */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {displayedError && (
+          {error && (
             <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
-              {displayedError}
+              {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-              Adresse email
-            </label>
-            <input
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="jean@example.com"
-              className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm"
-            />
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Adresse email</label>
+            <input name="email" type="email" autoComplete="email" value={form.email} onChange={handleChange}
+              placeholder="vous@example.com"
+              className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
           </div>
 
           <div>
@@ -157,46 +133,29 @@ function SignInForm() {
               </Link>
             </div>
             <div className="relative">
-              <input
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="••••••••"
-                className="w-full px-4 py-3 pr-11 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
-              >
+              <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password"
+                value={form.password} onChange={handleChange} placeholder="••••••••"
+                className="w-full px-4 py-3 pr-11 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
+              <button type="button" onClick={() => setShowPassword((s) => !s)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
                 {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading || loadingGoogle}
-            className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50 flex items-center justify-center"
-          >
-            {loading ? (
-              <span className="size-5 rounded-full border-2 border-zinc-600 border-t-zinc-900 animate-spin" />
-            ) : 'Se connecter'}
+          <button type="submit" disabled={loading || loadingGoogle}
+            className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50 flex items-center justify-center">
+            {loading
+              ? <span className="size-5 rounded-full border-2 border-zinc-600 border-t-zinc-900 animate-spin" />
+              : `Se connecter — ${mode === 'coach' ? 'Espace Coach' : 'Espace Athlète'}`}
           </button>
         </form>
 
         <p className="text-center text-sm text-zinc-400 mt-5">
-          {isCoach ? 'Pas encore de compte coach ?' : 'Pas encore de compte ?'}{' '}
-          <Link href={isCoach ? '/auth/register?role=coach' : '/auth/register'} className="text-[#C8F135] hover:underline font-medium">
-            {isCoach ? 'Créer un espace coach' : 'Créer un compte gratuit'}
-          </Link>
-        </p>
-        <p className="text-center text-sm text-zinc-500 mt-3">
-          {isCoach ? 'Vous êtes membre ?' : 'Vous êtes coach ?'}{' '}
-          <Link href={isCoach ? '/auth/signin' : '/auth/signin?callbackUrl=/coach/dashboard'} className="text-zinc-300 hover:text-[#C8F135] transition-colors">
-            {isCoach ? 'Connexion membre' : 'Connexion coach'}
+          Pas encore de compte ?{' '}
+          <Link href={mode === 'coach' ? '/auth/register/coach' : '/auth/register/member'}
+            className="text-[#C8F135] hover:underline font-medium">
+            Créer un compte {mode === 'coach' ? 'coach' : 'athlète'}
           </Link>
         </p>
       </div>
