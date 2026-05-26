@@ -6,6 +6,8 @@ const PUBLIC_ROUTES = [
   '/',
   '/auth/signin',
   '/auth/register',
+  '/auth/forgot-password',
+  '/auth/reset-password',
   '/auth/error',
   '/pricing',
   '/onboarding',
@@ -15,6 +17,7 @@ const PUBLIC_ROUTES = [
 ]
 
 const PUBLIC_PREFIXES = [
+  '/auth/register/',
   '/coaches/',
 ]
 
