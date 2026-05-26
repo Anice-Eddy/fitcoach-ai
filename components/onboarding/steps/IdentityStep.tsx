@@ -14,7 +14,6 @@ interface Props {
 const GENDER_OPTIONS = [
   { value: 'MALE',   label: 'Homme' },
   { value: 'FEMALE', label: 'Femme' },
-  { value: 'OTHER',  label: 'Autre' },
 ]
 
 export function IdentityStep({ defaultValues, onNext, onBack }: Props) {

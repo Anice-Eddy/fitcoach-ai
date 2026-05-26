@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
+import { sendAppointmentEmail } from '@/lib/email/send'
 
 export const runtime = 'nodejs'
 
@@ -92,16 +93,26 @@ export async function POST(req: NextRequest) {
       include: { member: { include: { profile: true } } },
     })
 
-    // Créer une notification
     await prisma.notification.create({
       data: {
-        coachId: coach.coachProfile.id,
-        type: 'APPOINTMENT',
-        title: `Rendez-vous: ${title}`,
-        message: `Rendez-vous avec ${appointment.member.name} le ${new Date(scheduledAt).toLocaleDateString('fr-FR')}`,
+        coachId:   coach.coachProfile.id,
+        type:      'APPOINTMENT',
+        title:     `Rendez-vous: ${title}`,
+        message:   `Rendez-vous avec ${appointment.member.name} le ${new Date(scheduledAt).toLocaleDateString('fr-FR')}`,
         relatedId: appointment.id,
       },
     })
+
+    // Email au membre
+    if (appointment.member.email) {
+      sendAppointmentEmail(
+        appointment.member.email,
+        coach.name ?? 'Votre coach',
+        title,
+        new Date(scheduledAt),
+        meetLink ?? null,
+      ).catch(() => {})
+    }
 
     return NextResponse.json(appointment, { status: 201 })
   } catch (error) {

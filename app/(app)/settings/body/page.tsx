@@ -26,7 +26,7 @@ export default function BodySettingsPage() {
     weightUnit: profile?.weightUnit ?? 'KG',
     heightUnit: profile?.heightUnit ?? 'CM',
     age: String(profile?.age ?? ''),
-    gender: profile?.gender ?? 'OTHER',
+    gender: profile?.gender ?? 'MALE',
     activityLevel: profile?.activityLevel ?? 'MODERATELY_ACTIVE',
     trainingDaysPerWeek: String(profile?.trainingDaysPerWeek ?? 3),
     fitnessGoal: profile?.fitnessGoal ?? 'MAINTENANCE',
@@ -124,7 +124,7 @@ export default function BodySettingsPage() {
 
               <Select label="Unités poids" value={form.weightUnit} options={['KG', 'LB']} onChange={(v) => set('weightUnit', v)} />
               <Select label="Unités taille" value={form.heightUnit} options={['CM', 'FT_IN']} onChange={(v) => set('heightUnit', v)} />
-              <Select label="Sexe" value={form.gender} options={['MALE', 'FEMALE', 'OTHER']} onChange={(v) => set('gender', v)} />
+              <Select label="Sexe" value={form.gender} options={['MALE', 'FEMALE']} onChange={(v) => set('gender', v)} />
               <Select label="Activité" value={form.activityLevel} options={ACTIVITY} onChange={(v) => set('activityLevel', v)} />
               <Select label="Objectif" value={form.fitnessGoal} options={GOALS} onChange={(v) => set('fitnessGoal', v)} />
               <Select label="Niveau sportif" value={form.fitnessLevel} options={LEVELS} onChange={(v) => set('fitnessLevel', v)} />

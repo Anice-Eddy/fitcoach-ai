@@ -11,7 +11,7 @@ const anthropometricsSchema = z.object({
 
 const bmrSchema = anthropometricsSchema.extend({
   age: z.number().int('Âge invalide : nombre entier requis').min(13, 'Âge hors limites : 13 à 100 ans').max(100, 'Âge hors limites : 13 à 100 ans'),
-  gender: z.enum(['MALE', 'FEMALE', 'OTHER']),
+  gender: z.enum(['MALE', 'FEMALE']),
 })
 
 const tdeeSchema = z.object({
@@ -72,8 +72,7 @@ export function calculateBMR(weightKg: number, heightCm: number, age: number, ge
   const value = assertValid(bmrSchema, { weightKg, heightCm, age, gender })
   const base = 10 * value.weightKg + 6.25 * value.heightCm - 5 * value.age
   if (value.gender === 'MALE') return Math.round(base + 5)
-  if (value.gender === 'FEMALE') return Math.round(base - 161)
-  return Math.round(base - 78)
+  return Math.round(base - 161)
 }
 
 // TDEE : BMR multiplié par les facteurs d'activité Harris-Benedict révisés.

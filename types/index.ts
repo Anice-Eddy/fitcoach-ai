@@ -5,7 +5,7 @@
 
 // --- Enums miroir (évite d'importer @prisma/client côté client) ---
 
-export type Gender         = 'MALE' | 'FEMALE' | 'OTHER'
+export type Gender         = 'MALE' | 'FEMALE'
 export type ActivityLevel  = 'SEDENTARY' | 'LIGHTLY_ACTIVE' | 'MODERATELY_ACTIVE' | 'VERY_ACTIVE' | 'EXTREMELY_ACTIVE'
 export type FitnessGoal    = 'WEIGHT_LOSS' | 'MUSCLE_GAIN' | 'MAINTENANCE' | 'ENDURANCE' | 'FLEXIBILITY' | 'GENERAL_FITNESS'
 export type FitnessLevel   = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'ATHLETE'

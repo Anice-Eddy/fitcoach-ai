@@ -19,7 +19,7 @@ export const identitySchema = z.object({
     .int('L\'âge doit être un entier')
     .min(13, 'Âge minimum : 13 ans')
     .max(100, 'Âge maximum : 100 ans'),
-  gender: z.enum(['MALE', 'FEMALE', 'OTHER'], {
+  gender: z.enum(['MALE', 'FEMALE'], {
     errorMap: () => ({ message: 'Sélectionnez un genre' }),
   }),
 })

@@ -45,7 +45,6 @@ const LEVEL_OPTIONS = [
 const GENDER_OPTIONS = [
   { value: 'MALE',   label: 'Homme' },
   { value: 'FEMALE', label: 'Femme' },
-  { value: 'OTHER',  label: 'Autre' },
 ]
 
 const RESTRICTIONS = ['Végétarien', 'Végan', 'Sans gluten', 'Sans lactose', 'Halal', 'Casher', 'Sans noix', 'Sans porc']
