@@ -122,21 +122,23 @@ export function MeasurementsStep({ defaultValues, weightUnit, heightUnit, onNext
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium text-zinc-400 mb-2">
-            Tour de taille <span className="text-zinc-600">(opt.)</span>
+            Tour de taille
+            <span className="ml-1.5 text-xs text-zinc-600 font-normal">optionnel</span>
           </label>
           <input
-            {...register('waistCm', { valueAsNumber: true })}
-            type="number" placeholder="80 cm"
+            {...register('waistCm')}
+            type="number" placeholder="80"
             className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-[#C8F135] transition-colors"
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-zinc-400 mb-2">
-            Tour de hanches <span className="text-zinc-600">(opt.)</span>
+            Tour de hanches
+            <span className="ml-1.5 text-xs text-zinc-600 font-normal">optionnel</span>
           </label>
           <input
-            {...register('hipsCm', { valueAsNumber: true })}
-            type="number" placeholder="95 cm"
+            {...register('hipsCm')}
+            type="number" placeholder="95"
             className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-[#C8F135] transition-colors"
           />
         </div>

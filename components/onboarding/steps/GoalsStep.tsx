@@ -66,7 +66,7 @@ export function GoalsStep({ defaultValues, onNext, onBack }: Props) {
           <label className="block text-sm font-medium text-zinc-300 mb-2">
             Poids cible <span className="text-zinc-500">(optionnel, en kg)</span>
           </label>
-          <input {...register('targetWeightKg', { valueAsNumber: true })} type="number" step="0.5" placeholder="65"
+          <input {...register('targetWeightKg')} type="number" step="0.5" placeholder="65"
             className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-[#C8F135] transition-colors"
           />
         </div>

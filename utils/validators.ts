@@ -35,8 +35,14 @@ export const measurementsSchema = z.object({
     .number({ invalid_type_error: 'Entrez une taille valide' })
     .min(100, 'Taille minimum : 100 cm')
     .max(250, 'Taille maximum : 250 cm'),
-  waistCm: z.number().min(40).max(200).optional(),
-  hipsCm: z.number().min(40).max(200).optional(),
+  waistCm: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)),
+    z.number().min(40).max(200).optional(),
+  ),
+  hipsCm: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)),
+    z.number().min(40).max(200).optional(),
+  ),
   weightUnit: z.enum(['KG', 'LB']),
   heightUnit: z.enum(['CM', 'FT_IN']),
 })
@@ -71,7 +77,10 @@ export const goalsSchema = z.object({
     ['WEIGHT_LOSS', 'MUSCLE_GAIN', 'MAINTENANCE', 'ENDURANCE', 'FLEXIBILITY', 'GENERAL_FITNESS'],
     { errorMap: () => ({ message: 'Sélectionnez un objectif' }) },
   ),
-  targetWeightKg: z.number().min(30).max(300).optional(),
+  targetWeightKg: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)),
+    z.number().min(30).max(300).optional(),
+  ),
   fitnessLevel: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'ATHLETE'], {
     errorMap: () => ({ message: 'Sélectionnez votre niveau' }),
   }),
@@ -101,10 +110,10 @@ export const updateProfileSchema = onboardingSchema.partial()
 export const bodyMetricSchema = z.object({
   date:         z.coerce.date().optional(),
   weightKg:     z.number().min(30).max(300),
-  bodyFatPct:   z.number().min(1).max(70).optional(),
-  muscleMassKg: z.number().min(10).max(150).optional(),
-  waistCm:      z.number().min(40).max(200).optional(),
-  hipsCm:       z.number().min(40).max(200).optional(),
+  bodyFatPct:   z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(1).max(70).optional()),
+  muscleMassKg: z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(10).max(150).optional()),
+  waistCm:      z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(40).max(200).optional()),
+  hipsCm:       z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(40).max(200).optional()),
   notes:        z.string().max(500).optional(),
 })
 
