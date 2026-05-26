@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { PageWrapper }          from '@/components/layout/PageWrapper'
 import { ProductCard }          from '@/components/affiliates/ProductCard'
 import { CategoryFilter }       from '@/components/affiliates/CategoryFilter'
@@ -12,11 +12,8 @@ import type { AffiliateCategory } from '@/types'
 
 export default function ShopPage() {
   const [selected, setSelected] = useState<AffiliateCategory | 'ALL'>('ALL')
-  const [mounted, setMounted]   = useState(false)
   const { profile }             = useUserStore()
   const userGoal                = profile?.fitnessGoal
-
-  useEffect(() => { setMounted(true) }, [])
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {}
@@ -31,7 +28,7 @@ export default function ShopPage() {
       ? AFFILIATE_PRODUCTS
       : AFFILIATE_PRODUCTS.filter((p) => p.category === selected)
 
-    if (mounted && userGoal) {
+    if (userGoal) {
       list = [...list].sort((a, b) => {
         const aMatch = a.fitnessGoals.includes(userGoal as never) ? -1 : 1
         const bMatch = b.fitnessGoals.includes(userGoal as never) ? -1 : 1
@@ -39,7 +36,7 @@ export default function ShopPage() {
       })
     }
     return list
-  }, [selected, mounted, userGoal])
+  }, [selected, userGoal])
 
   return (
     <PageWrapper>
