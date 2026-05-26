@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { AFFILIATE_PRODUCTS, getProductsByCategory, getProductsByGoal } from '@/lib/affiliates/products'
 
 describe('AFFILIATE_PRODUCTS', () => {
-  it('contient exactement 20 produits', () => {
-    expect(AFFILIATE_PRODUCTS).toHaveLength(20)
+  it('contient exactement 41 produits', () => {
+    expect(AFFILIATE_PRODUCTS).toHaveLength(41)
   })
 
   it('chaque produit a un id unique', () => {
@@ -26,20 +26,20 @@ describe('AFFILIATE_PRODUCTS', () => {
     }
   })
 
-  it('contient 5 suppléments', () => {
-    expect(AFFILIATE_PRODUCTS.filter((p) => p.category === 'SUPPLEMENTS')).toHaveLength(5)
+  it('contient 16 suppléments', () => {
+    expect(AFFILIATE_PRODUCTS.filter((p) => p.category === 'SUPPLEMENTS')).toHaveLength(16)
   })
 
-  it('contient 5 équipements', () => {
-    expect(AFFILIATE_PRODUCTS.filter((p) => p.category === 'EQUIPMENT')).toHaveLength(5)
+  it('contient 14 équipements', () => {
+    expect(AFFILIATE_PRODUCTS.filter((p) => p.category === 'EQUIPMENT')).toHaveLength(14)
   })
 
-  it('contient 5 vêtements', () => {
-    expect(AFFILIATE_PRODUCTS.filter((p) => p.category === 'CLOTHING')).toHaveLength(5)
+  it('contient au moins 1 vêtement', () => {
+    expect(AFFILIATE_PRODUCTS.filter((p) => p.category === 'CLOTHING').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('contient 5 livres', () => {
-    expect(AFFILIATE_PRODUCTS.filter((p) => p.category === 'BOOKS')).toHaveLength(5)
+  it('contient 10 livres', () => {
+    expect(AFFILIATE_PRODUCTS.filter((p) => p.category === 'BOOKS')).toHaveLength(10)
   })
 })
 

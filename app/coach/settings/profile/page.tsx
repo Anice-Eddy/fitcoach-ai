@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { useSession } from 'next-auth/react'
-import { UserCircle, Save, Camera } from 'lucide-react'
+import { signOut, useSession } from 'next-auth/react'
+import { UserCircle, Save, Camera, LogOut, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { DeleteAccountModal } from '@/components/ui/DeleteAccountModal'
 
 interface CoachProfile {
   id:              string
@@ -23,6 +24,8 @@ export default function CoachSettingsProfilePage() {
   const [profile, setProfile]   = useState<CoachProfile | null>(null)
   const [loading, setLoading]   = useState(true)
   const [saving, setSaving]     = useState(false)
+  const [showDel, setShowDel]   = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   // User fields
   const [name, setName]         = useState('')
@@ -57,6 +60,25 @@ export default function CoachSettingsProfilePage() {
     if (session?.user?.name)  setName(session.user.name)
     if (session?.user?.image) setAvatarUrl(prev => prev || session.user!.image!)
   }, [session])
+
+  const handleDeleteAccount = async (password?: string) => {
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/user/account', {
+        method:  'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ password }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? 'Erreur lors de la suppression')
+      }
+      await signOut({ callbackUrl: '/' })
+    } catch (e) {
+      setDeleting(false)
+      throw e
+    }
+  }
 
   const save = async () => {
     setSaving(true)
@@ -106,6 +128,13 @@ export default function CoachSettingsProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      {showDel && (
+        <DeleteAccountModal
+          onConfirm={handleDeleteAccount}
+          onCancel={() => setShowDel(false)}
+          deleting={deleting}
+        />
+      )}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
           <UserCircle className="size-6 text-[#C8F135]" />
@@ -249,6 +278,27 @@ export default function CoachSettingsProfilePage() {
           >
             <Save className="size-4" />
             {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
+          </button>
+        </div>
+
+        {/* Danger zone */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+          <div className="px-5 py-4 border-b border-zinc-800">
+            <h2 className="text-sm font-semibold text-zinc-300">Danger</h2>
+          </div>
+          <button
+            onClick={() => signOut({ callbackUrl: '/' })}
+            className="flex items-center gap-3 w-full px-5 py-3.5 border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors text-left"
+          >
+            <LogOut className="size-4 text-zinc-400" />
+            <span className="text-sm text-zinc-300">Se déconnecter</span>
+          </button>
+          <button
+            onClick={() => setShowDel(true)}
+            className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-red-500/5 transition-colors text-left"
+          >
+            <Trash2 className="size-4 text-red-400" />
+            <span className="text-sm text-red-400">Supprimer mon compte</span>
           </button>
         </div>
 

@@ -1,12 +1,10 @@
 'use client'
-// Page boutique affiliée — filtrage par catégorie + grille de produits
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { PageWrapper }          from '@/components/layout/PageWrapper'
 import { ProductCard }          from '@/components/affiliates/ProductCard'
 import { CategoryFilter }       from '@/components/affiliates/CategoryFilter'
 import { AffiliateDisclosure }  from '@/components/affiliates/AffiliateDisclosure'
-import { EmptyState }           from '@/components/ui/EmptyState'
 import { AFFILIATE_PRODUCTS }   from '@/lib/affiliates/products'
 import { ShoppingBag }          from 'lucide-react'
 import { useUserStore }         from '@/stores/userStore'
@@ -14,9 +12,11 @@ import type { AffiliateCategory } from '@/types'
 
 export default function ShopPage() {
   const [selected, setSelected] = useState<AffiliateCategory | 'ALL'>('ALL')
+  const [mounted, setMounted]   = useState(false)
   const { profile }             = useUserStore()
+  const userGoal                = profile?.fitnessGoal
 
-  const userGoal = profile?.fitnessGoal
+  useEffect(() => { setMounted(true) }, [])
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {}
@@ -27,9 +27,11 @@ export default function ShopPage() {
   }, [])
 
   const filtered = useMemo(() => {
-    let list = selected === 'ALL' ? AFFILIATE_PRODUCTS : AFFILIATE_PRODUCTS.filter((p) => p.category === selected)
-    // Produits pertinents pour l'objectif de l'utilisateur en premier
-    if (userGoal) {
+    let list = selected === 'ALL'
+      ? AFFILIATE_PRODUCTS
+      : AFFILIATE_PRODUCTS.filter((p) => p.category === selected)
+
+    if (mounted && userGoal) {
       list = [...list].sort((a, b) => {
         const aMatch = a.fitnessGoals.includes(userGoal as never) ? -1 : 1
         const bMatch = b.fitnessGoals.includes(userGoal as never) ? -1 : 1
@@ -37,15 +39,18 @@ export default function ShopPage() {
       })
     }
     return list
-  }, [selected, userGoal])
+  }, [selected, mounted, userGoal])
 
   return (
     <PageWrapper>
       <div className="space-y-6">
+
+        {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-white">Boutique</h1>
           <p className="text-sm text-zinc-400 mt-1">
-            Produits sélectionnés pour atteindre vos objectifs fitness.
+            Produits sélectionnés pour atteindre vos objectifs fitness.{' '}
+            <span className="text-zinc-600">{AFFILIATE_PRODUCTS.length} produits</span>
           </p>
         </div>
 
@@ -54,11 +59,16 @@ export default function ShopPage() {
         <CategoryFilter selected={selected} onChange={setSelected} counts={counts} />
 
         {filtered.length === 0 ? (
-          <EmptyState
-            icon={<ShoppingBag className="size-8" />}
-            title="Aucun produit"
-            description="Sélectionnez une autre catégorie."
-          />
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <ShoppingBag className="size-10 text-zinc-600 mb-3" />
+            <p className="text-zinc-400 font-medium">Aucun produit dans cette catégorie</p>
+            <button
+              onClick={() => setSelected('ALL')}
+              className="mt-3 text-sm text-[#C8F135] hover:underline"
+            >
+              Voir tous les produits
+            </button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filtered.map((product) => (

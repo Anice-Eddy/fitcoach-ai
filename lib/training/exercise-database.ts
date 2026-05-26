@@ -13,7 +13,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Poussez la barre vers le haut en expirant, bras tendus sans verrouiller les coudes.',
     ],
     muscleGroups: ['CHEST', 'TRICEPS', 'SHOULDERS'], equipment: ['BARBELL', 'BENCH'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=bench+press+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=vcBig73ojpE',
   },
   {
     id: 'ex-incline-db-press', name: 'Développé incliné haltères',
@@ -25,7 +25,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Redescendez de façon contrôlée.',
     ],
     muscleGroups: ['CHEST', 'SHOULDERS', 'TRICEPS'], equipment: ['DUMBBELL', 'BENCH'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=incline+dumbbell+press+tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=8iPEnn-ltC8',
   },
   {
     id: 'ex-push-up', name: 'Pompes',
@@ -36,7 +36,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Poussez pour revenir à la position de départ.',
     ],
     muscleGroups: ['CHEST', 'TRICEPS', 'SHOULDERS'], equipment: ['BODYWEIGHT'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=push+up+perfect+form+tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=IODxDxX7oi4',
   },
   {
     id: 'ex-cable-fly', name: 'Écartés à la poulie',
@@ -48,7 +48,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Contrôler le retour en maintenant la tension.',
     ],
     muscleGroups: ['CHEST'], equipment: ['CABLE_MACHINE'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=cable+fly+chest+tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=Iwe6AmxVf7o',
   },
   {
     id: 'ex-dips', name: 'Dips',
@@ -60,7 +60,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Poussez pour remonter.',
     ],
     muscleGroups: ['CHEST', 'TRICEPS'], equipment: ['BODYWEIGHT'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=chest+dips+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=2z8JmcrW-As',
   },
 
   // ── BACK ───────────────────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Redescendre de manière contrôlée en gardant la tension.',
     ],
     muscleGroups: ['BACK', 'BICEPS'], equipment: ['PULL_UP_BAR', 'BODYWEIGHT'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=pull+up+proper+form+tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=eGo4IYlbE5g',
   },
   {
     id: 'ex-chin-up', name: 'Tractions supination',
@@ -86,7 +86,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Descendre lentement.',
     ],
     muscleGroups: ['BACK', 'BICEPS'], equipment: ['PULL_UP_BAR', 'BODYWEIGHT'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=chin+up+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=tE_GJZSqcn0',
   },
   {
     id: 'ex-row', name: 'Rowing barre',
@@ -98,7 +98,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Contrôler la descente.',
     ],
     muscleGroups: ['BACK', 'BICEPS'], equipment: ['BARBELL'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=barbell+row+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=FWJR5Ve8bnQ',
   },
   {
     id: 'ex-db-row', name: 'Rowing haltère unilatéral',
@@ -110,7 +110,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Descendre lentement et répéter.',
     ],
     muscleGroups: ['BACK', 'BICEPS'], equipment: ['DUMBBELL', 'BENCH'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=dumbbell+row+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=pYcpY20QaE8',
   },
   {
     id: 'ex-face-pull', name: 'Face Pull',
@@ -122,7 +122,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Revenir de manière contrôlée.',
     ],
     muscleGroups: ['BACK', 'SHOULDERS'], equipment: ['CABLE_MACHINE'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=face+pull+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=rep-qVOkqgk',
   },
   {
     id: 'ex-deadlift', name: 'Soulevé de terre',
@@ -134,7 +134,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Pousser le sol, lever la barre en gardant le dos neutre jusqu\'à la position debout.',
     ],
     muscleGroups: ['BACK', 'HAMSTRINGS', 'GLUTES'], equipment: ['BARBELL'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=deadlift+tutorial+proper+form',
+    videoUrl: 'https://www.youtube.com/watch?v=ytGaGIn3SjE',
   },
 
   // ── SHOULDERS ──────────────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Descendez de manière contrôlée.',
     ],
     muscleGroups: ['SHOULDERS', 'TRICEPS'], equipment: ['BARBELL'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=overhead+press+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=2yjwXTZQDDI',
   },
   {
     id: 'ex-lateral-raise', name: 'Élévations latérales',
@@ -159,7 +159,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Contrôlez la descente.',
     ],
     muscleGroups: ['SHOULDERS'], equipment: ['DUMBBELL'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=lateral+raise+proper+form+tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=3VcKaXpzqRo',
   },
   {
     id: 'ex-arnold-press', name: 'Arnold Press',
@@ -171,7 +171,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Inversez le mouvement pour descendre.',
     ],
     muscleGroups: ['SHOULDERS', 'TRICEPS'], equipment: ['DUMBBELL'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=arnold+press+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=vj2w851ZHRM',
   },
   {
     id: 'ex-rear-delt-fly', name: 'Oiseau (deltoïde postérieur)',
@@ -183,7 +183,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Redescendez lentement.',
     ],
     muscleGroups: ['SHOULDERS', 'BACK'], equipment: ['DUMBBELL'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=rear+delt+fly+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=GneYaDPO11Y',
   },
 
   // ── BICEPS ─────────────────────────────────────────────────────────────────
@@ -197,7 +197,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Redescendez lentement en gardant les coudes fixes.',
     ],
     muscleGroups: ['BICEPS'], equipment: ['DUMBBELL'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=dumbbell+curl+proper+form+tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=ykJmrZ5v0Oo',
   },
   {
     id: 'ex-barbell-curl', name: 'Curl barre',
@@ -209,7 +209,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Redescendez de façon contrôlée.',
     ],
     muscleGroups: ['BICEPS'], equipment: ['BARBELL'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=barbell+curl+proper+form+tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=kwG2ipFRgfo',
   },
   {
     id: 'ex-hammer-curl', name: 'Curl marteau',
@@ -220,7 +220,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Montez jusqu\'à la contraction, redescendez lentement.',
     ],
     muscleGroups: ['BICEPS'], equipment: ['DUMBBELL'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=hammer+curl+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=TwD-YGVP4Bk',
   },
 
   // ── TRICEPS ────────────────────────────────────────────────────────────────
@@ -234,7 +234,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Gardez les coudes fixes et proches de la tête.',
     ],
     muscleGroups: ['TRICEPS'], equipment: ['DUMBBELL'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=overhead+tricep+extension+tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=_gsUck-7M74',
   },
   {
     id: 'ex-triceps-pushdown', name: 'Pushdown câble',
@@ -246,7 +246,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Remonter de façon contrôlée.',
     ],
     muscleGroups: ['TRICEPS'], equipment: ['CABLE_MACHINE'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=cable+tricep+pushdown+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=2-LAMcpzODU',
   },
   {
     id: 'ex-skull-crusher', name: 'Skull Crusher',
@@ -258,7 +258,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Gardez les coudes fixes et pointés vers le haut.',
     ],
     muscleGroups: ['TRICEPS'], equipment: ['BARBELL', 'BENCH'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=skull+crusher+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=d_KZxkY_0cM',
   },
 
   // ── QUADS ──────────────────────────────────────────────────────────────────
@@ -272,7 +272,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Remontez en poussant à travers les talons.',
     ],
     muscleGroups: ['QUADS', 'GLUTES', 'HAMSTRINGS'], equipment: ['BARBELL'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=squat+proper+form+tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=ultWZbUMPL8',
   },
   {
     id: 'ex-goblet-squat', name: 'Squat goblet',
@@ -284,7 +284,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Remonter en poussant à travers les talons.',
     ],
     muscleGroups: ['QUADS', 'GLUTES'], equipment: ['KETTLEBELL', 'DUMBBELL'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=goblet+squat+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=MeIiIdhvXT4',
   },
   {
     id: 'ex-lunges', name: 'Fentes avant',
@@ -296,7 +296,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Remontez et changez de jambe.',
     ],
     muscleGroups: ['QUADS', 'GLUTES'], equipment: ['BODYWEIGHT', 'DUMBBELL'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=lunges+proper+form+tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=QOVaHwm-Q6U',
   },
   {
     id: 'ex-bulgarian-split-squat', name: 'Bulgarian Split Squat',
@@ -307,7 +307,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Remonter en poussant à travers le talon avant.',
     ],
     muscleGroups: ['QUADS', 'GLUTES', 'HAMSTRINGS'], equipment: ['BODYWEIGHT', 'DUMBBELL', 'BENCH'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=bulgarian+split+squat+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=2C-uNgKwPLE',
   },
   {
     id: 'ex-leg-press', name: 'Presse à cuisses',
@@ -319,7 +319,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Pousser pour revenir sans verrouiller les genoux.',
     ],
     muscleGroups: ['QUADS', 'GLUTES'], equipment: ['SMITH_MACHINE'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=leg+press+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=IZxyjW7MPJQ',
   },
 
   // ── HAMSTRINGS ─────────────────────────────────────────────────────────────
@@ -333,7 +333,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Remontez en contractant les fessiers.',
     ],
     muscleGroups: ['HAMSTRINGS', 'GLUTES'], equipment: ['DUMBBELL', 'BARBELL'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=romanian+deadlift+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=JCXUYuzwNrM',
   },
   {
     id: 'ex-leg-curl', name: 'Leg Curl',
@@ -345,7 +345,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Contrôler la descente.',
     ],
     muscleGroups: ['HAMSTRINGS'], equipment: ['CARDIO_MACHINE'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=lying+leg+curl+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=1Tq3QdYUuHs',
   },
 
   // ── GLUTES ─────────────────────────────────────────────────────────────────
@@ -359,7 +359,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Maintenir brièvement en haut, redescendre.',
     ],
     muscleGroups: ['GLUTES', 'HAMSTRINGS'], equipment: ['BARBELL', 'BENCH'], isCompound: true,
-    videoUrl: 'https://www.youtube.com/results?search_query=hip+thrust+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=xDmFkJxPzeM',
   },
   {
     id: 'ex-glute-bridge', name: 'Pont fessier',
@@ -371,7 +371,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Redescendre lentement.',
     ],
     muscleGroups: ['GLUTES', 'HAMSTRINGS'], equipment: ['BODYWEIGHT'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=glute+bridge+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=OUgsJ8-Vi0E',
   },
 
   // ── CORE ───────────────────────────────────────────────────────────────────
@@ -385,7 +385,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Maintenez la position le temps requis.',
     ],
     muscleGroups: ['CORE'], equipment: ['BODYWEIGHT'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=plank+proper+form+tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=ASdvN_XEl_c',
   },
   {
     id: 'ex-hanging-knee-raise', name: 'Relevé de genoux suspendu',
@@ -396,7 +396,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Contrôlez la descente.',
     ],
     muscleGroups: ['CORE'], equipment: ['PULL_UP_BAR'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=hanging+knee+raise+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=hdng3Nm1x_E',
   },
   {
     id: 'ex-russian-twist', name: 'Russian Twist',
@@ -407,7 +407,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Tourner le buste d\'un côté à l\'autre de façon contrôlée.',
     ],
     muscleGroups: ['CORE'], equipment: ['BODYWEIGHT', 'DUMBBELL', 'KETTLEBELL'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=russian+twist+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=wkD8rjkodUI',
   },
   {
     id: 'ex-crunch', name: 'Crunchs',
@@ -418,7 +418,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Contrôlez la descente.',
     ],
     muscleGroups: ['CORE'], equipment: ['BODYWEIGHT'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=crunches+proper+form+tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=Xyd_fa5zoEU',
   },
 
   // ── CALVES ─────────────────────────────────────────────────────────────────
@@ -431,7 +431,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Descendez lentement sous l\'horizontale pour étirer.',
     ],
     muscleGroups: ['CALVES'], equipment: ['BODYWEIGHT', 'DUMBBELL', 'SMITH_MACHINE'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=calf+raise+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=gwLzBJYoWlI',
   },
   {
     id: 'ex-seated-calf-raise', name: 'Élévations mollets assis',
@@ -442,7 +442,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Descendre lentement.',
     ],
     muscleGroups: ['CALVES'], equipment: ['DUMBBELL', 'SMITH_MACHINE'], isCompound: false,
-    videoUrl: 'https://www.youtube.com/results?search_query=seated+calf+raise+tutorial+form',
+    videoUrl: 'https://www.youtube.com/watch?v=JbyjNymZOt0',
   },
 ]
 

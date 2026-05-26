@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
-import { hash } from 'bcryptjs'
+import { compare, hash } from 'bcryptjs'
 import { z } from 'zod'
 
 const accountUpdateSchema = z.object({
@@ -35,11 +35,32 @@ export async function PATCH(req: Request) {
   return NextResponse.json(updated)
 }
 
-export async function DELETE() {
+export async function DELETE(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-  await prisma.user.delete({ where: { id: session.user.id } })
+  let password: string | undefined
+  try {
+    const body = await req.json()
+    password = typeof body?.password === 'string' ? body.password : undefined
+  } catch { /* OAuth users may send no body */ }
 
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { password: true },
+  })
+  if (!user) return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 })
+
+  if (user.password) {
+    if (!password) {
+      return NextResponse.json({ error: 'Mot de passe requis pour confirmer la suppression.' }, { status: 422 })
+    }
+    const valid = await compare(password, user.password)
+    if (!valid) {
+      return NextResponse.json({ error: 'Mot de passe incorrect.' }, { status: 403 })
+    }
+  }
+
+  await prisma.user.delete({ where: { id: session.user.id } })
   return NextResponse.json({ success: true })
 }

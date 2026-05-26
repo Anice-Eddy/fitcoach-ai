@@ -7,7 +7,8 @@ import { useUserStore }         from '@/stores/userStore'
 import { PageWrapper }          from '@/components/layout/PageWrapper'
 import { toast }                from 'sonner'
 import { kgToLb, lbToKg, cmToFtIn, ftInToCm } from '@/utils/unit-conversions'
-import { Home, Dumbbell, Building2, TreePine, LogOut, Trash2, Save, User, X, Sparkles, ArrowRight, Scale, Target, CalendarDays } from 'lucide-react'
+import { Home, Dumbbell, Building2, TreePine, LogOut, Trash2, Save, User, Sparkles, ArrowRight, Scale, Target, CalendarDays } from 'lucide-react'
+import { DeleteAccountModal } from '@/components/ui/DeleteAccountModal'
 
 // ─── constantes (mirrors onboarding steps) ──────────────────────────────────
 
@@ -73,53 +74,6 @@ function Section({ title, children, className = '' }: { title: string; children:
   )
 }
 
-// ─── Delete confirmation modal ────────────────────────────────────────────────
-
-function DeleteModal({
-  email,
-  onConfirm,
-  onCancel,
-  deleting,
-}: {
-  email: string
-  onConfirm: () => void
-  onCancel: () => void
-  deleting: boolean
-}) {
-  const [input, setInput] = useState('')
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-zinc-900 border border-zinc-700 p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-white">Supprimer le compte</h3>
-          <button onClick={onCancel} className="text-zinc-500 hover:text-white transition-colors">
-            <X className="size-5" />
-          </button>
-        </div>
-        <p className="text-sm text-zinc-400">
-          Cette action est <span className="text-red-400 font-semibold">irréversible</span>. Toutes tes données seront supprimées.
-        </p>
-        <p className="text-xs text-zinc-500">
-          Tape ton adresse email pour confirmer :
-          <span className="text-zinc-300 font-medium ml-1">{email}</span>
-        </p>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={email}
-          className="w-full px-4 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-red-400 transition-colors"
-        />
-        <button
-          onClick={onConfirm}
-          disabled={input !== email || deleting}
-          className="w-full py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {deleting ? 'Suppression…' : 'Supprimer définitivement'}
-        </button>
-      </div>
-    </div>
-  )
-}
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
@@ -250,15 +204,22 @@ export default function SettingsPage() {
     }
   }
 
-  const handleDeleteAccount = async () => {
+  const handleDeleteAccount = async (password?: string) => {
     setDeleting(true)
     try {
-      const res = await fetch('/api/user/account', { method: 'DELETE' })
-      if (!res.ok) throw new Error()
+      const res = await fetch('/api/user/account', {
+        method:  'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ password }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? 'Erreur lors de la suppression')
+      }
       await signOut({ callbackUrl: '/' })
-    } catch {
-      toast.error('Erreur lors de la suppression')
+    } catch (e) {
       setDeleting(false)
+      throw e
     }
   }
 
@@ -267,8 +228,7 @@ export default function SettingsPage() {
   return (
     <PageWrapper>
       {showDel && (
-        <DeleteModal
-          email={session?.user?.email ?? ''}
+        <DeleteAccountModal
           onConfirm={handleDeleteAccount}
           onCancel={() => setShowDel(false)}
           deleting={deleting}

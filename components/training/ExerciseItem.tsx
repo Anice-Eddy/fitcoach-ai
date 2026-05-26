@@ -1,8 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, CheckCircle2, Circle, ExternalLink, RefreshCw, Youtube } from 'lucide-react'
+
+function extractYtId(url: string): string | null {
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+  return m?.[1] ?? null
+}
 import type { SessionExercise } from '@/types'
 import { useTrainingStore } from '@/stores/trainingStore'
 import { useUserStore } from '@/stores/userStore'
@@ -27,6 +32,7 @@ interface Props { exercise: SessionExercise; index: number }
 export function ExerciseItem({ exercise, index }: Props) {
   const [expanded, setExpanded] = useState(false)
   const [showAlternatives, setShowAlternatives] = useState(false)
+  const [ytImgError, setYtImgError] = useState(false)
   const [weight, setWeight]     = useState(exercise.weightKg ?? 0)
   const [weightInput, setWeightInput] = useState(String(exercise.weightKg ?? 0))
   const [reps, setReps]         = useState(exercise.reps)
@@ -55,6 +61,11 @@ export function ExerciseItem({ exercise, index }: Props) {
     const n = parseInt(val, 10)
     if (!isNaN(n) && n >= 1) setReps(n)
   }
+
+  const videoId = useMemo(
+    () => exercise.videoUrl ? extractYtId(exercise.videoUrl) : null,
+    [exercise.videoUrl],
+  )
 
   const alternatives = EXERCISE_DATABASE.filter((item) =>
     item.id !== exercise.id && item.muscleGroups.some((group) => exercise.muscleGroups.includes(group)),
@@ -167,14 +178,35 @@ export function ExerciseItem({ exercise, index }: Props) {
                   href={exercise.videoUrl}
                   target="_blank"
                   rel="noreferrer"
-                  aria-label={`Voir une vidéo explicative YouTube pour ${exercise.name}`}
-                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-left transition-colors hover:border-red-400/50 hover:bg-red-500/15"
+                  aria-label={`Voir tutoriel YouTube pour ${exercise.name}`}
+                  className="block relative rounded-xl overflow-hidden group/yt"
                 >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <Youtube className="size-4 shrink-0 text-red-400" />
-                    <span className="truncate text-sm font-medium text-white">Vidéo explicative YouTube</span>
-                  </span>
-                  <ExternalLink className="size-4 shrink-0 text-red-300" />
+                  {videoId && !ytImgError ? (
+                    <img
+                      src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+                      alt={`Tutoriel ${exercise.name}`}
+                      className="w-full h-36 object-cover"
+                      onError={() => setYtImgError(true)}
+                    />
+                  ) : (
+                    <div className="w-full h-36 bg-gradient-to-br from-zinc-800 to-zinc-900 flex flex-col items-center justify-center gap-2">
+                      <Youtube className="size-10 text-red-500" />
+                      <span className="text-xs text-zinc-400 text-center px-6 leading-relaxed">{exercise.name}</span>
+                    </div>
+                  )}
+                  {/* Play button overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover/yt:bg-black/35 transition-colors">
+                    <div className="bg-red-600 rounded-full p-3 shadow-xl group-hover/yt:scale-110 transition-transform">
+                      <svg className="size-5 text-white fill-white" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  {/* Bottom bar */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 py-2 flex items-center justify-between">
+                    <span className="text-xs text-white font-medium">Voir la technique</span>
+                    <ExternalLink className="size-3 text-zinc-400" />
+                  </div>
                 </a>
               )}
 

@@ -16,8 +16,18 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: 'Données invalides' }, { status: 422 })
 
   const { productId, source } = parsed.data
-  const product = await prisma.affiliateProduct.findUnique({ where: { id: productId } })
-  if (!product) return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 })
+
+  // Look up category from DB if product was seeded; fall back to static data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let category: any
+  const dbProduct = await prisma.affiliateProduct.findUnique({ where: { id: productId } })
+  if (dbProduct) {
+    category = dbProduct.category
+  } else {
+    const { AFFILIATE_PRODUCTS } = await import('@/lib/affiliates/products')
+    category = AFFILIATE_PRODUCTS.find((p) => p.id === productId)?.category
+    if (!category) return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 })
+  }
 
   // Hash de l'IP pour conformité RGPD (pas de stockage en clair)
   const ip      = req.headers.get('x-forwarded-for') ?? 'unknown'
@@ -27,7 +37,7 @@ export async function POST(req: Request) {
   await prisma.affiliateClick.create({
     data: {
       productId,
-      category:  product.category,
+      category,
       userId:    session?.user?.id ?? undefined,
       source:    source ?? undefined,
       ipHash,

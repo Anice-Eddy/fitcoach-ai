@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { AlertCircle, CalendarClock, CheckCircle2, Clock3, Filter, Lock, MessageSquareText, Pin, Plus, Search, Share2, Trash2, X } from 'lucide-react'
+import { AlertCircle, CalendarClock, CheckCircle2, Clock3, Filter, Lock, MessageSquareText, Pencil, Pin, Plus, Search, Share2, Trash2, X } from 'lucide-react'
 import { format, isBefore, isToday } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -168,14 +168,19 @@ export default function NotesPage() {
     }
   }
 
-  const updateNote = async (noteId: string, patch: Partial<CoachNote>) => {
-    if (!selectedMemberId) return
+  const updateNote = async (noteId: string, patch: Partial<CoachNote>): Promise<{ ok: boolean; error?: string }> => {
+    if (!selectedMemberId) return { ok: false }
     const res = await fetch('/api/coach/notes', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ noteId, ...patch }),
     })
-    if (res.ok) await fetchNotes(selectedMemberId)
+    if (res.ok) {
+      await fetchNotes(selectedMemberId)
+      return { ok: true }
+    }
+    const body = await res.json().catch(() => ({}))
+    return { ok: false, error: body.error }
   }
 
   const deleteNote = async (noteId: string) => {
@@ -435,9 +440,114 @@ function EmptyState({ title, description }: { title: string; description: string
   )
 }
 
-function NoteCard({ note, onPatch, onDelete }: { note: CoachNote; onPatch: (patch: Partial<CoachNote>) => void; onDelete: () => void }) {
+function NoteCard({
+  note, onPatch, onDelete,
+}: {
+  note: CoachNote
+  onPatch: (patch: Partial<CoachNote>) => Promise<{ ok: boolean; error?: string }>
+  onDelete: () => void
+}) {
   const followUp = formatFollowUp(note.followUpAt)
   const late = isLate(note.followUpAt)
+  const canEdit = note.status !== 'DONE'
+
+  const [editing, setEditing] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [editForm, setEditForm] = useState({
+    title: note.title,
+    content: note.content,
+    category: note.category ?? 'FEEDBACK',
+    priority: note.priority,
+    tags: note.tags.join(', '),
+    followUpAt: note.followUpAt ? note.followUpAt.slice(0, 10) : '',
+    isSharedWithMember: note.isSharedWithMember,
+  })
+
+  const openEdit = () => {
+    setEditForm({
+      title: note.title,
+      content: note.content,
+      category: note.category ?? 'FEEDBACK',
+      priority: note.priority,
+      tags: note.tags.join(', '),
+      followUpAt: note.followUpAt ? note.followUpAt.slice(0, 10) : '',
+      isSharedWithMember: note.isSharedWithMember,
+    })
+    setEditError(null)
+    setEditing(true)
+  }
+
+  const cancelEdit = () => { setEditing(false); setEditError(null) }
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    setEditError(null)
+    const result = await onPatch({
+      title: editForm.title,
+      content: editForm.content,
+      category: editForm.category,
+      priority: editForm.priority as NotePriority,
+      tags: editForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
+      followUpAt: editForm.followUpAt ? new Date(editForm.followUpAt).toISOString() : null,
+      isSharedWithMember: editForm.isSharedWithMember,
+    })
+    setIsSaving(false)
+    if (result.ok) {
+      setEditing(false)
+    } else {
+      setEditError(result.error ?? 'Erreur lors de la sauvegarde.')
+    }
+  }
+
+  if (editing) {
+    return (
+      <article className="rounded-2xl border border-[#C8F135]/30 bg-zinc-900 p-5">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <h3 className="text-sm font-semibold text-white">Modifier la note</h3>
+          <button type="button" onClick={cancelEdit} className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800 hover:text-white">
+            <X className="size-4" />
+          </button>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Field label="Titre">
+            <input value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} className="input" />
+          </Field>
+          <Field label="Catégorie">
+            <select value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} className="input">
+              {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          </Field>
+          <Field label="Priorité">
+            <select value={editForm.priority} onChange={(e) => setEditForm({ ...editForm, priority: e.target.value as NotePriority })} className="input">
+              <option value="LOW">Basse</option>
+              <option value="MEDIUM">Normale</option>
+              <option value="HIGH">Haute</option>
+            </select>
+          </Field>
+          <Field label="Date de suivi">
+            <input type="date" value={editForm.followUpAt} onChange={(e) => setEditForm({ ...editForm, followUpAt: e.target.value })} className="input" />
+          </Field>
+          <Field label="Tags" className="lg:col-span-2">
+            <input value={editForm.tags} onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })} placeholder="mobilité, squat, sommeil" className="input" />
+          </Field>
+          <Field label="Contenu" className="lg:col-span-2">
+            <textarea value={editForm.content} onChange={(e) => setEditForm({ ...editForm, content: e.target.value })} className="input min-h-36 resize-none" />
+          </Field>
+          <div className="flex flex-wrap items-center gap-3 lg:col-span-2">
+            <Toggle active={editForm.isSharedWithMember} label="Partager au membre" icon={<Share2 className="size-4" />} onClick={() => setEditForm({ ...editForm, isSharedWithMember: !editForm.isSharedWithMember })} />
+            {editError && <p className="text-xs text-red-400">{editError}</p>}
+            <button type="button" onClick={cancelEdit} className="ml-auto rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-400 hover:text-white transition-colors">
+              Annuler
+            </button>
+            <button type="button" onClick={handleSave} disabled={isSaving} className="rounded-xl bg-[#C8F135] px-5 py-2.5 text-sm font-bold text-zinc-950 hover:bg-[#d4f54d] disabled:opacity-50 transition-colors">
+              {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+            </button>
+          </div>
+        </div>
+      </article>
+    )
+  }
 
   return (
     <article className={`rounded-2xl border bg-zinc-900 p-5 transition-colors hover:border-zinc-700 ${
@@ -457,6 +567,11 @@ function NoteCard({ note, onPatch, onDelete }: { note: CoachNote; onPatch: (patc
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {canEdit && (
+            <button type="button" onClick={openEdit} className="rounded-lg bg-zinc-800 p-2 text-zinc-400 hover:text-[#C8F135]" aria-label="Modifier la note">
+              <Pencil className="size-4" />
+            </button>
+          )}
           <button type="button" onClick={() => onPatch({ isPinned: !note.isPinned })} className="rounded-lg bg-zinc-800 p-2 text-zinc-400 hover:text-[#C8F135]" aria-label="Épingler la note">
             <Pin className="size-4" />
           </button>
