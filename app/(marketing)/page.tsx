@@ -20,14 +20,14 @@ const TESTIMONIALS = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen overflow-x-hidden bg-zinc-950 text-white">
       {/* Nav */}
-      <nav className="flex items-center justify-between px-6 py-5 border-b border-zinc-800 max-w-6xl mx-auto">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 border-b border-zinc-800 px-4 py-5 sm:px-6">
         <Logo href="/" size="md" />
-        <div className="flex items-center gap-3">
-          <Link href="/auth/signin?callbackUrl=/coach/dashboard" className="text-sm px-4 py-2 rounded-xl border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-colors">Espace Coach</Link>
-          <Link href="/auth/signin" className="text-sm px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors">Connexion</Link>
-          <Link href="/onboarding" className="text-sm px-4 py-2 rounded-xl bg-[#C8F135] text-zinc-900 font-bold hover:bg-[#d4f54d] transition-colors">Essai gratuit</Link>
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
+          <Link href="/auth/signin?callbackUrl=/coach/dashboard" className="rounded-xl border border-zinc-700 px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-zinc-500 hover:text-white sm:text-sm">Espace Coach</Link>
+          <Link href="/auth/signin" className="rounded-xl bg-zinc-800 px-3 py-2 text-xs transition-colors hover:bg-zinc-700 sm:text-sm">Connexion</Link>
+          <Link href="/onboarding" className="rounded-xl bg-[#C8F135] px-3 py-2 text-xs font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] sm:text-sm">Essai gratuit</Link>
         </div>
       </nav>
 
@@ -36,7 +36,7 @@ export default function LandingPage() {
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 text-[#C8F135] text-sm font-medium mb-8">
           <Zap className="size-3.5" /> Propulsé par l&apos;intelligence artificielle
         </div>
-        <h1 className="text-5xl sm:text-6xl font-bold leading-tight mb-6">
+        <h1 className="text-4xl sm:text-6xl font-bold leading-tight mb-6">
           Votre coach fitness<br />
           <span className="text-[#C8F135]">personnalisé</span>, 24h/24
         </h1>

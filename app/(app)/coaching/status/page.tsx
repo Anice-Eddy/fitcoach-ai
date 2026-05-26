@@ -67,8 +67,20 @@ export default function CoachingStatusPage() {
   useEffect(() => {
     fetch('/api/user/appointments')
       .then(r => r.ok ? r.json() as Promise<Appointment[]> : [])
-      .then(data => { setAppointments(data); setLoading(false) })
-      .catch(() => setLoading(false))
+      .then(data => {
+        if (data.length === 0) {
+          const demo = sessionStorage.getItem('bodyops:demo-coach-appointment')
+          setAppointments(demo ? [JSON.parse(demo) as Appointment] : [])
+        } else {
+          setAppointments(data)
+        }
+        setLoading(false)
+      })
+      .catch(() => {
+        const demo = sessionStorage.getItem('bodyops:demo-coach-appointment')
+        setAppointments(demo ? [JSON.parse(demo) as Appointment] : [])
+        setLoading(false)
+      })
   }, [])
 
   const upcoming = appointments.filter(a => new Date(a.scheduledAt) >= new Date() && a.status !== 'CANCELLED')

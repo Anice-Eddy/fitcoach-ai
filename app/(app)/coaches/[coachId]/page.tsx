@@ -21,6 +21,19 @@ interface CoachData {
   }
 }
 
+const DEMO_COACH: CoachData = {
+  id: 'coach-1',
+  name: 'Sarah B.',
+  image: null,
+  coachProfile: {
+    id: 'demo-coach-profile',
+    bio: 'Coach certifiée en musculation, recomposition corporelle et accompagnement débutant.',
+    specialties: ['Musculation', 'Perte de poids', 'Mobilité'],
+    isVerified: true,
+    _count: { coachMembers: 24 },
+  },
+}
+
 const GOAL_LABEL: Record<string, string> = {
   WEIGHT_LOSS: 'Perte de poids', MUSCLE_GAIN: 'Prise de masse',
   MAINTENANCE: 'Maintien', ENDURANCE: 'Endurance',
@@ -54,15 +67,14 @@ export default function CoachBookingPage() {
   const params      = useParams<{ coachId: string }>()
   const coachId     = params?.coachId
   const { profile, setAccompanimentMode, setCoach } = useUserStore()
+  const days = useMemo(() => buildNextDays(14), [])
 
   const [coachData, setCoachData] = useState<CoachData | null>(null)
   const [loading,   setLoading]   = useState(true)
-  const [selectedDay,  setSelectedDay]  = useState<Date | null>(null)
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
+  const [selectedDay,  setSelectedDay]  = useState<Date | null>(() => days[0]?.date ?? null)
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(SLOTS[0] ?? null)
   const [msg,  setMsg]  = useState('')
   const [busy, setBusy] = useState(false)
-
-  const days = useMemo(() => buildNextDays(14), [])
 
   useEffect(() => {
     if (!coachId) {
@@ -70,9 +82,9 @@ export default function CoachBookingPage() {
       return
     }
     fetch(`/api/coaches/${coachId}`)
-      .then(r => r.ok ? r.json() as Promise<CoachData> : null)
+      .then(r => r.ok ? r.json() as Promise<CoachData> : (coachId === 'coach-1' ? DEMO_COACH : null))
       .then(data => { setCoachData(data); setLoading(false) })
-      .catch(() => setLoading(false))
+      .catch(() => { setCoachData(coachId === 'coach-1' ? DEMO_COACH : null); setLoading(false) })
   }, [coachId])
 
   const placeFromEquip = () => {
@@ -91,6 +103,27 @@ export default function CoachBookingPage() {
     const [h, m] = selectedSlot.split(':').map(Number)
     const scheduledAt = new Date(selectedDay)
     scheduledAt.setHours(h, m, 0, 0)
+
+    if (coachData.id === 'coach-1') {
+      const demoAppointment = {
+        id: 'demo-appointment',
+        title: 'Entretien découverte',
+        scheduledAt: scheduledAt.toISOString(),
+        duration: 30,
+        status: 'PENDING',
+        description: msg || null,
+        meetLink: null,
+        coachProfile: {
+          user: { id: 'coach-1', name: coachData.name, image: coachData.image },
+        },
+      }
+      sessionStorage.setItem('bodyops:demo-coach-appointment', JSON.stringify(demoAppointment))
+      setAccompanimentMode('COACH')
+      setCoach({ name: coachData.name ?? 'Coach', nextSession: `${selectedSlot}` })
+      toast.success('Demande envoyée avec succès !')
+      router.push('/coaching/status')
+      return
+    }
 
     try {
       const res = await fetch('/api/user/appointments', {

@@ -10,6 +10,7 @@ const PUBLIC_ROUTES = [
   '/pricing',
   '/onboarding',
   '/choose',
+  '/coaches',
   '/coaching/status',
 ]
 

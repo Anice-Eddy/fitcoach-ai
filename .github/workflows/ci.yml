@@ -104,8 +104,8 @@ jobs:
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/bodyops_test
           AUTH_SECRET: ci-secret-placeholder-32-chars-long
-          AUTH_URL: http://localhost:3000
-          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          AUTH_URL: http://127.0.0.1:3000
+          NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
           GOOGLE_CLIENT_ID: ci-google-client-id-placeholder
           GOOGLE_CLIENT_SECRET: ci-google-client-secret-placeholder
           STRIPE_SECRET_KEY: sk_test_placeholder
@@ -116,13 +116,13 @@ jobs:
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/bodyops_test
           AUTH_SECRET: ci-secret-placeholder-32-chars-long
-          AUTH_URL: http://localhost:3000
-          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          AUTH_URL: http://127.0.0.1:3000
+          NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
           GOOGLE_CLIENT_ID: ci-google-client-id-placeholder
           GOOGLE_CLIENT_SECRET: ci-google-client-secret-placeholder
           STRIPE_SECRET_KEY: sk_test_placeholder
           STRIPE_WEBHOOK_SECRET: whsec_placeholder
-          PLAYWRIGHT_BASE_URL: http://localhost:3000
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
 
   build:
     name: Build
@@ -149,8 +149,8 @@ jobs:
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/bodyops_test
           AUTH_SECRET: ci-secret-placeholder-32-chars-long
-          AUTH_URL: http://localhost:3000
-          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          AUTH_URL: http://127.0.0.1:3000
+          NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
           GOOGLE_CLIENT_ID: ci-google-client-id-placeholder
           GOOGLE_CLIENT_SECRET: ci-google-client-secret-placeholder
           STRIPE_SECRET_KEY: sk_test_placeholder
