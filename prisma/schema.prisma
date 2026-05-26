@@ -606,6 +606,7 @@ model CoachProfile {
   firstName       String?
   lastName        String?
   birthDate       DateTime?
+  avatarUrl       String?
   bio             String?
   specialties     String[]
   certifications  String[]
@@ -710,12 +711,20 @@ model CoachNote {
   title   String
   content String
   category String?  // PROGRESS, FEEDBACK, WORKOUT, NUTRITION, etc.
+  status   String   @default("OPEN")
+  priority String   @default("MEDIUM")
+  tags     String[]
+  followUpAt DateTime?
+  isPinned Boolean  @default(false)
+  isSharedWithMember Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([coachId])
   @@index([memberId])
+  @@index([status])
+  @@index([isPinned])
   @@map("coach_notes")
 }
 

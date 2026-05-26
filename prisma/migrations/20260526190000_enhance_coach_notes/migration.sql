@@ -1,0 +1,10 @@
+ALTER TABLE "coach_notes"
+  ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'OPEN',
+  ADD COLUMN IF NOT EXISTS "priority" TEXT NOT NULL DEFAULT 'MEDIUM',
+  ADD COLUMN IF NOT EXISTS "tags" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  ADD COLUMN IF NOT EXISTS "followUpAt" TIMESTAMP(3),
+  ADD COLUMN IF NOT EXISTS "isPinned" BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS "isSharedWithMember" BOOLEAN NOT NULL DEFAULT false;
+
+CREATE INDEX IF NOT EXISTS "coach_notes_status_idx" ON "coach_notes"("status");
+CREATE INDEX IF NOT EXISTS "coach_notes_isPinned_idx" ON "coach_notes"("isPinned");
