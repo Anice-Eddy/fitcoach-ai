@@ -8,9 +8,7 @@ import { getMealsForDay, sumMacros } from '@/lib/nutrition/macro-calculator'
 import { MealCard }            from '@/components/nutrition/MealCard'
 import { MacroRing }           from '@/components/ui/MacroRing'
 import { ProgressBar }         from '@/components/ui/ProgressBar'
-import { UpgradePrompt }       from '@/components/ui/UpgradePrompt'
 import { ListSkeleton }        from '@/components/ui/LoadingSkeleton'
-import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import type { NutritionPlan } from '@/types'
 import Link from 'next/link'
 import { ShoppingCart } from 'lucide-react'
@@ -19,7 +17,6 @@ const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
 
 export function NutritionClient() {
   const { profile }  = useUserStore()
-  const { isPro }    = useSubscriptionStore()
   const [plan, setPlan]       = useState<NutritionPlan | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedDay, setDay] = useState(() => {
@@ -29,7 +26,6 @@ export function NutritionClient() {
 
   useEffect(() => {
     if (!profile) { setLoading(false); return }
-    const maxDays = isPro() ? 7 : 3
     const generated = generateMealPlan({
       targetCalories:      profile.recommendedCalories ?? 2000,
       targetProteinG:      profile.recommendedProteinG ?? 150,
@@ -38,8 +34,6 @@ export function NutritionClient() {
       fitnessGoal:         profile.fitnessGoal,
       dietaryRestrictions: profile.dietaryRestrictions,
     })
-    // Limite à 3 jours en plan Free
-    generated.meals = generated.meals.filter((m) => m.dayOfWeek < maxDays)
     setPlan(generated)
     setLoading(false)
   }, [profile])
@@ -48,18 +42,10 @@ export function NutritionClient() {
 
   const todayMeals = plan ? getMealsForDay(plan.meals, selectedDay) : []
   const todayTotals = sumMacros(todayMeals)
-  const availableDays = isPro() ? 7 : 3
+  const availableDays = 7
 
   return (
     <div className="space-y-6">
-      {/* Upgrade si plan Free */}
-      {!isPro() && (
-        <UpgradePrompt
-          feature="Plan nutritionnel 7 jours + liste de courses"
-          description="Le plan gratuit inclut 3 jours. Passez à Pro pour 7 jours complets et la liste de courses automatique."
-        />
-      )}
-
       {/* Résumé macros du jour */}
       {plan && (
         <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
@@ -96,11 +82,6 @@ export function NutritionClient() {
               selectedDay === i ? 'bg-[#C8F135] text-zinc-900' : 'bg-zinc-800 text-zinc-400 hover:text-white'
             }`}
           >{day}</button>
-        ))}
-        {!isPro() && DAYS.slice(3).map((day, i) => (
-          <button key={`locked-${i}`} disabled
-            className="flex-1 min-w-[44px] py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-700 cursor-not-allowed border border-zinc-800"
-          >🔒</button>
         ))}
       </div>
 

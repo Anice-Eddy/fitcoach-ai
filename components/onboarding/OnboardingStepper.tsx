@@ -70,7 +70,7 @@ export function OnboardingStepper() {
       setProfile(profile)
       await storage.clearOnboardingProgress()
       toast.success('Profil créé ! Bienvenue sur FitCoach AI')
-      router.push('/dashboard')
+      router.push('/choose')
     } catch {
       toast.error('Erreur lors de la sauvegarde. Réessaie.')
     } finally {

@@ -7,14 +7,11 @@ import { generateProgram } from '@/lib/training/generate-program'
 import { WorkoutCard }     from '@/components/training/WorkoutCard'
 import { EmptyState }      from '@/components/ui/EmptyState'
 import { ListSkeleton }    from '@/components/ui/LoadingSkeleton'
-import { UpgradePrompt }   from '@/components/ui/UpgradePrompt'
-import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import type { WorkoutProgram } from '@/types'
 import { Dumbbell, RefreshCw } from 'lucide-react'
 
 export function TrainingClient() {
   const { profile }  = useUserStore()
-  const { isPro }    = useSubscriptionStore()
   const [program, setProgram]   = useState<WorkoutProgram | null>(null)
   const [loading, setLoading]   = useState(true)
 
@@ -63,15 +60,6 @@ export function TrainingClient() {
             <div className="h-full bg-[#C8F135] rounded-full" style={{ width: `${(program.currentWeek / program.weeksTotal) * 100}%` }} />
           </div>
         </div>
-      )}
-
-      {/* Limite plan Free */}
-      {!isPro() && (program?.sessions?.length ?? 0) > 1 && (
-        <UpgradePrompt
-          feature="Programmes illimités"
-          description="Le plan gratuit inclut 1 programme. Passez à Pro pour des programmes illimités et la surcharge progressive automatique."
-          compact
-        />
       )}
 
       {/* Séances */}

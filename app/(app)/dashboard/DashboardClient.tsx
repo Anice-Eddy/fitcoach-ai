@@ -3,13 +3,11 @@
 
 import { useEffect, useState } from 'react'
 import { useUserStore } from '@/stores/userStore'
-import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { LocalStorageAdapter } from '@/lib/storage/LocalStorageAdapter'
 import { MetricsGrid }      from '@/components/dashboard/MetricsGrid'
 import { WeightChart }      from '@/components/dashboard/WeightChart'
 import { NutritionSummary } from '@/components/dashboard/NutritionSummary'
 import { QuickActions }     from '@/components/dashboard/QuickActions'
-import { UpgradePrompt }    from '@/components/ui/UpgradePrompt'
 import { MacroRing }        from '@/components/ui/MacroRing'
 import Link from 'next/link'
 import { Dumbbell, ArrowRight } from 'lucide-react'
@@ -22,7 +20,6 @@ const MOCK_WEIGHT_DATA = Array.from({ length: 30 }, (_, i) => ({
 
 export function DashboardClient() {
   const { profile }  = useUserStore()
-  const { plan }     = useSubscriptionStore()
   const [loading, setLoading]     = useState(true)
   const [lastWeight, setLastWeight] = useState<number | null>(null)
 
@@ -48,14 +45,6 @@ export function DashboardClient() {
           {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
       </div>
-
-      {/* Bannière upgrade si plan Free */}
-      {plan === 'FREE' && (
-        <UpgradePrompt
-          feature="Synchronisation cloud + Export PDF"
-          description="Passez à Pro pour sauvegarder vos données sur tous vos appareils et exporter vos programmes en PDF."
-        />
-      )}
 
       {/* Métriques */}
       <MetricsGrid profile={profile} lastWeight={lastWeight} streak={streak} isLoading={loading} />

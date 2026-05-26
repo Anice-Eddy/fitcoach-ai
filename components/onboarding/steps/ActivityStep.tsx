@@ -73,9 +73,15 @@ export function ActivityStep({ defaultValues, onNext, onBack }: Props) {
   })
 
   const selectPlace = (place: typeof TRAINING_PLACES[number]) => {
-    setPlaceId(place.id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setValue('availableEquipment', place.equipment as any)
+    if (placeId === place.id) {
+      setPlaceId('')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setValue('availableEquipment', [] as any)
+    } else {
+      setPlaceId(place.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setValue('availableEquipment', place.equipment as any)
+    }
   }
 
   return (
@@ -125,7 +131,7 @@ export function ActivityStep({ defaultValues, onNext, onBack }: Props) {
             <button
               key={opt.value}
               type="button"
-              onClick={() => setValue('activityLevel', opt.value as ActivityData['activityLevel'])}
+              onClick={() => setValue('activityLevel', activity === opt.value ? (undefined as unknown as ActivityData['activityLevel']) : opt.value as ActivityData['activityLevel'])}
               className={`w-full flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${
                 activity === opt.value
                   ? 'border-[#C8F135] bg-[#C8F135]/10'

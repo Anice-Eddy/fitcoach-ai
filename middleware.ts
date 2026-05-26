@@ -4,7 +4,6 @@ import type { NextAuthRequest } from 'next-auth'
 
 const PUBLIC_ROUTES = [
   '/',
-  '/pricing',
   '/auth/signin',
   '/auth/register',
   '/auth/error',

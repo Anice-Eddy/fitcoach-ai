@@ -11,8 +11,6 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
-import { PlanBadge } from '@/components/ui/PlanBadge'
-
 const NAV_ITEMS = [
   { href: '/dashboard',  label: 'Dashboard',   icon: LayoutDashboard },
   { href: '/training',   label: 'Entraînement', icon: Dumbbell },
@@ -80,9 +78,8 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Plan badge */}
         <div className="px-4 py-4 border-t border-zinc-800">
-          <PlanBadge />
+          <p className="text-xs text-zinc-600 text-center">FitCoach AI · v1.0</p>
         </div>
       </motion.aside>
     </>

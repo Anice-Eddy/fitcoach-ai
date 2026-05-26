@@ -53,7 +53,7 @@ export function IdentityStep({ defaultValues, onNext, onBack }: Props) {
             <button
               key={opt.value}
               type="button"
-              onClick={() => setValue('gender', opt.value as IdentityData['gender'])}
+              onClick={() => setValue('gender', gender === opt.value ? (undefined as unknown as IdentityData['gender']) : opt.value as IdentityData['gender'])}
               className={`py-3 rounded-xl border text-sm font-medium transition-all ${
                 gender === opt.value
                   ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]'

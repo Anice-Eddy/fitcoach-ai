@@ -28,7 +28,6 @@ export default function LandingPage() {
           <span className="font-bold text-lg">FitCoach<span className="text-[#C8F135]">AI</span></span>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/pricing" className="text-sm text-zinc-400 hover:text-white">Tarifs</Link>
           <Link href="/auth/signin" className="text-sm px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors">Connexion</Link>
           <Link href="/onboarding" className="text-sm px-4 py-2 rounded-xl bg-[#C8F135] text-zinc-900 font-bold hover:bg-[#d4f54d] transition-colors">Essai gratuit</Link>
         </div>
@@ -54,19 +53,13 @@ export default function LandingPage() {
           >
             Commencer gratuitement <ArrowRight className="size-5" />
           </Link>
-          <Link
-            href="/pricing"
-            className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-zinc-800 text-white font-medium text-lg hover:bg-zinc-700 transition-colors"
-          >
-            Voir les tarifs
-          </Link>
         </div>
         <p className="text-sm text-zinc-500 mt-4">
           <Check className="inline size-3.5 text-[#C8F135] mr-1" />Aucune CB requise
           <span className="mx-3">·</span>
-          <Check className="inline size-3.5 text-[#C8F135] mr-1" />7 jours d&apos;essai Pro gratuit
+          <Check className="inline size-3.5 text-[#C8F135] mr-1" />Gratuit pour commencer
           <span className="mx-3">·</span>
-          <Check className="inline size-3.5 text-[#C8F135] mr-1" />Annulation à tout moment
+          <Check className="inline size-3.5 text-[#C8F135] mr-1" />Coaching IA ou humain
         </p>
       </section>
 
@@ -121,7 +114,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-zinc-800 px-6 py-8 text-center text-sm text-zinc-500">
-        © 2025 FitCoachAI · <Link href="/pricing" className="hover:text-zinc-300">Tarifs</Link> · <a href="mailto:hello@fitcoachai.app" className="hover:text-zinc-300">Contact</a>
+        © 2025 FitCoachAI · <a href="mailto:hello@fitcoachai.app" className="hover:text-zinc-300">Contact</a>
       </footer>
     </div>
   )

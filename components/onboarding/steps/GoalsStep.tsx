@@ -44,7 +44,7 @@ export function GoalsStep({ defaultValues, onNext, onBack }: Props) {
         <div className="grid grid-cols-2 gap-2">
           {GOAL_OPTIONS.map((opt) => (
             <button key={opt.value} type="button"
-              onClick={() => setValue('fitnessGoal', opt.value as GoalsData['fitnessGoal'])}
+              onClick={() => setValue('fitnessGoal', goal === opt.value ? (undefined as unknown as GoalsData['fitnessGoal']) : opt.value as GoalsData['fitnessGoal'])}
               className={`p-3 rounded-xl border text-left transition-all ${
                 goal === opt.value
                   ? 'border-[#C8F135] bg-[#C8F135]/10'
@@ -78,7 +78,7 @@ export function GoalsStep({ defaultValues, onNext, onBack }: Props) {
         <div className="grid grid-cols-2 gap-2">
           {LEVEL_OPTIONS.map((opt) => (
             <button key={opt.value} type="button"
-              onClick={() => setValue('fitnessLevel', opt.value as GoalsData['fitnessLevel'])}
+              onClick={() => setValue('fitnessLevel', level === opt.value ? (undefined as unknown as GoalsData['fitnessLevel']) : opt.value as GoalsData['fitnessLevel'])}
               className={`p-3 rounded-xl border text-left transition-all ${
                 level === opt.value
                   ? 'border-[#C8F135] bg-[#C8F135]/10'

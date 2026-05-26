@@ -3,9 +3,7 @@
 import { useState, useRef } from 'react'
 import { Header }        from '@/components/layout/Header'
 import { PageWrapper }   from '@/components/layout/PageWrapper'
-import { UpgradePrompt } from '@/components/ui/UpgradePrompt'
 import { useUserStore }  from '@/stores/userStore'
-import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { exportProfilePDF } from '@/lib/exports/pdf-generator'
 import { buildJsonExport, downloadJson } from '@/lib/exports/json-exporter'
 import { validateImport, readJsonFile }  from '@/lib/exports/json-importer'
@@ -15,7 +13,6 @@ import { Download, Upload, FileJson, FileText, AlertCircle } from 'lucide-react'
 
 export default function ExportsPage() {
   const { profile, setProfile } = useUserStore()
-  const { isPro }    = useSubscriptionStore()
   const fileRef      = useRef<HTMLInputElement>(null)
   const [loading, setLoading]   = useState<string | null>(null)
   const [preview, setPreview]   = useState<unknown>(null)
@@ -83,16 +80,11 @@ export default function ExportsPage() {
       <Header title="Exports" />
       <PageWrapper>
         <div className="space-y-6">
-          {!isPro() && (
-            <UpgradePrompt feature="Export PDF illimité" description="L'export PDF est réservé au plan Pro. L'export JSON reste disponible gratuitement." />
-          )}
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <ExportCard
               icon={FileText} id="pdf" title="Export PDF — Profil"
               desc="Profil, métriques, IMC, TDEE, macros"
               action={handleExportPDF}
-              disabled={!isPro()}
             />
             <ExportCard
               icon={FileJson} id="json" title="Export JSON — Toutes données"

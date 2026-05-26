@@ -2,19 +2,14 @@
 // Carte d'intégration — statut connexion + bouton connect/disconnect
 
 import Image from 'next/image'
-import { Plug, Unplug, Lock, Clock } from 'lucide-react'
+import { Plug, Unplug, Clock } from 'lucide-react'
 import type { IntegrationStatus } from '@/types'
-import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { toast } from 'sonner'
 
 interface Props { integration: IntegrationStatus }
 
 export function IntegrationCard({ integration }: Props) {
-  const { isPro } = useSubscriptionStore()
-  const canUse    = isPro()
-
   const handleConnect = () => {
-    if (!canUse) { toast.info('Disponible avec le plan Pro'); return }
     toast.info(`${integration.label} — disponible prochainement`)
   }
 
@@ -46,15 +41,13 @@ export function IntegrationCard({ integration }: Props) {
       <button
         onClick={handleConnect}
         className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-          !canUse
-            ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-            : integration.isConnected
+          integration.isConnected
             ? 'bg-zinc-800 text-zinc-300 hover:bg-red-500/10 hover:text-red-400'
             : 'bg-zinc-800 text-white hover:bg-zinc-700'
         }`}
       >
-        {!canUse ? <Lock className="size-3.5" /> : integration.isConnected ? <Unplug className="size-3.5" /> : <Plug className="size-3.5" />}
-        {!canUse ? 'Pro requis' : integration.isConnected ? 'Déconnecter' : 'Connecter'}
+        {integration.isConnected ? <Unplug className="size-3.5" /> : <Plug className="size-3.5" />}
+        {integration.isConnected ? 'Déconnecter' : 'Connecter'}
       </button>
     </div>
   )
