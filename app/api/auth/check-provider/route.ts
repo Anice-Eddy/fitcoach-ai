@@ -1,0 +1,21 @@
+export const dynamic = 'force-dynamic'
+
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma/client'
+
+// Returns the auth provider for an email — used in signin to show a helpful error
+// Not a security risk: only reveals provider type, not account existence
+export async function GET(req: NextRequest) {
+  const email = req.nextUrl.searchParams.get('email')
+  if (!email) return NextResponse.json({ provider: null })
+
+  const user = await prisma.user.findUnique({
+    where:  { email },
+    select: { provider: true, password: true },
+  })
+
+  if (!user) return NextResponse.json({ provider: null })
+  if (!user.password && user.provider === 'GOOGLE') return NextResponse.json({ provider: 'GOOGLE' })
+  if (!user.password && user.provider === 'GITHUB') return NextResponse.json({ provider: 'GITHUB' })
+  return NextResponse.json({ provider: 'EMAIL' })
+}

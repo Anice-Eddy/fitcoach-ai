@@ -55,13 +55,19 @@ export async function POST(req: Request) {
   }
 
   const existing = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true },
+    where:  { email },
+    select: { id: true, password: true, provider: true, coachProfile: { select: { id: true } } },
   })
   if (existing) {
-    return NextResponse.json({
-      error: { email: ['Cet email est déjà utilisé. Connectez-vous pour accéder à votre compte.'] },
-    }, { status: 409 })
+    if (!existing.password && existing.provider === 'GOOGLE') {
+      return NextResponse.json({
+        error: { email: ['Cet email est déjà associé à un compte Google. Connectez-vous via Google — les deux méthodes de connexion seront liées automatiquement.'] },
+      }, { status: 409 })
+    }
+    const msg = existing.coachProfile
+      ? 'Un compte avec cet email existe déjà. Connectez-vous pour accéder à votre espace coach ou membre.'
+      : 'Cet email est déjà utilisé. Connectez-vous pour accéder à votre compte.'
+    return NextResponse.json({ error: { email: [msg] } }, { status: 409 })
   }
 
   const hashed = await hash(password, 12)

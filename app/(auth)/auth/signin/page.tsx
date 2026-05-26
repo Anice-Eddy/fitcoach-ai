@@ -48,7 +48,14 @@ function SignInForm() {
     if (result?.ok) {
       router.push(mode === 'coach' ? '/coach/dashboard' : '/dashboard')
     } else {
-      setError('Email ou mot de passe incorrect')
+      // Check if this account uses Google/social login (no password)
+      const check = await fetch(`/api/auth/check-provider?email=${encodeURIComponent(form.email)}`)
+        .then((r) => r.json()).catch(() => ({ provider: null }))
+      if (check.provider === 'GOOGLE') {
+        setError('Ce compte utilise la connexion Google. Cliquez sur "Continuer avec Google" ci-dessus.')
+      } else {
+        setError('Email ou mot de passe incorrect.')
+      }
       setLoading(false)
     }
   }

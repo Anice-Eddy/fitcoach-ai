@@ -50,19 +50,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.userId = user.id
         const dbUser = await prisma.user.findUnique({
           where:  { id: user.id },
-          select: { subscriptionPlan: true, subscriptionStatus: true },
+          select: { subscriptionPlan: true, subscriptionStatus: true, coachProfile: { select: { id: true } } },
         })
-        token.plan   = dbUser?.subscriptionPlan   ?? 'FREE'
-        token.status = dbUser?.subscriptionStatus ?? 'INACTIVE'
+        token.plan    = dbUser?.subscriptionPlan   ?? 'FREE'
+        token.status  = dbUser?.subscriptionStatus ?? 'INACTIVE'
+        token.isCoach = !!dbUser?.coachProfile
       }
       return token
     },
 
     async session({ session, token }) {
       if (session.user) {
-        session.user.id     = (token.userId ?? '') as string
-        session.user.plan   = (token.plan   ?? 'FREE') as string
-        session.user.status = (token.status ?? 'INACTIVE') as string
+        session.user.id      = (token.userId  ?? '') as string
+        session.user.plan    = (token.plan    ?? 'FREE') as string
+        session.user.status  = (token.status  ?? 'INACTIVE') as string
+        session.user.isCoach = (token.isCoach ?? false) as boolean
       }
       return session
     },
