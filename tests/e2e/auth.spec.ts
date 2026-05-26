@@ -29,6 +29,37 @@ test.describe('Page de connexion', () => {
     await expect(page.getByText("Un utilisateur existe déjà avec cette adresse email. Connectez-vous avec la méthode utilisée à l'inscription pour accéder à votre espace coach.")).toBeVisible()
   })
 
+  test("affiche une erreur email introuvable sans bloquer le bouton", async ({ page }) => {
+    await page.route('**/api/auth/check-provider?email=missing%40example.com', async (route) => {
+      await route.fulfill({ json: { provider: null } })
+    })
+
+    await page.getByPlaceholder('jean@example.com').fill('missing@example.com')
+    await page.getByPlaceholder('••••••••').fill('password123')
+    const submit = page.getByRole('button', { name: /se connecter/i })
+    await submit.click()
+
+    await expect(page.getByText("Aucun compte n'existe avec cette adresse email.")).toBeVisible()
+    await expect(submit).toBeEnabled()
+  })
+
+  test('affiche une erreur mot de passe incorrect sans bloquer le bouton', async ({ page }) => {
+    await page.route('**/api/auth/check-provider?email=member%40example.com', async (route) => {
+      await route.fulfill({ json: { provider: 'EMAIL' } })
+    })
+    await page.route('**/api/auth/validate-credentials', async (route) => {
+      await route.fulfill({ status: 401, json: { valid: false, reason: 'BAD_PASSWORD' } })
+    })
+
+    await page.getByPlaceholder('jean@example.com').fill('member@example.com')
+    await page.getByPlaceholder('••••••••').fill('wrong-password')
+    const submit = page.getByRole('button', { name: /se connecter/i })
+    await submit.click()
+
+    await expect(page.getByText('Mot de passe incorrect.')).toBeVisible()
+    await expect(submit).toBeEnabled()
+  })
+
   test('redirige vers la landing si on clique sur retour', async ({ page }) => {
     await page.waitForLoadState('networkidle')
     const backLink = page.locator('a[href="/"], a:has-text("Retour"), a:has-text("Accueil")')

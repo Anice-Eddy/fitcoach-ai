@@ -36,12 +36,14 @@ function SignInForm() {
     }
   }, [authError])
 
-  const oauthErrorMessage = authError === 'OAuthAccountNotLinked'
+  const urlError = authError === 'OAuthAccountNotLinked'
     ? mode === 'coach'
       ? "Un utilisateur existe déjà avec cette adresse email. Connectez-vous avec la méthode utilisée à l'inscription pour accéder à votre espace coach."
       : "Un utilisateur existe déjà avec cette adresse email. Connectez-vous avec la méthode utilisée à l'inscription."
-    : ''
-  const displayedError = error || oauthErrorMessage
+    : authError === 'CredentialsSignin'
+      ? 'Email ou mot de passe incorrect.'
+      : ''
+  const displayedError = error || urlError
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
@@ -53,27 +55,51 @@ function SignInForm() {
     setLoading(true)
     setError('')
 
-    const provider = await fetch(`/api/auth/check-provider?email=${encodeURIComponent(form.email)}`)
-      .then((r) => r.json())
-      .catch(() => ({ provider: null }))
+    try {
+      const provider = await fetch(`/api/auth/check-provider?email=${encodeURIComponent(form.email)}`)
+        .then((r) => r.json())
+        .catch(() => ({ provider: null }))
 
-    if (provider.provider === 'GOOGLE') {
-      setError('Ce compte utilise la connexion Google. Cliquez sur "Continuer avec Google" ci-dessus.')
-      setLoading(false)
-      return
-    }
+      if (!provider.provider) {
+        setError("Aucun compte n'existe avec cette adresse email.")
+        return
+      }
 
-    const result = await signIn('credentials', {
-      email:    form.email,
-      password: form.password,
-      redirect: false,
-    })
+      if (provider.provider === 'GOOGLE') {
+        setError('Ce compte utilise la connexion Google. Cliquez sur "Continuer avec Google" ci-dessus.')
+        return
+      }
 
-    if (result?.ok) {
-      sessionStorage.removeItem('bodyops:last-auth-context')
-      router.push(mode === 'coach' ? '/auth/coach/complete' : '/dashboard')
-    } else {
-      setError('Email ou mot de passe incorrect.')
+      const validation = await fetch('/api/auth/validate-credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+        .then((r) => r.json())
+        .catch(() => ({ valid: false, reason: 'SERVER_ERROR' }))
+
+      if (!validation.valid) {
+        setError(validation.reason === 'EMAIL_NOT_FOUND'
+          ? "Aucun compte n'existe avec cette adresse email."
+          : 'Mot de passe incorrect.')
+        return
+      }
+
+      const result = await signIn('credentials', {
+        email:    form.email,
+        password: form.password,
+        redirect: false,
+      })
+
+      if (result?.ok) {
+        sessionStorage.removeItem('bodyops:last-auth-context')
+        router.push(mode === 'coach' ? '/auth/coach/complete' : '/dashboard')
+      } else {
+        setError('Mot de passe incorrect.')
+      }
+    } catch {
+      setError('Une erreur est survenue. Veuillez réessayer.')
+    } finally {
       setLoading(false)
     }
   }
