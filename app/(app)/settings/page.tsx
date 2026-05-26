@@ -7,7 +7,7 @@ import { useUserStore }         from '@/stores/userStore'
 import { PageWrapper }          from '@/components/layout/PageWrapper'
 import { toast }                from 'sonner'
 import { kgToLb, lbToKg, cmToFtIn, ftInToCm } from '@/utils/unit-conversions'
-import { Home, Dumbbell, Building2, TreePine, LogOut, Trash2, Save, User, X, Sparkles, ArrowRight } from 'lucide-react'
+import { Home, Dumbbell, Building2, TreePine, LogOut, Trash2, Save, User, X, Sparkles, ArrowRight, Scale, Target, CalendarDays } from 'lucide-react'
 
 // ─── constantes (mirrors onboarding steps) ──────────────────────────────────
 
@@ -62,9 +62,9 @@ function placeIdFromEquipment(eq?: string[]): string {
 
 // ─── Section wrapper ─────────────────────────────────────────────────────────
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({ title, children, className = '' }: { title: string; children: ReactNode; className?: string }) {
   return (
-    <section className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
+    <section className={`rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden ${className}`}>
       <div className="px-5 py-4 border-b border-zinc-800">
         <h2 className="text-sm font-semibold text-zinc-300">{title}</h2>
       </div>
@@ -275,84 +275,114 @@ export default function SettingsPage() {
         />
       )}
 
-      <div className="max-w-lg space-y-6 pb-10">
+      <div className="mx-auto w-full max-w-7xl space-y-6 pb-10">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">Paramètres</h1>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#C8F135]">Espace personnel</p>
+            <h1 className="mt-1 text-3xl font-bold text-white">Paramètres</h1>
+            <p className="mt-2 max-w-2xl text-sm text-zinc-400">
+              Ajuste ton profil, tes mensurations et tes préférences pour garder ton coaching précis.
+            </p>
+          </div>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C8F135] text-zinc-900 font-bold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 py-3 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] disabled:opacity-60 sm:w-auto"
           >
             <Save className="size-4" />
             {saving ? 'Sauvegarde…' : 'Enregistrer'}
           </button>
         </div>
 
-        {/* Compte */}
-        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
-          <div className="px-5 py-4 border-b border-zinc-800">
-            <h2 className="text-sm font-semibold text-zinc-300">Compte</h2>
-          </div>
-          <div className="p-5 flex items-center gap-4">
-            <div className="size-12 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
-              {session?.user?.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={session.user.image} alt="" className="size-12 rounded-full object-cover" />
-              ) : (
-                <User className="size-6 text-zinc-400" />
-              )}
-            </div>
-            <div>
-              <div className="font-medium text-white">{session?.user?.name ?? profile?.firstName ?? 'Utilisateur'}</div>
-              <div className="text-sm text-zinc-400">{session?.user?.email ?? '—'}</div>
-            </div>
-          </div>
-        </section>
+        <div className="grid gap-6 lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)] lg:items-start">
+          <aside className="space-y-6 lg:sticky lg:top-6">
+            {/* Compte */}
+            <section className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
+              <div className="px-5 py-4 border-b border-zinc-800">
+                <h2 className="text-sm font-semibold text-zinc-300">Compte</h2>
+              </div>
+              <div className="p-5 space-y-5">
+                <div className="flex items-center gap-4">
+                  <div className="size-14 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 ring-1 ring-zinc-700">
+                    {session?.user?.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={session.user.image} alt="" className="size-14 rounded-full object-cover" />
+                    ) : (
+                      <User className="size-7 text-zinc-400" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate font-medium text-white">{session?.user?.name ?? profile?.firstName ?? 'Utilisateur'}</div>
+                    <div className="truncate text-sm text-zinc-400">{session?.user?.email ?? '—'}</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3">
+                    <Scale className="mb-2 size-4 text-[#C8F135]" />
+                    <p className="text-[11px] text-zinc-500">Poids</p>
+                    <p className="truncate text-sm font-semibold text-white">{profile?.weightKg ? `${profile.weightKg} kg` : '—'}</p>
+                  </div>
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3">
+                    <Target className="mb-2 size-4 text-[#C8F135]" />
+                    <p className="text-[11px] text-zinc-500">Objectif</p>
+                    <p className="truncate text-sm font-semibold text-white">{profile?.targetWeightKg ? `${profile.targetWeightKg} kg` : '—'}</p>
+                  </div>
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3">
+                    <CalendarDays className="mb-2 size-4 text-[#C8F135]" />
+                    <p className="text-[11px] text-zinc-500">Sem.</p>
+                    <p className="truncate text-sm font-semibold text-white">{profile?.trainingDaysPerWeek ?? trainingDays} j</p>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-        {/* Mon accompagnement */}
-        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
-          <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-zinc-300">Mon accompagnement</h2>
-            <span className="rounded-full bg-[#C8F135]/10 px-2.5 py-1 text-xs font-medium text-[#C8F135]">
-              {accompanimentMode === 'COACH' ? 'Coach réel' : 'IA'}
-            </span>
-          </div>
-          <div className="p-5 space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#C8F135]/10">
-                <Sparkles className="size-5 text-[#C8F135]" />
+            {/* Mon accompagnement */}
+            <section className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
+              <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-zinc-300">Mon accompagnement</h2>
+                <span className="rounded-full bg-[#C8F135]/10 px-2.5 py-1 text-xs font-medium text-[#C8F135]">
+                  {accompanimentMode === 'COACH' ? 'Coach réel' : 'IA'}
+                </span>
               </div>
-              <div>
-                {accompanimentMode === 'COACH' ? (
-                  <>
-                    <p className="text-sm font-medium text-white">{coachName ?? 'Coach à confirmer'}</p>
-                    <p className="text-xs text-zinc-500">Prochaine séance : {nextCoachSession ?? 'à planifier'}</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-medium text-white">Programme IA en cours</p>
-                    <p className="text-xs text-zinc-500">{profile?.fitnessGoal ?? 'Objectif à finaliser'}</p>
-                  </>
-                )}
+              <div className="p-5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex size-10 items-center justify-center rounded-xl bg-[#C8F135]/10">
+                    <Sparkles className="size-5 text-[#C8F135]" />
+                  </div>
+                  <div>
+                    {accompanimentMode === 'COACH' ? (
+                      <>
+                        <p className="text-sm font-medium text-white">{coachName ?? 'Coach à confirmer'}</p>
+                        <p className="text-xs text-zinc-500">Prochaine séance : {nextCoachSession ?? 'à planifier'}</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium text-white">Programme IA en cours</p>
+                        <p className="text-xs text-zinc-500">{profile?.fitnessGoal ?? 'Objectif à finaliser'}</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-3">
+                  <Link
+                    href="/choose"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 py-2.5 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d]"
+                  >
+                    Changer de mode <ArrowRight className="size-4" />
+                  </Link>
+                  <Link
+                    href={accompanimentMode === 'COACH' ? '/choose' : '/coaches/coach-1'}
+                    className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white"
+                  >
+                    {accompanimentMode === 'COACH' ? 'Changer de coach' : 'Passer à un coach réel'}
+                  </Link>
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Link
-                href="/choose"
-                className="flex items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 py-2.5 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d]"
-              >
-                Changer de mode <ArrowRight className="size-4" />
-              </Link>
-              <Link
-                href={accompanimentMode === 'COACH' ? '/choose' : '/coaches/coach-1'}
-                className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white"
-              >
-                {accompanimentMode === 'COACH' ? 'Changer de coach' : 'Passer à un coach réel'}
-              </Link>
-            </div>
-          </div>
-        </section>
+            </section>
+          </aside>
+
+          <div className="grid min-w-0 gap-6 xl:grid-cols-2">
 
         {/* Unités */}
         <Section title="Unités de mesure">
@@ -516,7 +546,7 @@ export default function SettingsPage() {
         </Section>
 
         {/* Entraînement */}
-        <Section title="Entraînement">
+        <Section title="Entraînement" className="xl:col-span-2">
           <div>
             <p className="text-xs text-zinc-500 mb-2">Où t'entraînes-tu ?</p>
             <div className="grid grid-cols-2 gap-3">
@@ -665,7 +695,7 @@ export default function SettingsPage() {
         </Section>
 
         {/* Danger zone */}
-        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden xl:col-span-2">
           <div className="px-5 py-4 border-b border-zinc-800">
             <h2 className="text-sm font-semibold text-zinc-300">Danger</h2>
           </div>
@@ -685,7 +715,9 @@ export default function SettingsPage() {
           </button>
         </section>
 
-        <p className="text-xs text-center text-zinc-600">BodyOps v1.0</p>
+            <p className="text-xs text-center text-zinc-600 xl:col-span-2">BodyOps v1.0</p>
+          </div>
+        </div>
       </div>
     </PageWrapper>
   )
