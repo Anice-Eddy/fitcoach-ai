@@ -1,24 +1,34 @@
 'use client'
 
+import { useState } from 'react'
 import { Header } from '@/components/layout/Header'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { useUserStore } from '@/stores/userStore'
-import { useLocale } from '@/contexts/LocaleContext'
 import { toast } from 'sonner'
 
 export default function PreferencesPage() {
-  const { profile, updateProfile, setStorageMode, storageMode } = useUserStore()
-  const { locale, setLocale } = useLocale()
+  const { profile, updateProfile } = useUserStore()
+  const [weightUnit, setWeightUnitState] = useState<'KG' | 'LB'>(profile?.weightUnit ?? 'KG')
+  const [heightUnit, setHeightUnitState] = useState<'CM' | 'FT_IN'>(profile?.heightUnit ?? 'CM')
 
-  const setLanguage = async (language: 'fr' | 'en') => {
-    updateProfile({ language })
-    setLocale(language)
+  const saveUnit = async (field: 'weightUnit' | 'heightUnit', value: string) => {
+    updateProfile({ [field]: value })
     await fetch('/api/user/profile', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ language }),
+      body: JSON.stringify({ [field]: value }),
     }).catch(() => null)
-    toast.success(language === 'fr' ? 'Langue mise à jour en français' : 'Language updated to English')
+    toast.success('Préférences mises à jour')
+  }
+
+  const handleWeightUnit = (unit: 'KG' | 'LB') => {
+    setWeightUnitState(unit)
+    saveUnit('weightUnit', unit)
+  }
+
+  const handleHeightUnit = (unit: 'CM' | 'FT_IN') => {
+    setHeightUnitState(unit)
+    saveUnit('heightUnit', unit)
   }
 
   return (
@@ -28,47 +38,50 @@ export default function PreferencesPage() {
         <div className="max-w-2xl space-y-6">
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
             <h1 className="text-[22px] font-medium text-white">Préférences</h1>
-            <div className="mt-6 space-y-4">
+            <div className="mt-6 space-y-5">
+
               <div>
-                <p className="mb-2 text-xs uppercase tracking-[0.5px] text-zinc-500">Langue</p>
+                <p className="mb-2 text-xs uppercase tracking-[0.5px] text-zinc-500">Unité de poids</p>
                 <div className="grid grid-cols-2 gap-3">
-                  {(['fr', 'en'] as const).map((lang) => (
+                  {(['KG', 'LB'] as const).map((unit) => (
                     <button
-                      key={lang}
+                      key={unit}
                       type="button"
-                      onClick={() => setLanguage(lang)}
-                      aria-label={`Passer l'application en ${lang === 'fr' ? 'français' : 'anglais'}`}
+                      onClick={() => handleWeightUnit(unit)}
+                      aria-label={`Poids en ${unit}`}
                       className={`rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
-                        locale === lang
+                        weightUnit === unit
                           ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]'
                           : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600 hover:text-white'
                       }`}
                     >
-                      {lang === 'fr' ? 'FR' : 'EN'}
+                      {unit === 'KG' ? 'Kilogrammes (kg)' : 'Livres (lb)'}
                     </button>
                   ))}
                 </div>
               </div>
+
               <div>
-                <p className="mb-2 text-xs uppercase tracking-[0.5px] text-zinc-500">Stockage</p>
+                <p className="mb-2 text-xs uppercase tracking-[0.5px] text-zinc-500">Unité de taille</p>
                 <div className="grid grid-cols-2 gap-3">
-                  {(['local', 'cloud'] as const).map((mode) => (
+                  {(['CM', 'FT_IN'] as const).map((unit) => (
                     <button
-                      key={mode}
+                      key={unit}
                       type="button"
-                      onClick={() => setStorageMode(mode)}
-                      aria-label={`Utiliser le stockage ${mode}`}
+                      onClick={() => handleHeightUnit(unit)}
+                      aria-label={`Taille en ${unit}`}
                       className={`rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
-                        storageMode === mode
+                        heightUnit === unit
                           ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]'
                           : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600 hover:text-white'
                       }`}
                     >
-                      {mode === 'local' ? 'Local' : 'Cloud'}
+                      {unit === 'CM' ? 'Centimètres (cm)' : 'Pieds/Pouces (ft/in)'}
                     </button>
                   ))}
                 </div>
               </div>
+
             </div>
           </section>
         </div>
