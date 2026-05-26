@@ -174,6 +174,11 @@ model User {
   subscription        Subscription?
   affiliateClicks     AffiliateClick[]
   coachProfile        CoachProfile?
+  
+  // Coach relations
+  coachMembers            CoachMember[]       @relation("CoachMembers")
+  appointmentsAsMember    CoachAppointment[]  @relation("AppointmentsAsMember")
+  coachNotes              CoachNote[]         @relation("CoachNotes")
 
   @@index([email])
   @@index([stripeCustomerId])
@@ -565,7 +570,24 @@ model AffiliateClick {
   @@map("affiliate_clicks")
 }
 
-// Mocké MVP — structure prête pour Phase 2 B2B Coach
+// Enums pour Coach
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum NotificationType {
+  APPOINTMENT
+  MEMBER_UPDATE
+  NEW_MEMBER
+  MESSAGE
+  SYSTEM
+}
+
+// Profil Coach — structure pour Phase 2 B2B Coach
 model CoachProfile {
   id     String @id @default(cuid())
   userId String @unique
@@ -576,8 +598,102 @@ model CoachProfile {
   isVerified  Boolean @default(false)
   memberLimit Int     @default(10)
 
+  coachMembers  CoachMember[]
+  appointments  CoachAppointment[]
+  notifications Notification[]
+  notes         CoachNote[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("coach_profiles")
 }
+
+// Membres suivis par un coach
+model CoachMember {
+  id           String @id @default(cuid())
+  coachId      String
+  coachProfile CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  
+  memberId String
+  member   User   @relation("CoachMembers", fields: [memberId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+  lastUpdated DateTime @updatedAt
+
+  @@unique([coachId, memberId])
+  @@index([coachId])
+  @@index([memberId])
+  @@map("coach_members")
+}
+
+// Rendez-vous Coach ↔ Membre
+model CoachAppointment {
+  id           String @id @default(cuid())
+  coachId      String
+  coachProfile CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  
+  memberId String
+  member   User   @relation("AppointmentsAsMember", fields: [memberId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  scheduledAt DateTime
+  duration    Int      @default(60)  // en minutes
+  status      AppointmentStatus @default(PENDING)
+  meetLink    String?  // Zoom, Teams, etc.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([coachId])
+  @@index([memberId])
+  @@index([scheduledAt])
+  @@map("coach_appointments")
+}
+
+// Notifications pour le coach
+model Notification {
+  id           String @id @default(cuid())
+  coachId      String
+  coachProfile CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  type       NotificationType
+  title      String
+  message    String
+  relatedId  String?  // ID de l'appointment, member, etc.
+  isRead     Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([coachId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+// Notes du coach sur un membre
+model CoachNote {
+  id           String @id @default(cuid())
+  coachId      String
+  coachProfile CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  
+  memberId String
+  member   User   @relation("CoachNotes", fields: [memberId], references: [id], onDelete: Cascade)
+
+  title   String
+  content String
+  category String?  // PROGRESS, FEEDBACK, WORKOUT, NUTRITION, etc.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([coachId])
+  @@index([memberId])
+  @@map("coach_notes")
+}
+
+// Relation pour les membres d'un coach (ajouter à User)
+// Ajouter dans le modèle User:
+// coachMembers CoachMember[] @relation("CoachMembers")
+// appointmentsAsMember CoachAppointment[] @relation("AppointmentsAsMember")
+// coachNotes CoachNote[] @relation("CoachNotes")
