@@ -39,11 +39,12 @@ export async function PATCH(
   if (memberNote !== undefined && memberNote !== appointment.memberNote) {
     await prisma.notification.create({
       data: {
-        coachId:   appointment.coachId,
-        type:      'MESSAGE',
-        title:     'Note d\'un membre',
-        message:   `Un membre a ajouté une note à votre rendez-vous "${appointment.title}".`,
-        relatedId: params.id,
+        coachId:         appointment.coachId,
+        recipientUserId: null,
+        type:            'MESSAGE',
+        title:           'Note d\'un membre',
+        message:         `Un membre a ajouté une note à votre rendez-vous "${appointment.title}".`,
+        relatedId:       params.id,
       },
     }).catch(() => {})
   }

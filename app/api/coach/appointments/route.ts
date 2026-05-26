@@ -93,13 +93,21 @@ export async function POST(req: NextRequest) {
       include: { member: { include: { profile: true } } },
     })
 
+    // Create coach-member relationship as soon as a coach schedules an appointment
+    await prisma.coachMember.upsert({
+      where:  { coachId_memberId: { coachId: coach.coachProfile.id, memberId } },
+      update: {},
+      create: { coachId: coach.coachProfile.id, memberId },
+    }).catch((err) => console.error('[coachMember upsert on coach POST appt]', err))
+
     await prisma.notification.create({
       data: {
-        coachId:   coach.coachProfile.id,
-        type:      'APPOINTMENT',
-        title:     `Rendez-vous: ${title}`,
-        message:   `Rendez-vous avec ${appointment.member.name} le ${new Date(scheduledAt).toLocaleDateString('fr-FR')}`,
-        relatedId: appointment.id,
+        coachId:         coach.coachProfile.id,
+        recipientUserId: memberId,
+        type:            'APPOINTMENT',
+        title:           `Nouveau rendez-vous: ${title}`,
+        message:         `Votre coach a planifié un rendez-vous le ${new Date(scheduledAt).toLocaleDateString('fr-FR')}`,
+        relatedId:       appointment.id,
       },
     })
 

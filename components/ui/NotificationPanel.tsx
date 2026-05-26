@@ -1,22 +1,41 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Bell, X, CheckCheck } from 'lucide-react'
 
 interface Notification {
-  id: string
-  title: string
-  message: string
-  isRead: boolean
+  id:        string
+  title:     string
+  message:   string
+  isRead:    boolean
   createdAt: string
-  type?: string
+  type?:     string
+  relatedId: string | null
+}
+
+function resolveLink(type: string | undefined, relatedId: string | null): string {
+  switch (type) {
+    case 'MESSAGE':
+      // A shared note — go to notes page, coach tab
+      return relatedId ? `/notes?tab=coach&noteId=${relatedId}` : '/notes?tab=coach'
+    case 'APPOINTMENT':
+      return relatedId ? `/appointments?id=${relatedId}` : '/appointments'
+    case 'MEMBER_UPDATE':
+      return '/dashboard'
+    case 'SYSTEM':
+      return '/dashboard'
+    default:
+      return '/dashboard'
+  }
 }
 
 export function NotificationPanel() {
-  const [open, setOpen]             = useState(false)
+  const router                          = useRouter()
+  const [open, setOpen]                 = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading]       = useState(false)
-  const ref                         = useRef<HTMLDivElement>(null)
+  const [loading, setLoading]           = useState(false)
+  const ref                             = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {
@@ -43,6 +62,20 @@ export function NotificationPanel() {
   const markAllRead = async () => {
     await fetch('/api/user/notifications', { method: 'PATCH' })
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+  }
+
+  const handleClick = async (n: Notification) => {
+    setOpen(false)
+    if (!n.isRead) {
+      await fetch('/api/user/notifications', {
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ notificationId: n.id }),
+      }).catch(() => {})
+      setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, isRead: true } : x))
+    }
+    const link = resolveLink(n.type, n.relatedId)
+    router.push(link)
   }
 
   return (
@@ -96,9 +129,11 @@ export function NotificationPanel() {
               </div>
             ) : (
               notifications.map(n => (
-                <div
+                <button
                   key={n.id}
-                  className={`px-4 py-3 border-b border-zinc-800/50 last:border-0 ${n.isRead ? '' : 'bg-zinc-900/60'}`}
+                  type="button"
+                  onClick={() => handleClick(n)}
+                  className={`w-full text-left px-4 py-3 border-b border-zinc-800/50 last:border-0 transition-colors hover:bg-zinc-900 ${n.isRead ? '' : 'bg-zinc-900/60'}`}
                 >
                   <div className="flex items-start gap-2">
                     {!n.isRead && <div className="size-1.5 rounded-full bg-[#C8F135] mt-1.5 shrink-0" />}
@@ -110,7 +145,7 @@ export function NotificationPanel() {
                       </p>
                     </div>
                   </div>
-                </div>
+                </button>
               ))
             )}
           </div>

@@ -62,14 +62,22 @@ export async function POST(req: NextRequest) {
     },
   })
 
+  // Auto-add member to coach's member list when they book an appointment
+  await prisma.coachMember.upsert({
+    where:  { coachId_memberId: { coachId: coachProfileId, memberId: session.user.id } },
+    update: {},
+    create: { coachId: coachProfileId, memberId: session.user.id },
+  }).catch(() => {})
+
   // Notification for the coach
   await prisma.notification.create({
     data: {
-      coachId:   coachProfileId,
-      type:      'APPOINTMENT',
-      title:     `Nouvelle demande: ${title}`,
-      message:   `Un membre a demandé un rendez-vous le ${new Date(scheduledAt).toLocaleDateString('fr-FR')}`,
-      relatedId: appointment.id,
+      coachId:         coachProfileId,
+      recipientUserId: null,
+      type:            'APPOINTMENT',
+      title:           `Nouvelle demande: ${title}`,
+      message:         `Un membre a demandé un rendez-vous le ${new Date(scheduledAt).toLocaleDateString('fr-FR')}`,
+      relatedId:       appointment.id,
     },
   })
 

@@ -51,6 +51,27 @@ export async function GET(
   return NextResponse.json({ ...member, coachNotes: notes, assignedAt: membership.assignedAt })
 }
 
+// DELETE: remove member from coach's list
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { memberId: string } },
+) {
+  const session = await auth()
+  if (!session?.user?.email) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
+  const coach = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    include: { coachProfile: true },
+  })
+  if (!coach?.coachProfile) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
+
+  await prisma.coachMember.deleteMany({
+    where: { coachId: coach.coachProfile.id, memberId: params.memberId },
+  })
+
+  return NextResponse.json({ ok: true })
+}
+
 // PATCH: coach edits member profile (same rights as the member)
 export async function PATCH(
   req: NextRequest,

@@ -18,6 +18,7 @@ const noteSchema = z.object({
   followUpAt: z.string().datetime().optional().nullable(),
   isPinned: z.boolean().default(false),
   isSharedWithMember: z.boolean().default(false),
+  isImportant: z.boolean().optional(),
 })
 
 const updateNoteSchema = noteSchema.partial().extend({
@@ -66,6 +67,12 @@ export async function GET(req: NextRequest) {
         memberId,
         ...(status && status !== 'ALL' ? { status } : {}),
       },
+      include: {
+        replies: {
+          include: { member: { select: { name: true, image: true } } },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
       orderBy: [
         { isPinned: 'desc' },
         { followUpAt: 'asc' },
@@ -103,6 +110,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Ce membre n’est pas suivi par ce coach' }, { status: 403 })
     }
 
+    const { isImportant } = parsed.data
+
     const note = await prisma.coachNote.create({
       data: {
         coachId: coach!.coachProfile!.id,
@@ -116,17 +125,19 @@ export async function POST(req: NextRequest) {
         followUpAt: followUpAt ? new Date(followUpAt) : null,
         isPinned,
         isSharedWithMember,
+        isImportant: isImportant ?? false,
       },
     })
 
     if (isSharedWithMember) {
       await prisma.notification.create({
         data: {
-          coachId: coach!.coachProfile!.id,
-          type: 'MESSAGE',
-          title: `Nouvelle note: ${title}`,
-          message: `Votre coach a partagé une note: ${title}`,
-          relatedId: note.id,
+          coachId:         coach!.coachProfile!.id,
+          recipientUserId: memberId,
+          type:            'MESSAGE',
+          title:           `Nouvelle note: ${title}`,
+          message:         `Votre coach a partagé une note: ${title}`,
+          relatedId:       note.id,
         },
       })
     }
@@ -151,11 +162,20 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 422 })
     }
 
-    const { noteId, followUpAt, ...data } = parsed.data
+    const { noteId, followUpAt, memberId: _mid, ...data } = parsed.data
     const note = await prisma.coachNote.findFirst({
       where: { id: noteId, coachId: coach!.coachProfile!.id },
     })
     if (!note) return NextResponse.json({ error: 'Note introuvable' }, { status: 404 })
+
+    const CONTENT_FIELDS = ['title', 'content', 'category', 'priority', 'tags', 'isSharedWithMember'] as const
+    const hasContentEdit = CONTENT_FIELDS.some(f => f in data) || followUpAt !== undefined
+    if (note.status === 'DONE' && hasContentEdit) {
+      return NextResponse.json(
+        { error: 'Cette note est terminée et ne peut plus être modifiée.' },
+        { status: 403 },
+      )
+    }
 
     const updated = await prisma.coachNote.update({
       where: { id: noteId },

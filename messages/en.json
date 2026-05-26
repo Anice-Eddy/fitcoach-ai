@@ -9,7 +9,8 @@
     "exports": "Exports",
     "integrations": "Integrations",
     "coaching": "Coaching",
-    "appointments": "Appointments"
+    "appointments": "Appointments",
+    "notes": "Notes"
   },
   "common": {
     "loading": "Loading…",

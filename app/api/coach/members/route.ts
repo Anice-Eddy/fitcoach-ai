@@ -49,6 +49,41 @@ export async function GET(req: NextRequest) {
       )
     }
 
+    // Sync: auto-add any member who has ANY appointment (regardless of status) who isn't in the list yet
+    const confirmedAppointments = await prisma.coachAppointment.findMany({
+      where:  { coachId: coach.coachProfile.id },
+      select: { memberId: true },
+      distinct: ['memberId'],
+    })
+
+    const existingMemberIds = new Set(coach.coachProfile.coachMembers.map(m => m.memberId))
+    const toAdd = confirmedAppointments.filter(a => !existingMemberIds.has(a.memberId))
+
+    if (toAdd.length > 0) {
+      await prisma.coachMember.createMany({
+        data:           toAdd.map(a => ({ coachId: coach.coachProfile!.id, memberId: a.memberId })),
+        skipDuplicates: true,
+      })
+
+      // Re-fetch with newly added members
+      const updated = await prisma.coachProfile.findUnique({
+        where: { id: coach.coachProfile.id },
+        include: {
+          coachMembers: {
+            include: {
+              member: {
+                include: {
+                  profile: true,
+                  bodyMetrics: { orderBy: { date: 'desc' }, take: 1 },
+                },
+              },
+            },
+          },
+        },
+      })
+      return NextResponse.json(updated?.coachMembers ?? [])
+    }
+
     return NextResponse.json(coach.coachProfile.coachMembers)
   } catch (error) {
     console.error('GET /api/coach/members:', error)
@@ -109,11 +144,12 @@ export async function POST(req: NextRequest) {
     // Créer une notification
     await prisma.notification.create({
       data: {
-        coachId: coach.coachProfile.id,
-        type: 'NEW_MEMBER',
-        title: `Nouveau membre: ${coachMember.member.name}`,
-        message: `${coachMember.member.name} a été ajouté à vos membres suivis.`,
-        relatedId: memberId,
+        coachId:         coach.coachProfile.id,
+        recipientUserId: null,
+        type:            'NEW_MEMBER',
+        title:           `Nouveau membre: ${coachMember.member.name}`,
+        message:         `${coachMember.member.name} a été ajouté à vos membres suivis.`,
+        relatedId:       memberId,
       },
     })
 

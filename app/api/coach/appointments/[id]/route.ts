@@ -49,19 +49,38 @@ export async function PATCH(
     },
   })
 
-  // Notify member if status changed to CONFIRMED or a note was added
-  if (status === 'CONFIRMED' || (coachNote !== undefined && coachNote !== appointment.coachNote)) {
+  // Auto-add member to coach's list when appointment is confirmed
+  if (status === 'CONFIRMED' && updated.member?.id) {
+    await prisma.coachMember.upsert({
+      where:  { coachId_memberId: { coachId: coach.coachProfile.id, memberId: updated.member.id } },
+      update: {},
+      create: { coachId: coach.coachProfile.id, memberId: updated.member.id },
+    }).catch((err) => console.error('[coachMember upsert]', err))
+  }
+
+  // Notify member if status changed to CONFIRMED/PROPOSED or a note was added
+  const notifyMember = status === 'CONFIRMED' || status === 'PROPOSED'
+    || (coachNote !== undefined && coachNote !== appointment.coachNote)
+  if (notifyMember && updated.member?.id) {
+    const title = status === 'CONFIRMED'
+      ? 'Rendez-vous confirmé'
+      : status === 'PROPOSED'
+        ? 'Nouvelle proposition de date'
+        : 'Note de votre coach'
     const msg = status === 'CONFIRMED'
       ? `Votre rendez-vous "${updated.title}" a été confirmé par votre coach.`
-      : `Votre coach a ajouté une note à votre rendez-vous "${updated.title}".`
+      : status === 'PROPOSED'
+        ? `Votre coach vous propose une nouvelle date pour "${updated.title}".`
+        : `Votre coach a ajouté une note à votre rendez-vous "${updated.title}".`
 
     await prisma.notification.create({
       data: {
-        coachId:   coach.coachProfile.id,
-        type:      'APPOINTMENT',
-        title:     status === 'CONFIRMED' ? 'Rendez-vous confirmé' : 'Note de votre coach',
-        message:   msg,
-        relatedId: params.id,
+        coachId:         coach.coachProfile.id,
+        recipientUserId: updated.member.id,
+        type:            'APPOINTMENT',
+        title,
+        message:         msg,
+        relatedId:       params.id,
       },
     }).catch(() => {})
   }

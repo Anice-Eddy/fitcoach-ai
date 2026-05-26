@@ -33,7 +33,10 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const query: { coachId: string; isRead?: boolean } = { coachId: coach.coachProfile.id }
+    const query: { coachId: string; recipientUserId: null; isRead?: boolean } = {
+      coachId: coach.coachProfile.id,
+      recipientUserId: null,
+    }
     if (unreadOnly) query.isRead = false
 
     const notifications = await prisma.notification.findMany({
@@ -44,8 +47,9 @@ export async function GET(req: NextRequest) {
 
     const unreadCount = await prisma.notification.count({
       where: {
-        coachId: coach.coachProfile.id,
-        isRead: false,
+        coachId:         coach.coachProfile.id,
+        recipientUserId: null,
+        isRead:          false,
       },
     })
 
@@ -88,12 +92,34 @@ export async function PUT(req: NextRequest) {
       )
     }
 
-    const notification = await prisma.notification.update({
-      where: { id: notificationId },
-      data: { isRead },
+    if (!notificationId) {
+      return NextResponse.json(
+        { error: 'notificationId manquant' },
+        { status: 400 }
+      )
+    }
+
+    const notification = await prisma.notification.findFirst({
+      where: {
+        id:              notificationId,
+        coachId:         coach.coachProfile.id,
+        recipientUserId: null,
+      },
     })
 
-    return NextResponse.json(notification)
+    if (!notification) {
+      return NextResponse.json(
+        { error: 'Notification introuvable' },
+        { status: 404 }
+      )
+    }
+
+    const updated = await prisma.notification.update({
+      where: { id: notification.id },
+      data: { isRead: Boolean(isRead) },
+    })
+
+    return NextResponse.json(updated)
   } catch (error) {
     console.error('PUT /api/coach/notifications:', error)
     return NextResponse.json(

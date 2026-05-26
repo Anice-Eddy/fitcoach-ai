@@ -76,7 +76,7 @@ export default async function CoachDashboard() {
       <div>
         <h1 className="text-2xl font-bold">Tableau de bord coach</h1>
         <p className="text-zinc-400 text-sm mt-1">
-          Bonjour {coach.name?.split(' ')[0] ?? 'Coach'} — vue d&apos;ensemble de vos membres et programmes.
+          Bonjour {coach.name?.split(' ')[0] ?? 'Coach'} — vue d&apos;ensemble de vos membres.
         </p>
       </div>
 

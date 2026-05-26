@@ -181,6 +181,9 @@ model User {
   coachMembers            CoachMember[]       @relation("CoachMembers")
   appointmentsAsMember    CoachAppointment[]  @relation("AppointmentsAsMember")
   coachNotes              CoachNote[]         @relation("CoachNotes")
+  coachNoteReplies        CoachNoteReply[]    @relation("NoteReplies")
+  receivedNotifications   Notification[]      @relation("NotificationRecipient")
+  userNotes               UserNote[]
 
   @@index([email])
   @@index([stripeCustomerId])
@@ -686,15 +689,19 @@ model Notification {
   coachId      String
   coachProfile CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
 
+  recipientUserId String?
+  recipient       User?   @relation("NotificationRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+
   type       NotificationType
   title      String
   message    String
-  relatedId  String?  // ID de l'appointment, member, etc.
+  relatedId  String?
   isRead     Boolean  @default(false)
 
   createdAt DateTime @default(now())
 
   @@index([coachId])
+  @@index([recipientUserId])
   @@index([isRead])
   @@map("notifications")
 }
@@ -704,7 +711,7 @@ model CoachNote {
   id           String @id @default(cuid())
   coachId      String
   coachProfile CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
-  
+
   memberId String
   member   User   @relation("CoachNotes", fields: [memberId], references: [id], onDelete: Cascade)
 
@@ -715,8 +722,11 @@ model CoachNote {
   priority String   @default("MEDIUM")
   tags     String[]
   followUpAt DateTime?
-  isPinned Boolean  @default(false)
+  isPinned           Boolean @default(false)
   isSharedWithMember Boolean @default(false)
+  isImportant        Boolean @default(false)
+
+  replies CoachNoteReply[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -726,6 +736,41 @@ model CoachNote {
   @@index([status])
   @@index([isPinned])
   @@map("coach_notes")
+}
+
+model CoachNoteReply {
+  id       String    @id @default(cuid())
+  noteId   String
+  note     CoachNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  memberId String
+  member   User      @relation("NoteReplies", fields: [memberId], references: [id], onDelete: Cascade)
+  content  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([noteId])
+  @@index([memberId])
+  @@map("coach_note_replies")
+}
+
+model UserNote {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title    String
+  content  String
+  category String?
+  tags     String[]
+  isPinned Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isPinned])
+  @@map("user_notes")
 }
 
 model PasswordResetToken {
