@@ -14,6 +14,7 @@ const patchSchema = z.object({
   caloriesBurned:  z.number().min(0).max(5000).optional().nullable(),
 })
 
+// Authenticates the session as a coach and verifies the member is in their roster; returns coachProfileId or an error response.
 async function authorizeCoach(memberId: string) {
   const session = await auth()
   if (!session?.user?.email) return { error: NextResponse.json({ error: 'Non authentifié' }, { status: 401 }) }
@@ -32,7 +33,7 @@ async function authorizeCoach(memberId: string) {
   return { coachProfileId: user.coachProfile.id }
 }
 
-// GET: coach fetches member's workout sessions
+/** Returns the 30 most recent workout sessions for the member with full exercise logs. */
 export async function GET(
   _req: NextRequest,
   { params }: { params: { memberId: string } },
@@ -50,7 +51,7 @@ export async function GET(
   return NextResponse.json(sessions)
 }
 
-// PATCH: coach updates a session (status, notes, duration, calories)
+/** Updates a workout session's status, notes, duration, or calories; auto-sets startedAt/completedAt timestamps. */
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { memberId: string } },

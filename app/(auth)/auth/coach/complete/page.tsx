@@ -10,6 +10,7 @@ function toDateInput(value?: Date | null) {
   return value ? value.toISOString().slice(0, 10) : ''
 }
 
+/** Server component that fetches the coach's existing profile and renders the CoachCompletionForm; redirects to sign-in if unauthenticated. */
 export default async function CompleteCoachProfilePage() {
   const session = await auth()
 

@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
-// PATCH: coach updates appointment (status, date, note, meetLink)
+/** Updates an appointment's status, date, meetLink, description, or coachNote; auto-adds member to coach's list on CONFIRMED and notifies the member. */
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } },

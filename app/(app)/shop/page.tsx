@@ -10,6 +10,7 @@ import { ShoppingBag }          from 'lucide-react'
 import { useUserStore }         from '@/stores/userStore'
 import type { AffiliateCategory } from '@/types'
 
+/** Affiliate shop page: displays product cards filtered by fitness goal or category, with affiliate click tracking. */
 export default function ShopPage() {
   const [selected, setSelected] = useState<AffiliateCategory | 'ALL'>('ALL')
   const { profile }             = useUserStore()

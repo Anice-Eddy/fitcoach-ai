@@ -12,6 +12,7 @@ type CoachVerificationInput = {
   documentText?: string
 }
 
+// Strips accents and lowercases a string for locale-agnostic comparison.
 function normalize(value: string) {
   return value
     .normalize('NFD')
@@ -19,6 +20,7 @@ function normalize(value: string) {
     .toLowerCase()
 }
 
+// Returns multiple date format variants (ISO, DD/MM/YYYY, etc.) for a given ISO date string.
 function dateVariants(isoDate: string) {
   if (!isoDate) return []
   const [year, month, day] = isoDate.split('-')
@@ -31,6 +33,7 @@ function dateVariants(isoDate: string) {
   ]
 }
 
+/** Validates coach identity document by checking that first name, last name, and birth date appear in the document text; returns status and a list of field-level issues. */
 export function analyzeCoachDocument(input: CoachVerificationInput) {
   const issues: CoachVerificationIssue[] = []
   const documentText = `${input.documentName ?? ''} ${input.documentText ?? ''}`.trim()
@@ -83,6 +86,7 @@ export function analyzeCoachDocument(input: CoachVerificationInput) {
   }
 }
 
+/** Returns true when all required coach profile fields (name, birth date, bio, specialties, certifications, experience, document) are present. */
 export function isCoachProfileComplete(profile: {
   firstName?: string | null
   lastName?: string | null

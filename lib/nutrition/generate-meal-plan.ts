@@ -15,6 +15,7 @@ interface PlanParams {
 
 const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
 
+// Looks up a food in the database and scales its macros to the given gram amount.
 function makeFoodItem(foodId: string, grams: number): FoodItem {
   const food   = FOOD_DATABASE.find((f) => f.id === foodId)!
   const factor = grams / 100
@@ -29,6 +30,7 @@ function makeFoodItem(foodId: string, grams: number): FoodItem {
   }
 }
 
+// Assembles a Meal object from a list of food items, computing aggregate calorie and macro totals.
 function buildMeal(
   dayOfWeek: number,
   type: Meal['type'],
@@ -52,6 +54,7 @@ function buildMeal(
   }
 }
 
+/** Generates a 7-day meal plan (5 meals/day) based on target calories and macros; returns a NutritionPlan with meals for each day. */
 export function generateMealPlan(params: PlanParams): NutritionPlan {
   const meals: Meal[] = []
 

@@ -15,6 +15,7 @@ const sizes = {
   xl: { badge: 'size-16', icon: 'size-8',   text: 'text-4xl',  gap: 'gap-4' },
 }
 
+/** Renders the BodyOps logo at the specified size; wraps in a Next.js Link when href is provided. */
 export function Logo({ href, size = 'md', className }: LogoProps) {
   const s = sizes[size]
 

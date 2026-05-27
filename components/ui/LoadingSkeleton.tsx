@@ -4,10 +4,12 @@ import { cn } from '@/lib/utils'
 
 interface SkeletonProps { className?: string }
 
+/** Base pulsing skeleton block; accepts a className to control its dimensions. */
 export function Skeleton({ className }: SkeletonProps) {
   return <div className={cn('animate-pulse rounded-md bg-zinc-800', className)} />
 }
 
+/** Skeleton placeholder shaped like a metric/info card with three lines of varying widths. */
 export function CardSkeleton() {
   return (
     <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5 space-y-3">
@@ -18,6 +20,7 @@ export function CardSkeleton() {
   )
 }
 
+/** Renders a configurable number of list-row skeleton items with a square icon placeholder and two text lines. */
 export function ListSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div className="space-y-3">
@@ -34,6 +37,7 @@ export function ListSkeleton({ rows = 3 }: { rows?: number }) {
   )
 }
 
+/** Full-page loading skeleton with a heading, four metric card skeletons, and a four-row list skeleton. */
 export function PageSkeleton() {
   return (
     <div className="space-y-6">

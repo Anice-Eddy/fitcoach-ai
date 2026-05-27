@@ -6,6 +6,7 @@ import { PageWrapper } from '@/components/layout/PageWrapper'
 import { useUserStore } from '@/stores/userStore'
 import { ArrowRight, Sparkles, UserRound } from 'lucide-react'
 
+/** Accompaniment plan settings page: shows current coaching or solo mode, assigned coach info, and upgrade options. */
 export default function PlanSettingsPage() {
   const { profile, accompanimentMode, coachName, nextCoachSession } = useUserStore()
   const isCoach = accompanimentMode === 'COACH'

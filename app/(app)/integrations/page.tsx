@@ -57,6 +57,7 @@ const INTEGRATIONS: IntegrationStatus[] = [
   },
 ]
 
+/** Integrations settings page: shows available third-party data integrations (e.g., Evolt Active) and handles import callbacks. */
 export default function IntegrationsPage() {
   const { profile } = useUserStore()
 

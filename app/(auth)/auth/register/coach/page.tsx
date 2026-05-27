@@ -22,6 +22,7 @@ const CERTIFICATIONS = [
 
 type Step = 1 | 2 | 3
 
+/** Multi-step coach registration form: collects account credentials, professional profile, and certifications; posts to /api/auth/register/coach. */
 export default function CoachRegisterPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)

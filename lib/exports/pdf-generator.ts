@@ -4,6 +4,7 @@
 import type { UserProfile } from '@/lib/storage/StorageAdapter'
 import type { WorkoutProgram } from '@/types'
 
+/** Generates and downloads a PDF containing the user's personal info and calculated fitness metrics using jsPDF. */
 export async function exportProfilePDF(profile: UserProfile): Promise<void> {
   const { jsPDF } = await import('jspdf')
   const doc = new jsPDF()
@@ -73,6 +74,7 @@ export async function exportProfilePDF(profile: UserProfile): Promise<void> {
   doc.save(`BodyOps-profil-${profile.firstName.toLowerCase()}.pdf`)
 }
 
+/** Generates and downloads a PDF listing all sessions and exercises of the given workout program using jsPDF. */
 export async function exportProgramPDF(program: WorkoutProgram, firstName: string): Promise<void> {
   const { jsPDF } = await import('jspdf')
   const doc = new jsPDF()

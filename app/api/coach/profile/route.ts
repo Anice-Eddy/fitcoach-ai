@@ -16,6 +16,7 @@ const coachProfileSchema = z.object({
   description:     z.string().min(30, 'La description professionnelle doit faire au moins 30 caractères'),
 })
 
+// Splits a comma-separated string into a trimmed, non-empty string array.
 function splitList(value: string) {
   return value
     .split(',')
@@ -23,6 +24,7 @@ function splitList(value: string) {
     .filter(Boolean)
 }
 
+// Reads up to 8000 chars from a text/JSON File; returns empty string for non-text files or null.
 async function readDocumentText(file: File | null) {
   if (!file) return ''
   if (file.type.startsWith('text/') || file.type === 'application/json') {
@@ -31,6 +33,7 @@ async function readDocumentText(file: File | null) {
   return ''
 }
 
+// Upserts a blank coachProfile record for userId if none exists, then returns it.
 async function getCoachProfile(userId: string) {
   return prisma.coachProfile.upsert({
     where:  { userId },
@@ -47,6 +50,7 @@ async function getCoachProfile(userId: string) {
   })
 }
 
+/** Returns the coach profile for the authenticated user, or null if not found. */
 export async function GET() {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
@@ -57,6 +61,7 @@ export async function GET() {
   return NextResponse.json(profile)
 }
 
+/** Updates the coach profile from a multipart form; analyzes any uploaded certification document and sets the verification status accordingly. */
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

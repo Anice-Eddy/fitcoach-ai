@@ -8,6 +8,7 @@ import { ProfileSync } from '@/components/ProfileSync'
 const FULLSCREEN_ROUTES = ['/choose', '/coaching/status', '/coaches']
 const FULLSCREEN_PREFIXES = ['/coaches/']
 
+/** Root member app layout: renders fullscreen for certain routes (choose, coaches, coaching/status) or the standard sidebar+bottom-nav shell otherwise. */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? ''
   const fullscreen = FULLSCREEN_ROUTES.includes(pathname) || FULLSCREEN_PREFIXES.some((prefix) => pathname.startsWith(prefix))

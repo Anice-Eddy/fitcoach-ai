@@ -7,6 +7,7 @@ import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { Logo } from '@/components/ui/Logo'
 
+/** Reset-password page shell wrapping the ResetPasswordForm in a Suspense boundary for token searchParam. */
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>

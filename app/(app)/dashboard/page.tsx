@@ -8,6 +8,7 @@ import { PageSkeleton } from '@/components/ui/LoadingSkeleton'
 
 export const metadata: Metadata = { title: 'Tableau de bord — BodyOps' }
 
+/** Server component wrapping the member dashboard with a Suspense skeleton fallback. */
 export default function DashboardPage() {
   return (
     <>

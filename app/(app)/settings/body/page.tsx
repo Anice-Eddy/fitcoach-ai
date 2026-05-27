@@ -14,6 +14,7 @@ const GOALS = ['WEIGHT_LOSS', 'MUSCLE_GAIN', 'MAINTENANCE', 'ENDURANCE', 'FLEXIB
 const LEVELS = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'ATHLETE']
 const EQUIPMENT = ['BODYWEIGHT', 'DUMBBELL', 'KETTLEBELL', 'RESISTANCE_BAND', 'PULL_UP_BAR', 'BARBELL', 'BENCH', 'CABLE_MACHINE', 'SMITH_MACHINE', 'CARDIO_MACHINE']
 
+/** Body measurements settings page: allows updating weight, height, waist, hips, and body fat; displays historical weight chart. */
 export default function BodySettingsPage() {
   const { profile, setProfile } = useUserStore()
   const [saving, setSaving] = useState(false)

@@ -8,6 +8,7 @@ import { sendPasswordResetEmail } from '@/lib/email/send'
 
 const schema = z.object({ email: z.string().email() })
 
+/** Initiates a password reset for the given email: creates a 1-hour token and sends a reset email; returns errors for unknown email or OAuth-only accounts. */
 export async function POST(req: Request) {
   const body   = await req.json()
   const parsed = schema.safeParse(body)

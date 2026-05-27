@@ -22,6 +22,7 @@ type CoachProfileVerification = {
   certifications: string[]
 }
 
+/** Profile settings page: update display name, avatar, timezone, and account email/password; includes account deletion. */
 export default function ProfileSettingsPage() {
   const { data: session, update } = useSession()
   const { profile, updateProfile, timezone, setTimezone } = useUserStore()

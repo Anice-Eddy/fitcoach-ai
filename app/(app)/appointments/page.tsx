@@ -32,28 +32,32 @@ const STATUS_STYLE: Record<string, { label: string; color: string }> = {
   NO_SHOW:   { label: 'Absent',                     color: 'text-red-400     bg-red-400/10' },
 }
 
+/** Member appointments page: fetches and displays upcoming and past appointments, with inline note editing. */
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading]           = useState(true)
+  const [now, setNow]                   = useState<Date | null>(null)
 
-  const fetchAppointments = () =>
-    fetch('/api/user/appointments')
+  const fetchAppointments = () => {
+    setNow(new Date())
+    return fetch('/api/user/appointments')
       .then(r => r.ok ? r.json() as Promise<Appointment[]> : [])
       .then(data => { setAppointments(data); setLoading(false) })
       .catch(() => setLoading(false))
+  }
 
   useEffect(() => { fetchAppointments() }, [])
 
   const proposed = appointments.filter(a => a.status === 'PROPOSED')
-  const upcoming = appointments.filter(a =>
-    new Date(a.scheduledAt) >= new Date() &&
+  const upcoming = now ? appointments.filter(a =>
+    new Date(a.scheduledAt) >= now &&
     (a.status === 'PENDING' || a.status === 'CONFIRMED'),
-  )
-  const past = appointments.filter(a =>
-    new Date(a.scheduledAt) < new Date() ||
+  ) : []
+  const past = now ? appointments.filter(a =>
+    new Date(a.scheduledAt) < now ||
     a.status === 'COMPLETED' ||
     a.status === 'CANCELLED',
-  )
+  ) : []
 
   return (
     <>
@@ -146,6 +150,7 @@ export default function AppointmentsPage() {
 
 // ─── Empty state ─────────────────────────────────────────────────────────────
 
+// Renders a CTA to find a coach when no appointments exist.
 function EmptyState() {
   return (
     <div className="text-center py-16 space-y-4">
@@ -168,8 +173,7 @@ function EmptyState() {
   )
 }
 
-// ─── Appointment card ─────────────────────────────────────────────────────────
-
+// Renders an appointment card with status badge, date, meet link, coach notes, and an inline member note editor.
 function AppointmentCard({
   appt,
   onNoteUpdated,

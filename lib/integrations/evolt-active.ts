@@ -13,6 +13,7 @@ export interface EvoltMeasurement {
   bwi?:         number
 }
 
+/** Maps an EvoltMeasurement input to a normalized NormalizedBodyComposition record. */
 export function normalizeEvoltData(input: EvoltMeasurement): NormalizedBodyComposition {
   return {
     date:         input.date,

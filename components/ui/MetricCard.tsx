@@ -18,6 +18,7 @@ interface MetricCardProps {
   accentColor?: string
 }
 
+/** Animated stat card with title, value, optional unit, trend arrow, and a loading skeleton state. */
 export function MetricCard({
   title, value, unit, subtitle, trend, trendLabel,
   icon, isLoading, className, accentColor = '#C8F135',

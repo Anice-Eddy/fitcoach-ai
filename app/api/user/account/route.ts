@@ -13,6 +13,7 @@ const accountUpdateSchema = z.object({
   password: z.string().min(8, 'Mot de passe minimum : 8 caractères').optional(),
 })
 
+/** Updates the authenticated user's name, email, avatar image, or password; returns the updated user record. */
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
@@ -35,6 +36,7 @@ export async function PATCH(req: Request) {
   return NextResponse.json(updated)
 }
 
+/** Permanently deletes the authenticated user account; requires password confirmation for credential-based accounts. */
 export async function DELETE(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

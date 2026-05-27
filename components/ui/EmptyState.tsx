@@ -11,6 +11,7 @@ interface EmptyStateProps {
   action?:      { label: string; href?: string; onClick?: () => void }
 }
 
+/** Generic empty-state placeholder with optional icon, description text, and a CTA link or button. */
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
     <motion.div

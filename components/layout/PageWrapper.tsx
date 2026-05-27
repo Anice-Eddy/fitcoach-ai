@@ -8,6 +8,7 @@ interface PageWrapperProps {
   noPadding?: boolean
 }
 
+/** Scrollable page container with consistent padding and extra bottom spacing to avoid overlap with the mobile bottom nav. */
 export function PageWrapper({ children, className, noPadding }: PageWrapperProps) {
   return (
     <main

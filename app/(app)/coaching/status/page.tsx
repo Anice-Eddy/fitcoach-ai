@@ -59,12 +59,15 @@ function downloadICS(appt: Appointment) {
   a.click()
 }
 
+/** Shows the member's coaching status: assigned coaches, upcoming appointments, and a link to find a coach. */
 export default function CoachingStatusPage() {
   const router = useRouter()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading]           = useState(true)
+  const [now, setNow]                   = useState<Date | null>(null)
 
   useEffect(() => {
+    setNow(new Date())
     fetch('/api/user/appointments')
       .then(r => r.ok ? r.json() as Promise<Appointment[]> : [])
       .then(data => {
@@ -83,8 +86,8 @@ export default function CoachingStatusPage() {
       })
   }, [])
 
-  const upcoming = appointments.filter(a => new Date(a.scheduledAt) >= new Date() && a.status !== 'CANCELLED')
-  const past     = appointments.filter(a => new Date(a.scheduledAt) < new Date() || a.status === 'COMPLETED')
+  const upcoming = now ? appointments.filter(a => new Date(a.scheduledAt) >= now && a.status !== 'CANCELLED') : []
+  const past     = now ? appointments.filter(a => new Date(a.scheduledAt) < now || a.status === 'COMPLETED') : []
 
   if (loading) {
     return (
@@ -192,7 +195,7 @@ export default function CoachingStatusPage() {
             </p>
             <div className="space-y-2">
               {appointments.map(appt => {
-                const isPast = new Date(appt.scheduledAt) < new Date()
+                const isPast = now ? new Date(appt.scheduledAt) < now : false
                 const st = STATUS_LABEL[appt.status]
                 return (
                   <div key={appt.id} className={`flex items-center gap-3 rounded-xl border border-zinc-800 bg-[#1a1d17] p-3 ${isPast ? 'opacity-60' : ''}`}>

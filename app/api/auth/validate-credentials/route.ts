@@ -10,6 +10,7 @@ const schema = z.object({
   password: z.string().min(1),
 })
 
+/** Checks email/password credentials without creating a session; returns { valid, reason } for use by the NextAuth credentials provider. */
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json())
   if (!parsed.success) {

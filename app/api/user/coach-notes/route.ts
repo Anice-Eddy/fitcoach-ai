@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
-// GET: notes that the coach has shared with this member
+/** Returns coach notes shared with the authenticated member, including coach info and replies. */
 export async function GET() {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
@@ -47,7 +47,7 @@ export async function GET() {
   )
 }
 
-// DELETE: member deletes a coach note — blocked if isImportant
+/** Hides a shared coach note from the member by unsetting isSharedWithMember; blocked for notes marked isImportant by the coach. */
 export async function DELETE(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })

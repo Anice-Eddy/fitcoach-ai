@@ -20,6 +20,7 @@ const GOAL_LABELS: Record<string, string> = {
   ENDURANCE: 'Endurance', GENERAL_FITNESS: 'Forme générale', FLEXIBILITY: 'Souplesse',
 }
 
+/** Final onboarding step: displays the calculated BMI, TDEE, and macro targets, then calls onFinish to save the profile. */
 export function SummaryStep({ data, onFinish, onBack, isLoading }: Props) {
   const result = calculateFitnessProfile({
     weightKg:      data.weightKg,

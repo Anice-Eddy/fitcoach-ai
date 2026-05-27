@@ -21,6 +21,7 @@ const registerSchema = z.object({
   phone:             z.string().optional(),
 })
 
+// Splits a comma-separated string into a trimmed, non-empty string array.
 function splitList(value?: string) {
   return (value ?? '')
     .split(',')
@@ -28,6 +29,7 @@ function splitList(value?: string) {
     .filter(Boolean)
 }
 
+/** Registers a new member or coach account; validates extra coach fields, rejects duplicate emails, hashes the password, and persists the new user with optional coach profile. */
 export async function POST(req: Request) {
   const body   = await req.json()
   const parsed = registerSchema.safeParse(body)

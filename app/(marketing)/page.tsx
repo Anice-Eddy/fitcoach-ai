@@ -18,6 +18,7 @@ const TESTIMONIALS = [
   { name: 'Sarah K.', role: 'Perte de poids',        text: '-8kg en 4 mois avec les recettes et les calculs macro automatiques.', stars: 5 },
 ]
 
+/** Public landing page showcasing BodyOps features, testimonials, and CTAs for sign-up. */
 export default function LandingPage() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-zinc-950 text-white">

@@ -14,6 +14,7 @@ interface Props {
 const RESTRICTIONS = ['Végétarien', 'Végan', 'Sans gluten', 'Sans lactose', 'Halal', 'Casher', 'Sans noix', 'Sans porc']
 const PREFERENCES  = ['Viande blanche', 'Poisson', 'Œufs', 'Légumineuses', 'Riz', 'Pâtes', 'Pommes de terre', 'Légumes verts', 'Fruits', 'Produits laitiers']
 
+/** Onboarding step for selecting dietary restrictions and food preferences from predefined option chips. */
 export function DietStep({ defaultValues, onNext, onBack }: Props) {
   const { handleSubmit, watch, setValue } = useForm<DietData>({
     resolver:      zodResolver(dietSchema),

@@ -14,6 +14,7 @@ interface Notification {
   relatedId: string | null
 }
 
+// Resolves the in-app navigation link for a notification based on its type and optional related entity id.
 function resolveLink(type: string | undefined, relatedId: string | null): string {
   switch (type) {
     case 'MESSAGE':
@@ -30,14 +31,17 @@ function resolveLink(type: string | undefined, relatedId: string | null): string
   }
 }
 
+/** Member notification bell with dropdown panel; fetches unread count on mount, marks items read on click, and navigates to the relevant page. */
 export function NotificationPanel() {
   const router                          = useRouter()
   const [open, setOpen]                 = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading]           = useState(false)
+  const [hydrated, setHydrated]         = useState(false)
   const ref                             = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    setHydrated(true)
     function onPointerDown(e: PointerEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }

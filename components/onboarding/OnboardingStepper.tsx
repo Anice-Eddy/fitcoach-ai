@@ -36,6 +36,7 @@ const slideVariants = {
   exit:   (dir: number) => ({ x: dir > 0 ? -60 : 60, opacity: 0 }),
 }
 
+/** Multi-step animated onboarding form that hydrates from localStorage, cloud profile, or saved progress; persists each step and saves the final profile on completion. */
 export function OnboardingStepper() {
   const router         = useRouter()
   const { profile, setProfile } = useUserStore()

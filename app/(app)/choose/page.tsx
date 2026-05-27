@@ -26,6 +26,7 @@ function CardIcon() {
   )
 }
 
+/** Onboarding choice page: lets the user select a solo or coached accompaniment mode before proceeding. */
 export default function ChoosePage() {
   const router = useRouter()
   const { setAccompanimentMode, setCoach } = useUserStore()

@@ -7,7 +7,7 @@ import { sendAppointmentEmail } from '@/lib/email/send'
 
 export const runtime = 'nodejs'
 
-// GET: Récupérer les rendez-vous du coach
+/** Returns all appointments for the authenticated coach, optionally filtered by memberId. */
 export async function GET(req: NextRequest) {
   try {
     const session = await auth()
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST: Créer un rendez-vous
+/** Creates an appointment for a member, upserts the CoachMember relation, creates a member notification, and sends a confirmation email. */
 export async function POST(req: NextRequest) {
   try {
     const session = await auth()

@@ -7,6 +7,7 @@ import { Logo } from '@/components/ui/Logo'
 import { PricingCard } from '@/components/pricing/PricingCard'
 import { PricingToggle } from '@/components/pricing/PricingToggle'
 
+/** Pricing page with monthly/yearly toggle; renders plan cards and FAQs. */
 export default function PricingPage() {
   const [isYearly, setIsYearly] = useState(false)
 

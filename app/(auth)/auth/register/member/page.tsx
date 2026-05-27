@@ -8,6 +8,7 @@ import { Eye, EyeOff, ChevronLeft } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { toast } from 'sonner'
 
+/** Member registration form: collects name, email, and password; posts to /api/auth/register and redirects on success. */
 export default function MemberRegisterPage() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)

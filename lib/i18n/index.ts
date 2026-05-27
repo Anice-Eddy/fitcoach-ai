@@ -6,6 +6,7 @@ export type Messages = typeof fr
 
 const messages: Record<Locale, Messages> = { fr, en }
 
+/** Detects the preferred locale from localStorage, falling back to the browser language, then 'fr'. */
 export function detectLocale(): Locale {
   if (typeof window === 'undefined') return 'fr'
   const stored = localStorage.getItem('bodyops:locale') as Locale | null
@@ -14,6 +15,7 @@ export function detectLocale(): Locale {
   return lang.startsWith('fr') ? 'fr' : 'en'
 }
 
+/** Returns the full messages object for the given locale. */
 export function getMessages(locale: Locale): Messages {
   return messages[locale]
 }
@@ -25,6 +27,7 @@ type PathsOf<T, P extends string = ''> = T extends object
 
 export type TranslationKey = PathsOf<Messages>
 
+/** Resolves a dot-notation translation key against the messages object; returns the key itself if the path is not found. */
 export function translate(messages: Messages, key: string): string {
   const parts = key.split('.')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -9,15 +9,16 @@ import { CoachDropdown } from '@/components/coach/CoachDropdown'
 import { isCoachProfileComplete } from '@/lib/coach/verification'
 
 const NAV = [
-  { href: '/coach/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/coach/members',   label: 'Membres',         icon: Users },
-  { href: '/coach/appointments', label: 'Agenda',       icon: Calendar },
-  { href: '/coach/notes',     label: 'Notes',           icon: MessageSquare },
-  { href: '/coach/ai',        label: 'Assistant IA',    icon: Bot },
-
-  { href: '/coach/reports',   label: 'Rapports',        icon: BarChart2 },
+  { href: '/coach/dashboard',    label: 'Tableau de bord', icon: LayoutDashboard },
+  { href: '/coach/members',      label: 'Membres',         icon: Users },
+  { href: '/coach/calendar',     label: 'Calendrier',      icon: Calendar },
+  { href: '/coach/appointments', label: 'Agenda',          icon: Calendar },
+  { href: '/coach/notes',        label: 'Notes',           icon: MessageSquare },
+  { href: '/coach/ai',           label: 'Assistant IA',    icon: Bot },
+  { href: '/coach/reports',      label: 'Rapports',        icon: BarChart2 },
 ]
 
+/** Coach layout: verifies auth, ensures coachProfile exists (redirects to completion if not), then renders the coach shell with sidebar and header. */
 export default async function CoachLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   if (!session?.user?.id) redirect('/auth/signin?callbackUrl=/coach/dashboard')

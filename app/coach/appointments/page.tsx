@@ -36,6 +36,7 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
 
 type Panel = 'propose' | 'note' | 'edit' | null
 
+/** Coach appointments management page: lists and allows accepting, proposing dates, confirming, and archiving appointments across all members. */
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading]           = useState(true)
@@ -216,8 +217,7 @@ export default function AppointmentsPage() {
   )
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
+// Appointment list section header with count badge and optional accent color.
 function Section({ title, count, accent, muted, children }: {
   title: string; count: number; accent?: 'amber' | 'blue'; muted?: boolean; children: React.ReactNode
 }) {
@@ -240,6 +240,7 @@ function Section({ title, count, accent, muted, children }: {
   )
 }
 
+// Dashed empty-state box shown when a section has no appointments.
 function EmptyState({ label }: { label: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-zinc-800 p-6 text-center text-sm text-zinc-600">
@@ -248,6 +249,7 @@ function EmptyState({ label }: { label: string }) {
   )
 }
 
+// Renders a formatted date and duration row for an appointment.
 function DateRow({ scheduledAt, duration }: { scheduledAt: string; duration: number }) {
   return (
     <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-400">
@@ -263,6 +265,7 @@ function DateRow({ scheduledAt, duration }: { scheduledAt: string; duration: num
   )
 }
 
+// Displays the member's note on an appointment in a labelled box.
 function MemberNoteBlock({ note }: { note: string }) {
   return (
     <div className="rounded-xl bg-zinc-800 border border-zinc-700 px-3 py-2.5">
@@ -272,6 +275,7 @@ function MemberNoteBlock({ note }: { note: string }) {
   )
 }
 
+// Displays the coach's own note on an appointment in a labelled box.
 function CoachNoteBlock({ note }: { note: string }) {
   return (
     <div className="rounded-xl bg-zinc-800/60 px-3 py-2">
@@ -281,8 +285,7 @@ function CoachNoteBlock({ note }: { note: string }) {
   )
 }
 
-// ─── PENDING card : Accepter / Proposer une date+note / Refuser ────────────
-
+// Card for a PENDING appointment: allows the coach to confirm, propose a new date, add a note, or cancel.
 function PendingCard({ appt, onPatch }: { appt: Appointment; onPatch: (id: string, body: object) => Promise<void> }) {
   const [panel, setPanel]   = useState<Panel>(null)
   const [newDate, setNewDate] = useState(appt.scheduledAt.slice(0, 16))
@@ -386,8 +389,7 @@ function PendingCard({ appt, onPatch }: { appt: Appointment; onPatch: (id: strin
   )
 }
 
-// ─── PROPOSED card : contre-proposition envoyée, attente du membre ─────────
-
+// Card for a PROPOSED appointment: allows the coach to confirm, edit the proposal, or cancel.
 function ProposedCard({ appt, onPatch }: { appt: Appointment; onPatch: (id: string, body: object) => Promise<void> }) {
   const [panel, setPanel]     = useState<Panel>(null)
   const [newDate, setNewDate] = useState(appt.scheduledAt.slice(0, 16))
@@ -489,8 +491,7 @@ function ProposedCard({ appt, onPatch }: { appt: Appointment; onPatch: (id: stri
   )
 }
 
-// ─── CONFIRMED card : modifier / ajouter note / marquer terminé ───────────
-
+// Card for a CONFIRMED appointment: allows editing date/duration, adding a coach note, or marking as completed.
 function ConfirmedCard({ appt, onPatch }: { appt: Appointment; onPatch: (id: string, body: object) => Promise<void> }) {
   const [panel, setPanel]     = useState<Panel>(null)
   const [note, setNote]       = useState(appt.coachNote ?? '')
@@ -604,8 +605,7 @@ function ConfirmedCard({ appt, onPatch }: { appt: Appointment; onPatch: (id: str
   )
 }
 
-// ─── History card ─────────────────────────────────────────────────────────────
-
+// Read-only card for past/cancelled appointments showing status badge and notes.
 function HistoryCard({ appt }: { appt: Appointment }) {
   const st = STATUS_LABEL[appt.status]
   return (

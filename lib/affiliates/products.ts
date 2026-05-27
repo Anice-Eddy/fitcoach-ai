@@ -516,10 +516,12 @@ export const AFFILIATE_PRODUCTS: AffiliateProduct[] = [
   },
 ]
 
+/** Returns all affiliate products belonging to the given category string. */
 export function getProductsByCategory(category: string) {
   return AFFILIATE_PRODUCTS.filter((p) => p.category === category)
 }
 
+/** Returns all affiliate products whose fitnessGoals array includes the given goal string. */
 export function getProductsByGoal(goal: string) {
   return AFFILIATE_PRODUCTS.filter((p) => p.fitnessGoals.includes(goal as never))
 }

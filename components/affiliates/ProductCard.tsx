@@ -8,6 +8,7 @@ import { getCategoryMeta } from '@/lib/affiliates/categories'
 
 interface Props { product: AffiliateProduct }
 
+/** Renders an affiliate product card with image (with fallback emoji), tags, and an Amazon external link that fires a tracking event on click. */
 export function ProductCard({ product }: Props) {
   const meta = getCategoryMeta(product.category)
   const [imgError, setImgError] = useState(false)

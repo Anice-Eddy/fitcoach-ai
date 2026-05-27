@@ -27,6 +27,7 @@ const LEVEL_OPTIONS = [
   { value: 'ATHLETE',      label: 'Athlète',       desc: '5 ans+' },
 ]
 
+/** Onboarding step for selecting the primary fitness goal, optional target weight, and fitness level. */
 export function GoalsStep({ defaultValues, onNext, onBack }: Props) {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<GoalsData>({
     resolver:      zodResolver(goalsSchema),

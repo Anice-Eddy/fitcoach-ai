@@ -15,6 +15,7 @@ const STATUS_CONFIG = {
   SKIPPED:     { icon: Circle,       color: 'text-zinc-600', bg: 'bg-zinc-600/10',  label: 'Passée' },
 }
 
+/** Animated workout session card showing status icon, duration estimate, and exercise list with a link to start or view the session. */
 export function WorkoutCard({ session, index }: Props) {
   const config     = STATUS_CONFIG[session.status]
   const StatusIcon = config.icon

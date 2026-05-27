@@ -11,6 +11,7 @@ import { LocalStorageAdapter } from '@/lib/storage/LocalStorageAdapter'
 import { toast } from 'sonner'
 import { Download, Upload, FileJson, FileText, AlertCircle } from 'lucide-react'
 
+/** Data export/import page: allows downloading profile as JSON or PDF, and importing a previously exported JSON file. */
 export default function ExportsPage() {
   const { profile, setProfile } = useUserStore()
   const fileRef      = useRef<HTMLInputElement>(null)

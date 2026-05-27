@@ -16,6 +16,7 @@ const COLORS = {
   fat:     '#f472b6',
 }
 
+/** SVG donut ring showing the calorie share of protein, carbs, and fat with a total kcal label in the center. */
 export function MacroRing({ proteinG, carbsG, fatG, targetCalories, size = 120 }: MacroRingProps) {
   const total = proteinG * 4 + carbsG * 4 + fatG * 9
   const radius = (size - 16) / 2

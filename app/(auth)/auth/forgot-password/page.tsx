@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { Logo } from '@/components/ui/Logo'
 
+/** Forgot-password page: collects an email and calls /api/auth/forgot-password to send a reset link. */
 export default function ForgotPasswordPage() {
   const [email,   setEmail]   = useState('')
   const [loading, setLoading] = useState(false)

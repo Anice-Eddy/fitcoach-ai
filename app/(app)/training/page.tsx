@@ -6,6 +6,7 @@ import { TrainingClient } from './TrainingClient'
 
 export const metadata: Metadata = { title: 'Entraînement — BodyOps' }
 
+/** Server component shell for the training page; renders the interactive TrainingClient. */
 export default function TrainingPage() {
   return (
     <>

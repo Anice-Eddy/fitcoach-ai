@@ -10,6 +10,7 @@ const schema = z.object({
   password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
 })
 
+/** Validates a password-reset token, updates the user's hashed password, and deletes the used token; returns 400 on invalid or expired token. */
 export async function POST(req: Request) {
   const body   = await req.json()
   const parsed = schema.safeParse(body)

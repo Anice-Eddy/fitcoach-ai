@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
-// GET: Récupérer les membres du coach
+/** Returns the coach's member list with latest body metrics; auto-adds any members who have an appointment but are missing a CoachMember record. */
 export async function GET(req: NextRequest) {
   try {
     const session = await auth()
@@ -49,9 +49,14 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Sync: auto-add any member who has ANY appointment (regardless of status) who isn't in the list yet
+    // Sync: auto-add members who have an upcoming scheduled appointment but aren't in the list yet.
+    // Deliberately excludes past/completed appointments so that removing a member doesn't get undone.
     const confirmedAppointments = await prisma.coachAppointment.findMany({
-      where:  { coachId: coach.coachProfile.id },
+      where: {
+        coachId: coach.coachProfile.id,
+        status: { in: ['PENDING', 'PROPOSED', 'CONFIRMED'] },
+        scheduledAt: { gte: new Date() },
+      },
       select: { memberId: true },
       distinct: ['memberId'],
     })
@@ -94,7 +99,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST: Ajouter un membre au coach
+/** Adds a member to the coach's tracked list and creates a NEW_MEMBER coach notification; returns 201 with the CoachMember record. */
 export async function POST(req: NextRequest) {
   try {
     const session = await auth()

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTrainingStore } from '@/stores/trainingStore'
 import { X, Plus, Minus } from 'lucide-react'
 
+/** Animated rest-period countdown that reads from and writes to the training store; supports +/− 15 s adjustments and early stop. */
 export function RestTimer() {
   const { activeSession, tickRestTimer, stopRestTimer, startRestTimer } = useTrainingStore()
   const isActive = activeSession?.restTimerActive ?? false

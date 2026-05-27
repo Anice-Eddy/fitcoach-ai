@@ -15,6 +15,7 @@ const PLAN_CONFIG = {
 
 interface PlanBadgeProps { className?: string }
 
+/** Displays the user's current subscription plan badge with plan-specific icon and color, plus an upgrade link for non-Pro plans. */
 export function PlanBadge({ className }: PlanBadgeProps) {
   const { plan } = useSubscriptionStore()
   const config   = PLAN_CONFIG[plan]

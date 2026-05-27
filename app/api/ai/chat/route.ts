@@ -11,10 +11,12 @@ const schema = z.object({
   message:        z.string().min(1).max(2000),
   memberId:       z.string().optional().nullable(),
   conversationId: z.string().optional().nullable(),
+  provider:       z.enum(['AUTO', 'GEMINI', 'GROQ']).optional(),
 })
 
 const service = new AIService()
 
+/** Runs an AI chat turn for the given agentType and message, enforcing rate-limit and member access; returns the AI response. */
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
@@ -23,11 +25,15 @@ export async function POST(req: Request) {
   if (error) return error
 
   try {
+    const preferred = parsed.data.provider && parsed.data.provider !== 'AUTO'
+      ? parsed.data.provider
+      : undefined
     const result = await service.chat(
       access!,
       parsed.data.agentType,
       parsed.data.message,
       parsed.data.conversationId,
+      preferred,
     )
     return NextResponse.json(result)
   } catch (err) {

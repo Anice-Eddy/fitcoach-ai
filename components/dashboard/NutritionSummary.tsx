@@ -7,6 +7,7 @@ import { useNutritionStore } from '@/stores/nutritionStore'
 import { useUserStore } from '@/stores/userStore'
 import Link from 'next/link'
 
+/** Displays today's macro consumption as a ring chart and three progress bars compared to the user's daily targets. */
 export function NutritionSummary() {
   const { getTodayTotals } = useNutritionStore()
   const { profile }        = useUserStore()

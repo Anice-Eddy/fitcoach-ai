@@ -51,6 +51,7 @@ const MEMBER_PREFIXES = [
   '/api/user/training',
 ]
 
+/** Next.js middleware: enforces auth, role-based routing (coach vs member), and public-route bypass. */
 export default auth((req: NextAuthRequest) => {
   const { pathname } = req.nextUrl
   const session      = req.auth

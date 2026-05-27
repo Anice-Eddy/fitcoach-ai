@@ -14,6 +14,7 @@ export const AFFILIATE_CATEGORIES: {
   { id: 'BOOKS',       label: 'Livres',       emoji: '📚', description: 'Guides nutrition, musculation…' },
 ]
 
+/** Returns the metadata object (label, emoji, description) for a given affiliate category id. */
 export function getCategoryMeta(id: AffiliateCategory) {
   return AFFILIATE_CATEGORIES.find((c) => c.id === id)
 }

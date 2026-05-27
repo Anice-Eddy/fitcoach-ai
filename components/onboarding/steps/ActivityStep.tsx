@@ -52,6 +52,7 @@ const TRAINING_PLACES = [
   },
 ]
 
+/** Onboarding step for selecting activity level, training place (auto-fills equipment), and training days per week. */
 export function ActivityStep({ defaultValues, onNext, onBack }: Props) {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ActivityData>({
     resolver:      zodResolver(activitySchema),

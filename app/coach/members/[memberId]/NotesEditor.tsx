@@ -11,6 +11,7 @@ interface Props {
   initialNotes: Note[]
 }
 
+/** Inline coach-note editor: lists existing notes and provides a form to add new notes for the given member. */
 export function NotesEditor({ memberId, initialNotes }: Props) {
   const [notes, setNotes]   = useState<Note[]>(initialNotes)
   const [adding, setAdding] = useState(false)

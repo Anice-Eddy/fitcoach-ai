@@ -28,6 +28,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
   EXTREMELY_ACTIVE: 'Extrêmement actif',
 }
 
+/** Editable member profile form: displays current physical stats and allows the coach to update them via PATCH /api/coach/members/[memberId]. */
 export function ProfileEditor({ memberId, profile }: Props) {
   const [editing, setEditing] = useState(false)
   const [saving,  setSaving]  = useState(false)

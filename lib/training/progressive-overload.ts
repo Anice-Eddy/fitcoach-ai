@@ -12,6 +12,7 @@ export interface OverloadResult {
   progressed:   boolean
 }
 
+/** Calculates the next session's weight for an exercise; increments by 2.5 kg (compound) or 1.25 kg (isolation) only when all sets were completed. */
 export function calculateNextWeight(
   exercise:        ExerciseForOverload,
   allSetsCompleted: boolean,
@@ -31,6 +32,7 @@ export function calculateNextWeight(
   return { nextWeightKg: nextWeight, progressed: true }
 }
 
+/** Returns a human-readable string describing whether the load increased or was maintained this session. */
 export function getProgressionMessage(
   progressed:    boolean,
   previousWeight: number,

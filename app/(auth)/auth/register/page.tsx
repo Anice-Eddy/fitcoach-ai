@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Dumbbell, Users } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 
+/** Registration entry page: presents a choice between member and coach account creation. */
 export default function RegisterChoicePage() {
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 py-12">

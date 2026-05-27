@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma/client'
 
 // Returns the auth provider for an email — used in signin to show a helpful error
 // Not a security risk: only reveals provider type, not account existence
+/** Returns the auth provider ('GOOGLE', 'GITHUB', or 'EMAIL') for the given email query param; returns null if no account exists. */
 export async function GET(req: NextRequest) {
   const email = req.nextUrl.searchParams.get('email')
   if (!email) return NextResponse.json({ provider: null })

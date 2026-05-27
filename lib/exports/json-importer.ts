@@ -10,6 +10,7 @@ const importSchema = z.object({
 
 export type ImportPayload = z.infer<typeof importSchema>
 
+/** Validates an unknown value against the import schema; returns success with typed data or an error message. */
 export function validateImport(raw: unknown): { success: true; data: ImportPayload } | { success: false; error: string } {
   const result = importSchema.safeParse(raw)
   if (!result.success) {
@@ -18,6 +19,7 @@ export function validateImport(raw: unknown): { success: true; data: ImportPaylo
   return { success: true, data: result.data }
 }
 
+/** Reads a File as text and parses it as JSON; rejects with a descriptive error on read failure or invalid JSON. */
 export async function readJsonFile(file: File): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()

@@ -17,6 +17,7 @@ const GOAL_LABELS: Record<string, string> = {
   GENERAL_FITNESS: 'Forme générale', FLEXIBILITY: 'Flexibilité',
 }
 
+/** Progress tracking page: displays body weight history chart, allows logging new weight entries, and shows BMI and body composition metrics. */
 export default function ProgressPage() {
   const { profile }         = useUserStore()
   const [weight, setWeight]         = useState('')

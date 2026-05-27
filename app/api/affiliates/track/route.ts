@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma/client'
 import { affiliateClickSchema } from '@/utils/validators'
 import { createHash } from 'crypto'
 
+/** Records a single affiliate click for productId, hashing the IP for GDPR compliance; returns { tracked: true }. */
 export async function POST(req: Request) {
   const session = await auth()
 
@@ -17,27 +18,38 @@ export async function POST(req: Request) {
 
   const { productId, source } = parsed.data
 
-  // Look up category from DB if product was seeded; fall back to static data
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let category: any
-  const dbProduct = await prisma.affiliateProduct.findUnique({ where: { id: productId } })
-  if (dbProduct) {
-    category = dbProduct.category
-  } else {
-    const { AFFILIATE_PRODUCTS } = await import('@/lib/affiliates/products')
-    category = AFFILIATE_PRODUCTS.find((p) => p.id === productId)?.category
-    if (!category) return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 })
-  }
+  // Ensure the product row exists in DB (upsert from static catalog if needed)
+  const { AFFILIATE_PRODUCTS } = await import('@/lib/affiliates/products')
+  const staticProduct = AFFILIATE_PRODUCTS.find((p) => p.id === productId)
+  if (!staticProduct) return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 })
 
-  // Hash de l'IP pour conformité RGPD (pas de stockage en clair)
-  const ip      = req.headers.get('x-forwarded-for') ?? 'unknown'
-  const ipHash  = createHash('sha256').update(ip + (process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? '')).digest('hex')
-  const ua      = req.headers.get('user-agent') ?? undefined
+  await prisma.affiliateProduct.upsert({
+    where:  { id: productId },
+    update: {},
+    create: {
+      id:               productId,
+      name:             staticProduct.name,
+      brand:            staticProduct.brand          ?? null,
+      description:      staticProduct.description    ?? null,
+      category:         staticProduct.category,
+      affiliateUrl:     staticProduct.affiliateUrl,
+      imageUrl:         staticProduct.imageUrl        ?? null,
+      price:            staticProduct.price           ?? null,
+      commissionRateMin: staticProduct.commissionRateMin,
+      commissionRateMax: staticProduct.commissionRateMax,
+      fitnessGoals:     staticProduct.fitnessGoals   ?? [],
+      tags:             staticProduct.tags            ?? [],
+    },
+  })
+
+  const ip     = req.headers.get('x-forwarded-for') ?? 'unknown'
+  const ipHash = createHash('sha256').update(ip + (process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? '')).digest('hex')
+  const ua     = req.headers.get('user-agent') ?? undefined
 
   await prisma.affiliateClick.create({
     data: {
       productId,
-      category,
+      category:  staticProduct.category,
       userId:    session?.user?.id ?? undefined,
       source:    source ?? undefined,
       ipHash,

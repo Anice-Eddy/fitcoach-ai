@@ -2,6 +2,7 @@
 
 import { Info } from 'lucide-react'
 
+/** Renders the mandatory affiliate/sponsored-links legal disclosure banner. */
 export function AffiliateDisclosure() {
   return (
     <div className="flex items-start gap-2 p-3 rounded-xl bg-zinc-800/50 border border-zinc-700/50 text-xs text-zinc-400">

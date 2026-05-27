@@ -15,6 +15,7 @@ type ProfileLike = {
   foodPreferences?: string[] | null
 }
 
+// Returns labels for items whose value is null, undefined, empty string, or empty array.
 function listMissing(items: Array<[string, unknown]>) {
   return items
     .filter(([, value]) => {
@@ -24,6 +25,7 @@ function listMissing(items: Array<[string, unknown]>) {
     .map(([label]) => label)
 }
 
+// Scans text strings for injury/restriction keywords and returns up to 6 matching snippets.
 function extractSignals(texts: string[]) {
   const keywords = ['douleur', 'blessure', 'gene', 'gêne', 'tendinite', 'restriction', 'limite', 'mal au', 'inconfort']
   return texts
@@ -32,6 +34,7 @@ function extractSignals(texts: string[]) {
     .slice(0, 6)
 }
 
+// Formats the last 6 body-metric entries as "YYYY-MM-DD: X kg" strings, filtering out entries without weight.
 function buildProgressHistory(metrics: Array<{ weightKg?: number | null; date?: Date }>) {
   return metrics
     .slice(0, 6)
@@ -42,6 +45,7 @@ function buildProgressHistory(metrics: Array<{ weightKg?: number | null; date?: 
     .filter((value): value is string => Boolean(value))
 }
 
+/** Resolves the access level for requesterId over memberId; returns null if the requester is not a coach of that member. */
 export async function resolveMemberAccess(requesterId: string, memberId?: string | null): Promise<MemberAccess | null> {
   if (!memberId || memberId === requesterId) {
     return { requesterId, memberId: requesterId, coachId: null, role: 'member' }
@@ -62,6 +66,7 @@ export async function resolveMemberAccess(requesterId: string, memberId?: string
   return { requesterId, memberId, coachId: coach.id, role: 'coach' }
 }
 
+/** Fetches all data needed for AI analysis (profile, metrics, workouts, nutrition, notes, appointments) and returns a structured MemberAIContext. */
 export async function getMemberAIContext(memberId: string, coachId?: string | null): Promise<MemberAIContext | null> {
   const member = await prisma.user.findUnique({
     where: { id: memberId },
@@ -234,6 +239,7 @@ export async function getMemberAIContext(memberId: string, coachId?: string | nu
   }
 }
 
+/** Returns true if the context has a profile plus at least one of: metrics, completed sessions, nutrition plans, or coach notes. */
 export function hasEnoughDataForAnalysis(context: MemberAIContext) {
   return context.dataQuality.hasProfile
     && (context.dataQuality.metricsCount > 0
@@ -242,9 +248,84 @@ export function hasEnoughDataForAnalysis(context: MemberAIContext) {
       || context.dataQuality.coachNotesCount > 0)
 }
 
+/** Serializes a MemberAIContext to a pretty-printed JSON string, converting Date objects to ISO strings. */
 export function serializeContext(context: MemberAIContext) {
   return JSON.stringify(context, (_key, value) => {
     if (value instanceof Date) return value.toISOString()
     return value
   }, 2)
+}
+
+/** Builds a compact, coach-readable text summary of the member context — replaces raw JSON for AI prompts. */
+export function serializeContextCompact(context: MemberAIContext): string {
+  const { userFacts, missingData, workoutSessions, nutritionPlans } = context
+  const lines: string[] = []
+
+  // --- Profil ---
+  const profile: string[] = []
+  if (userFacts.currentWeightKg) profile.push(`poids ${userFacts.currentWeightKg} kg`)
+  if (userFacts.targetWeightKg)  profile.push(`objectif ${userFacts.targetWeightKg} kg`)
+  if (userFacts.heightCm && userFacts.currentWeightKg) {
+    const bmi = (userFacts.currentWeightKg / Math.pow(userFacts.heightCm / 100, 2)).toFixed(1)
+    profile.push(`IMC ${bmi}`)
+  }
+  if (userFacts.age)    profile.push(`${userFacts.age} ans`)
+  if (userFacts.gender) profile.push(userFacts.gender)
+  if (userFacts.primaryGoal)        profile.push(`objectif: ${userFacts.primaryGoal}`)
+  if (userFacts.fitnessLevel)       profile.push(`niveau: ${userFacts.fitnessLevel}`)
+  if (userFacts.trainingDaysPerWeek) profile.push(`${userFacts.trainingDaysPerWeek} séances/semaine`)
+  if (userFacts.currentProgram)     profile.push(`programme: ${userFacts.currentProgram}`)
+  if (userFacts.availableEquipment.length) profile.push(`équipement: ${userFacts.availableEquipment.join(', ')}`)
+  if (userFacts.dietaryRestrictions.length) profile.push(`restrictions: ${userFacts.dietaryRestrictions.join(', ')}`)
+  if (profile.length) lines.push(`PROFIL: ${profile.join(' | ')}`)
+
+  // --- Progression poids ---
+  if (userFacts.progressHistory.length) {
+    lines.push(`ÉVOLUTION POIDS: ${userFacts.progressHistory.join(' → ')}`)
+  }
+
+  // --- Séances ---
+  const sessions = workoutSessions as Array<Record<string, unknown>>
+  const completedSessions = sessions.filter(s => s['status'] === 'COMPLETED')
+  lines.push(`SÉANCES: ${completedSessions.length} complétées sur ${sessions.length} récupérées`)
+
+  const recent = completedSessions.slice(0, 6)
+  if (recent.length) {
+    const summaries = recent.map(s => {
+      const raw = (s['completedAt'] ?? s['scheduledAt']) as string | Date | undefined
+      const date = raw ? new Date(raw).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '?'
+      const logs = s['exerciseLogs'] as Array<Record<string, unknown>> | undefined
+      const muscles = Array.from(new Set(
+        (logs ?? []).flatMap(l => {
+          const ex = l['exercise'] as Record<string, unknown> | undefined
+          return (ex?.['muscleGroups'] as string[] | undefined) ?? []
+        })
+      )).slice(0, 3).join('+')
+      const exCount = logs?.length ?? 0
+      return `${date}(${exCount}ex${muscles ? ' '+muscles : ''})`
+    })
+    lines.push(`DERNIÈRES SÉANCES: ${summaries.join(' | ')}`)
+  }
+
+  // --- Nutrition ---
+  if (nutritionPlans.length) {
+    const plan = nutritionPlans[0] as Record<string, unknown>
+    const meals = plan['meals'] as unknown[] | undefined
+    lines.push(`NUTRITION: plan "${String(plan['name'] ?? 'actif')}" — ${meals?.length ?? 0} repas configurés`)
+  } else {
+    lines.push('NUTRITION: aucun plan actif')
+  }
+
+  // --- Blessures/restrictions ---
+  if (userFacts.injuryOrRestrictionSignals.length) {
+    lines.push(`SIGNAUX BLESSURE/RESTRICTION: ${userFacts.injuryOrRestrictionSignals.join('; ')}`)
+  }
+
+  // --- Données manquantes ---
+  const allMissing = [...new Set([...missingData.workoutPlan, ...missingData.nutritionPlan])]
+  if (allMissing.length) {
+    lines.push(`DONNÉES MANQUANTES: ${allMissing.join(', ')}`)
+  }
+
+  return lines.join('\n')
 }

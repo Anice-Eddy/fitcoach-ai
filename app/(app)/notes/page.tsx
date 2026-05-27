@@ -58,10 +58,12 @@ const EMPTY_FORM = { title: '', content: '', category: 'TRAINING', tags: '', isP
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
+// Formats a date string into a French locale string like "15 jan 2025 à 14:30".
 function formatDate(v: string) {
   return format(new Date(v), "d MMM yyyy 'à' HH:mm", { locale: fr })
 }
 
+// Labeled form field wrapper that renders a small uppercase label above its children.
 function Field({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
     <label className={cn('grid gap-1.5', className)}>
@@ -71,6 +73,7 @@ function Field({ label, className, children }: { label: string; className?: stri
   )
 }
 
+// Generic empty-state card with icon, title, and description text.
 function EmptyState({ title, description }: { title: string; description: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900 p-10 text-center">
@@ -81,6 +84,7 @@ function EmptyState({ title, description }: { title: string; description: string
   )
 }
 
+// Search and category filter toolbar for the notes list.
 function FilterBar({
   search, onSearch, catFilter, onCatFilter,
 }: {
@@ -120,8 +124,7 @@ function FilterBar({
   )
 }
 
-// ─── My notes tab ─────────────────────────────────────────────────────────────
-
+// Tab displaying the user's personal notes with CRUD functionality and search/category filtering.
 function MyNotesTab() {
   const [notes, setNotes]         = useState<UserNote[]>([])
   const [loading, setLoading]     = useState(true)
@@ -313,6 +316,7 @@ function MyNotesTab() {
   )
 }
 
+// Renders a single personal note card with pin/delete actions and tag badges.
 function NoteCard({ note, onPin, onDelete }: { note: UserNote; onPin: () => void; onDelete: () => void }) {
   return (
     <article className={cn(
@@ -364,8 +368,7 @@ function NoteCard({ note, onPin, onDelete }: { note: UserNote; onPin: () => void
   )
 }
 
-// ─── Coach notes tab ──────────────────────────────────────────────────────────
-
+// Tab displaying notes shared by the coach, with inline reply thread and delete (hide) support.
 function CoachNotesTab() {
   const [notes, setNotes]         = useState<CoachNote[]>([])
   const [loading, setLoading]     = useState(true)
@@ -450,6 +453,7 @@ function CoachNotesTab() {
   )
 }
 
+// Renders a shared coach note card with expandable reply thread and inline reply submission.
 function CoachNoteCard({
   note, onDelete, onReplyAdded,
 }: {
@@ -619,10 +623,9 @@ function CoachNoteCard({
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 type Tab = 'mine' | 'coach'
 
+/** Notes page with two tabs: the member's own personal notes and notes shared by their coach. */
 export default function NotesPage() {
   const [tab, setTab] = useState<Tab>('mine')
 

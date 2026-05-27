@@ -15,19 +15,23 @@ const MAX_RECENT_MESSAGES = 10
 const MAX_MEMORY_ITEMS = 8
 const MAX_SUMMARY_LENGTH = 1200
 
+// Returns the trimmed string value, or empty string if the value is not a string.
 function text(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+// Deduplicates, trims, and limits the array to MAX_MEMORY_ITEMS non-empty strings.
 function unique(values: string[]) {
   return Array.from(new Set(values.map(v => v.trim()).filter(Boolean))).slice(0, MAX_MEMORY_ITEMS)
 }
 
+// Collapses whitespace and truncates the string to max characters with a trailing ellipsis.
 function compact(value: string, max = MAX_SUMMARY_LENGTH) {
   const normalized = value.replace(/\s+/g, ' ').trim()
   return normalized.length > max ? `${normalized.slice(0, max - 3)}...` : normalized
 }
 
+/** Extracts the user's first name from the profile or from the first token of their display name. */
 export function getContextFirstName(context: MemberAIContext) {
   const profile = context.profile && typeof context.profile === 'object'
     ? context.profile as Record<string, unknown>
@@ -36,6 +40,7 @@ export function getContextFirstName(context: MemberAIContext) {
   return text(profile?.firstName) || text(context.member.name?.split(' ')[0])
 }
 
+/** Parses a user message for fitness topics and stated preferences; returns deduplicated topics and preference strings. */
 export function extractMemorySignals(userMessage: string) {
   const lower = userMessage.toLowerCase()
   const topics: string[] = []
@@ -71,6 +76,7 @@ export function extractMemorySignals(userMessage: string) {
   return { topics: unique(topics), preferences: unique(preferences) }
 }
 
+/** Builds the system-level memory instruction block injected before each AI call, combining rules, first name, and conversation history summary. */
 export function buildMemoryInstruction(params: {
   memory: AIMemory | null
   firstName: string
@@ -95,6 +101,7 @@ export function buildMemoryInstruction(params: {
   return lines.filter(Boolean).join('\n')
 }
 
+/** Retrieves the most-recently-updated AIMemory record for the given scope, or null if none exists. */
 export async function getAIMemory(scope: MemoryScope) {
   return prisma.aIMemory.findFirst({
     where: {
@@ -107,6 +114,7 @@ export async function getAIMemory(scope: MemoryScope) {
   })
 }
 
+/** Fetches the most recent messages of a conversation in chronological order; capped at MAX_RECENT_MESSAGES. */
 export async function getRecentConversationMessages(conversationId: string) {
   const messages = await prisma.aIMessage.findMany({
     where: { conversationId },
@@ -118,6 +126,7 @@ export async function getRecentConversationMessages(conversationId: string) {
   return messages.reverse()
 }
 
+/** Upserts the AIMemory record for the scope, merging signals from the latest exchange with the previous memory summary. */
 export async function updateAIMemory(params: {
   scope: MemoryScope
   firstName: string

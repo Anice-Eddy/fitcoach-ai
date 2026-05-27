@@ -14,6 +14,7 @@ const MEMBER_LINKS = [
   { href: '/settings/preferences', label: 'Préférences', icon: SlidersHorizontal },
 ]
 
+/** Member account dropdown with avatar, name, email, settings links, and a sign-out button; closes on outside pointer events. */
 export function UserDropdown() {
   const { data: session } = useSession()
   const { profile } = useUserStore()

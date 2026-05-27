@@ -44,6 +44,7 @@ const LEVEL_LABEL: Record<string, string> = {
   ADVANCED: 'Avancé', ATHLETE: 'Athlète',
 }
 
+// Returns the next `count` days starting from tomorrow as an array of { date, dayLabel, dateLabel } in French.
 function buildNextDays(count = 14) {
   const days: { date: Date; dayLabel: string; dateLabel: string }[] = []
   const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + 1)
@@ -62,6 +63,7 @@ function buildNextDays(count = 14) {
 
 const SLOTS = ['09:00', '10:30', '13:00', '14:30', '16:00', '17:30']
 
+/** Coach profile and appointment booking page: shows coach info, specialty, and a date/time slot picker to request an appointment. */
 export default function CoachBookingPage() {
   const router      = useRouter()
   const params      = useParams<{ coachId: string }>()

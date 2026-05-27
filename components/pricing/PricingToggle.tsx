@@ -6,6 +6,7 @@ interface Props {
   onChange:  (yearly: boolean) => void
 }
 
+/** Monthly/yearly billing toggle switch for the pricing page. */
 export function PricingToggle({ isYearly, onChange }: Props) {
   return (
     <div className="flex items-center gap-3 justify-center">

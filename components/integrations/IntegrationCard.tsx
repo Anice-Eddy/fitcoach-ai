@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 
 interface Props { integration: IntegrationStatus }
 
+/** Displays an integration's logo, connection status, last-sync time, and a connect/disconnect button; shows a "coming soon" toast for mocked integrations. */
 export function IntegrationCard({ integration }: Props) {
   const handleConnect = () => {
     toast.info(`${integration.label} — disponible prochainement`)

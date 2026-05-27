@@ -25,6 +25,7 @@ const updateNoteSchema = noteSchema.partial().extend({
   noteId: z.string().min(1),
 })
 
+// Authenticates the session and returns the coach user with coachProfile, or an error response.
 async function getCoach() {
   const session = await auth()
 
@@ -44,7 +45,7 @@ async function getCoach() {
   return { coach }
 }
 
-// GET: Récupérer les notes pour un membre
+/** Returns all notes the coach has written for a given member, optionally filtered by status; ordered by pinned, followUpAt, and creation date. */
 export async function GET(req: NextRequest) {
   try {
     const { coach, error } = await getCoach()
@@ -90,7 +91,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST: Créer une note pour un membre
+/** Creates a coach note for a member; sends a member notification if isSharedWithMember is true. */
 export async function POST(req: NextRequest) {
   try {
     const { coach, error } = await getCoach()
@@ -152,6 +153,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
+/** Updates a coach note's fields; blocks content edits on DONE notes. */
 export async function PATCH(req: NextRequest) {
   try {
     const { coach, error } = await getCoach()
@@ -192,6 +194,7 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
+/** Permanently deletes a coach note by noteId; verifies coach ownership before deletion. */
 export async function DELETE(req: NextRequest) {
   try {
     const { coach, error } = await getCoach()

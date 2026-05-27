@@ -8,6 +8,7 @@ import { useUserStore }  from '@/stores/userStore'
 import { generateMealPlan }    from '@/lib/nutrition/generate-meal-plan'
 import { generateShoppingList } from '@/lib/nutrition/macro-calculator'
 
+/** Shopping list page: aggregates ingredients from the active weekly meal plan and displays a grouped grocery list. */
 export default function ShoppingListPage() {
   const { profile }  = useUserStore()
   const [items, setItems] = useState<Record<string, { name: string; totalGrams: number; category: string }>>({})

@@ -2,6 +2,7 @@
 
 import type { Meal, Macros } from '@/types'
 
+/** Sums the calories and macros of all provided meals into a single aggregate object. */
 export function sumMacros(meals: Meal[]): Macros & { calories: number } {
   return meals.reduce(
     (acc, meal) => ({
@@ -14,6 +15,7 @@ export function sumMacros(meals: Meal[]): Macros & { calories: number } {
   )
 }
 
+/** Converts macros and total calories into percentage-of-energy values for protein, carbs, and fat. */
 export function macroPct(
   macros: Macros & { calories: number },
 ): { proteinPct: number; carbsPct: number; fatPct: number } {
@@ -26,10 +28,12 @@ export function macroPct(
   }
 }
 
+/** Filters meals to only those scheduled for the given dayOfWeek (0 = Monday). */
 export function getMealsForDay(meals: Meal[], dayOfWeek: number): Meal[] {
   return meals.filter((m) => m.dayOfWeek === dayOfWeek)
 }
 
+/** Aggregates all food items across meals into a shopping list keyed by food name with total gram quantities. */
 export function generateShoppingList(meals: Meal[]): Record<string, { name: string; totalGrams: number; category: string }> {
   const list: Record<string, { name: string; totalGrams: number; category: string }> = {}
   meals.forEach((meal) => {

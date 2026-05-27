@@ -7,7 +7,7 @@ import { sendAppointmentEmail } from '@/lib/email/send'
 
 export const runtime = 'nodejs'
 
-// GET: user's upcoming and past appointments
+/** Returns all appointments for the authenticated member, ordered by scheduledAt ascending, including coach info. */
 export async function GET(_req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest) {
   return NextResponse.json(appointments)
 }
 
-// POST: member requests an appointment with a coach
+/** Creates an appointment request to a coach, upserts the CoachMember relation, notifies the coach, and emails the member. */
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })

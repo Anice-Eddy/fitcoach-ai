@@ -10,7 +10,7 @@ const replySchema = z.object({
   content: z.string().min(1).max(2000),
 })
 
-// GET: member fetches all replies for a shared note
+/** Returns all replies for the shared note, ordered by creation date ascending; verifies member access. */
 export async function GET(
   _req: NextRequest,
   { params }: { params: { noteId: string } },
@@ -33,7 +33,7 @@ export async function GET(
   return NextResponse.json(replies)
 }
 
-// POST: member posts a reply
+/** Adds a member reply to the shared coach note and notifies the coach. */
 export async function POST(
   req: NextRequest,
   { params }: { params: { noteId: string } },
@@ -73,7 +73,7 @@ export async function POST(
   return NextResponse.json(reply, { status: 201 })
 }
 
-// DELETE: member deletes own reply
+/** Deletes the member's own reply (by replyId in body) from the note. */
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { noteId: string } },

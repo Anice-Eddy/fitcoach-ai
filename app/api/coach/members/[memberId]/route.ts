@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
-// GET: full member detail for coach
+/** Returns full member data (profile, body metrics, sessions, programs, nutrition plan, coach notes) after verifying coach ownership. */
 export async function GET(
   _req: NextRequest,
   { params }: { params: { memberId: string } },
@@ -51,7 +51,7 @@ export async function GET(
   return NextResponse.json({ ...member, coachNotes: notes, assignedAt: membership.assignedAt })
 }
 
-// DELETE: remove member from coach's list
+/** Removes the member from the coach's tracked list by deleting the CoachMember record. */
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: { memberId: string } },
@@ -72,7 +72,7 @@ export async function DELETE(
   return NextResponse.json({ ok: true })
 }
 
-// PATCH: coach edits member profile (same rights as the member)
+/** Allows the coach to update the member's profile fields (body stats, goals, equipment, etc.) with the same permissions as the member. */
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { memberId: string } },

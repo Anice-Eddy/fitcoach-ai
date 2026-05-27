@@ -12,6 +12,7 @@ const ACTIONS = [
   { label: 'Ajouter',       icon: Plus,     href: '/progress',   color: '#f472b6' },
 ]
 
+/** Renders a row of animated icon link buttons for the four main quick-action shortcuts on the dashboard. */
 export function QuickActions() {
   return (
     <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">

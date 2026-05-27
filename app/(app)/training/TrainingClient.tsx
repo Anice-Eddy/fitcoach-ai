@@ -12,6 +12,7 @@ import { Dumbbell, RefreshCw } from 'lucide-react'
 interface DBSession { id: string; name: string; status: string; dayOfWeek: number | null; durationMinutes: number | null }
 interface DBProgram { id: string; name: string; currentWeek: number; weeksTotal: number; sessions: DBSession[] }
 
+/** Interactive training view: fetches the active workout program and renders each session with exercise details and status controls. */
 export function TrainingClient() {
   const { profile }             = useUserStore()
   const [sessions, setSessions] = useState<WorkoutSession[]>([])

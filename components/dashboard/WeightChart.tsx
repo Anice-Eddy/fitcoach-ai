@@ -16,6 +16,7 @@ const RANGES = [
   { label: '90j', days: 90 },
 ]
 
+/** Renders a Recharts line chart of weight progression with 7/30/90-day range toggle and an optional target-weight reference line. */
 export function WeightChart({ data, targetWeight }: Props) {
   const [range, setRange] = useState(30)
 

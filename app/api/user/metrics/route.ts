@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { bodyMetricSchema } from '@/utils/validators'
 
+/** Returns up to `limit` (max 365, default 90) body metric records for the authenticated user, ordered by date descending. */
 export async function GET(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
@@ -21,6 +22,7 @@ export async function GET(req: Request) {
   return NextResponse.json(metrics)
 }
 
+/** Creates a new body metric entry for the authenticated user; validates via bodyMetricSchema. */
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
@@ -36,6 +38,7 @@ export async function POST(req: Request) {
   return NextResponse.json(metric, { status: 201 })
 }
 
+/** Deletes a body metric entry by id query param, verifying the record belongs to the authenticated user. */
 export async function DELETE(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

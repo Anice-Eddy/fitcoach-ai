@@ -4,6 +4,7 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null
 
+/** Sends a password reset email via Resend; logs the link to the console in development when Resend is not configured. */
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   if (!resend) {
     // Dev: affiche le lien dans la console
@@ -39,6 +40,7 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   })
 }
 
+/** Sends an appointment confirmation email with date, time, and optional meet link; logs details to console in development. */
 export async function sendAppointmentEmail(
   to: string,
   coachName: string,

@@ -17,6 +17,7 @@ const MACRO_CONFIG: { key: keyof Macros; label: string; color: string; kcalPer: 
   { key: 'fatG',     label: 'Lipides',   color: '#f472b6', kcalPer: 9 },
 ]
 
+/** Renders +/− controls for protein, carbs, and fat grams with a live calorie delta indicator; calls onSave with the adjusted macros. */
 export function MacroAdjuster({ initial, calories, onSave }: Props) {
   const [macros, setMacros] = useState<Macros>(initial)
 

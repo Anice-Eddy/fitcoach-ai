@@ -28,6 +28,7 @@ function Label({ children }: { children: React.ReactNode }) {
   return <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-3">{children}</p>
 }
 
+/** Server component for the member detail view: fetches member data from the API and renders ProfileEditor and NotesEditor. */
 export default async function MemberDetailPage({ params }: { params: { memberId: string } }) {
   const session = await auth()
   if (!session?.user?.id) redirect('/auth/signin')

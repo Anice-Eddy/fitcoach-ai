@@ -11,6 +11,7 @@ interface Props {
   onClose:   () => void
 }
 
+/** Post-workout summary card showing completed sets, total volume, duration, and a link to the progress page. */
 export function WorkoutSummary({ session, onClose }: Props) {
   const completed   = session.exercises.filter((e) => e.isCompleted).length
   const totalSets   = session.exercises.reduce((acc, e) => acc + e.sets, 0)

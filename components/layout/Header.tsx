@@ -7,6 +7,7 @@ import { NotificationPanel } from '@/components/ui/NotificationPanel'
 
 interface HeaderProps { title?: string }
 
+/** Sticky app header with sidebar toggle (mobile), optional page title, notification panel, and user dropdown. */
 export function Header({ title }: HeaderProps) {
   const { toggleSidebar } = useUIStore()
 

@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { prisma } from '@/lib/prisma/client'
 import { NextResponse } from 'next/server'
 
-// GET: public list of coaches
+/** Returns a public list of all coaches with their profile summary (bio, specialties, verification status, member count). */
 export async function GET() {
   const coaches = await prisma.user.findMany({
     where: { coachProfile: { isNot: null } },

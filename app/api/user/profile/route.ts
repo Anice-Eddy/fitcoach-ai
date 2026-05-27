@@ -11,6 +11,7 @@ import { updateProfileSchema } from '@/utils/validators'
 import { calculateFitnessProfile } from '@/utils/fitness-calculations'
 import type { ActivityLevel, FitnessGoal, Gender } from '@prisma/client'
 
+/** Returns the member's profile; blocked for coach accounts. Returns null (200) if profile not yet created. */
 export async function GET() {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
@@ -25,6 +26,7 @@ export async function GET() {
   return NextResponse.json(profile)
 }
 
+/** Upserts the member's profile and recalculates BMI/BMR/TDEE/macros when physical fields change; blocked for coach accounts. */
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

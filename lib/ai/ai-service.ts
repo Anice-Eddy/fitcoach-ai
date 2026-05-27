@@ -2,7 +2,7 @@ import type { AIAgentType, AIReportType } from '@prisma/client'
 import { prisma } from '@/lib/prisma/client'
 import { AGENT_LABELS, AGENT_SYSTEM_PROMPTS } from '@/lib/ai/agents'
 import { AIProviderService } from '@/lib/ai/provider-service'
-import { getMemberAIContext, hasEnoughDataForAnalysis, serializeContext } from '@/lib/ai/context'
+import { getMemberAIContext, hasEnoughDataForAnalysis, serializeContextCompact } from '@/lib/ai/context'
 import {
   buildMemoryInstruction,
   getAIMemory,
@@ -14,28 +14,24 @@ import type { AIMessageInput, MemberAccess } from '@/lib/ai/types'
 
 const providerService = new AIProviderService()
 
-function buildPrompt(task: string, contextJson: string, message?: string) {
+// Assembles the coach prompt: task + member message + compact context summary.
+function buildPrompt(task: string, contextSummary: string, message?: string) {
   return [
-    `Tâche: ${task}`,
-    message ? `Message utilisateur: ${message}` : null,
-    'Consignes de personnalisation:',
-    '- Utilise les données userFacts avant toute recommandation.',
-    '- Si missingData contient des éléments nécessaires à la demande, pose ces questions avant de proposer un programme, une nutrition ou un plan d’action.',
-    '- Donne des conseils courts, pratiques et personnalisés. Pas de réponse générique.',
-    'Données réelles disponibles:',
-    contextJson,
-    'Réponds en français. Ne mentionne pas de données qui ne sont pas présentes.',
+    message ? `MESSAGE: ${message}` : `TÂCHE: ${task}`,
+    contextSummary,
   ].filter(Boolean).join('\n\n')
 }
 
+/** Orchestrates AI-powered chat and report generation for member and coach workflows. */
 export class AIService {
-  async chat(access: MemberAccess, agentType: AIAgentType, message: string, conversationId?: string | null) {
+  /** Sends a user message to the specified AI agent, persists the conversation turn, updates memory, and returns the assistant reply. */
+  async chat(access: MemberAccess, agentType: AIAgentType, message: string, conversationId?: string | null, preferredProvider?: 'GEMINI' | 'GROQ') {
     const context = await getMemberAIContext(access.memberId, access.coachId)
     if (!context) throw new Error('MEMBER_NOT_FOUND')
 
     const prompt = buildPrompt(
       `Répondre comme ${AGENT_LABELS[agentType]} dans un chat IA fitness.`,
-      serializeContext(context),
+      serializeContextCompact(context),
       message,
     )
 
@@ -95,7 +91,7 @@ export class AIService {
       { role: 'system', content: `${AGENT_SYSTEM_PROMPTS[agentType]}\n\n${memoryInstruction}` },
       ...conversationMessages,
       { role: 'user', content: prompt },
-    ])
+    ], preferredProvider)
 
     await prisma.aIMessage.create({
       data: {
@@ -123,6 +119,7 @@ export class AIService {
     return { conversationId: currentConversation.id, provider: result.provider, response: result.text }
   }
 
+  /** Generates and persists an AI report of the given type; returns insufficientData flag if profile/metrics are missing. */
   async generateReport(access: MemberAccess, type: AIReportType, agentType: AIAgentType, task: string) {
     const context = await getMemberAIContext(access.memberId, access.coachId)
     if (!context) throw new Error('MEMBER_NOT_FOUND')
@@ -137,7 +134,7 @@ export class AIService {
       }
     }
 
-    const prompt = buildPrompt(task, serializeContext(context))
+    const prompt = buildPrompt(task, serializeContextCompact(context))
     const result = await providerService.generate([
       { role: 'system', content: AGENT_SYSTEM_PROMPTS[agentType] },
       { role: 'user', content: prompt },

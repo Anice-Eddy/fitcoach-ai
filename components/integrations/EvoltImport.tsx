@@ -11,6 +11,7 @@ interface Props {
   onImport: (data: ReturnType<typeof normalizeEvoltData>) => void
 }
 
+/** Drag-or-click file input that parses an Evolt JSON export, normalizes it, and calls onImport with the result. */
 export function EvoltImport({ onImport }: Props) {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
 

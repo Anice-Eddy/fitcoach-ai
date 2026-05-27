@@ -15,13 +15,15 @@ const MEAL_EMOJIS: Record<string, string> = {
 
 interface Props { meal: Meal }
 
+/** Expandable meal card showing food items and macros; toggling logs or unlogs the meal via the nutrition store. */
 export function MealCard({ meal }: Props) {
   const [expanded, setExpanded] = useState(false)
   const [substituteOpen, setSubstituteOpen] = useState(false)
   const { toggleMeal, todayMeals } = useNutritionStore()
   const isLogged = todayMeals.some((m) => m.mealId === meal.id)
 
-  const mealLog = {
+  const handleLog = () => {
+    const mealLog = {
       mealId:   meal.id,
       name:     meal.name,
       type:     meal.type,
@@ -30,9 +32,7 @@ export function MealCard({ meal }: Props) {
       carbsG:   Math.round(meal.totalCarbsG),
       fatG:     Math.round(meal.totalFatG),
       loggedAt: new Date().toISOString(),
-  }
-
-  const handleLog = () => {
+    }
     toggleMeal(mealLog)
   }
 

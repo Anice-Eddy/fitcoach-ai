@@ -7,6 +7,7 @@ import { getPlanByPriceId } from './plans'
 import type { SubscriptionPlan, SubscriptionStatus } from '@prisma/client'
 
 // Mappe les statuts Stripe → enum Prisma
+// Maps a Stripe subscription status string to the corresponding Prisma SubscriptionStatus enum value.
 function mapStatus(status: Stripe.Subscription.Status): SubscriptionStatus {
   const map: Record<string, SubscriptionStatus> = {
     active:             'ACTIVE',
@@ -21,6 +22,7 @@ function mapStatus(status: Stripe.Subscription.Status): SubscriptionStatus {
   return map[status] ?? 'INACTIVE'
 }
 
+/** Updates the user's subscription plan and status in both the User and Subscription tables based on the Stripe subscription event. */
 export async function handleSubscriptionUpsert(sub: Stripe.Subscription): Promise<void> {
   const customerId = sub.customer as string
   const priceId    = sub.items.data[0]?.price.id
@@ -61,6 +63,7 @@ export async function handleSubscriptionUpsert(sub: Stripe.Subscription): Promis
   ])
 }
 
+/** Downgrades the user to the FREE / INACTIVE plan when a Stripe subscription is deleted. */
 export async function handleSubscriptionDeleted(sub: Stripe.Subscription): Promise<void> {
   const customerId = sub.customer as string
   const user = await prisma.user.findFirst({ where: { stripeCustomerId: customerId } })
@@ -78,6 +81,7 @@ export async function handleSubscriptionDeleted(sub: Stripe.Subscription): Promi
   ])
 }
 
+/** Stores the Stripe customer ID on the user record when a checkout session completes successfully. */
 export async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
   const customerId = session.customer as string
   const userId     = session.metadata?.userId

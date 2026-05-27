@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
-// GET: Récupérer les notifications du coach
+/** Returns the coach's notifications (with unread count); optionally filtered to unread only via the `unreadOnly` query param. */
 export async function GET(req: NextRequest) {
   try {
     const session = await auth()
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// PUT: Marquer une notification comme lue
+/** Marks a specific notification (by notificationId) as read or unread for the coach. */
 export async function PUT(req: NextRequest) {
   try {
     const session = await auth()

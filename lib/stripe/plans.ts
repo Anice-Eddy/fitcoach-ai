@@ -75,12 +75,14 @@ export const PLANS: PricingPlan[] = [
   },
 ]
 
+/** Finds the PricingPlan whose monthly or yearly Stripe price ID matches the given priceId. */
 export function getPlanByPriceId(priceId: string): PricingPlan | undefined {
   return PLANS.find(
     (p) => p.stripePriceIdMonthly === priceId || p.stripePriceIdYearly === priceId,
   )
 }
 
+/** Finds the PricingPlan whose id field matches the given planId. */
 export function getPlanById(planId: string): PricingPlan | undefined {
   return PLANS.find((p) => p.id === planId)
 }

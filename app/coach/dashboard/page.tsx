@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma/client'
 import { Users, Calendar, TrendingUp, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 
+/** Coach dashboard server component: fetches report stats and renders KPI cards, top performers, and recent activity tables. */
 export default async function CoachDashboard() {
   const session = await auth()
   if (!session?.user?.id) redirect('/auth/signin')

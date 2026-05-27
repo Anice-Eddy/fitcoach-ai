@@ -6,14 +6,7 @@ import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
-/**
- * GET /api/user/my-coach
- *
- * Returns all coaches linked to the authenticated member via CoachMember.
- * Also performs a self-healing sync: if an appointment exists but the
- * CoachMember record is missing (legacy data or race condition), it is
- * created here before returning the list.
- */
+/** Returns all coaches linked to the member via CoachMember, performing a self-healing sync (creates missing records from appointments) before fetching; enriches each coach entry with the next upcoming appointment and total appointment count. */
 export async function GET() {
   const session = await auth()
   if (!session?.user?.id) {

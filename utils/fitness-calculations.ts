@@ -43,6 +43,7 @@ export type BMICategory = {
   range: string
 }
 
+// Validates a value against a Zod schema and returns the parsed result; throws the first error message on failure.
 function assertValid<T>(schema: z.ZodSchema<T>, value: unknown): T {
   const parsed = schema.safeParse(value)
   if (!parsed.success) {
@@ -52,14 +53,14 @@ function assertValid<T>(schema: z.ZodSchema<T>, value: unknown): T {
   return parsed.data
 }
 
-// IMC OMS : poids(kg) / taille(m)^2, arrondi à l'entier le plus proche.
+/** Calculates WHO BMI (weight kg / height m²) rounded to the nearest integer; validates inputs via Zod. */
 export function calculateBMI(weightKg: number, heightCm: number): number {
   const value = assertValid(anthropometricsSchema, { weightKg, heightCm })
   const heightM = value.heightCm / 100
   return Math.round(value.weightKg / (heightM * heightM))
 }
 
-// Classification OMS : <18.5 insuffisance, 18.5-24.9 normal, 25-29.9 surpoids, >=30 obésité.
+/** Returns the WHO BMI category label, color, and range string for the given BMI value. */
 export function getBMICategory(bmi: number): BMICategory {
   if (bmi < 18.5) return { label: 'Insuffisance pondérale', color: '#60a5fa', range: '< 18.5' }
   if (bmi < 25) return { label: 'Poids normal', color: '#4ade80', range: '18.5 à 24.9' }
@@ -67,7 +68,7 @@ export function getBMICategory(bmi: number): BMICategory {
   return { label: 'Obésité', color: '#f87171', range: '≥ 30' }
 }
 
-// Mifflin-St Jeor (1990), référence actuelle pour estimer le métabolisme de base.
+/** Calculates basal metabolic rate using the Mifflin-St Jeor (1990) equation for male and female. */
 export function calculateBMR(weightKg: number, heightCm: number, age: number, gender: Gender): number {
   const value = assertValid(bmrSchema, { weightKg, heightCm, age, gender })
   const base = 10 * value.weightKg + 6.25 * value.heightCm - 5 * value.age
@@ -75,13 +76,13 @@ export function calculateBMR(weightKg: number, heightCm: number, age: number, ge
   return Math.round(base - 161)
 }
 
-// TDEE : BMR multiplié par les facteurs d'activité Harris-Benedict révisés.
+/** Calculates total daily energy expenditure by multiplying BMR by the revised Harris-Benedict activity multiplier. */
 export function calculateTDEE(bmr: number, activityLevel: ActivityLevel): number {
   const value = assertValid(tdeeSchema, { bmr, activityLevel })
   return Math.round(value.bmr * ACTIVITY_MULTIPLIERS[value.activityLevel])
 }
 
-// Calories selon objectif : déficit/surplus modéré pour préserver adhérence et masse maigre.
+/** Adjusts TDEE by a moderate deficit or surplus depending on the fitness goal; ensures a minimum of 1200 kcal for weight loss. */
 export function calculateRecommendedCalories(tdee: number, goal: FitnessGoal): number {
   const value = assertValid(caloriesSchema, { tdee, goal })
   switch (value.goal) {
@@ -99,7 +100,7 @@ export function calculateRecommendedCalories(tdee: number, goal: FitnessGoal): n
   }
 }
 
-// Macros : protéines en g/kg selon objectif, lipides/glucides répartis selon les recommandations sportives.
+/** Distributes daily calories into protein, carbs, and fat grams based on goal-specific ratios and body weight. */
 export function calculateMacros(
   calories: number,
   goal: FitnessGoal,
@@ -135,6 +136,7 @@ export function calculateMacros(
   }
 }
 
+/** Returns the next session's weight and rep target using a 2.5–5% progressive overload rule; holds values if not all sets were completed. */
 export function calculateProgressiveOverload(params: {
   previousWeightKg: number
   previousReps: number
@@ -168,6 +170,7 @@ export type FitnessProfileResult = {
   fatG: number
 }
 
+/** Computes the full fitness profile (BMI, BMR, TDEE, recommended calories, and macros) in a single call. */
 export function calculateFitnessProfile(params: {
   weightKg: number
   heightCm: number

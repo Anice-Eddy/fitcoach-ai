@@ -57,11 +57,13 @@ const STATUS_LABEL: Record<string, string> = {
   PENDING:   'En attente', PROPOSED: 'Proposé', CONFIRMED: 'Confirmé',
 }
 
+// Returns a 2-letter uppercase initials string from a display name or email fallback.
 function initials(name: string | null, email: string) {
   if (name) return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
   return email.slice(0, 2).toUpperCase()
 }
 
+// Renders a card showing assigned coach info, next appointment, total sessions, and a booking link.
 function CoachCard({ relation }: { relation: CoachRelation }) {
   const { coach, nextAppointment, totalAppointments, assignedAt } = relation
   const displayName = coach.name ?? `${coach.firstName} ${coach.lastName}`
@@ -158,6 +160,7 @@ function CoachCard({ relation }: { relation: CoachRelation }) {
   )
 }
 
+/** Member dashboard: fetches and displays daily tasks, metrics, weight chart, nutrition summary, quick actions, and assigned coach cards. */
 export function DashboardClient() {
   const { data: session }             = useSession()
   const { profile }                   = useUserStore()

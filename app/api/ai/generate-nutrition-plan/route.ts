@@ -9,6 +9,7 @@ import { aiError, getAIAccess } from '@/app/api/ai/_utils'
 const schema = z.object({ memberId: z.string().optional().nullable() })
 const service = new AIService()
 
+/** Generates an AI nutrition plan for the authenticated user or specified member; returns a non-medical dietary proposal with macros and meal ideas. */
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => ({})))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })

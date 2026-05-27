@@ -51,8 +51,7 @@ const GENDER_OPTIONS = [
 const RESTRICTIONS = ['Végétarien', 'Végan', 'Sans gluten', 'Sans lactose', 'Halal', 'Casher', 'Sans noix', 'Sans porc']
 const PREFERENCES  = ['Viande blanche', 'Poisson', 'Œufs', 'Légumineuses', 'Riz', 'Pâtes', 'Pommes de terre', 'Légumes verts', 'Fruits', 'Produits laitiers']
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
+// Maps the user's available equipment list to a training-place id string ('gym', 'home_gear', 'home_bw', 'outdoor').
 function placeIdFromEquipment(eq?: string[]): string {
   if (!eq?.length) return ''
   if (eq.includes('BARBELL')) return 'gym'
@@ -61,8 +60,7 @@ function placeIdFromEquipment(eq?: string[]): string {
   return 'outdoor'
 }
 
-// ─── Section wrapper ─────────────────────────────────────────────────────────
-
+// Card section wrapper with a header title and padded content area.
 function Section({ title, children, className = '' }: { title: string; children: ReactNode; className?: string }) {
   return (
     <section className={`rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden ${className}`}>
@@ -75,8 +73,7 @@ function Section({ title, children, className = '' }: { title: string; children:
 }
 
 
-// ─── Main page ────────────────────────────────────────────────────────────────
-
+/** Member settings hub: profile info, physical measurements, training preferences, equipment, and plan/subscription section. */
 export default function SettingsPage() {
   const { data: session }       = useSession()
   const { profile, setProfile, accompanimentMode, coachName, nextCoachSession } = useUserStore()

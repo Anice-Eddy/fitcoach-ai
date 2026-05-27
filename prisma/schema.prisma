@@ -652,6 +652,7 @@ model CoachProfile {
   appointments  CoachAppointment[]
   notifications Notification[]
   notes         CoachNote[]
+  availability  CoachAvailability[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -702,6 +703,25 @@ model CoachAppointment {
   @@index([memberId])
   @@index([scheduledAt])
   @@map("coach_appointments")
+}
+
+// Créneaux de disponibilité récurrents du coach (par jour de la semaine)
+model CoachAvailability {
+  id           String       @id @default(cuid())
+  coachId      String
+  coachProfile CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  dayOfWeek    Int  // 1=Lundi, 2=Mardi, ... 7=Dimanche (ISO)
+  startHour    Int  // 0-23
+  startMinute  Int  @default(0)
+  endHour      Int  // 0-23
+  endMinute    Int  @default(0)
+  slotDuration Int  @default(60)  // durée d'un créneau en minutes
+
+  createdAt DateTime @default(now())
+
+  @@unique([coachId, dayOfWeek, startHour, startMinute])
+  @@map("coach_availabilities")
 }
 
 // Notifications pour le coach

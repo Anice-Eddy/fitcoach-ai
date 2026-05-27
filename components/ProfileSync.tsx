@@ -6,6 +6,7 @@ import { useUserStore } from '@/stores/userStore'
 import { useLocale } from '@/contexts/LocaleContext'
 import type { UserProfile } from '@/lib/storage/StorageAdapter'
 
+/** Invisible component that fetches and syncs the cloud profile into the Zustand store after the user authenticates. */
 export function ProfileSync() {
   const { data: session, status } = useSession()
   const { profile, setProfile }   = useUserStore()

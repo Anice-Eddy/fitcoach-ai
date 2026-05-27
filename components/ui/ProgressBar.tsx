@@ -16,6 +16,7 @@ interface ProgressBarProps {
 
 const SIZE_MAP = { sm: 'h-1.5', md: 'h-2.5', lg: 'h-3.5' }
 
+/** Animated progress bar with optional label, sub-label, custom color, and three size variants; clamps value between 0 and max. */
 export function ProgressBar({
   value, max = 100, label, sublabel, color = '#C8F135', size = 'md', className,
 }: ProgressBarProps) {

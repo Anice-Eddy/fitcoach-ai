@@ -6,6 +6,7 @@ import { PageWrapper } from '@/components/layout/PageWrapper'
 import { useUserStore } from '@/stores/userStore'
 import { toast } from 'sonner'
 
+/** Preferences settings page: lets the user change weight/height unit system and save the preference. */
 export default function PreferencesPage() {
   const { profile, updateProfile } = useUserStore()
   const [weightUnit, setWeightUnitState] = useState<'KG' | 'LB'>(profile?.weightUnit ?? 'KG')

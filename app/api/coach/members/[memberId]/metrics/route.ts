@@ -16,6 +16,7 @@ const metricSchema = z.object({
   notes:        z.string().max(500).optional().nullable(),
 })
 
+// Authenticates the session as a coach and verifies the member belongs to this coach; returns coachProfileId or an error response.
 async function authorizeCoach(memberId: string) {
   const session = await auth()
   if (!session?.user?.email) return { error: NextResponse.json({ error: 'Non authentifié' }, { status: 401 }) }
@@ -34,7 +35,7 @@ async function authorizeCoach(memberId: string) {
   return { coachProfileId: user.coachProfile.id }
 }
 
-// GET: coach fetches member's body metrics
+/** Returns up to `limit` (max 365) body metric records for the member, ordered by date descending. */
 export async function GET(
   req: NextRequest,
   { params }: { params: { memberId: string } },
@@ -53,7 +54,7 @@ export async function GET(
   return NextResponse.json(metrics)
 }
 
-// POST: coach adds a body metric for member
+/** Adds a body metric entry for the member and updates the profile weight if this is the latest record. */
 export async function POST(
   req: NextRequest,
   { params }: { params: { memberId: string } },
@@ -88,7 +89,7 @@ export async function POST(
   return NextResponse.json(metric, { status: 201 })
 }
 
-// DELETE: coach removes a body metric
+/** Deletes a specific body metric entry (by metricId in body) that belongs to the given member. */
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { memberId: string } },

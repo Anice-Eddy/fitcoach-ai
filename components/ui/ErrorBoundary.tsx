@@ -7,6 +7,7 @@ import { AlertTriangle } from 'lucide-react'
 interface Props   { children: ReactNode; fallback?: ReactNode }
 interface State   { hasError: boolean; message: string }
 
+/** React class component that catches render errors and displays a fallback UI; logs errors to the console. */
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, message: '' }
 

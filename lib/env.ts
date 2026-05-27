@@ -6,6 +6,7 @@ const REQUIRED_ENV_VARS = [
   { key: 'NEXT_PUBLIC_APP_URL',  desc: 'URL publique de l\'app' },
 ] as const
 
+/** Throws a descriptive error listing all required environment variables that are currently missing. */
 export function validateEnv() {
   const missing = REQUIRED_ENV_VARS.filter(({ key }) => !process.env[key])
 

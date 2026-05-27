@@ -22,6 +22,7 @@ interface ReportData {
   recentActivity:       { memberId: string; name: string | null; lastSessionAt: string | null }[]
 }
 
+// KPI stat card with icon, numeric value, label, and optional sub-label.
 function StatCard({
   label, value, icon: Icon, color, sub,
 }: {
@@ -41,12 +42,14 @@ function StatCard({
   )
 }
 
+// Renders a centred italic message for an empty report section.
 function EmptySection({ message }: { message: string }) {
   return (
     <p className="text-sm text-zinc-500 italic py-4 text-center">{message}</p>
   )
 }
 
+/** Coach analytics page: fetches and displays KPI stats, member completion rates, top performers, and recent activity. */
 export default function CoachReports() {
   const [data, setData]       = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)

@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 
+// Authenticates the session and returns the coachProfile record, or an error response.
 async function getCoachProfile() {
   const session = await auth()
   if (!session?.user?.email) return { error: NextResponse.json({ error: 'Non authentifié' }, { status: 401 }) }
@@ -16,7 +17,7 @@ async function getCoachProfile() {
   return { coachProfile: user.coachProfile }
 }
 
-// GET: all replies for a note (coach view)
+/** Returns all replies for the note (coach view), ordered by creation date ascending. */
 export async function GET(
   _req: NextRequest,
   { params }: { params: { noteId: string } },
@@ -38,7 +39,7 @@ export async function GET(
   return NextResponse.json(replies)
 }
 
-// DELETE: coach removes a reply
+/** Deletes a specific reply (by replyId in body) from the note; verifies the note belongs to this coach. */
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { noteId: string } },

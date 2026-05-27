@@ -14,12 +14,17 @@ interface Props {
   storageKey?: string
 }
 
+/** Renders an animated checklist of daily tasks with localStorage persistence for completed state. */
 export function DailyTaskChecklist({ tasks, storageKey = 'BodyOps:daily-tasks' }: Props) {
   const [completed, setCompleted] = useState<string[]>([])
+  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
     setCompleted(JSON.parse(localStorage.getItem(storageKey) ?? '[]') as string[])
+    setHydrated(true)
   }, [storageKey])
+
+  if (!hydrated) return null
 
   const toggle = (id: string) => {
     setCompleted((current) => {

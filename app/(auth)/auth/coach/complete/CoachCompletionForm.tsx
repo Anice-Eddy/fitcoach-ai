@@ -22,6 +22,7 @@ type CoachProfileFormProps = {
   }
 }
 
+/** Form for completing a coach's professional profile (bio, specialties, certifications, document); submits via multipart PATCH to /api/coach/profile. */
 export function CoachCompletionForm({ initialProfile }: CoachProfileFormProps) {
   const router = useRouter()
   const { update: updateSession } = useSession()

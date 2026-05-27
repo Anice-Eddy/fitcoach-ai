@@ -12,6 +12,7 @@ import {
 } from '@/lib/stripe/webhooks'
 import type Stripe from 'stripe'
 
+/** Receives Stripe webhook events, verifies the signature, and dispatches to the appropriate handler (checkout, subscription created/updated/deleted). */
 export async function POST(req: Request) {
   const body      = await req.text()
   const signature = req.headers.get('stripe-signature')

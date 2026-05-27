@@ -13,7 +13,7 @@ import { useTrainingStore } from '@/stores/trainingStore'
 import { useUserStore } from '@/stores/userStore'
 import { EXERCISE_DATABASE } from '@/lib/training/exercise-database'
 
-// Rest time based on fitness goal and exercise type
+// Calculates the recommended rest period in seconds based on the user's fitness goal and whether the exercise is compound.
 function calcRestSeconds(goal: string | undefined, isCompound: boolean): number {
   const base: Record<string, number> = {
     MUSCLE_GAIN:     120,
@@ -29,6 +29,7 @@ function calcRestSeconds(goal: string | undefined, isCompound: boolean): number 
 
 interface Props { exercise: SessionExercise; index: number }
 
+/** Expandable exercise row with weight/reps input, set completion toggle, YouTube thumbnail, and alternative exercise selector. */
 export function ExerciseItem({ exercise, index }: Props) {
   const [expanded, setExpanded] = useState(false)
   const [showAlternatives, setShowAlternatives] = useState(false)

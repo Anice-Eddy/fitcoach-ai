@@ -6,6 +6,7 @@ import { resolveMemberAccess } from '@/lib/ai/context'
 
 export const agentSchema = z.enum(['TRAINING', 'NUTRITION', 'PROGRESSION', 'MOTIVATION', 'COACH_REPORT'])
 
+/** Authenticates the session, checks the AI rate-limit, and resolves member access; returns { access } or { error: NextResponse }. */
 export async function getAIAccess(memberId?: string | null) {
   const session = await auth()
   if (!session?.user?.id) {
@@ -30,6 +31,7 @@ export async function getAIAccess(memberId?: string | null) {
   return { access }
 }
 
+/** Maps a caught AI error to a structured NextResponse (404, 502, etc.) and logs the message. */
 export function aiError(error: unknown) {
   const message = error instanceof Error ? error.message : 'Erreur IA inconnue'
   console.error('[ai] endpoint error:', message)

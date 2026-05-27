@@ -19,6 +19,7 @@ interface CoachProfile {
   avatarUrl:       string | null
 }
 
+/** Coach profile settings page: edit bio, specialties, certifications, and upload a verification document. */
 export default function CoachSettingsProfilePage() {
   const { data: session, update: updateSession } = useSession()
   const [profile, setProfile]   = useState<CoachProfile | null>(null)

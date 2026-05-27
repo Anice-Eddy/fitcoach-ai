@@ -12,6 +12,7 @@ interface UpgradePromptProps {
   compact?:    boolean
 }
 
+/** Dismissible upgrade banner shown on Pro-gated features; renders a compact inline variant or a full card depending on the compact prop. */
 export function UpgradePrompt({ feature, description, compact }: UpgradePromptProps) {
   const [dismissed, setDismissed] = useState(false)
   if (dismissed) return null

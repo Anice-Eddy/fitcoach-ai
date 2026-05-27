@@ -15,16 +15,22 @@ import { Plus, ShoppingCart } from 'lucide-react'
 
 const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
 
+/** Interactive nutrition plan view: fetches or generates a weekly meal plan and allows day/meal navigation with macro summaries. */
 export function NutritionClient() {
   const { profile }  = useUserStore()
   const [plan, setPlan]       = useState<NutritionPlan | null>(null)
   const [loading, setLoading] = useState(true)
   const [addingMeal, setAddingMeal] = useState(false)
   const [quickMeal, setQuickMeal] = useState({ name: '', calories: '', proteinG: '', carbsG: '', fatG: '' })
-  const [selectedDay, setDay] = useState(() => {
+  const [selectedDay, setDay] = useState(0) // Par défaut lundi
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
     const d = new Date().getDay()
-    return d === 0 ? 6 : d - 1 // Convertit 0=dimanche en 6
-  })
+    const todayIndex = d === 0 ? 6 : d - 1
+    setDay(todayIndex)
+    setHydrated(true)
+  }, [])
 
   useEffect(() => {
     if (!profile) { setLoading(false); return }
@@ -124,7 +130,7 @@ export function NutritionClient() {
             <div className="grid gap-3 sm:grid-cols-5">
               <input value={quickMeal.name} onChange={(e) => setQuickMeal({ ...quickMeal, name: e.target.value })} placeholder="Nom" className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white outline-none focus:border-[#C8F135] sm:col-span-2" />
               <input value={quickMeal.calories} onChange={(e) => setQuickMeal({ ...quickMeal, calories: e.target.value })} type="number" placeholder="kcal" className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white outline-none focus:border-[#C8F135]" />
-              <input value={quickMeal.proteinG} onChange={(e) => setQuickMeal({ ...quickMeal, proteinG: e.target.value })} type="number" placeholder="P" className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white outline-none focus:border-[#C8F135]" />
+              <input value={quickMeal.proteinG} onChange={(e) => setQuickMeal({ ...quickMeal, proteinG: e.target.value })} type="number" placeholder="Prot. g" className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white outline-none focus:border-[#C8F135]" />
               <button type="button" onClick={addQuickMeal} disabled={!quickMeal.name || !quickMeal.calories} aria-label="Enregistrer le repas rapide" className="rounded-xl bg-[#C8F135] px-4 py-2 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] disabled:opacity-50">Ajouter</button>
             </div>
           </div>

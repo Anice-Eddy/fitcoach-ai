@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Dumbbell, Users } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 
+/** Sign-in page shell wrapping the SignInForm in a Suspense boundary for searchParams access. */
 export default function SignInPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>

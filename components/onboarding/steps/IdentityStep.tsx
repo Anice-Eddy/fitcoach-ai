@@ -16,6 +16,7 @@ const GENDER_OPTIONS = [
   { value: 'FEMALE', label: 'Femme' },
 ]
 
+/** Onboarding step that collects the user's first name, age, and gender. */
 export function IdentityStep({ defaultValues, onNext, onBack }: Props) {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<IdentityData>({
     resolver:      zodResolver(identitySchema),

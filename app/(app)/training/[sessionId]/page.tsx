@@ -15,6 +15,7 @@ import Link from 'next/link'
 
 interface DBSession { id: string; name: string; status: string; durationMinutes: number | null }
 
+/** Active workout session page: tracks exercise sets, rest timer, and session completion; syncs status to the API. */
 export default function SessionPage({ params }: { params: { sessionId: string } }) {
   const router       = useRouter()
   const { profile }  = useUserStore()

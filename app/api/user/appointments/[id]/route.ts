@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
-// PATCH: member adds/updates their note on an appointment
+/** Updates the member's own note on an appointment and notifies the coach when the note changes. */
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } },

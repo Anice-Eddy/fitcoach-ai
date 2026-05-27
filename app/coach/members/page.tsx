@@ -89,13 +89,13 @@ const SESSION_STYLE: Record<string, { dot: string; label: string }> = {
   SKIPPED:     { dot: 'bg-red-400',     label: 'Manqué' },
 }
 
+// Returns 2-letter uppercase initials from a display name or email fallback.
 function initials(name: string | null, email: string) {
   if (name) return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
   return email.slice(0, 2).toUpperCase()
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
+// Tab toggle button with active highlight style.
 function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
@@ -110,6 +110,7 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
   )
 }
 
+// Small stat card with label, bold value, and optional sub-text.
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
@@ -120,8 +121,7 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
   )
 }
 
-// ─── Overview Tab ─────────────────────────────────────────────────────────────
-
+// Displays a summary of the member's profile: physical stats, goals, BMI, latest metrics, and active program.
 function OverviewTab({ detail }: { detail: MemberDetail }) {
   const p = detail.profile
   const last = detail.bodyMetrics[0]
@@ -178,6 +178,7 @@ function OverviewTab({ detail }: { detail: MemberDetail }) {
 
 // ─── Notes Tab ────────────────────────────────────────────────────────────────
 
+// Expandable section showing existing replies on a coach note and allowing the coach to fetch the latest replies.
 function NoteRepliesSection({ noteId, replies: initialReplies }: { noteId: string; replies: NoteReply[] }) {
   const [expanded, setExpanded]   = useState(false)
   const [replies, setReplies]     = useState<NoteReply[]>(initialReplies)
@@ -251,6 +252,7 @@ function NoteRepliesSection({ noteId, replies: initialReplies }: { noteId: strin
   )
 }
 
+// Notes management tab: create, share, pin, and delete coach notes for this member.
 function NotesTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: () => void }) {
   const [notes, setNotes]       = useState<Note[]>(detail.coachNotes)
   const [form, setForm]         = useState({ title: '', content: '', shared: false, important: false })
@@ -430,8 +432,7 @@ function NotesTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: () =
   )
 }
 
-// ─── Activity Tab (editable) ──────────────────────────────────────────────────
-
+// Activity tab: displays and manages body metrics and workout sessions for the member, with add/delete and session status editing.
 function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; memberId: string; onRefresh: () => void }) {
   const [metrics, setMetrics]             = useState<Metric[]>(detail.bodyMetrics)
   const [sessions, setSessions]           = useState<Session[]>(detail.workoutSessions)
@@ -679,21 +680,22 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
   )
 }
 
-// ─── Appointments Tab ─────────────────────────────────────────────────────────
-
+// Appointments tab: lists all appointments for this member with status badges, date, and a link to the appointments page.
 function AppointmentsTab({ memberId }: { memberId: string }) {
   const [appts, setAppts]     = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
+  const [now, setNow]         = useState<Date | null>(null)
 
   useEffect(() => {
+    setNow(new Date())
     fetch(`/api/coach/appointments?memberId=${memberId}`)
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setAppts(d) })
       .finally(() => setLoading(false))
   }, [memberId])
 
-  const upcoming = appts.filter(a => new Date(a.scheduledAt) >= new Date() && a.status !== 'CANCELLED')
-  const past     = appts.filter(a => new Date(a.scheduledAt) < new Date() || a.status === 'CANCELLED' || a.status === 'COMPLETED')
+  const upcoming = now ? appts.filter(a => new Date(a.scheduledAt) >= now && a.status !== 'CANCELLED') : []
+  const past     = now ? appts.filter(a => new Date(a.scheduledAt) < now || a.status === 'CANCELLED' || a.status === 'COMPLETED') : []
 
   if (loading) return <div className="py-10 text-center text-sm text-zinc-500">Chargement…</div>
 
@@ -754,6 +756,7 @@ function AppointmentsTab({ memberId }: { memberId: string }) {
 
 type Tab = 'overview' | 'notes' | 'activity' | 'appointments'
 
+/** Coach members management page: sidebar member list with search, and a detail panel with Overview/Notes/Activity/Appointments tabs. */
 export default function CoachMembers() {
   const [members, setMembers]               = useState<MemberItem[]>([])
   const [search, setSearch]                 = useState('')
@@ -791,11 +794,19 @@ export default function CoachMembers() {
   const removeMember = async () => {
     if (!selectedId || !confirm('Retirer ce membre de votre liste ?')) return
     setRemoving(true)
-    await fetch(`/api/coach/members/${selectedId}`, { method: 'DELETE' })
-    setSelectedId(null)
-    setDetail(null)
-    await fetchMembers()
-    setRemoving(false)
+    try {
+      const res = await fetch(`/api/coach/members/${selectedId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        alert(data?.error ?? 'Erreur lors de la suppression')
+        return
+      }
+      setSelectedId(null)
+      setDetail(null)
+      await fetchMembers()
+    } finally {
+      setRemoving(false)
+    }
   }
 
   const filtered = members.filter(m =>

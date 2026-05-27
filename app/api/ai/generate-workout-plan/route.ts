@@ -9,6 +9,7 @@ import { aiError, getAIAccess } from '@/app/api/ai/_utils'
 const schema = z.object({ memberId: z.string().optional().nullable() })
 const service = new AIService()
 
+/** Generates a personalized AI workout plan proposal for the user or member; returns exercises, sets, reps, rest times, and progression rationale. */
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => ({})))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })

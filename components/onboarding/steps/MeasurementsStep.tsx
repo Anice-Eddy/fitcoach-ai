@@ -14,6 +14,7 @@ interface Props {
   onBack: () => void
 }
 
+/** Onboarding step for entering weight, height, and optional waist/hip measurements with live unit conversion display. */
 export function MeasurementsStep({ defaultValues, weightUnit, heightUnit, onNext, onBack }: Props) {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<MeasurementsData>({
     resolver:      zodResolver(measurementsSchema),

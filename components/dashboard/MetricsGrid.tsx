@@ -13,6 +13,7 @@ interface Props {
   isLoading:  boolean
 }
 
+/** Renders the four main dashboard metric cards: current weight, today's calories, workout status, and consecutive-day streak. */
 export function MetricsGrid({ profile, lastWeight, streak, isLoading }: Props) {
   const { getTodayTotals } = useNutritionStore()
   const totals = getTodayTotals()

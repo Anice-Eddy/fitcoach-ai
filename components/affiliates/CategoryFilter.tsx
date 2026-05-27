@@ -10,6 +10,7 @@ interface Props {
   counts:   Record<string, number>
 }
 
+/** Renders category filter chip buttons for the affiliate shop; highlights the active category and shows per-category product counts. */
 export function CategoryFilter({ selected, onChange, counts }: Props) {
   const all = [
     { id: 'ALL' as const, label: 'Tous',  emoji: '🛍️' },

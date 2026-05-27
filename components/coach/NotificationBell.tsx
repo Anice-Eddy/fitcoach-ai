@@ -21,6 +21,7 @@ const NOTIFICATION_LINKS: Record<string, string> = {
   MESSAGE:     '/coach/members',
 }
 
+/** Bell icon with unread badge that polls /api/coach/notifications every 30 s; clicking a notification marks it read and navigates to the relevant page. */
 export function NotificationBell() {
   const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])

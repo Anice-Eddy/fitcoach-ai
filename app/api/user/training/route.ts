@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma/client'
 import { generateProgram } from '@/lib/training/generate-program'
 import type { FitnessGoal, FitnessLevel } from '@prisma/client'
 
+/** Returns the user's active workout program; generates and persists a new program from the user's profile if none is active. */
 export async function GET() {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
@@ -54,7 +55,7 @@ export async function GET() {
   return NextResponse.json(program)
 }
 
-// Reset: deactivate current program and create a new one
+/** Deactivates all active workout programs for the user, allowing a fresh program to be generated on next GET. */
 export async function DELETE() {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

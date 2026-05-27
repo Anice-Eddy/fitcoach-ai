@@ -13,6 +13,7 @@ interface Props {
   onNext: (data: UnitsData) => void
 }
 
+/** First onboarding step that lets the user choose their preferred weight (kg/lb) and height (cm/ft-in) units. */
 export function UnitsStep({ defaultValues, onNext }: Props) {
   const [weightUnit, setWeightUnit] = useState<'KG' | 'LB'>(defaultValues?.weightUnit ?? 'KG')
   const [heightUnit, setHeightUnit] = useState<'CM' | 'FT_IN'>(defaultValues?.heightUnit ?? 'CM')

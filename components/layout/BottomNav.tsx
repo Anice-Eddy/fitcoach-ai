@@ -14,6 +14,7 @@ const TABS = [
   { href: '/settings',  key: 'nav.settings',  icon: Settings },
 ]
 
+/** Mobile-only fixed bottom navigation bar with five translated tab links; highlights the active route. */
 export function BottomNav() {
   const pathname = usePathname() ?? ''
   const { t }    = useLocale()

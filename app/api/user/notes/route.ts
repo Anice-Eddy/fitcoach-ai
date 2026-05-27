@@ -17,13 +17,14 @@ const createSchema = z.object({
 
 const updateSchema = createSchema.partial().extend({ id: z.string().min(1) })
 
+// Authenticates the session and returns userId, or an error response.
 async function getUser() {
   const session = await auth()
   if (!session?.user?.id) return { error: NextResponse.json({ error: 'Non authentifié' }, { status: 401 }) }
   return { userId: session.user.id }
 }
 
-// GET: all notes for the authenticated user
+/** Returns all personal notes for the authenticated user, ordered by pinned then creation date descending. */
 export async function GET(_req: NextRequest) {
   const { userId, error } = await getUser()
   if (error) return error
@@ -36,7 +37,7 @@ export async function GET(_req: NextRequest) {
   return NextResponse.json(notes)
 }
 
-// POST: create a note
+/** Creates a new personal note for the authenticated user; returns 201 with the created note. */
 export async function POST(req: NextRequest) {
   const { userId, error } = await getUser()
   if (error) return error
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(note, { status: 201 })
 }
 
-// PATCH: update a note
+/** Updates a personal note by id; verifies ownership and returns the updated note. */
 export async function PATCH(req: NextRequest) {
   const { userId, error } = await getUser()
   if (error) return error
@@ -70,7 +71,7 @@ export async function PATCH(req: NextRequest) {
   return NextResponse.json(note)
 }
 
-// DELETE: delete a note
+/** Deletes a personal note by id from the request body, after verifying ownership. */
 export async function DELETE(req: NextRequest) {
   const { userId, error } = await getUser()
   if (error) return error

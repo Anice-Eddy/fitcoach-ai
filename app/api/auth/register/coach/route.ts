@@ -18,6 +18,7 @@ const schema = z.object({
   memberLimit:     z.number().int().min(1).max(100).default(10),
 })
 
+/** Registers a new coach-only account with full profile data (bio, specialties, certifications, etc.); hashes the password and returns 201 on success. */
 export async function POST(req: Request) {
   const body   = await req.json()
   const parsed = schema.safeParse(body)

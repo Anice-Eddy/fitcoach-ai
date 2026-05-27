@@ -6,6 +6,7 @@ import { NutritionClient } from './NutritionClient'
 
 export const metadata: Metadata = { title: 'Nutrition — BodyOps' }
 
+/** Server component shell for the nutrition page; renders the interactive NutritionClient. */
 export default function NutritionPage() {
   return (
     <>

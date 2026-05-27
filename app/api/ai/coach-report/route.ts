@@ -9,6 +9,7 @@ import { aiError, getAIAccess } from '@/app/api/ai/_utils'
 const schema = z.object({ memberId: z.string().min(1) })
 const service = new AIService()
 
+/** Generates a full AI coach-report for the given memberId; restricted to coach role. */
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })

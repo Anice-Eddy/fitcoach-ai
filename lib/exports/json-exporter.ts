@@ -9,6 +9,7 @@ interface ExportPayload {
   metrics:   unknown[]
 }
 
+/** Builds a versioned JSON export payload containing the user profile and body metrics. */
 export function buildJsonExport(profile: UserProfile | null, metrics: unknown[]): ExportPayload {
   return {
     version:    '1.0',
@@ -18,6 +19,7 @@ export function buildJsonExport(profile: UserProfile | null, metrics: unknown[])
   }
 }
 
+/** Triggers a browser download of the given ExportPayload as a JSON file with the specified filename. */
 export function downloadJson(data: ExportPayload, filename = 'BodyOps-export.json'): void {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
   const url  = URL.createObjectURL(blob)

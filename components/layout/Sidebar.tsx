@@ -26,6 +26,7 @@ const NAV_KEYS = [
   { href: '/settings',     key: 'nav.settings',     icon: Settings },
 ]
 
+/** Animated slide-in sidebar with translated nav links; collapses to a mobile overlay with a backdrop on small screens. */
 export function Sidebar() {
   const pathname       = usePathname() ?? ''
   const { sidebarOpen, toggleSidebar } = useUIStore()

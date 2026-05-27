@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { prisma } from '@/lib/prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 
-// GET: single coach detail by User.id
+/** Returns a single coach's public profile detail by User.id, including member and appointment counts; 404 if not a coach. */
 export async function GET(
   _req: NextRequest,
   { params }: { params: { coachId: string } },

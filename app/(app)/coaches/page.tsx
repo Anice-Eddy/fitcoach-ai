@@ -31,6 +31,7 @@ const FALLBACK_COACH: Coach = {
   },
 }
 
+/** Displays the public coach directory fetched from /api/coaches, with a search bar and coach cards. */
 export default function CoachesPage() {
   const [coaches, setCoaches] = useState<Coach[]>([])
   const [loading, setLoading] = useState(true)

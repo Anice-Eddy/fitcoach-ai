@@ -13,6 +13,7 @@ interface Props {
   index:    number
 }
 
+/** Animated pricing plan card showing monthly/yearly price, feature list, current-plan badge, and a Stripe checkout action. */
 export function PricingCard({ plan, isYearly, index }: Props) {
   const { plan: currentPlan } = useSubscriptionStore()
   const isCurrent = currentPlan === plan.plan

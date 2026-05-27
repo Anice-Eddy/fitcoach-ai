@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 interface ShoppingItem { name: string; totalGrams: number; category: string }
 interface Props         { items: Record<string, ShoppingItem> }
 
+/** Renders a checkable shopping list from the aggregated food items map; checked items are struck through and dimmed. */
 export function ShoppingList({ items }: Props) {
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const entries = Object.entries(items)

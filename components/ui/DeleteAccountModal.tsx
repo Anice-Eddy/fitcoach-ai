@@ -11,6 +11,7 @@ interface Props {
   deleting:  boolean
 }
 
+/** Confirmation modal that requires the user to type 'SUPPRIMER' before calling onConfirm with an optional password. */
 export function DeleteAccountModal({ onConfirm, onCancel, deleting }: Props) {
   const [confirmWord, setConfirmWord] = useState('')
   const [password,    setPassword]    = useState('')

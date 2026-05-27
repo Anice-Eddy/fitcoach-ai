@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { NextResponse } from 'next/server'
 
+/** Returns aggregated dashboard statistics for the authenticated coach: member count, appointment totals, session metrics, completion rate, weight delta, top performers, and recent activity. */
 export async function GET() {
   const session = await auth()
   if (!session?.user?.email) {

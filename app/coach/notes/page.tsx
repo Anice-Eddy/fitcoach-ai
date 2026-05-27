@@ -65,11 +65,13 @@ const EMPTY_FORM = {
   isSharedWithMember: false,
 }
 
+// Returns a 2-letter uppercase initials string from a display name or email.
 function initials(name?: string | null, email?: string) {
   const source = name?.trim() || email || '?'
   return source.split(/\s|@/).filter(Boolean).map((part) => part[0]).join('').slice(0, 2).toUpperCase()
 }
 
+// Formats a followUpAt date string as "Aujourd'hui" or a French short date.
 function formatFollowUp(value: string | null) {
   if (!value) return null
   const date = new Date(value)
@@ -77,10 +79,12 @@ function formatFollowUp(value: string | null) {
   return format(date, 'd MMM yyyy', { locale: fr })
 }
 
+// Returns true if the followUpAt date is in the past (not today).
 function isLate(value: string | null) {
   return Boolean(value && isBefore(new Date(value), new Date()) && !isToday(new Date(value)))
 }
 
+/** Coach notes management page: select a member, create/edit/delete notes with status, priority, tags, and optional member sharing. */
 export default function NotesPage() {
   const [members, setMembers] = useState<CoachMember[]>([])
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null)

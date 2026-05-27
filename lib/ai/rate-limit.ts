@@ -5,6 +5,7 @@ type Bucket = {
 
 const buckets = new Map<string, Bucket>()
 
+/** Checks and increments an in-memory sliding-window counter for the given key; returns ok: false with remaining: 0 when the limit is reached. */
 export function checkRateLimit(key: string, limit = 20, windowMs = 60_000) {
   const now = Date.now()
   const current = buckets.get(key)

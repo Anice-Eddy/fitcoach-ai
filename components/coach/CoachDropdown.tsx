@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
 import { ChevronDown, LogOut, UserCircle } from 'lucide-react'
 
+/** Coach account dropdown showing name, email, avatar, profile link, and sign-out button; closes on outside pointer events. */
 export function CoachDropdown() {
   const { data: session } = useSession()
   const [open, setOpen]   = useState(false)

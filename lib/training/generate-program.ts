@@ -11,10 +11,12 @@ interface ProgramParams {
   availableEquipment: string[]
 }
 
+// Filters exercises to those requiring at least one piece of equipment the user has available.
 function filterByEquipment(exercises: typeof EXERCISE_DATABASE, equipment: string[]) {
   return exercises.filter((ex) => ex.equipment.some((eq) => equipment.includes(eq)))
 }
 
+// Selects exercises targeting the given muscle groups (primary first, then secondary) and builds a WorkoutSession.
 function buildSession(
   name: string,
   muscleGroups: string[],
@@ -72,6 +74,7 @@ function buildSession(
   }
 }
 
+/** Generates a full-week WorkoutProgram (Full Body, PPL, or Upper/Lower) based on fitness goal, level, and available training days. */
 export function generateProgram(params: ProgramParams): WorkoutProgram {
   const { fitnessGoal, fitnessLevel, trainingDaysPerWeek, availableEquipment } = params
 

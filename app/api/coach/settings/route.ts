@@ -18,6 +18,7 @@ const schema = z.object({
   avatarUrl:       z.string().url().nullable().optional(),
 })
 
+/** Updates coach profile settings (bio, specialties, certifications, memberLimit, avatarUrl, etc.); ignores undefined fields. */
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
