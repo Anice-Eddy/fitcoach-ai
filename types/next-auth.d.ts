@@ -9,6 +9,7 @@ declare module 'next-auth' {
       plan:    string
       status:  string
       isCoach: boolean
+      hasRoleConflict: boolean
       hasMemberProfile: boolean
     } & DefaultSession['user']
   }
@@ -25,6 +26,7 @@ declare module 'next-auth/jwt' {
     plan?:    string
     status?:  string
     isCoach?: boolean
+    hasRoleConflict?: boolean
     hasMemberProfile?: boolean
   }
 }

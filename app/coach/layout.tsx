@@ -11,7 +11,6 @@ import { isCoachProfileComplete } from '@/lib/coach/verification'
 const NAV = [
   { href: '/coach/dashboard',    label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/coach/members',      label: 'Membres',         icon: Users },
-  { href: '/coach/calendar',     label: 'Calendrier',      icon: Calendar },
   { href: '/coach/appointments', label: 'Agenda',          icon: Calendar },
   { href: '/coach/notes',        label: 'Notes',           icon: MessageSquare },
   { href: '/coach/ai',           label: 'Assistant IA',    icon: Bot },
@@ -27,6 +26,7 @@ export default async function CoachLayout({ children }: { children: React.ReactN
     where:  { id: session.user.id },
     select: {
       name: true,
+      profile: { select: { id: true } },
       coachProfile: {
         select: {
           id: true,
@@ -43,6 +43,7 @@ export default async function CoachLayout({ children }: { children: React.ReactN
     },
   })
   if (!user?.coachProfile) redirect('/dashboard')
+  if (user.profile) redirect('/dashboard')
   if (!isCoachProfileComplete(user.coachProfile)) redirect('/auth/coach/complete')
 
   return (

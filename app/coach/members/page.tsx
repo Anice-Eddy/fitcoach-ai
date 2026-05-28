@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import type { ReactNode } from 'react'
 import {
   Search, User, CalendarPlus, Mail, FileText, Activity, Calendar,
   Send, Scale, Target, Clock, CheckCircle, XCircle, AlertCircle,
   ChevronRight, Trash2, Plus, X, Pin, Eye, EyeOff, Lock, Unlock,
   MessageSquare, ChevronDown, ChevronUp, Pencil, Check, PlusCircle,
+  Footprints, Moon, Droplets, Battery, Brain, Camera,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -41,8 +43,11 @@ interface Session {
 }
 
 interface Metric {
-  id: string; date: string; weightKg: number
+  id: string; date: string; weightKg: number | null
   bodyFatPct: number | null; waistCm: number | null
+  steps: number | null; sleepHours: number | null; waterLiters: number | null
+  energyLevel: number | null; stressLevel: number | null; progressPhotoUrl: string | null
+  notes: string | null
 }
 
 interface Appointment {
@@ -125,13 +130,14 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 function OverviewTab({ detail }: { detail: MemberDetail }) {
   const p = detail.profile
   const last = detail.bodyMetrics[0]
+  const lastWeight = detail.bodyMetrics.find(metric => typeof metric.weightKg === 'number')?.weightKg ?? null
   const doneSessions = detail.workoutSessions.filter(s => s.status === 'COMPLETED').length
   const totalMin = detail.workoutSessions.reduce((a, s) => a + (s.durationMinutes ?? 0), 0)
 
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Poids actuel" value={last ? `${last.weightKg} kg` : '—'} sub={p?.targetWeightKg ? `Objectif : ${p.targetWeightKg} kg` : undefined} />
+        <StatCard label="Poids actuel" value={lastWeight ? `${lastWeight} kg` : '—'} sub={p?.targetWeightKg ? `Objectif : ${p.targetWeightKg} kg` : undefined} />
         <StatCard label="IMC" value={p?.bmi ? p.bmi.toFixed(1) : '—'} sub={p ? `${p.heightCm} cm` : undefined} />
         <StatCard label="Séances complétées" value={String(doneSessions)} sub={totalMin ? `${totalMin} min total` : undefined} />
         <StatCard label="Objectif" value={p ? (GOAL_LABELS[p.fitnessGoal] ?? p.fitnessGoal) : '—'} sub={p ? (LEVEL_LABELS[p.fitnessLevel] ?? p.fitnessLevel) : undefined} />
@@ -166,12 +172,76 @@ function OverviewTab({ detail }: { detail: MemberDetail }) {
             {detail.bodyMetrics.slice(0, 5).map(m => (
               <div key={m.id} className="flex justify-between items-center text-sm border-b border-zinc-800/60 pb-1.5 last:border-0">
                 <span className="text-zinc-400">{format(new Date(m.date), 'd MMM yyyy', { locale: fr })}</span>
-                <span className="font-mono text-white font-medium">{m.weightKg} kg</span>
+                <span className="font-mono text-white font-medium">{m.weightKg ? `${m.weightKg} kg` : '—'}</span>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {last && (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Derniers signaux de récupération</p>
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
+            <CoachSignal icon={<Footprints className="size-3.5" />} label="Pas" value={last.steps ? last.steps.toLocaleString('fr-FR') : '—'} />
+            <CoachSignal icon={<Moon className="size-3.5" />} label="Sommeil" value={last.sleepHours ? `${last.sleepHours} h` : '—'} />
+            <CoachSignal icon={<Droplets className="size-3.5" />} label="Litres d'eau" value={last.waterLiters ? `${last.waterLiters} L` : '—'} />
+            <CoachSignal icon={<Battery className="size-3.5" />} label="Énergie" value={last.energyLevel ? `${last.energyLevel}/5` : '—'} />
+            <CoachSignal icon={<Brain className="size-3.5" />} label="Stress" value={last.stressLevel ? `${last.stressLevel}/5` : '—'} />
+          </div>
+          {last.progressPhotoUrl && (
+            <a href={last.progressPhotoUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-[#C8F135] hover:text-[#d4f54d]">
+              <Camera className="size-3.5" /> Voir la photo de progression
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CoachSignal({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-800/60 p-3">
+      <div className="mb-1 flex items-center gap-1.5 text-zinc-500">
+        {icon}
+        <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
+      </div>
+      <p className="font-mono text-sm font-semibold text-white">{value}</p>
+    </div>
+  )
+}
+
+function CoachMetricInput({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step,
+  placeholder,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  min: number
+  max: number
+  step: string
+  placeholder: string
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-[10px] text-zinc-500">{label}</label>
+      <input
+        type="number"
+        min={min}
+        max={max}
+        step={step}
+        placeholder={placeholder}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="w-full rounded border border-zinc-600 bg-zinc-700 px-2 py-1.5 text-xs text-white focus:outline-none focus:border-[#C8F135]"
+      />
     </div>
   )
 }
@@ -437,7 +507,18 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
   const [metrics, setMetrics]             = useState<Metric[]>(detail.bodyMetrics)
   const [sessions, setSessions]           = useState<Session[]>(detail.workoutSessions)
   const [showMetricForm, setShowMetricForm] = useState(false)
-  const [metricForm, setMetricForm]       = useState({ weightKg: '', bodyFatPct: '', waistCm: '', notes: '' })
+  const [metricForm, setMetricForm]       = useState({
+    weightKg: '',
+    bodyFatPct: '',
+    waistCm: '',
+    steps: '',
+    sleepHours: '',
+    waterLiters: '',
+    energyLevel: '',
+    stressLevel: '',
+    progressPhotoUrl: '',
+    notes: '',
+  })
   const [savingMetric, setSavingMetric]   = useState(false)
   const [deletingMetric, setDeletingMetric] = useState<string | null>(null)
   const [editingSession, setEditingSession] = useState<string | null>(null)
@@ -445,6 +526,21 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
   const [savingSession, setSavingSession] = useState<string | null>(null)
 
   useEffect(() => { setMetrics(detail.bodyMetrics); setSessions(detail.workoutSessions) }, [detail])
+
+  const emptyMetricForm = {
+    weightKg: '',
+    bodyFatPct: '',
+    waistCm: '',
+    steps: '',
+    sleepHours: '',
+    waterLiters: '',
+    energyLevel: '',
+    stressLevel: '',
+    progressPhotoUrl: '',
+    notes: '',
+  }
+
+  const nullableNumber = (value: string) => value ? Number(value) : null
 
   const addMetric = async () => {
     if (!metricForm.weightKg) return
@@ -454,15 +550,22 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         weightKg:   Number(metricForm.weightKg),
-        bodyFatPct: metricForm.bodyFatPct ? Number(metricForm.bodyFatPct) : null,
-        waistCm:    metricForm.waistCm    ? Number(metricForm.waistCm)    : null,
-        notes:      metricForm.notes || null,
+        bodyFatPct: nullableNumber(metricForm.bodyFatPct),
+        waistCm:    nullableNumber(metricForm.waistCm),
+        // Le coach peut compléter ces valeurs, mais elles restent stockées dans la même table que côté membre.
+        steps:            nullableNumber(metricForm.steps),
+        sleepHours:       nullableNumber(metricForm.sleepHours),
+        waterLiters:      nullableNumber(metricForm.waterLiters),
+        energyLevel:      nullableNumber(metricForm.energyLevel),
+        stressLevel:      nullableNumber(metricForm.stressLevel),
+        progressPhotoUrl: metricForm.progressPhotoUrl || null,
+        notes:            metricForm.notes || null,
       }),
     })
     if (res.ok) {
       const newMetric = await res.json()
       setMetrics(prev => [newMetric, ...prev])
-      setMetricForm({ weightKg: '', bodyFatPct: '', waistCm: '', notes: '' })
+      setMetricForm(emptyMetricForm)
       setShowMetricForm(false)
       onRefresh()
     }
@@ -525,7 +628,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
 
         {showMetricForm && (
           <div className="mb-4 p-3 rounded-lg bg-zinc-800 border border-zinc-700 space-y-2">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className="text-[10px] text-zinc-500 block mb-1">Poids (kg) *</label>
                 <input
@@ -553,7 +656,19 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
                   className="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-[#C8F135]"
                 />
               </div>
+              <CoachMetricInput label="Pas" value={metricForm.steps} onChange={value => setMetricForm(f => ({ ...f, steps: value }))} min={0} max={100000} step="1" placeholder="8000" />
+              <CoachMetricInput label="Sommeil (h)" value={metricForm.sleepHours} onChange={value => setMetricForm(f => ({ ...f, sleepHours: value }))} min={0} max={24} step="0.25" placeholder="7.5" />
+              <CoachMetricInput label="Litres d'eau" value={metricForm.waterLiters} onChange={value => setMetricForm(f => ({ ...f, waterLiters: value }))} min={0} max={15} step="0.1" placeholder="2.0" />
+              <CoachMetricInput label="Énergie 1-5" value={metricForm.energyLevel} onChange={value => setMetricForm(f => ({ ...f, energyLevel: value }))} min={1} max={5} step="1" placeholder="4" />
+              <CoachMetricInput label="Stress 1-5" value={metricForm.stressLevel} onChange={value => setMetricForm(f => ({ ...f, stressLevel: value }))} min={1} max={5} step="1" placeholder="2" />
             </div>
+            <input
+              type="url"
+              placeholder="URL photo de progression"
+              value={metricForm.progressPhotoUrl}
+              onChange={e => setMetricForm(f => ({ ...f, progressPhotoUrl: e.target.value }))}
+              className="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-[#C8F135]"
+            />
             <input
               placeholder="Note optionnelle"
               value={metricForm.notes}
@@ -578,15 +693,28 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
         ) : (
           <div className="space-y-1">
             {metrics.slice(0, 15).map(m => (
-              <div key={m.id} className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-2 py-1.5 border-b border-zinc-800/60 last:border-0 text-xs items-center">
-                <span className="text-zinc-400">{format(new Date(m.date), 'd MMM yyyy', { locale: fr })}</span>
-                <span className="font-mono text-white">{m.weightKg} kg</span>
-                <span className="text-zinc-500">{m.bodyFatPct ? `${m.bodyFatPct}% MG` : '—'}</span>
-                <span className="text-zinc-500">{m.waistCm ? `${m.waistCm} cm` : '—'}</span>
+              <div key={m.id} className="grid gap-2 border-b border-zinc-800/60 py-2 text-xs last:border-0 sm:grid-cols-[1fr_auto] sm:items-start">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="text-zinc-400">{format(new Date(m.date), 'd MMM yyyy', { locale: fr })}</span>
+                    <span className="font-mono font-semibold text-white">{m.weightKg ? `${m.weightKg} kg` : '— kg'}</span>
+                    <span className="text-zinc-500">{m.bodyFatPct ? `${m.bodyFatPct}% MG` : '— MG'}</span>
+                    <span className="text-zinc-500">{m.waistCm ? `${m.waistCm} cm taille` : '— taille'}</span>
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500">
+                    <span>{m.steps ? `${m.steps.toLocaleString('fr-FR')} pas` : '— pas'}</span>
+                    <span>{m.sleepHours ? `${m.sleepHours} h sommeil` : '— sommeil'}</span>
+                    <span>{m.waterLiters ? `${m.waterLiters} L eau` : '— eau'}</span>
+                    <span>{m.energyLevel ? `énergie ${m.energyLevel}/5` : '— énergie'}</span>
+                    <span>{m.stressLevel ? `stress ${m.stressLevel}/5` : '— stress'}</span>
+                    {m.progressPhotoUrl ? <a href={m.progressPhotoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#C8F135]"><Camera className="size-3" /> photo</a> : null}
+                  </div>
+                  {m.notes ? <p className="mt-1 truncate text-[11px] text-zinc-600">{m.notes}</p> : null}
+                </div>
                 <button
                   onClick={() => deleteMetric(m.id)}
                   disabled={deletingMetric === m.id}
-                  className="text-zinc-700 hover:text-red-400 transition-colors disabled:opacity-50"
+                  className="justify-self-end text-zinc-700 transition-colors hover:text-red-400 disabled:opacity-50"
                 >
                   <Trash2 className="size-3" />
                 </button>

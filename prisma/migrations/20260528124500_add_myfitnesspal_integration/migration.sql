@@ -1,0 +1,1 @@
+ALTER TYPE "IntegrationService" ADD VALUE 'MYFITNESSPAL';

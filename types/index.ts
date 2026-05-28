@@ -18,7 +18,7 @@ export type SubStatus      = 'ACTIVE' | 'INACTIVE' | 'CANCELED' | 'PAST_DUE' | '
 export type MuscleGroup    = 'CHEST' | 'BACK' | 'SHOULDERS' | 'BICEPS' | 'TRICEPS' | 'FOREARMS' | 'CORE' | 'QUADS' | 'HAMSTRINGS' | 'GLUTES' | 'CALVES' | 'FULL_BODY'
 export type Equipment      = 'BARBELL' | 'DUMBBELL' | 'KETTLEBELL' | 'RESISTANCE_BAND' | 'PULL_UP_BAR' | 'BENCH' | 'CABLE_MACHINE' | 'SMITH_MACHINE' | 'BODYWEIGHT' | 'CARDIO_MACHINE'
 export type AffiliateCategory = 'SUPPLEMENTS' | 'EQUIPMENT' | 'CLOTHING' | 'BOOKS'
-export type IntegrationService = 'GOOGLE_FIT' | 'STRAVA' | 'FITBIT' | 'GARMIN' | 'APPLE_HEALTH' | 'EVOLT_ACTIVE'
+export type IntegrationService = 'GOOGLE_FIT' | 'STRAVA' | 'FITBIT' | 'GARMIN' | 'APPLE_HEALTH' | 'MYFITNESSPAL' | 'EVOLT_ACTIVE'
 export type ExportType     = 'PDF_TRAINING' | 'PDF_NUTRITION' | 'PDF_PROFILE' | 'JSON_ALL'
 
 // --- Fitness ---

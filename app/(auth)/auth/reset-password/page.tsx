@@ -6,13 +6,17 @@ import Link from 'next/link'
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { Logo } from '@/components/ui/Logo'
+import { PageBackground } from '@/components/landing/PageBackground'
 
 /** Reset-password page shell wrapping the ResetPasswordForm in a Suspense boundary for token searchParam. */
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
-      <ResetPasswordForm />
-    </Suspense>
+    <div className="relative min-h-screen text-white">
+      <PageBackground showArtwork={false} />
+      <Suspense fallback={<div className="min-h-screen" />}>
+        <ResetPasswordForm />
+      </Suspense>
+    </div>
   )
 }
 
@@ -30,7 +34,7 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
           <p className="text-zinc-400 mb-4">Lien invalide ou manquant.</p>
           <Link href="/auth/forgot-password" className="text-[#C8F135] hover:underline text-sm">
@@ -76,7 +80,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+    <div className="relative z-10 min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="mb-6 flex justify-center">

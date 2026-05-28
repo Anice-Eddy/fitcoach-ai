@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation'
 import { Check, ArrowRight, Square } from 'lucide-react'
-import { useUserStore } from '@/stores/userStore'
 
 const AI_BENEFITS = [
   'Démarrage immédiat',
@@ -29,16 +28,15 @@ function CardIcon() {
 /** Onboarding choice page: lets the user select a solo or coached accompaniment mode before proceeding. */
 export default function ChoosePage() {
   const router = useRouter()
-  const { setAccompanimentMode, setCoach } = useUserStore()
 
   const chooseAI = () => {
-    setAccompanimentMode('AI')
-    setCoach({ name: null, nextSession: null })
     router.push('/dashboard')
   }
 
   const chooseCoach = () => {
-    router.push('/coaches')
+    const params = new URLSearchParams(window.location.search)
+    const returnTo = params.get('returnTo') || '/dashboard'
+    router.replace(`/coaches?returnTo=${encodeURIComponent(returnTo)}`)
   }
 
   return (

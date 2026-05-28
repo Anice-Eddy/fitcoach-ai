@@ -13,6 +13,13 @@ const metricSchema = z.object({
   muscleMassKg: z.number().min(10).max(200).optional().nullable(),
   waistCm:      z.number().min(40).max(300).optional().nullable(),
   hipsCm:       z.number().min(40).max(300).optional().nullable(),
+  // Les mêmes signaux quotidiens que côté membre, pour garder coach et IA synchronisés.
+  steps:            z.number().int().min(0).max(100000).optional().nullable(),
+  sleepHours:       z.number().min(0).max(24).optional().nullable(),
+  waterLiters:      z.number().min(0).max(15).optional().nullable(),
+  energyLevel:      z.number().int().min(1).max(5).optional().nullable(),
+  stressLevel:      z.number().int().min(1).max(5).optional().nullable(),
+  progressPhotoUrl: z.string().url().max(1000).optional().nullable(),
   notes:        z.string().max(500).optional().nullable(),
 })
 
@@ -74,12 +81,12 @@ export async function POST(
     },
   })
 
-  // Update profile weight if this is the latest metric
+  // Le profil ne change de poids que si la nouvelle mesure contient réellement un poids.
   const latest = await prisma.bodyMetric.findFirst({
     where:   { userId: params.memberId },
     orderBy: { date: 'desc' },
   })
-  if (latest?.id === metric.id) {
+  if (latest?.id === metric.id && typeof metric.weightKg === 'number') {
     await prisma.profile.updateMany({
       where: { userId: params.memberId },
       data:  { weightKg: metric.weightKg },

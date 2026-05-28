@@ -6,13 +6,17 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Dumbbell, Users } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
+import { PageBackground } from '@/components/landing/PageBackground'
 
 /** Sign-in page shell wrapping the SignInForm in a Suspense boundary for searchParams access. */
 export default function SignInPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
-      <SignInForm />
-    </Suspense>
+    <div className="relative min-h-screen text-white">
+      <PageBackground showArtwork={false} />
+      <Suspense fallback={<div className="min-h-screen" />}>
+        <SignInForm />
+      </Suspense>
+    </div>
   )
 }
 
@@ -112,7 +116,7 @@ function SignInForm() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+    <div className="relative z-10 min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
 
         <div className="text-center mb-8">

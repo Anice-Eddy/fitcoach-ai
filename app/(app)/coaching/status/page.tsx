@@ -71,17 +71,11 @@ export default function CoachingStatusPage() {
     fetch('/api/user/appointments')
       .then(r => r.ok ? r.json() as Promise<Appointment[]> : [])
       .then(data => {
-        if (data.length === 0) {
-          const demo = sessionStorage.getItem('bodyops:demo-coach-appointment')
-          setAppointments(demo ? [JSON.parse(demo) as Appointment] : [])
-        } else {
-          setAppointments(data)
-        }
+        setAppointments(Array.isArray(data) ? data : [])
         setLoading(false)
       })
       .catch(() => {
-        const demo = sessionStorage.getItem('bodyops:demo-coach-appointment')
-        setAppointments(demo ? [JSON.parse(demo) as Appointment] : [])
+        setAppointments([])
         setLoading(false)
       })
   }, [])

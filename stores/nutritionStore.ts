@@ -15,8 +15,20 @@ export interface LoggedMeal {
   loggedAt:  string // ISO date
 }
 
+function localDateKey(date = new Date()) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function isLoggedToday(meal: LoggedMeal) {
+  return localDateKey(new Date(meal.loggedAt)) === localDateKey()
+}
+
 interface NutritionState {
   activePlanId:  string | null
+  currentDate:   string
   todayMeals:    LoggedMeal[]
   isLoading:     boolean
   error:         string | null
@@ -26,6 +38,7 @@ interface NutritionState {
   toggleMeal:     (meal: LoggedMeal) => void
   removeMeal:     (mealId: string) => void
   clearTodayLog:  () => void
+  ensureTodayLog: () => void
   setLoading:     (loading: boolean) => void
   setError:       (error: string | null) => void
 
@@ -37,6 +50,7 @@ export const useNutritionStore = create<NutritionState>()(
   persist(
     (set, get) => ({
       activePlanId: null,
+      currentDate:  localDateKey(),
       todayMeals:   [],
       isLoading:    false,
       error:        null,
@@ -44,22 +58,40 @@ export const useNutritionStore = create<NutritionState>()(
       setActivePlan: (id) => set({ activePlanId: id }),
 
       logMeal: (meal) =>
-        set((s) => ({ todayMeals: [...s.todayMeals.filter((m) => m.mealId !== meal.mealId), meal] })),
+        set((s) => {
+          const today = localDateKey()
+          // Chaque nouvelle journée repart avec un journal nutrition vide.
+          const baseMeals = s.currentDate === today ? s.todayMeals.filter(isLoggedToday) : []
+          return { currentDate: today, todayMeals: [...baseMeals.filter((m) => m.mealId !== meal.mealId), meal] }
+        }),
 
       toggleMeal: (meal) =>
-        set((s) => s.todayMeals.some((m) => m.mealId === meal.mealId)
-          ? { todayMeals: s.todayMeals.filter((m) => m.mealId !== meal.mealId) }
-          : { todayMeals: [...s.todayMeals, meal] }),
+        set((s) => {
+          const today = localDateKey()
+          const baseMeals = s.currentDate === today ? s.todayMeals.filter(isLoggedToday) : []
+          return baseMeals.some((m) => m.mealId === meal.mealId)
+            ? { currentDate: today, todayMeals: baseMeals.filter((m) => m.mealId !== meal.mealId) }
+            : { currentDate: today, todayMeals: [...baseMeals, meal] }
+        }),
 
       removeMeal: (mealId) =>
-        set((s) => ({ todayMeals: s.todayMeals.filter((m) => m.mealId !== mealId) })),
+        set((s) => ({ currentDate: localDateKey(), todayMeals: s.todayMeals.filter(isLoggedToday).filter((m) => m.mealId !== mealId) })),
 
-      clearTodayLog: () => set({ todayMeals: [] }),
+      clearTodayLog: () => set({ currentDate: localDateKey(), todayMeals: [] }),
+      ensureTodayLog: () => set((s) => {
+        const today = localDateKey()
+        return s.currentDate === today
+          ? { todayMeals: s.todayMeals.filter(isLoggedToday) }
+          : { currentDate: today, todayMeals: [] }
+      }),
       setLoading:    (isLoading) => set({ isLoading }),
       setError:      (error) => set({ error }),
 
       getTodayTotals: () => {
-        const meals = get().todayMeals
+        const state = get()
+        const meals = state.currentDate === localDateKey()
+          ? state.todayMeals.filter(isLoggedToday)
+          : []
         return meals.reduce(
           (acc, m) => ({
             calories: acc.calories + m.calories,
@@ -74,7 +106,17 @@ export const useNutritionStore = create<NutritionState>()(
     {
       name: 'BodyOps:nutrition',
       skipHydration: true,
-      partialize: (s) => ({ activePlanId: s.activePlanId, todayMeals: s.todayMeals }),
+      version: 2,
+      partialize: (s) => ({ activePlanId: s.activePlanId, currentDate: s.currentDate, todayMeals: s.todayMeals.filter(isLoggedToday) }),
+      migrate: (persisted) => {
+        const state = persisted as Partial<NutritionState>
+        const today = localDateKey()
+        return {
+          activePlanId: state.activePlanId ?? null,
+          currentDate: today,
+          todayMeals: state.currentDate === today ? (state.todayMeals ?? []).filter(isLoggedToday) : [],
+        }
+      },
     },
   ),
 )

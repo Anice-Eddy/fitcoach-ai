@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, ChevronLeft } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { toast } from 'sonner'
+import { PageBackground } from '@/components/landing/PageBackground'
 
 /** Member registration form: collects name, email, and password; posts to /api/auth/register and redirects on success. */
 export default function MemberRegisterPage() {
@@ -68,8 +69,9 @@ export default function MemberRegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm">
+    <div className="relative min-h-screen text-white flex items-center justify-center px-4 py-12">
+      <PageBackground showArtwork={false} />
+      <div className="relative z-10 w-full max-w-sm">
 
         <div className="text-center mb-8">
           <div className="mb-6 flex justify-center">

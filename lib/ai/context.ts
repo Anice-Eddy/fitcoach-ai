@@ -13,6 +13,8 @@ type ProfileLike = {
   availableEquipment?: string[] | null
   dietaryRestrictions?: string[] | null
   foodPreferences?: string[] | null
+  injuries?: unknown
+  bodyFocus?: string | null
 }
 
 // Returns labels for items whose value is null, undefined, empty string, or empty array.
@@ -34,13 +36,31 @@ function extractSignals(texts: string[]) {
     .slice(0, 6)
 }
 
-// Formats the last 6 body-metric entries as "YYYY-MM-DD: X kg" strings, filtering out entries without weight.
-function buildProgressHistory(metrics: Array<{ weightKg?: number | null; date?: Date }>) {
+// Formats the last 6 body-metric entries with lifestyle signals so the AI can link progress to recovery.
+function buildProgressHistory(metrics: Array<{
+  weightKg?: number | null
+  date?: Date
+  steps?: number | null
+  sleepHours?: number | null
+  waterLiters?: number | null
+  energyLevel?: number | null
+  stressLevel?: number | null
+}>) {
   return metrics
     .slice(0, 6)
     .map(metric => {
       const date = metric.date instanceof Date ? metric.date.toISOString().slice(0, 10) : 'date inconnue'
-      return metric.weightKg ? `${date}: ${metric.weightKg} kg` : null
+      if (!metric.weightKg) return null
+      const signals = [
+        metric.steps != null ? `${metric.steps} pas` : null,
+        metric.sleepHours != null ? `${metric.sleepHours}h sommeil` : null,
+        metric.waterLiters != null ? `${metric.waterLiters}L eau` : null,
+        metric.energyLevel != null ? `énergie ${metric.energyLevel}/5` : null,
+        metric.stressLevel != null ? `stress ${metric.stressLevel}/5` : null,
+      ].filter(Boolean)
+      return signals.length > 0
+        ? `${date}: ${metric.weightKg} kg (${signals.join(', ')})`
+        : `${date}: ${metric.weightKg} kg`
     })
     .filter((value): value is string => Boolean(value))
 }
@@ -184,9 +204,22 @@ export async function getMemberAIContext(memberId: string, coachId?: string | nu
     availableEquipment: profile?.availableEquipment ?? [],
     dietaryRestrictions: profile?.dietaryRestrictions ?? [],
     foodPreferences: profile?.foodPreferences ?? [],
+    bodyFocus: profile?.bodyFocus ?? null,
     currentProgram,
     progressHistory: buildProgressHistory(member.bodyMetrics),
-    injuryOrRestrictionSignals: extractSignals(noteTexts),
+    injuryOrRestrictionSignals: (() => {
+      const raw = profile?.injuries
+      const structured = Array.isArray(raw)
+        ? (raw as Array<{ bodyPart?: string; severity?: string; description?: string }>)
+        : []
+      if (structured.length > 0) {
+        return structured.map(i => {
+          const sev = i.severity === 'SEVERE' ? 'grave' : i.severity === 'MODERATE' ? 'modérée' : 'légère'
+          return `${i.bodyPart} (${sev})${i.description ? ': ' + i.description : ''}`
+        })
+      }
+      return extractSignals(noteTexts)
+    })(),
   }
   const missingData = {
     workoutPlan: listMissing([
@@ -277,6 +310,7 @@ export function serializeContextCompact(context: MemberAIContext): string {
   if (userFacts.currentProgram)     profile.push(`programme: ${userFacts.currentProgram}`)
   if (userFacts.availableEquipment.length) profile.push(`équipement: ${userFacts.availableEquipment.join(', ')}`)
   if (userFacts.dietaryRestrictions.length) profile.push(`restrictions: ${userFacts.dietaryRestrictions.join(', ')}`)
+  if (userFacts.bodyFocus) profile.push(`focus: ${userFacts.bodyFocus}`)
   if (profile.length) lines.push(`PROFIL: ${profile.join(' | ')}`)
 
   // --- Progression poids ---

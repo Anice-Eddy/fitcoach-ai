@@ -84,9 +84,26 @@ export const goalsSchema = z.object({
   fitnessLevel: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'ATHLETE'], {
     errorMap: () => ({ message: 'Sélectionnez votre niveau' }),
   }),
+  bodyFocus: z.enum(['UPPER_BODY', 'LOWER_BODY', 'FULL_BODY']).optional(),
 })
 
-// --- Étape 5 : Alimentation ---
+// --- Blessures (partagé entre onboarding + API) ---
+
+export const injuryEntrySchema = z.object({
+  bodyPart:    z.string().min(1),
+  severity:    z.enum(['MILD', 'MODERATE', 'SEVERE']),
+  description: z.string().max(300).optional().default(''),
+})
+export type InjuryEntry = z.infer<typeof injuryEntrySchema>
+
+// --- Étape 5 : Santé & Blessures ---
+
+export const healthSchema = z.object({
+  injuries: z.array(injuryEntrySchema).default([]),
+})
+export type HealthData = z.infer<typeof healthSchema>
+
+// --- Étape 6 : Alimentation ---
 
 export const dietSchema = z.object({
   dietaryRestrictions: z.array(z.string()).default([]),
@@ -99,26 +116,53 @@ export const onboardingSchema = identitySchema
   .merge(measurementsSchema)
   .merge(activitySchema)
   .merge(goalsSchema)
+  .merge(healthSchema)
   .merge(dietSchema)
 
 // --- Schéma API : mise à jour du profil ---
 
 export const updateProfileSchema = onboardingSchema.partial().extend({
-  language: z.enum(['fr', 'en']).optional(),
-  darkMode: z.boolean().optional(),
+  language:            z.enum(['fr', 'en']).optional(),
+  darkMode:            z.boolean().optional(),
   onboardingCompleted: z.boolean().optional(),
+  injuries:            z.array(injuryEntrySchema).optional(),
 })
 
 // --- Schéma API : ajout d'une métrique corporelle ---
 
 export const bodyMetricSchema = z.object({
   date:         z.coerce.date().optional(),
-  weightKg:     z.number().min(30).max(300),
+  weightKg:     z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(30).max(300).optional()),
   bodyFatPct:   z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(1).max(70).optional()),
   muscleMassKg: z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(10).max(150).optional()),
   waistCm:      z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(40).max(200).optional()),
   hipsCm:       z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(40).max(200).optional()),
+  // Ces champs donnent du contexte à l'IA: sommeil, activité, hydratation et ressenti du jour.
+  steps:            z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().int().min(0).max(100000).optional()),
+  sleepHours:       z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(0).max(24).optional()),
+  waterLiters:      z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(0).max(15).optional()),
+  energyLevel:      z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().int().min(1).max(5).optional()),
+  stressLevel:      z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().int().min(1).max(5).optional()),
+  progressPhotoUrl: z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().url().max(1000).optional()),
   notes:        z.string().max(500).optional(),
+}).refine((metric) => {
+  // Une mesure peut être seulement hydratation/sommeil/etc., mais elle ne doit jamais être vide.
+  return [
+    metric.weightKg,
+    metric.bodyFatPct,
+    metric.muscleMassKg,
+    metric.waistCm,
+    metric.hipsCm,
+    metric.steps,
+    metric.sleepHours,
+    metric.waterLiters,
+    metric.energyLevel,
+    metric.stressLevel,
+    metric.progressPhotoUrl,
+    metric.notes,
+  ].some(value => value !== undefined && value !== '')
+}, {
+  message: 'Renseignez au moins une donnée à enregistrer',
 })
 
 // --- Schéma API : tracking clic affilié ---

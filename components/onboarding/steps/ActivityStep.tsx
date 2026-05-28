@@ -62,27 +62,28 @@ export function ActivityStep({ defaultValues, onNext, onBack }: Props) {
   const activity = watch('activityLevel')
   const days     = watch('trainingDaysPerWeek')
 
-  // On garde juste l'ID du lieu sélectionné pour l'UI
-  const [placeId, setPlaceId] = useState<string>(() => {
-    // Retrouve le lieu depuis l'équipement existant si on revient en arrière
-    const eq = defaultValues?.availableEquipment as string[] | undefined
-    if (!eq?.length) return ''
-    if (eq.includes('BARBELL')) return 'gym'
-    if (eq.includes('DUMBBELL')) return 'home_gear'
-    if (eq.length === 1 && eq[0] === 'BODYWEIGHT') return 'home_bw'
-    return 'outdoor'
+  // Plusieurs lieux peuvent être cochés; on reconstruit l'état UI depuis les équipements sauvegardés.
+  const [placeIds, setPlaceIds] = useState<string[]>(() => {
+    const eq = (defaultValues?.availableEquipment ?? []) as string[]
+    const ids: string[] = []
+    if (eq.includes('BARBELL')) ids.push('gym')
+    if (eq.includes('DUMBBELL') && !eq.includes('BARBELL')) ids.push('home_gear')
+    if (eq.includes('RESISTANCE_BAND') && !eq.includes('DUMBBELL') && !eq.includes('BARBELL')) ids.push('outdoor')
+    if (eq.length === 1 && eq[0] === 'BODYWEIGHT') ids.push('home_bw')
+    return ids
   })
 
-  const selectPlace = (place: typeof TRAINING_PLACES[number]) => {
-    if (placeId === place.id) {
-      setPlaceId('')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setValue('availableEquipment', [] as any)
-    } else {
-      setPlaceId(place.id)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setValue('availableEquipment', place.equipment as any)
-    }
+  // Chaque lieu apporte une liste d'équipements; on fusionne sans doublons avant de valider le formulaire.
+  const togglePlace = (place: typeof TRAINING_PLACES[number]) => {
+    const newIds = placeIds.includes(place.id)
+      ? placeIds.filter(id => id !== place.id)
+      : [...placeIds, place.id]
+    setPlaceIds(newIds)
+    const union = Array.from(new Set(
+      TRAINING_PLACES.filter(p => newIds.includes(p.id)).flatMap(p => p.equipment),
+    ))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setValue('availableEquipment', union as any)
   }
 
   return (
@@ -96,19 +97,24 @@ export function ActivityStep({ defaultValues, onNext, onBack }: Props) {
         <div className="grid grid-cols-2 gap-3">
           {TRAINING_PLACES.map((place) => {
             const Icon   = place.icon
-            const active = placeId === place.id
+            const active = placeIds.includes(place.id)
             return (
               <button
                 key={place.id}
                 type="button"
-                onClick={() => selectPlace(place)}
+                onClick={() => togglePlace(place)}
                 className={`p-4 rounded-xl border-2 text-left transition-all ${
                   active
                     ? 'border-[#C8F135] bg-[#C8F135]/10'
                     : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600'
                 }`}
               >
-                <Icon className={`size-5 mb-2 ${active ? 'text-[#C8F135]' : 'text-zinc-400'}`} />
+                <div className="flex items-center justify-between mb-2">
+                  <Icon className={`size-5 ${active ? 'text-[#C8F135]' : 'text-zinc-400'}`} />
+                  <div className={`size-4 rounded border-2 flex items-center justify-center ${active ? 'border-[#C8F135] bg-[#C8F135]' : 'border-zinc-600'}`}>
+                    {active && <svg className="size-2.5 text-zinc-950" fill="none" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </div>
+                </div>
                 <p className={`text-sm font-semibold ${active ? 'text-[#C8F135]' : 'text-white'}`}>
                   {place.label}
                 </p>

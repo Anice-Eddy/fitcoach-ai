@@ -55,6 +55,15 @@ const INTEGRATIONS: IntegrationStatus[] = [
     isMocked:    true,
     service:     'APPLE_HEALTH',
   },
+  {
+    id:          'myfitnesspal',
+    label:       'MyFitnessPal',
+    description: 'Préparez la synchro calories, macros et litres d’eau depuis MyFitnessPal.',
+    logoSrc:     '/icons/myfitnesspal.svg',
+    isConnected: false,
+    isMocked:    true,
+    service:     'MYFITNESSPAL',
+  },
 ]
 
 /** Integrations settings page: shows available third-party data integrations (e.g., Evolt Active) and handles import callbacks. */
@@ -78,7 +87,7 @@ export default function IntegrationsPage() {
           </div>
 
           <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 text-sm text-amber-300">
-            🚧 Les intégrations OAuth (Google Fit, Strava, Fitbit, Garmin) arrivent prochainement.
+            🚧 Les intégrations OAuth (Google Fit, Strava, Fitbit, Garmin, MyFitnessPal) arrivent prochainement.
             Import Evolt disponible dès maintenant.
           </div>
 

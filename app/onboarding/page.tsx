@@ -2,17 +2,18 @@
 import type { Metadata } from 'next'
 import { OnboardingStepper } from '@/components/onboarding/OnboardingStepper'
 import { Logo } from '@/components/ui/Logo'
+import { PageBackground } from '@/components/landing/PageBackground'
 
 export const metadata: Metadata = { title: 'Onboarding — BodyOps' }
 
 export default function OnboardingPage() {
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col">
-      <header className="flex items-center px-6 py-5">
+    <div className="relative min-h-screen text-white flex flex-col">
+      <PageBackground showArtwork={false} />
+      <header className="relative z-10 flex items-center px-6 py-5">
         <Logo href="/" size="md" />
       </header>
-
-      <main className="flex-1 flex items-start justify-center px-4 py-8 overflow-y-auto">
+      <main className="relative z-10 flex-1 flex items-start justify-center px-4 py-8 overflow-y-auto">
         <OnboardingStepper />
       </main>
     </div>

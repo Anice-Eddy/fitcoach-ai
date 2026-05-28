@@ -8,6 +8,8 @@ import {
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { Header } from '@/components/layout/Header'
+import { PageWrapper } from '@/components/layout/PageWrapper'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -630,41 +632,48 @@ export default function NotesPage() {
   const [tab, setTab] = useState<Tab>('mine')
 
   return (
-    <div className="space-y-6">
-      <header>
-        <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-3 py-1 text-xs font-semibold text-[#C8F135]">
-          <NotebookPen className="size-3.5" />
-          Journal
+    <>
+      <Header title="Notes" />
+      <PageWrapper>
+        <div className="w-full space-y-5 sm:space-y-6">
+          <header>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-3 py-1 text-xs font-semibold text-[#C8F135]">
+              <NotebookPen className="size-3.5" />
+              Journal
+            </div>
+            <h1 className="hidden text-3xl font-semibold tracking-tight text-white sm:block">Notes</h1>
+            <p className="mt-1 text-sm text-zinc-400">Votre journal personnel et les notes partagées par votre coach.</p>
+          </header>
+
+          <div className="grid w-full grid-cols-2 gap-1 rounded-xl border border-zinc-800 bg-zinc-900 p-1 sm:flex sm:w-fit">
+            <button
+              type="button"
+              onClick={() => setTab('mine')}
+              className={cn(
+                'flex min-w-0 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors sm:shrink-0 sm:px-4',
+                tab === 'mine' ? 'bg-[#C8F135] text-zinc-900' : 'text-zinc-400 hover:text-white',
+              )}
+            >
+              <NotebookPen className="size-4 shrink-0" />
+              <span className="truncate">Mes notes</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('coach')}
+              className={cn(
+                'flex min-w-0 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors sm:shrink-0 sm:px-4',
+                tab === 'coach' ? 'bg-[#C8F135] text-zinc-900' : 'text-zinc-400 hover:text-white',
+              )}
+            >
+              <Eye className="size-4 shrink-0" />
+              <span className="truncate">Notes coach</span>
+            </button>
+          </div>
+
+          {tab === 'mine'  && <MyNotesTab />}
+          {tab === 'coach' && <CoachNotesTab />}
         </div>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">Notes</h1>
-        <p className="mt-1 text-sm text-zinc-400">Votre journal personnel et les notes partagées par votre coach.</p>
-      </header>
-
-      <div className="flex gap-1 rounded-xl border border-zinc-800 bg-zinc-900 p-1 w-fit">
-        <button
-          type="button"
-          onClick={() => setTab('mine')}
-          className={cn(
-            'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
-            tab === 'mine' ? 'bg-[#C8F135] text-zinc-900' : 'text-zinc-400 hover:text-white',
-          )}
-        >
-          <NotebookPen className="size-4" /> Mes notes
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('coach')}
-          className={cn(
-            'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
-            tab === 'coach' ? 'bg-[#C8F135] text-zinc-900' : 'text-zinc-400 hover:text-white',
-          )}
-        >
-          <Eye className="size-4" /> Notes de mon coach
-        </button>
-      </div>
-
-      {tab === 'mine'  && <MyNotesTab />}
-      {tab === 'coach' && <CoachNotesTab />}
-    </div>
+      </PageWrapper>
+    </>
   )
 }

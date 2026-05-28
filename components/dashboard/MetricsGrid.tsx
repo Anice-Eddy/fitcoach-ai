@@ -2,20 +2,25 @@
 // Grille des métriques principales du dashboard
 
 import { MetricCard } from '@/components/ui/MetricCard'
-import { Scale, Flame, Dumbbell, Zap } from 'lucide-react'
+import { Scale, Flame, Dumbbell, Zap, Droplets } from 'lucide-react'
 import type { UserProfile } from '@/lib/storage/StorageAdapter'
 import { useNutritionStore } from '@/stores/nutritionStore'
+import { useEffect } from 'react'
 
 interface Props {
   profile:    UserProfile | null
   lastWeight: number | null
+  lastWaterLiters: number | null
   streak:     number
   isLoading:  boolean
 }
 
 /** Renders the four main dashboard metric cards: current weight, today's calories, workout status, and consecutive-day streak. */
-export function MetricsGrid({ profile, lastWeight, streak, isLoading }: Props) {
-  const { getTodayTotals } = useNutritionStore()
+export function MetricsGrid({ profile, lastWeight, lastWaterLiters, streak, isLoading }: Props) {
+  const { ensureTodayLog, getTodayTotals } = useNutritionStore()
+
+  useEffect(() => { ensureTodayLog() }, [ensureTodayLog])
+
   const totals = getTodayTotals()
 
   const weightDelta = profile?.targetWeightKg && lastWeight
@@ -23,7 +28,7 @@ export function MetricsGrid({ profile, lastWeight, streak, isLoading }: Props) {
     : undefined
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
       <MetricCard
         title="Poids actuel"
         value={lastWeight ?? '—'}
@@ -47,6 +52,15 @@ export function MetricsGrid({ profile, lastWeight, streak, isLoading }: Props) {
         value="À faire"
         subtitle="Programme actif"
         icon={<Dumbbell className="size-4" />}
+        isLoading={isLoading}
+      />
+      <MetricCard
+        title="Litres d'eau"
+        value={lastWaterLiters ?? '—'}
+        unit={lastWaterLiters ? 'L' : ''}
+        subtitle="Dernière mesure"
+        icon={<Droplets className="size-4" />}
+        accentColor="#22d3ee"
         isLoading={isLoading}
       />
       <MetricCard

@@ -10,16 +10,11 @@ interface UserState {
   isLoading:   boolean
   error:       string | null
   storageMode: 'local' | 'cloud'
-  accompanimentMode: 'AI' | 'COACH'
-  coachName: string | null
-  nextCoachSession: string | null
   timezone: string
 
   setProfile:     (profile: UserProfile) => void
   updateProfile:  (data: Partial<UserProfile>) => void
   setStorageMode: (mode: 'local' | 'cloud') => void
-  setAccompanimentMode: (mode: 'AI' | 'COACH') => void
-  setCoach:       (coach: { name: string | null; nextSession?: string | null }) => void
   setTimezone:    (timezone: string) => void
   setLoading:     (loading: boolean) => void
   setError:       (error: string | null) => void
@@ -33,30 +28,32 @@ export const useUserStore = create<UserState>()(
       isLoading:   false,
       error:       null,
       storageMode: 'local',
-      accompanimentMode: 'AI',
-      coachName: null,
-      nextCoachSession: null,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'Europe/Paris',
 
       setProfile:    (profile) => set({ profile, error: null }),
       updateProfile: (data)    => set((s) => ({ profile: s.profile ? { ...s.profile, ...data } : null })),
       setStorageMode:(mode)    => set({ storageMode: mode }),
-      setAccompanimentMode: (mode) => set({ accompanimentMode: mode }),
-      setCoach: (coach) => set({ coachName: coach.name, nextCoachSession: coach.nextSession ?? null }),
       setTimezone: (timezone) => set({ timezone }),
       setLoading:    (isLoading) => set({ isLoading }),
       setError:      (error)   => set({ error }),
-      reset:         ()        => set({ profile: null, error: null, storageMode: 'local', accompanimentMode: 'AI', coachName: null, nextCoachSession: null }),
+      reset:         ()        => set({ profile: null, error: null, storageMode: 'local' }),
     }),
     {
       name: 'BodyOps:user',
+      version: 2,
       skipHydration: true,
+      migrate: (persistedState) => {
+        if (!persistedState || typeof persistedState !== 'object') return persistedState
+        // Coach data now comes from /api/user/my-coach; remove stale local coach fields.
+        const state = { ...(persistedState as Record<string, unknown>) }
+        delete state.accompanimentMode
+        delete state.coachName
+        delete state.nextCoachSession
+        return state
+      },
       partialize: (s) => ({
         profile: s.profile,
         storageMode: s.storageMode,
-        accompanimentMode: s.accompanimentMode,
-        coachName: s.coachName,
-        nextCoachSession: s.nextCoachSession,
         timezone: s.timezone,
       }),
     },

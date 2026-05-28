@@ -27,6 +27,12 @@ const LEVEL_OPTIONS = [
   { value: 'ATHLETE',      label: 'Athlète',       desc: '5 ans+' },
 ]
 
+const FOCUS_OPTIONS = [
+  { value: 'UPPER_BODY', emoji: '💪', label: 'Haut du corps',  desc: 'Pecs, dos, épaules, bras' },
+  { value: 'LOWER_BODY', emoji: '🦵', label: 'Bas du corps',   desc: 'Fessiers, cuisses, mollets' },
+  { value: 'FULL_BODY',  emoji: '⚡', label: 'Corps entier',   desc: 'Équilibre haut & bas' },
+]
+
 /** Onboarding step for selecting the primary fitness goal, optional target weight, and fitness level. */
 export function GoalsStep({ defaultValues, onNext, onBack }: Props) {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<GoalsData>({
@@ -36,6 +42,7 @@ export function GoalsStep({ defaultValues, onNext, onBack }: Props) {
 
   const goal  = watch('fitnessGoal')
   const level = watch('fitnessLevel')
+  const focus = watch('bodyFocus')
 
   return (
     <form onSubmit={handleSubmit(onNext)} className="space-y-6">
@@ -92,6 +99,30 @@ export function GoalsStep({ defaultValues, onNext, onBack }: Props) {
           ))}
         </div>
         {errors.fitnessLevel && <p className="mt-1.5 text-xs text-red-400">{errors.fitnessLevel.message}</p>}
+      </div>
+
+      {/* Focus corporel */}
+      <div>
+        <label className="block text-sm font-medium text-zinc-300 mb-1">
+          Tu veux travailler plutôt…
+        </label>
+        <p className="text-xs text-zinc-500 mb-3">L&apos;IA adaptera le ratio haut/bas du corps dans chaque programme.</p>
+        <div className="grid grid-cols-3 gap-2">
+          {FOCUS_OPTIONS.map((opt) => (
+            <button key={opt.value} type="button"
+              onClick={() => setValue('bodyFocus', focus === opt.value ? undefined : opt.value as GoalsData['bodyFocus'])}
+              className={`p-3 rounded-xl border text-left transition-all ${
+                focus === opt.value
+                  ? 'border-[#C8F135] bg-[#C8F135]/10'
+                  : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
+              }`}
+            >
+              <div className="text-xl mb-1">{opt.emoji}</div>
+              <p className={`text-xs font-semibold ${focus === opt.value ? 'text-[#C8F135]' : 'text-white'}`}>{opt.label}</p>
+              <p className="text-xs text-zinc-500 leading-tight">{opt.desc}</p>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex gap-3">

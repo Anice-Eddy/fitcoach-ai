@@ -1,7 +1,7 @@
 'use client'
 // Carte d'un repas — aliments, macros, bouton logger
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, Check, RefreshCw } from 'lucide-react'
 import type { Meal } from '@/types'
@@ -19,7 +19,8 @@ interface Props { meal: Meal }
 export function MealCard({ meal }: Props) {
   const [expanded, setExpanded] = useState(false)
   const [substituteOpen, setSubstituteOpen] = useState(false)
-  const { toggleMeal, todayMeals } = useNutritionStore()
+  const { ensureTodayLog, toggleMeal, todayMeals } = useNutritionStore()
+  useEffect(() => { ensureTodayLog() }, [ensureTodayLog])
   const isLogged = todayMeals.some((m) => m.mealId === meal.id)
 
   const handleLog = () => {

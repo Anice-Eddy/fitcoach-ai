@@ -9,6 +9,7 @@ import { IdentityStep }     from './steps/IdentityStep'
 import { MeasurementsStep } from './steps/MeasurementsStep'
 import { ActivityStep }     from './steps/ActivityStep'
 import { GoalsStep }        from './steps/GoalsStep'
+import { HealthStep }       from './steps/HealthStep'
 import { DietStep }         from './steps/DietStep'
 import { SummaryStep }      from './steps/SummaryStep'
 import { useUserStore }     from '@/stores/userStore'
@@ -26,6 +27,7 @@ const STEPS = [
   { title: 'Mensurations',     desc: 'Ton corps aujourd\'hui' },
   { title: 'Activité',         desc: 'Ton mode de vie' },
   { title: 'Objectifs',        desc: 'Où veux-tu aller ?' },
+  { title: 'Santé',            desc: 'Zones à ménager' },
   { title: 'Alimentation',     desc: 'Tes préférences' },
   { title: 'Ton profil',       desc: 'Résumé calculé' },
 ]
@@ -129,7 +131,7 @@ export function OnboardingStepper() {
       setProfile(savedProfile)
       await storage.clearOnboardingProgress()
       toast.success('Profil prêt. Choisis maintenant ton accompagnement.')
-      router.push('/choose')
+      router.push('/choose?returnTo=/dashboard')
     } catch {
       toast.error('Erreur lors de la sauvegarde. Réessaie.')
     } finally {
@@ -222,9 +224,12 @@ export function OnboardingStepper() {
             <GoalsStep defaultValues={data} onNext={goNext} onBack={goBack} />
           )}
           {step === 5 && (
-            <DietStep defaultValues={data} onNext={goNext} onBack={goBack} />
+            <HealthStep defaultValues={data} onNext={goNext} onBack={goBack} />
           )}
           {step === 6 && (
+            <DietStep defaultValues={data} onNext={goNext} onBack={goBack} />
+          )}
+          {step === 7 && (
             <SummaryStep
               data={data as OnboardingData}
               onFinish={finish}

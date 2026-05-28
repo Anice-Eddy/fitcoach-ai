@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useUserStore } from '@/stores/userStore'
 import { toast } from 'sonner'
 import { Star, CheckCircle, ArrowLeft, CalendarDays } from 'lucide-react'
@@ -61,33 +61,51 @@ function buildNextDays(count = 14) {
   return days
 }
 
-const SLOTS = ['09:00', '10:30', '13:00', '14:30', '16:00', '17:30']
+type AvailableSlot = { datetime: string; duration: number }
 
 /** Coach profile and appointment booking page: shows coach info, specialty, and a date/time slot picker to request an appointment. */
 export default function CoachBookingPage() {
   const router      = useRouter()
   const params      = useParams<{ coachId: string }>()
+  const searchParams = useSearchParams()
   const coachId     = params?.coachId
-  const { profile, setAccompanimentMode, setCoach } = useUserStore()
+  const { profile } = useUserStore()
   const days = useMemo(() => buildNextDays(14), [])
 
-  const [coachData, setCoachData] = useState<CoachData | null>(null)
-  const [loading,   setLoading]   = useState(true)
+  const [coachData,    setCoachData]    = useState<CoachData | null>(null)
+  const [loading,      setLoading]      = useState(true)
+  const [allSlots,     setAllSlots]     = useState<AvailableSlot[]>([])
+  const [slotsLoading, setSlotsLoading] = useState(false)
   const [selectedDay,  setSelectedDay]  = useState<Date | null>(() => days[0]?.date ?? null)
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(SLOTS[0] ?? null)
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [msg,  setMsg]  = useState('')
   const [busy, setBusy] = useState(false)
+  const returnTo = searchParams?.get('returnTo') ?? ''
+  // Preserve the original account page when navigating list -> coach detail -> list.
+  const safeReturnTo = returnTo.startsWith('/') && !returnTo.startsWith('//') && returnTo !== '/choose'
+    ? returnTo
+    : ''
+  const coachesHref = `/coaches${safeReturnTo ? `?returnTo=${encodeURIComponent(safeReturnTo)}` : ''}`
 
   useEffect(() => {
-    if (!coachId) {
-      setLoading(false)
-      return
-    }
+    if (!coachId) { setLoading(false); return }
     fetch(`/api/coaches/${coachId}`)
       .then(r => r.ok ? r.json() as Promise<CoachData> : (coachId === 'coach-1' ? DEMO_COACH : null))
       .then(data => { setCoachData(data); setLoading(false) })
       .catch(() => { setCoachData(coachId === 'coach-1' ? DEMO_COACH : null); setLoading(false) })
   }, [coachId])
+
+  // Fetch real availability slots for the next 14 days once the coach is known
+  useEffect(() => {
+    if (!coachData || coachData.id === 'coach-1') return
+    setSlotsLoading(true)
+    const from = new Date(); from.setDate(from.getDate() + 1); from.setHours(0, 0, 0, 0)
+    const to   = new Date(from.getTime() + 13 * 86_400_000)
+    fetch(`/api/coaches/${coachData.coachProfile.id}/slots?from=${from.toISOString().slice(0, 10)}&to=${to.toISOString().slice(0, 10)}`)
+      .then(r => r.ok ? r.json() : [])
+      .then((data: AvailableSlot[]) => { setAllSlots(data); setSlotsLoading(false) })
+      .catch(() => setSlotsLoading(false))
+  }, [coachData])
 
   const placeFromEquip = () => {
     const eq = profile?.availableEquipment as string[] | undefined
@@ -98,32 +116,23 @@ export default function CoachBookingPage() {
     return 'Extérieur'
   }
 
+  const daysWithSlots = new Set(allSlots.map(s => new Date(s.datetime).toDateString()))
+  const daySlots = selectedDay
+    ? allSlots.filter(s => new Date(s.datetime).toDateString() === selectedDay.toDateString())
+    : []
+
   const handleConfirm = async () => {
     if (!selectedDay || !selectedSlot || !coachData) return
     setBusy(true)
 
-    const [h, m] = selectedSlot.split(':').map(Number)
-    const scheduledAt = new Date(selectedDay)
-    scheduledAt.setHours(h, m, 0, 0)
+    // Slots come from the availability API, so the selected value is already a full datetime.
+    const scheduledAt = new Date(selectedSlot)
+    const slotDuration = allSlots.find(s => s.datetime === selectedSlot)?.duration ?? 60
 
     if (coachData.id === 'coach-1') {
-      const demoAppointment = {
-        id: 'demo-appointment',
-        title: 'Entretien découverte',
-        scheduledAt: scheduledAt.toISOString(),
-        duration: 30,
-        status: 'PENDING',
-        description: msg || null,
-        meetLink: null,
-        coachProfile: {
-          user: { id: 'coach-1', name: coachData.name, image: coachData.image },
-        },
-      }
-      sessionStorage.setItem('bodyops:demo-coach-appointment', JSON.stringify(demoAppointment))
-      setAccompanimentMode('COACH')
-      setCoach({ name: coachData.name ?? 'Coach', nextSession: `${selectedSlot}` })
-      toast.success('Demande envoyée avec succès !')
-      router.push('/coaching/status')
+      // Never create local demo appointments; synced coach panels must reflect the database only.
+      toast.error('Aucun coach réel disponible pour le moment.')
+      setBusy(false)
       return
     }
 
@@ -136,13 +145,11 @@ export default function CoachBookingPage() {
           title:          'Entretien découverte',
           description:    msg || undefined,
           scheduledAt:    scheduledAt.toISOString(),
-          duration:       30,
+          duration:       slotDuration,
         }),
       })
       if (!res.ok) throw new Error()
 
-      setAccompanimentMode('COACH')
-      setCoach({ name: coachData.name ?? 'Coach', nextSession: `${selectedSlot}` })
       toast.success('Demande envoyée avec succès !')
       router.push('/coaching/status')
     } catch {
@@ -171,7 +178,7 @@ export default function CoachBookingPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <section className="mx-auto max-w-6xl rounded-lg bg-[#0b0d09] px-6 py-10">
-        <Link href="/coaches" className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white mb-8 transition-colors">
+        <Link href={coachesHref} className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white mb-8 transition-colors">
           <ArrowLeft className="size-3.5" /> Choisir un autre coach
         </Link>
 
@@ -250,14 +257,16 @@ export default function CoachBookingPage() {
                 Choisissez une date
               </p>
               <div className="grid grid-cols-7 gap-2">
-                {days.map(({ date, dayLabel, dateLabel }) => {
-                  const selected = selectedDay?.toDateString() === date.toDateString()
+                {days.map(({ date, dayLabel }) => {
+                  const selected  = selectedDay?.toDateString() === date.toDateString()
+                  const hasSlots  = coachData?.id === 'coach-1' || daysWithSlots.has(date.toDateString())
                   return (
                     <button
                       key={date.toISOString()}
                       type="button"
+                      disabled={!hasSlots && !slotsLoading}
                       onClick={() => { setSelectedDay(date); setSelectedSlot(null) }}
-                      className={`flex flex-col items-center py-2 rounded-xl text-xs font-medium transition-all ${
+                      className={`flex flex-col items-center py-2 rounded-xl text-xs font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
                         selected
                           ? 'bg-[#C8F135] text-black'
                           : 'border border-zinc-700 bg-[#1a1d17] text-zinc-300 hover:border-[#C8F135]/50'
@@ -265,6 +274,9 @@ export default function CoachBookingPage() {
                     >
                       <span className="text-[10px] opacity-70">{dayLabel}</span>
                       <span className="text-sm font-bold mt-0.5">{date.getDate()}</span>
+                      {hasSlots && !selected && (
+                        <span className="mt-1 size-1 rounded-full bg-[#C8F135]/60" />
+                      )}
                     </button>
                   )
                 })}
@@ -276,23 +288,33 @@ export default function CoachBookingPage() {
                 <p className="text-sm font-medium text-[#C8F135] mb-4 capitalize">
                   {selectedDay.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} — Créneaux disponibles
                 </p>
-                <div className="grid grid-cols-3 gap-3">
-                  {SLOTS.map(slot => (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => setSelectedSlot(slot)}
-                      className={`rounded-xl border py-4 text-center transition-all ${
-                        selectedSlot === slot
-                          ? 'border-[#C8F135] bg-[#C8F135]/10'
-                          : 'border-zinc-700 bg-[#1a1d17] hover:border-zinc-600'
-                      }`}
-                    >
-                      <p className={`text-base font-medium ${selectedSlot === slot ? 'text-[#C8F135]' : 'text-white'}`}>{slot}</p>
-                      <p className="text-[11px] mt-0.5 text-zinc-500">30 min</p>
-                    </button>
-                  ))}
-                </div>
+                {slotsLoading ? (
+                  <p className="text-xs text-zinc-500">Chargement des créneaux…</p>
+                ) : daySlots.length === 0 && coachData?.id !== 'coach-1' ? (
+                  <p className="text-xs text-zinc-500">Aucun créneau disponible ce jour.</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-3">
+                    {daySlots.map(slot => {
+                      const d    = new Date(slot.datetime)
+                      const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                      return (
+                        <button
+                          key={slot.datetime}
+                          type="button"
+                          onClick={() => setSelectedSlot(slot.datetime)}
+                          className={`rounded-xl border py-4 text-center transition-all ${
+                            selectedSlot === slot.datetime
+                              ? 'border-[#C8F135] bg-[#C8F135]/10'
+                              : 'border-zinc-700 bg-[#1a1d17] hover:border-zinc-600'
+                          }`}
+                        >
+                          <p className={`text-base font-medium ${selectedSlot === slot.datetime ? 'text-[#C8F135]' : 'text-white'}`}>{time}</p>
+                          <p className="text-[11px] mt-0.5 text-zinc-500">{slot.duration} min</p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -303,7 +325,7 @@ export default function CoachBookingPage() {
                   <div className="text-sm">
                     <p className="font-medium text-[#C8F135]">Rendez-vous sélectionné</p>
                     <p className="text-white capitalize">
-                      {selectedDay.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à {selectedSlot}
+                      {selectedDay.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à {selectedSlot ? new Date(selectedSlot).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''}
                     </p>
                   </div>
                 </div>

@@ -13,7 +13,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
 interface WeightPoint { date: string; weight: number }
-interface Metric { id: string; weightKg: number; date: string }
+interface Metric { id: string; weightKg?: number | null; waterLiters?: number | null; date: string }
 
 interface CoachRelation {
   relationId:      string
@@ -55,6 +55,13 @@ const STATUS_COLOR: Record<string, string> = {
 }
 const STATUS_LABEL: Record<string, string> = {
   PENDING:   'En attente', PROPOSED: 'Proposé', CONFIRMED: 'Confirmé',
+}
+
+function localDateKey(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 // Returns a 2-letter uppercase initials string from a display name or email fallback.
@@ -166,6 +173,7 @@ export function DashboardClient() {
   const { profile }                   = useUserStore()
   const [weightData, setWeightData]   = useState<WeightPoint[]>([])
   const [lastWeight, setLastWeight]   = useState<number | null>(null)
+  const [lastWaterLiters, setLastWaterLiters] = useState<number | null>(null)
   const [loading, setLoading]         = useState(true)
   const [coaches, setCoaches]         = useState<CoachRelation[]>([])
   const [coachLoading, setCoachLoading] = useState(true)
@@ -175,8 +183,13 @@ export function DashboardClient() {
       .then(res => res.json())
       .then((metrics: Metric[]) => {
         if (Array.isArray(metrics) && metrics.length > 0) {
-          setLastWeight(metrics[0].weightKg)
-          const sorted = [...metrics].reverse()
+          const todayKey = localDateKey(new Date())
+          const todayMetric = metrics.find(metric => localDateKey(new Date(metric.date)) === todayKey)
+          const latestWeightMetric = metrics.find(metric => typeof metric.weightKg === 'number')
+          setLastWeight(latestWeightMetric?.weightKg ?? null)
+          setLastWaterLiters(todayMetric?.waterLiters ?? null)
+          // Les mesures sans poids restent utiles ailleurs, mais le graphique de poids les ignore.
+          const sorted = [...metrics].reverse().filter((metric): metric is Metric & { weightKg: number } => typeof metric.weightKg === 'number')
           setWeightData(sorted.map(m => ({
             date:   new Date(m.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
             weight: m.weightKg,
@@ -208,7 +221,7 @@ export function DashboardClient() {
         </p>
       </div>
 
-      <MetricsGrid profile={profile} lastWeight={lastWeight} streak={streak} isLoading={loading} />
+      <MetricsGrid profile={profile} lastWeight={lastWeight} lastWaterLiters={lastWaterLiters} streak={streak} isLoading={loading} />
 
       {weightData.length > 0 && (
         <WeightChart data={weightData} targetWeight={profile?.targetWeightKg} />

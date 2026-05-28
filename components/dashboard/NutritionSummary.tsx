@@ -6,11 +6,15 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useNutritionStore } from '@/stores/nutritionStore'
 import { useUserStore } from '@/stores/userStore'
 import Link from 'next/link'
+import { useEffect } from 'react'
 
 /** Displays today's macro consumption as a ring chart and three progress bars compared to the user's daily targets. */
 export function NutritionSummary() {
-  const { getTodayTotals } = useNutritionStore()
+  const { ensureTodayLog, getTodayTotals } = useNutritionStore()
   const { profile }        = useUserStore()
+
+  useEffect(() => { ensureTodayLog() }, [ensureTodayLog])
+
   const totals = getTodayTotals()
 
   const target = {

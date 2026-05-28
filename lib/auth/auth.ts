@@ -71,7 +71,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         })
         token.plan             = dbUser?.subscriptionPlan   ?? 'FREE'
         token.status           = dbUser?.subscriptionStatus ?? 'INACTIVE'
-        token.isCoach          = !!dbUser?.coachProfile
+        token.isCoach          = !!dbUser?.coachProfile && !dbUser?.profile
+        token.hasRoleConflict  = !!dbUser?.coachProfile && !!dbUser?.profile
         token.hasMemberProfile = !!dbUser?.profile
       }
       return token
@@ -83,6 +84,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.plan    = (token.plan    ?? 'FREE') as string
         session.user.status  = (token.status  ?? 'INACTIVE') as string
         session.user.isCoach = (token.isCoach ?? false) as boolean
+        session.user.hasRoleConflict = (token.hasRoleConflict ?? false) as boolean
         session.user.hasMemberProfile = (token.hasMemberProfile ?? false) as boolean
       }
       return session

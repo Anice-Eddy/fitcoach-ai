@@ -7,8 +7,10 @@ import { useUserStore }         from '@/stores/userStore'
 import { PageWrapper }          from '@/components/layout/PageWrapper'
 import { toast }                from 'sonner'
 import { kgToLb, lbToKg, cmToFtIn, ftInToCm } from '@/utils/unit-conversions'
-import { Home, Dumbbell, Building2, TreePine, LogOut, Trash2, Save, User, Sparkles, ArrowRight, Scale, Target, CalendarDays } from 'lucide-react'
+import { Home, Dumbbell, Building2, TreePine, LogOut, Trash2, Save, User, Sparkles, ArrowRight, Scale, Target, CalendarDays, Plus, X, AlertTriangle } from 'lucide-react'
+import type { InjuryEntry } from '@/utils/validators'
 import { DeleteAccountModal } from '@/components/ui/DeleteAccountModal'
+import { useMyCoach } from '@/lib/coach/use-my-coach'
 
 // ─── constantes (mirrors onboarding steps) ──────────────────────────────────
 
@@ -51,13 +53,27 @@ const GENDER_OPTIONS = [
 const RESTRICTIONS = ['Végétarien', 'Végan', 'Sans gluten', 'Sans lactose', 'Halal', 'Casher', 'Sans noix', 'Sans porc']
 const PREFERENCES  = ['Viande blanche', 'Poisson', 'Œufs', 'Légumineuses', 'Riz', 'Pâtes', 'Pommes de terre', 'Légumes verts', 'Fruits', 'Produits laitiers']
 
-// Maps the user's available equipment list to a training-place id string ('gym', 'home_gear', 'home_bw', 'outdoor').
-function placeIdFromEquipment(eq?: string[]): string {
-  if (!eq?.length) return ''
-  if (eq.includes('BARBELL')) return 'gym'
-  if (eq.includes('DUMBBELL')) return 'home_gear'
-  if (eq.length === 1 && eq[0] === 'BODYWEIGHT') return 'home_bw'
-  return 'outdoor'
+const BODY_PARTS = [
+  'Cou / Nuque', 'Épaule gauche', 'Épaule droite', 'Coude gauche', 'Coude droit',
+  'Poignet gauche', 'Poignet droit', 'Dos haut', 'Dos bas / Lombaires',
+  'Hanche gauche', 'Hanche droite', 'Genou gauche', 'Genou droit',
+  'Cheville gauche', 'Cheville droite', 'Quadriceps gauche', 'Quadriceps droit',
+  'Ischio-jambiers gauche', 'Ischio-jambiers droit', 'Mollet gauche', 'Mollet droit',
+]
+const SEVERITY_LABELS: Record<string, { label: string; color: string }> = {
+  MILD:     { label: 'Légère',  color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
+  MODERATE: { label: 'Modérée', color: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
+  SEVERE:   { label: 'Grave',   color: 'text-red-400 bg-red-400/10 border-red-400/20' },
+}
+
+function placeIdsFromEquipment(eq?: string[]): string[] {
+  if (!eq?.length) return []
+  const ids: string[] = []
+  if (eq.includes('BARBELL')) ids.push('gym')
+  if (eq.includes('DUMBBELL') && !eq.includes('BARBELL')) ids.push('home_gear')
+  if (eq.includes('RESISTANCE_BAND') && !eq.includes('DUMBBELL') && !eq.includes('BARBELL')) ids.push('outdoor')
+  if (eq.length === 1 && eq[0] === 'BODYWEIGHT') ids.push('home_bw')
+  return ids
 }
 
 // Card section wrapper with a header title and padded content area.
@@ -76,7 +92,8 @@ function Section({ title, children, className = '' }: { title: string; children:
 /** Member settings hub: profile info, physical measurements, training preferences, equipment, and plan/subscription section. */
 export default function SettingsPage() {
   const { data: session }       = useSession()
-  const { profile, setProfile, accompanimentMode, coachName, nextCoachSession } = useUserStore()
+  const { profile, setProfile } = useUserStore()
+  const { hasCoach, coachName, nextAppointment, loading: coachLoading } = useMyCoach()
 
   const [saving,  setSaving]  = useState(false)
   const [showDel, setShowDel] = useState(false)
@@ -106,8 +123,14 @@ export default function SettingsPage() {
   })
 
   // ── activity
-  const [placeId,      setPlaceId]      = useState(() => placeIdFromEquipment(profile?.availableEquipment as string[]))
+  const [placeIds,     setPlaceIds]     = useState<string[]>(() => placeIdsFromEquipment(profile?.availableEquipment as string[]))
   const [activityLevel, setActivityLevel] = useState(profile?.activityLevel ?? '')
+  // ── injuries
+  const [injuries,     setInjuries]     = useState<InjuryEntry[]>(() => {
+    const raw = (profile as Record<string, unknown> | null)?.injuries
+    return Array.isArray(raw) ? (raw as InjuryEntry[]) : []
+  })
+  const [injuryForm,   setInjuryForm]   = useState<{ bodyPart: string; severity: InjuryEntry['severity']; description: string }>({ bodyPart: BODY_PARTS[0], severity: 'MILD', description: '' })
   const [trainingDays,  setTrainingDays]  = useState(profile?.trainingDaysPerWeek ?? 3)
 
   // ── goals
@@ -140,7 +163,9 @@ export default function SettingsPage() {
           const { feet, inches } = cmToFtIn(data.heightCm)
           setFtDisplay({ feet: String(feet), inches: String(inches) })
         }
-        setPlaceId(placeIdFromEquipment(data.availableEquipment))
+        setPlaceIds(placeIdsFromEquipment(data.availableEquipment))
+        const rawInjuries = (data as Record<string, unknown>).injuries
+        setInjuries(Array.isArray(rawInjuries) ? (rawInjuries as InjuryEntry[]) : [])
         setActivityLevel(data.activityLevel ?? '')
         setTrainingDays(data.trainingDaysPerWeek ?? 3)
         setFitnessGoal(data.fitnessGoal ?? '')
@@ -164,26 +189,29 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      const place = TRAINING_PLACES.find((p) => p.id === placeId)
+      const unionEquipment = Array.from(new Set(
+        TRAINING_PLACES.filter(p => placeIds.includes(p.id)).flatMap(p => p.equipment)
+      ))
       const body: Record<string, unknown> = {
         weightUnit,
         heightUnit,
         dietaryRestrictions: restrictions,
         foodPreferences:     foodPrefs,
         trainingDaysPerWeek: trainingDays,
+        injuries,
       }
-      if (firstName)      body.firstName     = firstName
-      if (age)            body.age           = parseInt(age)
-      if (gender)         body.gender        = gender
-      if (weightKg)       body.weightKg      = parseFloat(weightKg)
-      if (heightCm)       body.heightCm      = parseFloat(heightCm)
-      if (waistCm)        body.waistCm       = parseFloat(waistCm)
-      if (hipsCm)         body.hipsCm        = parseFloat(hipsCm)
-      if (activityLevel)  body.activityLevel = activityLevel
-      if (place)          body.availableEquipment = place.equipment
-      if (fitnessGoal)    body.fitnessGoal   = fitnessGoal
-      if (fitnessLevel)   body.fitnessLevel  = fitnessLevel
-      if (targetWeight)   body.targetWeightKg = parseFloat(targetWeight)
+      if (firstName)                body.firstName           = firstName
+      if (age)                      body.age                 = parseInt(age)
+      if (gender)                   body.gender              = gender
+      if (weightKg)                 body.weightKg            = parseFloat(weightKg)
+      if (heightCm)                 body.heightCm            = parseFloat(heightCm)
+      if (waistCm)                  body.waistCm             = parseFloat(waistCm)
+      if (hipsCm)                   body.hipsCm              = parseFloat(hipsCm)
+      if (activityLevel)            body.activityLevel       = activityLevel
+      if (unionEquipment.length)    body.availableEquipment  = unionEquipment
+      if (fitnessGoal)              body.fitnessGoal         = fitnessGoal
+      if (fitnessLevel)             body.fitnessLevel        = fitnessLevel
+      if (targetWeight)             body.targetWeightKg      = parseFloat(targetWeight)
 
       const res = await fetch('/api/user/profile', {
         method:  'PATCH',
@@ -299,7 +327,7 @@ export default function SettingsPage() {
               <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-zinc-300">Mon accompagnement</h2>
                 <span className="rounded-full bg-[#C8F135]/10 px-2.5 py-1 text-xs font-medium text-[#C8F135]">
-                  {accompanimentMode === 'COACH' ? 'Coach réel' : 'IA'}
+                    {hasCoach ? 'Coach réel' : 'IA'}
                 </span>
               </div>
               <div className="p-5 space-y-4">
@@ -308,10 +336,12 @@ export default function SettingsPage() {
                     <Sparkles className="size-5 text-[#C8F135]" />
                   </div>
                   <div>
-                    {accompanimentMode === 'COACH' ? (
+                    {hasCoach ? (
                       <>
-                        <p className="text-sm font-medium text-white">{coachName ?? 'Coach à confirmer'}</p>
-                        <p className="text-xs text-zinc-500">Prochaine séance : {nextCoachSession ?? 'à planifier'}</p>
+                        <p className="text-sm font-medium text-white">{coachLoading ? 'Synchronisation...' : coachName ?? 'Coach à confirmer'}</p>
+                        <p className="text-xs text-zinc-500">
+                          Prochaine séance : {nextAppointment ? new Date(nextAppointment.scheduledAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'à planifier'}
+                        </p>
                       </>
                     ) : (
                       <>
@@ -323,16 +353,16 @@ export default function SettingsPage() {
                 </div>
                 <div className="grid grid-cols-1 gap-3">
                   <Link
-                    href="/choose"
+                    href="/choose?returnTo=/settings"
                     className="flex items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 py-2.5 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d]"
                   >
                     Changer de mode <ArrowRight className="size-4" />
                   </Link>
                   <Link
-                    href={accompanimentMode === 'COACH' ? '/choose' : '/coaches/coach-1'}
+                    href={hasCoach ? '/choose?returnTo=/settings' : '/coaches?returnTo=/settings'}
                     className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white"
                   >
-                    {accompanimentMode === 'COACH' ? 'Changer de coach' : 'Passer à un coach réel'}
+                    {hasCoach ? 'Changer de coach' : 'Passer à un coach réel'}
                   </Link>
                 </div>
               </div>
@@ -509,15 +539,20 @@ export default function SettingsPage() {
             <div className="grid grid-cols-2 gap-3">
               {TRAINING_PLACES.map((place) => {
                 const Icon   = place.icon
-                const active = placeId === place.id
+                const active = placeIds.includes(place.id)
                 return (
                   <button key={place.id} type="button"
-                    onClick={() => setPlaceId(placeId === place.id ? '' : place.id)}
+                    onClick={() => setPlaceIds(prev => prev.includes(place.id) ? prev.filter(id => id !== place.id) : [...prev, place.id])}
                     className={`p-4 rounded-xl border-2 text-left transition-all ${
                       active ? 'border-[#C8F135] bg-[#C8F135]/10' : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600'
                     }`}
                   >
-                    <Icon className={`size-5 mb-2 ${active ? 'text-[#C8F135]' : 'text-zinc-400'}`} />
+                    <div className="flex items-center justify-between mb-2">
+                      <Icon className={`size-5 ${active ? 'text-[#C8F135]' : 'text-zinc-400'}`} />
+                      <div className={`size-4 rounded border-2 flex items-center justify-center ${active ? 'border-[#C8F135] bg-[#C8F135]' : 'border-zinc-600'}`}>
+                        {active && <svg className="size-2.5 text-zinc-950" fill="none" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </div>
+                    </div>
                     <p className={`text-sm font-semibold ${active ? 'text-[#C8F135]' : 'text-white'}`}>{place.label}</p>
                     <p className="text-xs text-zinc-400 mt-0.5 leading-snug">{place.sub}</p>
                   </button>
@@ -563,6 +598,67 @@ export default function SettingsPage() {
               ))}
             </div>
           </div>
+        </Section>
+
+        {/* Santé & Blessures */}
+        <Section title="Santé & Blessures" className="xl:col-span-2">
+          {injuries.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-1">
+              {injuries.map((inj, i) => {
+                const sev = SEVERITY_LABELS[inj.severity]
+                return (
+                  <div key={i} className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs ${sev.color}`}>
+                    <AlertTriangle className="size-3 shrink-0" />
+                    <span className="font-semibold">{inj.bodyPart}</span>
+                    <span className="opacity-70">— {sev.label}</span>
+                    {inj.description && <span className="opacity-60 italic">· {inj.description}</span>}
+                    <button onClick={() => setInjuries(prev => prev.filter((_, j) => j !== i))} className="ml-1 opacity-60 hover:opacity-100 hover:text-red-400">
+                      <X className="size-3" />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          <div className="rounded-xl border border-zinc-700 bg-zinc-800/40 p-4 space-y-3">
+            <p className="text-xs font-medium text-zinc-400">Ajouter une blessure / zone sensible</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div>
+                <label className="block text-[11px] text-zinc-500 mb-1">Zone du corps</label>
+                <select value={injuryForm.bodyPart} onChange={e => setInjuryForm(f => ({ ...f, bodyPart: e.target.value }))}
+                  className="w-full px-2.5 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135]">
+                  {BODY_PARTS.map(bp => <option key={bp} value={bp}>{bp}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] text-zinc-500 mb-1">Sévérité</label>
+                <select value={injuryForm.severity} onChange={e => setInjuryForm(f => ({ ...f, severity: e.target.value as InjuryEntry['severity'] }))}
+                  className="w-full px-2.5 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135]">
+                  <option value="MILD">Légère (gêne)</option>
+                  <option value="MODERATE">Modérée (douleur)</option>
+                  <option value="SEVERE">Grave (impossible)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] text-zinc-500 mb-1">Détail <span className="text-zinc-600">(optionnel)</span></label>
+                <input type="text" value={injuryForm.description} onChange={e => setInjuryForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="ex: tendinite, ancienne op…"
+                  className="w-full px-2.5 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]" />
+              </div>
+            </div>
+            <button type="button"
+              onClick={() => {
+                setInjuries(prev => [...prev, { bodyPart: injuryForm.bodyPart, severity: injuryForm.severity, description: injuryForm.description }])
+                setInjuryForm(f => ({ ...f, description: '' }))
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#C8F135]/10 text-[#C8F135] text-xs font-semibold hover:bg-[#C8F135]/20 transition-colors"
+            >
+              <Plus className="size-3.5" /> Ajouter
+            </button>
+          </div>
+          {injuries.length === 0 && (
+            <p className="text-xs text-zinc-600">Aucune blessure enregistrée. Ces informations permettent à l'IA de personnaliser tes programmes.</p>
+          )}
         </Section>
 
         {/* Objectifs */}

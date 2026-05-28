@@ -105,8 +105,9 @@ export async function GET() {
         orderBy: { date: 'asc' },
         select:  { weightKg: true },
       })
-      if (metrics.length >= 2) {
-        deltas.push(metrics[metrics.length - 1].weightKg - metrics[0].weightKg)
+      const weightMetrics = metrics.filter((metric): metric is { weightKg: number } => typeof metric.weightKg === 'number')
+      if (weightMetrics.length >= 2) {
+        deltas.push(weightMetrics[weightMetrics.length - 1].weightKg - weightMetrics[0].weightKg)
       }
     }
     if (deltas.length > 0) {

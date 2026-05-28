@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Star, Users, CheckCircle, ArrowLeft } from 'lucide-react'
 import { ListSkeleton } from '@/components/ui/LoadingSkeleton'
 
@@ -32,9 +33,17 @@ const FALLBACK_COACH: Coach = {
 }
 
 /** Displays the public coach directory fetched from /api/coaches, with a search bar and coach cards. */
-export default function CoachesPage() {
+function CoachesInner() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [coaches, setCoaches] = useState<Coach[]>([])
   const [loading, setLoading] = useState(true)
+  const returnTo = searchParams?.get('returnTo') ?? ''
+  // Only accept app-internal return targets to avoid open redirects and loops back to /choose.
+  const safeReturnTo = returnTo.startsWith('/') && !returnTo.startsWith('//') && returnTo !== '/choose'
+    ? returnTo
+    : ''
+  const returnQuery = safeReturnTo ? `?returnTo=${encodeURIComponent(safeReturnTo)}` : ''
 
   useEffect(() => {
     fetch('/api/coaches')
@@ -48,13 +57,31 @@ export default function CoachesPage() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }
 
+  const goBack = () => {
+    // Prefer the explicit origin passed by settings/onboarding over browser history.
+    if (safeReturnTo) {
+      router.replace(safeReturnTo)
+      return
+    }
+
+    if (window.history.length > 1) {
+      router.back()
+      return
+    }
+    router.push('/dashboard')
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
       <section className="mx-auto max-w-4xl px-4 py-12">
 
-        <Link href="/choose" className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white mb-8 transition-colors">
+        <button
+          type="button"
+          onClick={goBack}
+          className="mb-8 flex items-center gap-1.5 text-xs text-zinc-500 transition-colors hover:text-white"
+        >
           <ArrowLeft className="size-3.5" /> Retour
-        </Link>
+        </button>
 
         <div className="mb-10 text-center">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[5px] text-[#C8F135]">
@@ -79,7 +106,7 @@ export default function CoachesPage() {
               {(coaches.length > 0 ? coaches : [FALLBACK_COACH]).map(coach => (
                 <Link
                   key={coach.id}
-                  href={`/coaches/${coach.id}`}
+                  href={`/coaches/${coach.id}${returnQuery}`}
                   className="group rounded-2xl border border-zinc-800 bg-[#0b0d09] p-6 hover:border-zinc-600 transition-all"
                 >
                   <div className="flex items-start gap-4">
@@ -130,5 +157,13 @@ export default function CoachesPage() {
         )}
       </section>
     </div>
+  )
+}
+
+export default function CoachesPage() {
+  return (
+    <Suspense fallback={<div className="p-8"><ListSkeleton /></div>}>
+      <CoachesInner />
+    </Suspense>
   )
 }

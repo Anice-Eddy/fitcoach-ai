@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { Logo } from '@/components/ui/Logo'
+import { PageBackground } from '@/components/landing/PageBackground'
 
 /** Forgot-password page: collects an email and calls /api/auth/forgot-password to send a reset link. */
 export default function ForgotPasswordPage() {
@@ -40,8 +41,9 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+    <div className="relative min-h-screen text-white flex items-center justify-center px-4">
+      <PageBackground showArtwork={false} />
+      <div className="relative z-10 w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="mb-6 flex justify-center">
             <Logo href="/" size="lg" />

@@ -65,7 +65,7 @@ export default async function MemberDetailPage({ params }: { params: { memberId:
   })
 
   const p = member.profile
-  const lastMetric = member.bodyMetrics[0]
+  const lastWeight = member.bodyMetrics.find(metric => typeof metric.weightKg === 'number')?.weightKg ?? null
 
   // Map sessions to display format
   const sessions = member.workoutSessions.map(s => {
@@ -95,7 +95,7 @@ export default async function MemberDetailPage({ params }: { params: { memberId:
               <h1 className="text-[22px] font-medium text-white">Fiche client — {member.name ?? member.email}</h1>
               <p className="text-xs text-zinc-500 mt-0.5">
                 Suivi depuis le {new Date(membership.assignedAt).toLocaleDateString('fr-FR')}
-                {lastMetric && ` · Dernier poids: ${lastMetric.weightKg} kg`}
+                {lastWeight && ` · Dernier poids: ${lastWeight} kg`}
               </p>
             </div>
             <div className="flex gap-2 shrink-0">
@@ -196,7 +196,7 @@ export default async function MemberDetailPage({ params }: { params: { memberId:
                 <Label>Dernière mensuration</Label>
                 <div className="space-y-1.5">
                   {[
-                    { k: 'Poids',       v: `${member.bodyMetrics[0].weightKg} kg` },
+                    { k: 'Poids',       v: member.bodyMetrics[0].weightKg ? `${member.bodyMetrics[0].weightKg} kg` : '—' },
                     { k: 'Masse grasse', v: member.bodyMetrics[0].bodyFatPct ? `${member.bodyMetrics[0].bodyFatPct}%` : '—' },
                     { k: 'Tour de taille', v: member.bodyMetrics[0].waistCm ? `${member.bodyMetrics[0].waistCm} cm` : '—' },
                     { k: 'Date', v: new Date(member.bodyMetrics[0].date).toLocaleDateString('fr-FR') },

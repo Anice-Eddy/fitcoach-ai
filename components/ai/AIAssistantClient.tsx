@@ -85,7 +85,6 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
   const [error, setError]               = useState('')
   const [members, setMembers]           = useState<CoachMember[]>([])
   const [memberId, setMemberId]         = useState('')
-  const [preferredProvider, setPreferredProvider] = useState<'AUTO' | 'GEMINI' | 'GROQ'>('AUTO')
   const [insights, setInsights]         = useState<InsightsPayload | null>(null)
   const bottomRef                       = useRef<HTMLDivElement>(null)
 
@@ -146,7 +145,7 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
       const res  = await fetch('/api/ai/chat', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody({ agentType: agent, message: text, conversationId, provider: preferredProvider })),
+        body: JSON.stringify(requestBody({ agentType: agent, message: text, conversationId, provider: 'AUTO' })),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error ?? 'Erreur IA')
@@ -179,12 +178,12 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
 
       {/* ── Header ───────────────────────────────────────────── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Assistant IA</h1>
+          <h1 className="text-xl font-bold text-white sm:text-2xl">Assistant IA</h1>
           <p className="mt-1 text-sm text-zinc-400">Analyse personnalisée basée sur tes données réelles.</p>
         </div>
         {mode === 'coach' && (
@@ -216,89 +215,78 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
       {/* ── Memory strip ──────────────────────────────────────── */}
       {insights?.memory && <MemoryStrip memory={insights.memory} />}
 
-      {/* ── Agent tabs ────────────────────────────────────────── */}
-      <div className="grid gap-2 md:grid-cols-5">
-        {AGENTS.filter(a => mode === 'coach' || a.value !== 'COACH_REPORT').map(({ value, label, desc, icon: Icon }) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => { setAgent(value); setMessages([]); setConversationId(null) }}
-            className={`rounded-xl border p-3.5 text-left transition-colors ${
-              agent === value
-                ? 'border-[#C8F135] bg-[#C8F135]/10'
-                : 'border-zinc-800 bg-zinc-900 hover:border-zinc-700'
-            }`}
-          >
-            <Icon className={`mb-2 size-4 ${agent === value ? 'text-[#C8F135]' : 'text-zinc-500'}`} />
-            <p className="text-xs font-semibold text-white">{label}</p>
-            <p className="mt-0.5 text-[11px] leading-tight text-zinc-500">{desc}</p>
-          </button>
-        ))}
+      {/* ── Assistant topic ───────────────────────────────────── */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Sujet de l'assistant</p>
+          <p className="text-xs text-zinc-600">{AGENTS.find(a => a.value === agent)?.desc}</p>
+        </div>
+        <div className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:px-0 sm:pb-0 md:grid-cols-5">
+          {AGENTS.filter(a => mode === 'coach' || a.value !== 'COACH_REPORT').map(({ value, label, icon: Icon }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setAgent(value)}
+              className={`flex min-w-[140px] snap-start items-center gap-2 rounded-xl border px-3 py-3 text-left transition-colors sm:min-w-0 ${
+                agent === value
+                  ? 'border-[#C8F135] bg-[#C8F135]/10 text-white'
+                  : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-zinc-700 hover:text-white'
+              }`}
+              aria-pressed={agent === value}
+            >
+              <Icon className={`size-4 shrink-0 ${agent === value ? 'text-[#C8F135]' : 'text-zinc-500'}`} />
+              <span className="truncate text-sm font-semibold">{label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── Quick actions ─────────────────────────────────────── */}
-      <div className="grid gap-2 sm:grid-cols-3">
-        {QUICK_ACTIONS.map(action => (
-          <button
-            key={action.endpoint}
-            type="button"
-            disabled={loading || (mode === 'coach' && !memberId)}
-            onClick={() => runAction(action.endpoint)}
-            className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-[#C8F135]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {action.label}
-          </button>
-        ))}
-        {mode === 'coach' && (
-          <button
-            type="button"
-            disabled={loading || !memberId}
-            onClick={() => runAction('/api/ai/coach-report')}
-            className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-[#C8F135]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-3"
-          >
-            Rapport coach — {selectedMemberName || 'ce membre'}
-          </button>
-        )}
+      <div className="space-y-2">
+        <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Actions rapides</p>
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:px-0 sm:pb-0">
+          {QUICK_ACTIONS.map(action => (
+            <button
+              key={action.endpoint}
+              type="button"
+              disabled={loading || (mode === 'coach' && !memberId)}
+              onClick={() => runAction(action.endpoint)}
+              className="min-w-[190px] rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-[#C8F135]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:min-w-0"
+            >
+              {action.label}
+            </button>
+          ))}
+          {mode === 'coach' && (
+            <button
+              type="button"
+              disabled={loading || !memberId}
+              onClick={() => runAction('/api/ai/coach-report')}
+              className="min-w-[220px] rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-[#C8F135]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-3 sm:min-w-0"
+            >
+              Rapport coach — {selectedMemberName || 'ce membre'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Chat ─────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900">
+      <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
 
-        <div className="border-b border-zinc-800 px-5 py-3.5">
-          <div className="flex items-center justify-between">
+        <div className="border-b border-zinc-800 px-4 py-3.5 sm:px-5">
+          <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
               <Bot className="size-4 text-[#C8F135]" />
               <p className="text-sm font-semibold text-white">Chat</p>
             </div>
-            {mode === 'member' && (
-              <div className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-950 p-1">
-                {(['AUTO', 'GEMINI', 'GROQ'] as const).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPreferredProvider(p)}
-                    className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                      preferredProvider === p
-                        ? p === 'GEMINI' ? 'bg-blue-600 text-white'
-                          : p === 'GROQ' ? 'bg-orange-600 text-white'
-                          : 'bg-zinc-700 text-white'
-                        : 'text-zinc-500 hover:text-zinc-300'
-                    }`}
-                  >
-                    {p === 'AUTO' ? 'Auto' : p}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
-        <div className="min-h-[360px] max-h-[500px] overflow-y-auto px-5 py-4 space-y-3">
+        <div className="min-h-[260px] max-h-[50svh] overflow-y-auto px-4 py-4 space-y-3 overscroll-contain sm:min-h-[360px] sm:max-h-[500px] sm:px-5">
           {messages.length === 0 ? (
             <div className="flex min-h-56 flex-col items-center justify-center text-center">
               <MessageSquare className="mb-3 size-7 text-zinc-700" />
               <p className="text-sm font-medium text-zinc-400">Posez une question à votre coach IA.</p>
-              <p className="mt-1 text-xs text-zinc-600">
+              <p className="mt-1 max-w-64 text-xs leading-relaxed text-zinc-600 sm:max-w-none">
                 "Fais-moi un programme cette semaine" · "Comment améliorer mes macros ?"
               </p>
             </div>
@@ -333,14 +321,14 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
           </div>
         )}
 
-        <div className="flex gap-3 border-t border-zinc-800 p-4">
+        <div className="sticky bottom-0 flex gap-2 border-t border-zinc-800 bg-zinc-900 p-3 sm:gap-3 sm:p-4">
           <input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
             placeholder={mode === 'coach' && !memberId ? 'Sélectionnez un membre...' : 'Votre message…'}
             disabled={loading || (mode === 'coach' && !memberId)}
-            className="min-w-0 flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-[#C8F135] disabled:opacity-50"
+            className="min-w-0 flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-3 text-base text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-[#C8F135] disabled:opacity-50 sm:px-4 sm:text-sm"
           />
           <button
             type="button"

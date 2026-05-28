@@ -5,11 +5,29 @@ import { PageWrapper }  from '@/components/layout/PageWrapper'
 import { WeightChart }  from '@/components/dashboard/WeightChart'
 import { useUserStore } from '@/stores/userStore'
 import { toast } from 'sonner'
-import { Plus, Scale, Target, TrendingDown, TrendingUp, Activity, Trash2, Ruler } from 'lucide-react'
+import { Plus, Scale, Target, TrendingDown, TrendingUp, Activity, Trash2, Ruler, Footprints, Moon, Droplets, Battery, Brain, Camera } from 'lucide-react'
 import { MetricCard } from '@/components/ui/MetricCard'
 
-interface BodyMetric { id: string; weightKg: number; date: string; bodyFatPct?: number | null }
+interface BodyMetric {
+  id: string
+  weightKg?: number | null
+  date: string
+  bodyFatPct?: number | null
+  steps?: number | null
+  sleepHours?: number | null
+  waterLiters?: number | null
+  energyLevel?: number | null
+  stressLevel?: number | null
+  progressPhotoUrl?: string | null
+}
 interface WeightPoint { date: string; weight: number }
+
+function localDateKey(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 const GOAL_LABELS: Record<string, string> = {
   WEIGHT_LOSS: 'Perte de poids', MUSCLE_GAIN: 'Prise de masse',
@@ -20,7 +38,16 @@ const GOAL_LABELS: Record<string, string> = {
 /** Progress tracking page: displays body weight history chart, allows logging new weight entries, and shows BMI and body composition metrics. */
 export default function ProgressPage() {
   const { profile }         = useUserStore()
-  const [weight, setWeight]         = useState('')
+  const [form, setForm] = useState({
+    weightKg: '',
+    bodyFatPct: '',
+    steps: '',
+    sleepHours: '',
+    waterLiters: '',
+    energyLevel: '',
+    stressLevel: '',
+    progressPhotoUrl: '',
+  })
   const [saving, setSaving]         = useState(false)
   const [metrics, setMetrics]       = useState<BodyMetric[]>([])
   const [loading, setLoading]       = useState(true)
@@ -38,22 +65,50 @@ export default function ProgressPage() {
 
   useEffect(() => { fetchMetrics() }, [fetchMetrics])
 
-  const handleAddWeight = async () => {
-    const val = parseFloat(weight)
-    if (isNaN(val) || val < 30 || val > 300) { toast.error('Poids invalide (30–300 kg)'); return }
+  const updateForm = (key: keyof typeof form, value: string) => {
+    setForm(current => ({ ...current, [key]: value }))
+  }
+
+  const optionalNumber = (value: string) => value.trim() === '' ? undefined : Number(value)
+  const hasAnyMetricInput = Object.values(form).some(value => value.trim() !== '')
+
+  const handleAddMetric = async () => {
+    if (!hasAnyMetricInput) { toast.error('Ajoute au moins une donnée à enregistrer'); return }
+    const val = optionalNumber(form.weightKg)
+    if (val !== undefined && (isNaN(val) || val < 30 || val > 300)) { toast.error('Poids invalide (30–300 kg)'); return }
     setSaving(true)
     try {
+      // On envoie aussi les signaux de récupération pour que l'IA explique mieux les variations.
+      const payload = {
+        weightKg: val,
+        bodyFatPct: optionalNumber(form.bodyFatPct),
+        steps: optionalNumber(form.steps),
+        sleepHours: optionalNumber(form.sleepHours),
+        waterLiters: optionalNumber(form.waterLiters),
+        energyLevel: optionalNumber(form.energyLevel),
+        stressLevel: optionalNumber(form.stressLevel),
+        progressPhotoUrl: form.progressPhotoUrl.trim() || undefined,
+      }
       const res = await fetch('/api/user/metrics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weightKg: val }),
+        body: JSON.stringify(payload),
       })
       if (res.ok) {
-        toast.success('Poids enregistré !')
-        setWeight('')
+        toast.success('Mesure enregistrée !')
+        setForm({
+          weightKg: '',
+          bodyFatPct: '',
+          steps: '',
+          sleepHours: '',
+          waterLiters: '',
+          energyLevel: '',
+          stressLevel: '',
+          progressPhotoUrl: '',
+        })
         fetchMetrics()
       } else {
-        toast.error('Erreur lors de l\'ajout')
+        toast.error('Certaines valeurs sont hors limites')
       }
     } catch { toast.error('Erreur réseau') }
     finally { setSaving(false) }
@@ -70,14 +125,19 @@ export default function ProgressPage() {
   }
 
   const sortedAsc = [...metrics].reverse()
-  const chartData: WeightPoint[] = sortedAsc.map(m => ({
-    date:   new Date(m.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
-    weight: m.weightKg,
-  }))
+  const chartData: WeightPoint[] = sortedAsc
+    .filter((m): m is BodyMetric & { weightKg: number } => typeof m.weightKg === 'number')
+    .map(m => ({
+      date:   new Date(m.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+      weight: m.weightKg,
+    }))
 
-  const lastWeight  = metrics[0]?.weightKg ?? null
-  const firstWeight = metrics[metrics.length - 1]?.weightKg ?? null
-  const delta = lastWeight !== null && firstWeight !== null && metrics.length > 1
+  const weightMetrics = metrics.filter((m): m is BodyMetric & { weightKg: number } => typeof m.weightKg === 'number')
+  const lastWeight  = weightMetrics[0]?.weightKg ?? null
+  const todayKey = localDateKey(new Date())
+  const lastMetric  = metrics.find(metric => localDateKey(new Date(metric.date)) === todayKey) ?? null
+  const firstWeight = weightMetrics[weightMetrics.length - 1]?.weightKg ?? null
+  const delta = lastWeight !== null && firstWeight !== null && weightMetrics.length > 1
     ? Math.round((lastWeight - firstWeight) * 10) / 10
     : null
   const bmi = profile?.bmi ?? null
@@ -164,27 +224,48 @@ export default function ProgressPage() {
             />
           </div>
 
-          {/* Ajout poids */}
+          {/* Ajout mesure */}
           <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
             <h3 className="text-sm font-semibold text-white mb-3">Ajouter une mesure</h3>
-            <div className="flex gap-3">
-              <input
-                type="number" step="0.1" min="30" max="300"
-                placeholder="Poids en kg" value={weight}
-                onChange={e => setWeight(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleAddWeight()}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-[#C8F135] transition-colors"
-              />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <MetricInput label="Poids (kg)" value={form.weightKg} onChange={value => updateForm('weightKg', value)} min={30} max={300} step="0.1" />
+              <MetricInput label="Masse grasse (%)" value={form.bodyFatPct} onChange={value => updateForm('bodyFatPct', value)} min={1} max={70} step="0.1" />
+              <MetricInput label="Pas" value={form.steps} onChange={value => updateForm('steps', value)} min={0} max={100000} step="1" />
+              <MetricInput label="Sommeil (h)" value={form.sleepHours} onChange={value => updateForm('sleepHours', value)} min={0} max={24} step="0.25" />
+              <MetricInput label="Litres d'eau" value={form.waterLiters} onChange={value => updateForm('waterLiters', value)} min={0} max={15} step="0.1" />
+              <MetricInput label="Énergie 1-5" value={form.energyLevel} onChange={value => updateForm('energyLevel', value)} min={1} max={5} step="1" />
+              <MetricInput label="Stress 1-5" value={form.stressLevel} onChange={value => updateForm('stressLevel', value)} min={1} max={5} step="1" />
+              <label className="grid gap-1.5">
+                <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Photo URL</span>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={form.progressPhotoUrl}
+                  onChange={e => updateForm('progressPhotoUrl', e.target.value)}
+                  className="h-11 rounded-xl border border-zinc-700 bg-zinc-800 px-4 text-sm text-white outline-none transition-colors focus:border-[#C8F135]"
+                />
+              </label>
               <button
-                type="button" onClick={handleAddWeight}
-                disabled={saving || !weight}
-                aria-label="Enregistrer mon poids"
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C8F135] text-zinc-900 font-bold disabled:opacity-50 hover:bg-[#d4f54d] transition-colors"
+                type="button" onClick={handleAddMetric}
+                disabled={saving || !hasAnyMetricInput}
+                aria-label="Enregistrer ma mesure"
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] disabled:opacity-50 sm:col-span-2 lg:col-span-4"
               >
                 <Plus className="size-4" /> Enregistrer
               </button>
             </div>
           </div>
+
+          {/* Récupération */}
+          {lastMetric && (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+              <MetricCard title="Pas" value={lastMetric.steps ?? '—'} icon={<Footprints className="size-4" />} accentColor="#38bdf8" />
+              <MetricCard title="Sommeil" value={lastMetric.sleepHours ?? '—'} unit={lastMetric.sleepHours ? 'h' : ''} icon={<Moon className="size-4" />} accentColor="#a78bfa" />
+              <MetricCard title="Litres d'eau" value={lastMetric.waterLiters ?? '—'} unit={lastMetric.waterLiters ? 'L' : ''} icon={<Droplets className="size-4" />} accentColor="#22d3ee" />
+              <MetricCard title="Énergie" value={lastMetric.energyLevel ?? '—'} unit={lastMetric.energyLevel ? '/5' : ''} icon={<Battery className="size-4" />} accentColor="#4ade80" />
+              <MetricCard title="Stress" value={lastMetric.stressLevel ?? '—'} unit={lastMetric.stressLevel ? '/5' : ''} icon={<Brain className="size-4" />} accentColor="#f87171" />
+            </div>
+          )}
 
           {/* Graphique */}
           {chartData.length > 0 ? (
@@ -227,8 +308,9 @@ export default function ProgressPage() {
                       {new Date(m.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-white">{m.weightKg} kg</span>
+                      {typeof m.weightKg === 'number' ? <span className="text-sm font-semibold text-white">{m.weightKg} kg</span> : null}
                       {m.bodyFatPct ? <span className="text-xs text-zinc-500">{m.bodyFatPct}% MG</span> : null}
+                      {m.progressPhotoUrl ? <Camera className="size-3.5 text-zinc-500" aria-label="Photo de progression enregistrée" /> : null}
                       <button
                         type="button"
                         onClick={() => handleDelete(m.id)}
@@ -248,5 +330,39 @@ export default function ProgressPage() {
         </div>
       </PageWrapper>
     </>
+  )
+}
+
+function MetricInput({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step,
+  required = false,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  min: number
+  max: number
+  step: string
+  required?: boolean
+}) {
+  return (
+    <label className="grid gap-1.5">
+      <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{label}</span>
+      <input
+        type="number"
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        required={required}
+        onChange={e => onChange(e.target.value)}
+        className="h-11 rounded-xl border border-zinc-700 bg-zinc-800 px-4 text-sm text-white outline-none transition-colors focus:border-[#C8F135]"
+      />
+    </label>
   )
 }

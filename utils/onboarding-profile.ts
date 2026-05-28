@@ -22,6 +22,8 @@ export function profileToOnboardingData(profile: UserProfile): Partial<Onboardin
     fitnessGoal: profile.fitnessGoal as OnboardingData['fitnessGoal'],
     targetWeightKg: profile.targetWeightKg,
     fitnessLevel: profile.fitnessLevel as OnboardingData['fitnessLevel'],
+    bodyFocus: profile.bodyFocus,
+    injuries: profile.injuries,
     dietaryRestrictions: profile.dietaryRestrictions,
     foodPreferences: profile.foodPreferences,
   }

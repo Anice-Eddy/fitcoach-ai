@@ -31,6 +31,7 @@ export type MemberAIContext = {
     availableEquipment: string[]
     dietaryRestrictions: string[]
     foodPreferences: string[]
+    bodyFocus: string | null
     currentProgram: string | null
     progressHistory: string[]
     injuryOrRestrictionSignals: string[]

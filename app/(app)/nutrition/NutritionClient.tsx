@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import { useUserStore }        from '@/stores/userStore'
+import { useNutritionStore }   from '@/stores/nutritionStore'
 import { generateMealPlan }    from '@/lib/nutrition/generate-meal-plan'
 import { getMealsForDay, sumMacros } from '@/lib/nutrition/macro-calculator'
 import { MealCard }            from '@/components/nutrition/MealCard'
@@ -18,19 +19,19 @@ const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
 /** Interactive nutrition plan view: fetches or generates a weekly meal plan and allows day/meal navigation with macro summaries. */
 export function NutritionClient() {
   const { profile }  = useUserStore()
+  const { ensureTodayLog, logMeal } = useNutritionStore()
   const [plan, setPlan]       = useState<NutritionPlan | null>(null)
   const [loading, setLoading] = useState(true)
   const [addingMeal, setAddingMeal] = useState(false)
   const [quickMeal, setQuickMeal] = useState({ name: '', calories: '', proteinG: '', carbsG: '', fatG: '' })
   const [selectedDay, setDay] = useState(0) // Par défaut lundi
-  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
+    ensureTodayLog()
     const d = new Date().getDay()
     const todayIndex = d === 0 ? 6 : d - 1
     setDay(todayIndex)
-    setHydrated(true)
-  }, [])
+  }, [ensureTodayLog])
 
   useEffect(() => {
     if (!profile) { setLoading(false); return }
@@ -54,6 +55,7 @@ export function NutritionClient() {
 
   const addQuickMeal = () => {
     if (!plan || !quickMeal.name || !quickMeal.calories) return
+    const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
     const meal = {
       id: `custom-${Date.now()}`,
       dayOfWeek: selectedDay,
@@ -68,6 +70,19 @@ export function NutritionClient() {
       foodItems: [],
     }
     setPlan({ ...plan, meals: [...plan.meals, meal] })
+    // Si l'utilisateur ajoute un repas sur aujourd'hui, il compte tout de suite dans le dashboard.
+    if (selectedDay === todayIndex) {
+      logMeal({
+        mealId:   meal.id,
+        name:     meal.name,
+        type:     meal.type,
+        calories: Math.round(meal.totalCalories),
+        proteinG: Math.round(meal.totalProteinG),
+        carbsG:   Math.round(meal.totalCarbsG),
+        fatG:     Math.round(meal.totalFatG),
+        loggedAt: new Date().toISOString(),
+      })
+    }
     setQuickMeal({ name: '', calories: '', proteinG: '', carbsG: '', fatG: '' })
     setAddingMeal(false)
   }

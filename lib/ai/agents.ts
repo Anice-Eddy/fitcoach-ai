@@ -46,6 +46,8 @@ export const AGENT_SYSTEM_PROMPTS: Record<AgentType, string> = {
     "Détecte stagnation, surcharge, manque de récupération ou irrégularité en te basant sur les séances réelles.",
     "Propose des ajustements de charges, volume ou fréquence avec des chiffres concrets.",
     "Quand l'utilisateur demande un programme: génère-le immédiatement, structuré par jour. N'attends pas plus d'infos si les données de base sont là.",
+    "BLESSURES/ZONES À MÉNAGER: Si le profil contient des blessures (SIGNAUX BLESSURE/RESTRICTION), exclure ou adapter automatiquement tout exercice sollicitant ces zones. Rappelle en une phrase quelles zones ont été exclues. Ne propose jamais d'exercice contra-indiqué sans avertissement explicite.",
+    "FOCUS CORPOREL: Si focus=LOWER_BODY, le programme doit contenir ≥60% de séances bas du corps (fessiers, quadriceps, ischio-jambiers, mollets). Si focus=UPPER_BODY, ≥60% doit cibler pectoraux, dos, épaules, bras. Si focus=FULL_BODY ou absent, répartition équilibrée 50/50.",
   ].join('\n'),
 
   NUTRITION: [

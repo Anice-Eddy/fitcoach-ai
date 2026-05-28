@@ -67,6 +67,12 @@ enum FitnessLevel {
   ATHLETE
 }
 
+enum BodyFocus {
+  UPPER_BODY
+  LOWER_BODY
+  FULL_BODY
+}
+
 enum WeightUnit {
   KG
   LB
@@ -106,6 +112,7 @@ enum IntegrationService {
   FITBIT
   GARMIN
   APPLE_HEALTH
+  MYFITNESSPAL
   EVOLT_ACTIVE
 }
 
@@ -219,6 +226,10 @@ model Profile {
   fitnessGoal    FitnessGoal
   targetWeightKg Float?
   fitnessLevel   FitnessLevel
+  bodyFocus      BodyFocus?   @default(FULL_BODY)
+
+  // Blessures / contraintes physiques
+  injuries Json?  // InjuryEntry[]  { bodyPart, severity, description }
 
   // Alimentation
   dietaryRestrictions String[]
@@ -252,13 +263,21 @@ model BodyMetric {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   date         DateTime @default(now())
-  weightKg     Float
+  weightKg     Float?
   bodyFatPct   Float?
   muscleMassKg Float?
   waistCm      Float?
   hipsCm       Float?
   chestCm      Float?
   armCm        Float?
+
+  // Signaux quotidiens utiles pour relier la progression au mode de vie.
+  steps            Int?
+  sleepHours       Float?
+  waterLiters      Float?
+  energyLevel      Int?
+  stressLevel      Int?
+  progressPhotoUrl String?
 
   // Données Evolt Active (composition corporelle avancée)
   evoltBioAge Float?

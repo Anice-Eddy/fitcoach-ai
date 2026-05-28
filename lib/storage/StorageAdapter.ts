@@ -22,6 +22,8 @@ export interface UserProfile {
   fitnessGoal: string
   targetWeightKg?: number
   fitnessLevel: string
+  bodyFocus?: 'UPPER_BODY' | 'LOWER_BODY' | 'FULL_BODY'
+  injuries?: Array<{ bodyPart: string; severity: 'MILD' | 'MODERATE' | 'SEVERE'; description: string }>
   dietaryRestrictions: string[]
   foodPreferences: string[]
   bmi?: number

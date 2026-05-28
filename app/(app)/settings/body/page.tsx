@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Header } from '@/components/layout/Header'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { useUserStore } from '@/stores/userStore'
-import { LocalStorageAdapter } from '@/lib/storage/LocalStorageAdapter'
 import { bodyMetricSchema } from '@/utils/validators'
 import { toast } from 'sonner'
 import { Save } from 'lucide-react'
@@ -14,11 +13,13 @@ const GOALS = ['WEIGHT_LOSS', 'MUSCLE_GAIN', 'MAINTENANCE', 'ENDURANCE', 'FLEXIB
 const LEVELS = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'ATHLETE']
 const EQUIPMENT = ['BODYWEIGHT', 'DUMBBELL', 'KETTLEBELL', 'RESISTANCE_BAND', 'PULL_UP_BAR', 'BARBELL', 'BENCH', 'CABLE_MACHINE', 'SMITH_MACHINE', 'CARDIO_MACHINE']
 
+type MetricHistoryItem = { weightKg: number; date?: string | Date }
+
 /** Body measurements settings page: allows updating weight, height, waist, hips, and body fat; displays historical weight chart. */
 export default function BodySettingsPage() {
   const { profile, setProfile } = useUserStore()
   const [saving, setSaving] = useState(false)
-  const [metrics, setMetrics] = useState<{ weightKg: number; date?: Date }[]>([])
+  const [metrics, setMetrics] = useState<MetricHistoryItem[]>([])
   const [form, setForm] = useState({
     weightKg: String(profile?.weightKg ?? ''),
     heightCm: String(profile?.heightCm ?? ''),
@@ -38,9 +39,13 @@ export default function BodySettingsPage() {
     availableEquipment: profile?.availableEquipment ?? ['BODYWEIGHT'],
   })
 
-  useEffect(() => {
-    new LocalStorageAdapter().getBodyMetrics(10).then(setMetrics)
+  const loadMetrics = useCallback(async () => {
+    // L'historique vient de l'API pour rester synchronisé entre dashboard, coach et IA.
+    const res = await fetch('/api/user/metrics?limit=10')
+    if (res.ok) setMetrics(await res.json())
   }, [])
+
+  useEffect(() => { loadMetrics().catch(() => undefined) }, [loadMetrics])
 
   const set = (key: string, value: unknown) => setForm((current) => ({ ...current, [key]: value }))
 
@@ -84,8 +89,13 @@ export default function BodySettingsPage() {
       if (!res.ok) throw new Error()
       const updated = await res.json()
       setProfile(updated)
-      await new LocalStorageAdapter().addBodyMetric(metric.data)
-      setMetrics(await new LocalStorageAdapter().getBodyMetrics(10))
+      const metricRes = await fetch('/api/user/metrics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(metric.data),
+      })
+      if (!metricRes.ok) throw new Error()
+      await loadMetrics()
       toast.success('Informations physiques mises à jour')
     } catch {
       toast.error('Impossible de sauvegarder les informations physiques')
