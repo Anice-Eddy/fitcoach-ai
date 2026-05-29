@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { AFFILIATE_PRODUCTS, getProductsByCategory, getProductsByGoal } from '@/lib/affiliates/products'
 
 describe('AFFILIATE_PRODUCTS', () => {
-  it('contient exactement 41 produits', () => {
-    expect(AFFILIATE_PRODUCTS).toHaveLength(41)
+  it('contient exactement 49 produits', () => {
+    expect(AFFILIATE_PRODUCTS).toHaveLength(49)
   })
 
   it('chaque produit a un id unique', () => {
@@ -26,8 +26,8 @@ describe('AFFILIATE_PRODUCTS', () => {
     }
   })
 
-  it('contient 16 suppléments', () => {
-    expect(AFFILIATE_PRODUCTS.filter((p) => p.category === 'SUPPLEMENTS')).toHaveLength(16)
+  it('contient 24 suppléments', () => {
+    expect(AFFILIATE_PRODUCTS.filter((p) => p.category === 'SUPPLEMENTS')).toHaveLength(24)
   })
 
   it('contient 14 équipements', () => {

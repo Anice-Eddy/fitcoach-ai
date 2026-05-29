@@ -5,10 +5,20 @@ vi.mock('@/lib/auth/auth', () => ({
   auth: vi.fn(),
 }))
 
+vi.mock('@/lib/affiliates/products', () => ({
+  AFFILIATE_PRODUCTS: [
+    {
+      id: 'prod-supplement-whey', name: 'Test Whey', brand: 'Test', category: 'SUPPLEMENTS',
+      affiliateUrl: 'https://example.com', imageUrl: null, price: 29.99,
+      commissionRateMin: 3, commissionRateMax: 5, fitnessGoals: ['MUSCLE_GAIN'], tags: [],
+    },
+  ],
+}))
+
 vi.mock('@/lib/prisma/client', () => ({
   prisma: {
     affiliateProduct: {
-      findUnique: vi.fn(),
+      upsert: vi.fn(),
     },
     affiliateClick: {
       create: vi.fn(),
@@ -39,7 +49,7 @@ describe('POST /api/affiliates/track', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(null)
-    ;(prisma.affiliateProduct.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockProduct)
+    ;(prisma.affiliateProduct.upsert as ReturnType<typeof vi.fn>).mockResolvedValue(mockProduct)
     ;(prisma.affiliateClick.create as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'click-1' })
   })
 
@@ -50,7 +60,6 @@ describe('POST /api/affiliates/track', () => {
   })
 
   it('retourne 404 si le produit est introuvable', async () => {
-    ;(prisma.affiliateProduct.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const req = makeRequest({ productId: 'prod-inexistant', source: 'shop' })
     const res = await POST(req)
     expect(res.status).toBe(404)
