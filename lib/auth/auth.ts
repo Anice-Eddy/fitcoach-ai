@@ -52,6 +52,47 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider !== 'google' || !user.email) return true
+      try {
+        const existing = await prisma.user.findUnique({
+          where:   { email: user.email },
+          include: { accounts: { where: { provider: 'google' } } },
+        })
+        if (!existing) return true
+
+        const linked = existing.accounts[0]
+        if (linked && linked.userId !== existing.id) {
+          // Stale account record pointing to wrong userId — re-link it
+          await prisma.account.update({
+            where: { id: linked.id },
+            data:  { userId: existing.id },
+          })
+        }
+
+        if (!linked) {
+          // Email exists (email/password) but no Google account linked yet — create the link
+          await prisma.account.create({
+            data: {
+              userId:            existing.id,
+              type:              account.type,
+              provider:          'google',
+              providerAccountId: account.providerAccountId,
+              access_token:      account.access_token  ?? null,
+              refresh_token:     account.refresh_token ?? null,
+              expires_at:        account.expires_at    ?? null,
+              token_type:        account.token_type    ?? null,
+              scope:             account.scope         ?? null,
+              id_token:          account.id_token      ?? null,
+            },
+          })
+        }
+      } catch (err) {
+        console.error('[auth] signIn link error:', err)
+      }
+      return true
+    },
+
     async jwt({ token, user }) {
       const rawUserId = user?.id ?? token.userId
       const userId = typeof rawUserId === 'string' ? rawUserId : undefined
