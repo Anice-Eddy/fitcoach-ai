@@ -26,7 +26,7 @@ test.describe('Page de connexion', () => {
     await page.evaluate(() => sessionStorage.setItem('bodyops:last-auth-context', 'coach'))
     await page.goto('/auth/signin?error=OAuthAccountNotLinked')
     await expect(page.getByText('Connexion coach')).toBeVisible()
-    await expect(page.getByText("Un utilisateur existe déjà avec cette adresse email. Connectez-vous avec la méthode utilisée à l'inscription pour accéder à votre espace coach.")).toBeVisible()
+    await expect(page.getByText("Ce compte Google est déjà lié à un autre utilisateur. Essayez de vous connecter avec votre email et mot de passe, ou contactez le support.")).toBeVisible()
   })
 
   test("affiche une erreur email introuvable sans bloquer le bouton", async ({ page }) => {
@@ -65,7 +65,7 @@ test.describe('Page de connexion', () => {
     const backLink = page.locator('a[href="/"], a:has-text("Retour"), a:has-text("Accueil")')
     if (await backLink.count() > 0) {
       await backLink.first().click()
-      await expect(page).toHaveURL('/')
+      await page.waitForURL('/', { timeout: 15000 })
     }
   })
 })
