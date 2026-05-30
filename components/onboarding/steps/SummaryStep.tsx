@@ -94,7 +94,7 @@ export function SummaryStep({ data, onFinish, onBack, isLoading }: Props) {
           disabled={isLoading}
           className="flex-1 py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-bold hover:bg-[#d4f54d] transition-colors disabled:opacity-60"
         >
-          {isLoading ? 'Sauvegarde…' : 'Commencer 🚀'}
+          {isLoading ? 'Sauvegarde…' : 'Commencer'}
         </button>
       </div>
     </div>

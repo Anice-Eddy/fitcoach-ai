@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/stores/userStore'
 import { MetricsGrid }      from '@/components/dashboard/MetricsGrid'
 import { WeightChart }      from '@/components/dashboard/WeightChart'
@@ -169,14 +170,21 @@ function CoachCard({ relation }: { relation: CoachRelation }) {
 
 /** Member dashboard: fetches and displays daily tasks, metrics, weight chart, nutrition summary, quick actions, and assigned coach cards. */
 export function DashboardClient() {
-  const { data: session }             = useSession()
-  const { profile }                   = useUserStore()
+  const { data: session, status }     = useSession()
+  const { profile, profileChecked }   = useUserStore()
+  const router                        = useRouter()
   const [weightData, setWeightData]   = useState<WeightPoint[]>([])
   const [lastWeight, setLastWeight]   = useState<number | null>(null)
   const [lastWaterLiters, setLastWaterLiters] = useState<number | null>(null)
   const [loading, setLoading]         = useState(true)
   const [coaches, setCoaches]         = useState<CoachRelation[]>([])
   const [coachLoading, setCoachLoading] = useState(true)
+
+  useEffect(() => {
+    if (status === 'authenticated' && profileChecked && !profile) {
+      router.replace('/onboarding')
+    }
+  }, [status, profileChecked, profile, router])
 
   useEffect(() => {
     fetch('/api/user/metrics?limit=30')

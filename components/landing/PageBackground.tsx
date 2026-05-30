@@ -214,15 +214,17 @@ export function PageBackground({ showArtwork = true }: { showArtwork?: boolean }
 
         <FullPageCanvas reduced={reduced} />
 
-        <div
-          className="bg-scan-line absolute left-0 right-0 top-0 h-px"
-          style={{
-            background: 'linear-gradient(90deg, transparent 0%, rgba(200,241,53,0.3) 25%, rgba(200,241,53,0.7) 50%, rgba(200,241,53,0.3) 75%, transparent 100%)',
-            boxShadow: '0 0 8px 1px rgba(200,241,53,0.2), 0 0 18px 2px rgba(200,241,53,0.07)',
-            animation: reduced ? 'none' : 'bg-scan 10s linear infinite',
-            willChange: 'transform, opacity',
-          }}
-        />
+        {showArtwork && (
+          <div
+            className="bg-scan-line absolute left-0 right-0 top-0 h-px"
+            style={{
+              background: 'linear-gradient(90deg, transparent 0%, rgba(200,241,53,0.3) 25%, rgba(200,241,53,0.7) 50%, rgba(200,241,53,0.3) 75%, transparent 100%)',
+              boxShadow: '0 0 8px 1px rgba(200,241,53,0.2), 0 0 18px 2px rgba(200,241,53,0.07)',
+              animation: reduced ? 'none' : 'bg-scan 10s linear infinite',
+              willChange: 'transform, opacity',
+            }}
+          />
+        )}
       </div>
     </>
   )

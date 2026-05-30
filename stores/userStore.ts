@@ -6,37 +6,41 @@ import { persist } from 'zustand/middleware'
 import type { UserProfile } from '@/lib/storage/StorageAdapter'
 
 interface UserState {
-  profile:     UserProfile | null
-  isLoading:   boolean
-  error:       string | null
-  storageMode: 'local' | 'cloud'
-  timezone: string
+  profile:        UserProfile | null
+  profileChecked: boolean
+  isLoading:      boolean
+  error:          string | null
+  storageMode:    'local' | 'cloud'
+  timezone:       string
 
-  setProfile:     (profile: UserProfile) => void
-  updateProfile:  (data: Partial<UserProfile>) => void
-  setStorageMode: (mode: 'local' | 'cloud') => void
-  setTimezone:    (timezone: string) => void
-  setLoading:     (loading: boolean) => void
-  setError:       (error: string | null) => void
-  reset:          () => void
+  setProfile:        (profile: UserProfile) => void
+  setProfileChecked: (checked: boolean) => void
+  updateProfile:     (data: Partial<UserProfile>) => void
+  setStorageMode:    (mode: 'local' | 'cloud') => void
+  setTimezone:       (timezone: string) => void
+  setLoading:        (loading: boolean) => void
+  setError:          (error: string | null) => void
+  reset:             () => void
 }
 
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
-      profile:     null,
-      isLoading:   false,
-      error:       null,
-      storageMode: 'local',
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'Europe/Paris',
+      profile:        null,
+      profileChecked: false,
+      isLoading:      false,
+      error:          null,
+      storageMode:    'local',
+      timezone:       Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'Europe/Paris',
 
-      setProfile:    (profile) => set({ profile, error: null }),
-      updateProfile: (data)    => set((s) => ({ profile: s.profile ? { ...s.profile, ...data } : null })),
-      setStorageMode:(mode)    => set({ storageMode: mode }),
-      setTimezone: (timezone) => set({ timezone }),
-      setLoading:    (isLoading) => set({ isLoading }),
-      setError:      (error)   => set({ error }),
-      reset:         ()        => set({ profile: null, error: null, storageMode: 'local' }),
+      setProfile:        (profile) => set({ profile, error: null }),
+      setProfileChecked: (checked) => set({ profileChecked: checked }),
+      updateProfile:     (data)    => set((s) => ({ profile: s.profile ? { ...s.profile, ...data } : null })),
+      setStorageMode:    (mode)    => set({ storageMode: mode }),
+      setTimezone:       (timezone) => set({ timezone }),
+      setLoading:        (isLoading) => set({ isLoading }),
+      setError:          (error)   => set({ error }),
+      reset:             ()        => set({ profile: null, profileChecked: false, error: null, storageMode: 'local' }),
     }),
     {
       name: 'BodyOps:user',
