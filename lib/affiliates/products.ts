@@ -1,4 +1,5 @@
-import type { AffiliateProduct } from '@/types'
+import type { AffiliateMarket, AffiliateProduct } from '@/types'
+import { CANADA_AFFILIATE_PRODUCTS } from './products-ca'
 
 // Produits Amazon réels — titres et images récupérés directement depuis les pages Amazon.
 // Prix gérés par Amazon → afficher "Voir le prix sur Amazon" côté UI.
@@ -615,12 +616,19 @@ export const AFFILIATE_PRODUCTS: AffiliateProduct[] = [
   },
 ]
 
+export { CANADA_AFFILIATE_PRODUCTS }
+
+/** Returns the affiliate catalog for the selected customer market. */
+export function getAffiliateProductsForMarket(market: AffiliateMarket) {
+  return market === 'CA' ? CANADA_AFFILIATE_PRODUCTS : AFFILIATE_PRODUCTS
+}
+
 /** Returns all affiliate products belonging to the given category string. */
-export function getProductsByCategory(category: string) {
-  return AFFILIATE_PRODUCTS.filter((p) => p.category === category)
+export function getProductsByCategory(category: string, market: AffiliateMarket = 'FR') {
+  return getAffiliateProductsForMarket(market).filter((p) => p.category === category)
 }
 
 /** Returns all affiliate products whose fitnessGoals array includes the given goal string. */
-export function getProductsByGoal(goal: string) {
-  return AFFILIATE_PRODUCTS.filter((p) => p.fitnessGoals.includes(goal as never))
+export function getProductsByGoal(goal: string, market: AffiliateMarket = 'FR') {
+  return getAffiliateProductsForMarket(market).filter((p) => p.fitnessGoals.includes(goal as never))
 }

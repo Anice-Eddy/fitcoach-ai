@@ -1,34 +1,60 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { PageWrapper }          from '@/components/layout/PageWrapper'
 import { Header }               from '@/components/layout/Header'
 import { ProductCard }          from '@/components/affiliates/ProductCard'
 import { CategoryFilter }       from '@/components/affiliates/CategoryFilter'
 import { AffiliateDisclosure }  from '@/components/affiliates/AffiliateDisclosure'
-import { AFFILIATE_PRODUCTS }   from '@/lib/affiliates/products'
+import { getAffiliateProductsForMarket } from '@/lib/affiliates/products'
 import { ShoppingBag }          from 'lucide-react'
 import { useUserStore }         from '@/stores/userStore'
-import type { AffiliateCategory } from '@/types'
+import type { AffiliateCategory, AffiliateMarket } from '@/types'
+
+const MARKET_STORAGE_KEY = 'BodyOps:shop-market'
+
+// Detects the most likely shop market from browser locale/timezone; manual choice still wins.
+function detectMarket(): AffiliateMarket {
+  if (typeof window === 'undefined') return 'FR'
+  const stored = window.localStorage.getItem(MARKET_STORAGE_KEY)
+  if (stored === 'FR' || stored === 'CA') return stored
+
+  const locale = navigator.language.toLowerCase()
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone.toLowerCase()
+  return locale.includes('-ca') || timezone.includes('toronto') || timezone.includes('montreal') || timezone.includes('vancouver')
+    ? 'CA'
+    : 'FR'
+}
 
 /** Affiliate shop page: displays product cards filtered by fitness goal or category, with affiliate click tracking. */
 export default function ShopPage() {
   const [selected, setSelected] = useState<AffiliateCategory | 'ALL'>('ALL')
+  const [market, setMarket] = useState<AffiliateMarket>('FR')
   const { profile }             = useUserStore()
   const userGoal                = profile?.fitnessGoal
+  const products                = useMemo(() => getAffiliateProductsForMarket(market), [market])
+
+  useEffect(() => {
+    setMarket(detectMarket())
+  }, [])
+
+  const changeMarket = (nextMarket: AffiliateMarket) => {
+    setMarket(nextMarket)
+    window.localStorage.setItem(MARKET_STORAGE_KEY, nextMarket)
+  }
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {}
-    for (const p of AFFILIATE_PRODUCTS) {
+    for (const p of products) {
       c[p.category] = (c[p.category] ?? 0) + 1
     }
     return c
-  }, [])
+  }, [products])
 
   const filtered = useMemo(() => {
     let list = selected === 'ALL'
-      ? AFFILIATE_PRODUCTS
-      : AFFILIATE_PRODUCTS.filter((p) => p.category === selected)
+      ? products
+      : products.filter((p) => p.category === selected)
 
     if (userGoal) {
       list = [...list].sort((a, b) => {
@@ -38,7 +64,7 @@ export default function ShopPage() {
       })
     }
     return list
-  }, [selected, userGoal])
+  }, [products, selected, userGoal])
 
   return (
     <>
@@ -51,8 +77,28 @@ export default function ShopPage() {
           <h1 className="text-2xl font-bold text-white">Boutique</h1>
           <p className="text-sm text-zinc-400 mt-1">
             Produits sélectionnés pour atteindre vos objectifs fitness.{' '}
-            <span className="text-zinc-600">{AFFILIATE_PRODUCTS.length} produits</span>
+            <span className="text-zinc-600">{products.length} produits · {market === 'CA' ? 'Canada' : 'France'}</span>
           </p>
+        </div>
+
+        <div className="inline-flex rounded-xl border border-zinc-800 bg-zinc-900 p-1">
+          {([
+            { value: 'FR' as const, label: 'France' },
+            { value: 'CA' as const, label: 'Canada' },
+          ]).map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => changeMarket(option.value)}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                market === option.value
+                  ? 'bg-[#C8F135] text-zinc-950'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
 
         <AffiliateDisclosure />

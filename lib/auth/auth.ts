@@ -46,6 +46,22 @@ const healingAdapter = {
   },
 }
 
+function getProfileEmail(profile: unknown) {
+  const email = (profile as { email?: unknown } | null)?.email
+  return typeof email === 'string' ? email.toLowerCase() : null
+}
+
+function getProfileName(profile: unknown) {
+  const name = (profile as { name?: unknown } | null)?.name
+  return typeof name === 'string' ? name : null
+}
+
+function getProfileImage(profile: unknown) {
+  const picture = (profile as { picture?: unknown; image?: unknown } | null)?.picture
+    ?? (profile as { image?: unknown } | null)?.image
+  return typeof picture === 'string' ? picture : null
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret:    process.env.AUTH_SECRET,
   trustHost: true,
@@ -93,9 +109,52 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider !== 'google' || !user.email) return true
       try {
+        const googleEmail = getProfileEmail(profile)
+        const linkedAccount = await prisma.account.findUnique({
+          where: {
+            provider_providerAccountId: {
+              provider:          'google',
+              providerAccountId: account.providerAccountId,
+            },
+          },
+          include: { user: true },
+        })
+
+        if (googleEmail && linkedAccount && linkedAccount.user.email.toLowerCase() !== googleEmail) {
+          const target = await prisma.user.upsert({
+            where:  { email: googleEmail },
+            update: {
+              name:     getProfileName(profile)  ?? undefined,
+              image:    getProfileImage(profile) ?? undefined,
+              provider: 'GOOGLE',
+            },
+            create: {
+              email:    googleEmail,
+              name:     getProfileName(profile),
+              image:    getProfileImage(profile),
+              provider: 'GOOGLE',
+              subscription: {
+                create: { plan: 'FREE', status: 'INACTIVE' },
+              },
+            },
+          })
+
+          await prisma.account.update({
+            where: { id: linkedAccount.id },
+            data:  { userId: target.id },
+          })
+
+          // Make the current OAuth callback continue with the corrected user.
+          user.id = target.id
+          user.email = target.email
+          user.name = target.name
+          user.image = target.image
+          return true
+        }
+
         const existing = await prisma.user.findUnique({
           where:   { email: user.email },
           include: { accounts: { where: { provider: 'google' } } },
