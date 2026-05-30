@@ -122,7 +122,7 @@ export function HeroSection() {
           transition={{ duration: 0.7, delay: 0.29, ease: [0.22, 1, 0.36, 1] }}
         >
           <Link
-            href="/auth/register/member"
+            href="/auth/register"
             className="group relative flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-[#C8F135] text-zinc-900 font-bold text-lg hover:bg-[#d4f54d] transition-colors overflow-hidden"
           >
             {!reduced && (

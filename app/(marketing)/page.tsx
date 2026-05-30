@@ -38,7 +38,7 @@ export default function LandingPage() {
           <Logo href="/" size="md" />
           <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
             <Link href="/auth/signin" className="rounded-xl bg-zinc-800 px-3 py-2 text-xs transition-colors hover:bg-zinc-700 sm:text-sm">Connexion</Link>
-            <Link href="/auth/register/member" className="rounded-xl bg-[#C8F135] px-3 py-2 text-xs font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] sm:text-sm">Essai gratuit</Link>
+            <Link href="/auth/register" className="rounded-xl bg-[#C8F135] px-3 py-2 text-xs font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] sm:text-sm">Essai gratuit</Link>
           </div>
         </div>
       </nav>
@@ -93,7 +93,7 @@ export default function LandingPage() {
         <h2 className="text-3xl font-bold mb-4">Prêt à transformer votre corps&nbsp;?</h2>
         <p className="text-zinc-400 mb-8">Rejoignez des milliers de membres qui atteignent leurs objectifs avec BodyOps.</p>
         <Link
-          href="/auth/register/member"
+          href="/auth/register"
           className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-[#C8F135] text-zinc-900 font-bold text-lg hover:bg-[#d4f54d] transition-colors"
         >
           Démarrer maintenant <ArrowRight className="size-5" />
