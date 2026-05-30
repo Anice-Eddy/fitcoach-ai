@@ -192,6 +192,7 @@ model User {
   coachNoteReplies        CoachNoteReply[]    @relation("NoteReplies")
   receivedNotifications   Notification[]      @relation("NotificationRecipient")
   userNotes               UserNote[]
+  aiUsageDaily            AIUsageDaily[]
 
   @@index([email])
   @@index([stripeCustomerId])
@@ -248,6 +249,10 @@ model Profile {
   language            String  @default("fr")
   darkMode            Boolean @default(true)
   onboardingCompleted Boolean @default(false)
+
+  // Paramètres IA
+  aiMemoryEnabled  Boolean @default(true)
+  aiHistoryEnabled Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -916,6 +921,19 @@ model AIReport {
   @@index([coachId, createdAt])
   @@index([type])
   @@map("ai_reports")
+}
+
+// Suivi quotidien des appels IA — rate limiting par jour (20 membre / 50 coach)
+model AIUsageDaily {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date   String // YYYY-MM-DD
+  count  Int    @default(0)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("ai_usage_daily")
 }
 
 model PasswordResetToken {

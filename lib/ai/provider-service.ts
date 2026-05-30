@@ -1,66 +1,106 @@
 import type { AIMessageInput, AIProviderResult } from '@/lib/ai/types'
+import type { AITool } from '@/lib/ai/tools'
 
-const GEMINI_MODEL = 'gemini-2.5-flash'
-// llama-3.3-70b-versatile supports 128k context vs 8k for llama-3.1-8b-instant — avoids HTTP 413 on large fitness contexts
+// Gemini model fallback chain: premium → standard → lite
+const GEMINI_MODELS = [
+  'gemini-2.5-pro',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+] as const
+
+type GeminiModelId = typeof GEMINI_MODELS[number]
+
+// llama-3.3-70b-versatile supports 128k context — avoids HTTP 413 on large fitness contexts
 const GROQ_MODEL   = 'llama-3.3-70b-versatile'
+const MAX_TOOL_CALLS = 3
 
-// Module-level cooldown map — survives request boundaries within the same Node process.
-// Keys: 'gemini' | 'groq'  Values: timestamp (ms) until which the provider is skipped.
-const cooldownUntil = new Map<string, number>()
+// Module-level cooldown map — shared across all instances, persists across requests in the same process
+const _cooldownUntil = new Map<string, number>()
 
-// Returns true if the provider key is currently within a cooldown window.
-function onCooldown(key: string): boolean {
-  const t = cooldownUntil.get(key)
-  return t !== undefined && Date.now() < t
+// Gemini multi-turn content format
+interface GeminiPart {
+  text?: string
+  functionCall?: { name: string; args: Record<string, unknown> }
+  functionResponse?: { name: string; response: unknown }
 }
 
-// Sets a cooldown for the given provider key for the specified number of milliseconds.
-function setCooldown(key: string, ms: number) {
-  cooldownUntil.set(key, Date.now() + ms)
+interface GeminiContent {
+  role: 'user' | 'model'
+  parts: GeminiPart[]
 }
 
-/** Calls AI providers with automatic fallback and per-provider cooldown management. */
+/** Converts AIMessageInput[] (excluding system) to Gemini multi-turn contents format. */
+function toGeminiContents(messages: AIMessageInput[]): GeminiContent[] {
+  return messages
+    .filter(m => m.role !== 'system')
+    .map(m => ({
+      role:  (m.role === 'assistant' ? 'model' : 'user') as 'user' | 'model',
+      parts: [{ text: m.content }],
+    }))
+}
+
+/** Calls AI providers with automatic fallback: Gemini 2.5-pro → 2.5-flash → 2.5-flash-lite → Groq. */
 export class AIProviderService {
-  /** Generates AI text using Gemini first, falling back to Groq; respects per-provider cooldowns. */
-  async generate(messages: AIMessageInput[], preferredProvider?: 'GEMINI' | 'GROQ'): Promise<AIProviderResult> {
+  /** Instance-level cooldowns — isolated per instance so tests can reset by creating a new instance. */
+  private cooldowns = _cooldownUntil
+
+  private onCooldown(key: string): boolean {
+    const t = this.cooldowns.get(key)
+    return t !== undefined && Date.now() < t
+  }
+
+  private setCooldown(key: string, ms: number) {
+    this.cooldowns.set(key, Date.now() + ms)
+  }
+
+  /** Clears all provider cooldowns (useful in tests). */
+  resetCooldowns() {
+    this.cooldowns = new Map()
+  }
+
+  /** Generates AI text, with optional Gemini function calling (budget: 3 tool calls max). */
+  async generate(
+    messages:           AIMessageInput[],
+    preferredProvider?: 'GEMINI' | 'GROQ',
+    tools?:             AITool[],
+  ): Promise<AIProviderResult> {
     const errors: string[] = []
     const tryGemini = !preferredProvider || preferredProvider === 'GEMINI'
     const tryGroq   = !preferredProvider || preferredProvider === 'GROQ'
 
     if (tryGemini && process.env.GEMINI_API_KEY) {
-      if (onCooldown('gemini')) {
-        errors.push('Gemini: rate-limited (cooldown)')
-      } else {
+      for (const model of GEMINI_MODELS) {
+        const key = `gemini:${model}`
+        if (this.onCooldown(key)) { errors.push(`${model}: cooldown`); continue }
         try {
-          const text = await this.generateWithGemini(messages)
+          const text = await this.generateWithGemini(messages, model, tools)
           return { provider: 'GEMINI', text }
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Erreur Gemini inconnue'
-          console.error('[ai] Gemini provider failed:', message)
-          if (message.includes('429'))      setCooldown('gemini', 60_000)
-          else if (message.includes('503')) setCooldown('gemini', 30_000)
-          else if (message.includes('404')) setCooldown('gemini', 90_000)
-          else if (message.includes('500')) setCooldown('gemini', 30_000)
-          errors.push(`Gemini: ${message}`)
+          const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+          console.error(`[ai] Gemini (${model}) failed:`, msg)
+          if (msg.includes('429'))      this.setCooldown(key, 60_000)
+          else if (msg.includes('503')) this.setCooldown(key, 30_000)
+          else if (msg.includes('404')) this.setCooldown(key, 90_000)
+          else if (msg.includes('500')) this.setCooldown(key, 30_000)
+          errors.push(`${model}: ${msg}`)
         }
       }
     }
 
     if (tryGroq && process.env.GROQ_API_KEY) {
-      if (onCooldown('groq')) {
-        errors.push('Groq: rate-limited (cooldown)')
+      if (this.onCooldown('groq')) {
+        errors.push('Groq: cooldown')
       } else {
         try {
           const text = await this.generateWithGroq(messages)
           return { provider: 'GROQ', text }
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Erreur Groq inconnue'
-          console.error('[ai] Groq provider failed:', message)
-          if (message.includes('429'))      setCooldown('groq', 30_000)
-          else if (message.includes('503')) setCooldown('groq', 20_000)
-          else if (message.includes('500')) setCooldown('groq', 30_000)
-          // 413 = payload too large — no cooldown, fix is in the request size not the provider
-          errors.push(`Groq: ${message}`)
+          const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+          console.error('[ai] Groq failed:', msg)
+          if (msg.includes('429'))      this.setCooldown('groq', 30_000)
+          else if (msg.includes('503')) this.setCooldown('groq', 20_000)
+          else if (msg.includes('500')) this.setCooldown('groq', 30_000)
+          errors.push(`Groq: ${msg}`)
         }
       }
     }
@@ -68,59 +108,86 @@ export class AIProviderService {
     throw new Error(errors.length > 0 ? errors.join(' | ') : 'Aucun provider IA configuré')
   }
 
-  // Sends messages to the Gemini REST API and returns the generated text; throws on HTTP errors or empty responses.
-  private async generateWithGemini(messages: AIMessageInput[]) {
-    const system = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n')
-    const content = messages
-      .filter(m => m.role !== 'system')
-      .map(m => `${m.role === 'assistant' ? 'Assistant' : 'Utilisateur'}: ${m.content}`)
+  /** Calls one Gemini model with optional function calling loop (budget: MAX_TOOL_CALLS). */
+  private async generateWithGemini(
+    messages: AIMessageInput[],
+    model:    GeminiModelId,
+    tools?:   AITool[],
+  ): Promise<string> {
+    const system = messages
+      .filter(m => m.role === 'system')
+      .map(m => m.content)
       .join('\n\n')
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: system }] },
-          contents: [{ role: 'user', parts: [{ text: content }] }],
-          generationConfig: { temperature: 0.35, maxOutputTokens: 1600 },
-        }),
-      },
-    )
+    const contents: GeminiContent[] = toGeminiContents(messages)
+    let toolCallsUsed = 0
 
-    if (!res.ok) {
-      const body = await res.text().catch(() => '')
-      throw new Error(`HTTP ${res.status}${body ? `: ${body.slice(0, 120)}` : ''}`)
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const body: Record<string, unknown> = {
+        systemInstruction: system ? { parts: [{ text: system }] } : undefined,
+        contents,
+        generationConfig: { temperature: 0.35, maxOutputTokens: 1600 },
+      }
+
+      if (tools?.length && toolCallsUsed < MAX_TOOL_CALLS) {
+        body.tools = [{
+          functionDeclarations: tools.map(t => ({
+            name:        t.name,
+            description: t.description,
+            parameters:  t.parameters,
+          })),
+        }]
+        body.toolConfig = { functionCallingConfig: { mode: 'AUTO' } }
+      }
+
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+      )
+
+      if (!res.ok) {
+        const raw = await res.text().catch(() => '')
+        throw new Error(`HTTP ${res.status}${raw ? `: ${raw.slice(0, 120)}` : ''}`)
+      }
+
+      const data = await res.json()
+      const parts: GeminiPart[] = data?.candidates?.[0]?.content?.parts ?? []
+      const fnCall = parts.find(p => p.functionCall)
+
+      if (fnCall?.functionCall && toolCallsUsed < MAX_TOOL_CALLS) {
+        const { name, args } = fnCall.functionCall
+        const tool   = tools?.find(t => t.name === name)
+        const result = tool
+          ? await tool.handler(args ?? {}).catch((e: unknown) => ({ error: String(e) }))
+          : { error: `Outil inconnu: ${name}` }
+
+        contents.push({ role: 'model', parts: [{ functionCall: { name, args: args ?? {} } }] })
+        contents.push({ role: 'user',  parts: [{ functionResponse: { name, response: result } }] })
+        toolCallsUsed++
+        continue
+      }
+
+      const text = parts.filter(p => p.text).map(p => p.text).join('\n').trim()
+      if (!text) throw new Error('Réponse Gemini vide')
+      return text
     }
-    const data = await res.json()
-    const text = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text).filter(Boolean).join('\n')
-    if (!text) throw new Error('Réponse Gemini vide')
-    return text
   }
 
-  // Sends messages to the Groq OpenAI-compatible API and returns the generated text; throws on HTTP errors or empty responses.
-  private async generateWithGroq(messages: AIMessageInput[]) {
+  /** Calls Groq (OpenAI-compatible API) and returns the generated text. */
+  private async generateWithGroq(messages: AIMessageInput[]): Promise<string> {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method:  'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model:       GROQ_MODEL,
-        temperature: 0.35,
-        max_tokens:  1600,
-        messages,
-      }),
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
+      body: JSON.stringify({ model: GROQ_MODEL, temperature: 0.35, max_tokens: 1600, messages }),
     })
 
     if (!res.ok) {
-      const body = await res.text().catch(() => '')
-      throw new Error(`HTTP ${res.status}${body ? `: ${body.slice(0, 120)}` : ''}`)
+      const raw = await res.text().catch(() => '')
+      throw new Error(`HTTP ${res.status}${raw ? `: ${raw.slice(0, 120)}` : ''}`)
     }
     const data = await res.json()
-    const text = data?.choices?.[0]?.message?.content
+    const text: string = data?.choices?.[0]?.message?.content
     if (!text) throw new Error('Réponse Groq vide')
     return text
   }

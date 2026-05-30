@@ -22,7 +22,6 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
   const { activeSession, startSession, endSession } = useTrainingStore()
   const [showSummary, setShowSummary] = useState(false)
   const [elapsed, setElapsed]         = useState(0)
-  const [dbSession, setDbSession]     = useState<DBSession | null>(null)
 
   useEffect(() => {
     const interval = setInterval(() => setElapsed(e => e + 1), 1000)
@@ -31,9 +30,17 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
 
   useEffect(() => {
     if (!params.sessionId || !profile) return
+    if (!profile.fitnessGoal || !profile.fitnessLevel) return
 
     // Skip if already active for this session
     if (activeSession?.sessionId === params.sessionId) return
+
+    const buildProgram = () => generateProgram({
+      fitnessGoal: profile.fitnessGoal!,
+      fitnessLevel: profile.fitnessLevel!,
+      trainingDaysPerWeek: profile.trainingDaysPerWeek ?? 3,
+      availableEquipment: profile.availableEquipment ?? [],
+    })
 
     // Fetch session from DB to get the name and mark as IN_PROGRESS
     fetch(`/api/user/training/sessions/${params.sessionId}`)
@@ -41,23 +48,14 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
       .then(sess => {
         if (!sess) {
           // Fallback: try local ID match (for offline use)
-          const program = generateProgram({
-            fitnessGoal: profile.fitnessGoal!, fitnessLevel: profile.fitnessLevel!,
-            trainingDaysPerWeek: profile.trainingDaysPerWeek ?? 3,
-            availableEquipment: profile.availableEquipment ?? [],
-          })
+          const program = buildProgram()
           const local = program.sessions.find(s => s.id === params.sessionId) ?? program.sessions[0]
           if (local) startSession({ sessionId: params.sessionId, name: local.name, exercises: local.exercises, currentExercise: 0, restTimerActive: false, restSecondsLeft: 0 })
           return
         }
-        setDbSession(sess)
 
         // Generate exercises from session name
-        const program = generateProgram({
-          fitnessGoal: profile.fitnessGoal!, fitnessLevel: profile.fitnessLevel!,
-          trainingDaysPerWeek: profile.trainingDaysPerWeek ?? 3,
-          availableEquipment: profile.availableEquipment ?? [],
-        })
+        const program = buildProgram()
         const matching = program.sessions.find(s => s.name === sess.name) ?? program.sessions[0]
         if (matching) {
           startSession({ sessionId: params.sessionId, name: sess.name, exercises: matching.exercises, currentExercise: 0, restTimerActive: false, restSecondsLeft: 0 })
@@ -75,15 +73,20 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
       .catch(() => {
         // Offline fallback
         if (!profile) return
-        const program = generateProgram({
-          fitnessGoal: profile.fitnessGoal!, fitnessLevel: profile.fitnessLevel!,
-          trainingDaysPerWeek: profile.trainingDaysPerWeek ?? 3,
-          availableEquipment: profile.availableEquipment ?? [],
-        })
+        const program = buildProgram()
         const s = program.sessions[0]
         if (s) startSession({ sessionId: params.sessionId, name: s.name, exercises: s.exercises, currentExercise: 0, restTimerActive: false, restSecondsLeft: 0 })
       })
-  }, [params.sessionId, profile])
+  }, [
+    params.sessionId,
+    profile,
+    profile?.fitnessGoal,
+    profile?.fitnessLevel,
+    profile?.trainingDaysPerWeek,
+    profile?.availableEquipment,
+    activeSession?.sessionId,
+    startSession,
+  ])
 
   if (!activeSession) return null
 

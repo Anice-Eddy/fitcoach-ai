@@ -1,6 +1,22 @@
 import { prisma } from '@/lib/prisma/client'
 import type { MemberAccess, MemberAIContext } from '@/lib/ai/types'
 
+/**
+ * Strips PII (email, phone, full names) from any text before sending to Gemini.
+ * Respects GDPR: only fitness data is transmitted to the external AI provider.
+ */
+export function sanitizeContextForAI(text: string): string {
+  return text
+    // Email addresses
+    .replace(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g, '[email]')
+    // French mobile/landline (+33..., 06..., 07..., 01-05...)
+    .replace(/(?:\+33\s?|0)[1-9](?:[\s.\-]?\d{2}){4}/g, '[tél]')
+    // International phone patterns (general)
+    .replace(/\+\d{1,3}[\s\-]?\(?\d{1,4}\)?[\s\-]?\d{3,4}[\s\-]?\d{3,4}/g, '[tél]')
+    // Full name patterns (Prénom Nom format in context lines)
+    .replace(/(name|nom|prénom):\s*["']?[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜ][a-zàâäéèêëîïôùûü]{1,}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜ][a-zàâäéèêëîïôùûü]{1,}["']?/gi, '$1: [anonyme]')
+}
+
 type ProfileLike = {
   weightKg?: number | null
   heightCm?: number | null
@@ -361,5 +377,5 @@ export function serializeContextCompact(context: MemberAIContext): string {
     lines.push(`DONNÉES MANQUANTES: ${allMissing.join(', ')}`)
   }
 
-  return lines.join('\n')
+  return sanitizeContextForAI(lines.join('\n'))
 }

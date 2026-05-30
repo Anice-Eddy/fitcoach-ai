@@ -126,7 +126,7 @@ export async function getRecentConversationMessages(conversationId: string) {
   return messages.reverse()
 }
 
-/** Upserts the AIMemory record for the scope, merging signals from the latest exchange with the previous memory summary. */
+/** Upserts the AIMemory record for the scope, merging signals from the latest exchange with the previous memory summary. Skips if the user has disabled AI memory. */
 export async function updateAIMemory(params: {
   scope: MemoryScope
   firstName: string
@@ -134,6 +134,12 @@ export async function updateAIMemory(params: {
   userMessage: string
   assistantResponse: string
 }) {
+  // Respect the user's AI memory preference
+  const profile = await prisma.profile.findUnique({
+    where:  { userId: params.scope.userId },
+    select: { aiMemoryEnabled: true },
+  })
+  if (profile && !profile.aiMemoryEnabled) return
   const signals = extractMemorySignals(params.userMessage)
   const preferences = unique([...(params.previousMemory?.preferences ?? []), ...signals.preferences])
   const topics = unique([...signals.topics, ...(params.previousMemory?.topics ?? [])])

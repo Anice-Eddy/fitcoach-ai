@@ -10,7 +10,10 @@ import {
   getRecentConversationMessages,
   updateAIMemory,
 } from '@/lib/ai/memory'
+import { createAITools } from '@/lib/ai/tools'
 import type { AIMessageInput, MemberAccess } from '@/lib/ai/types'
+
+const DISCLAIMER = '\n\n---\n*⚠️ Les recommandations de BodyOps sont fournies à titre informatif uniquement et ne constituent pas un avis médical. Consultez un professionnel de santé avant tout changement significatif de régime alimentaire ou d\'entraînement.*'
 
 const providerService = new AIProviderService()
 
@@ -87,11 +90,16 @@ export class AIService {
       },
     })
 
+    const tools = createAITools(access.memberId)
     const result = await providerService.generate([
       { role: 'system', content: `${AGENT_SYSTEM_PROMPTS[agentType]}\n\n${memoryInstruction}` },
       ...conversationMessages,
       { role: 'user', content: prompt },
-    ], preferredProvider)
+    ], preferredProvider, tools)
+
+    // Inject disclaimer on first ever message in this conversation
+    const isFirstMessage = recentMessages.length === 0
+    const finalResponse  = isFirstMessage ? result.text + DISCLAIMER : result.text
 
     await prisma.aIMessage.create({
       data: {
@@ -100,9 +108,9 @@ export class AIService {
         memberId:       access.memberId,
         coachId:        access.coachId,
         role:           'assistant',
-        content:        result.text,
+        content:        finalResponse,
         prompt,
-        response:       result.text,
+        response:       finalResponse,
         provider:       result.provider,
         agentType,
       },
@@ -116,7 +124,7 @@ export class AIService {
       assistantResponse: result.text,
     })
 
-    return { conversationId: currentConversation.id, provider: result.provider, response: result.text }
+    return { conversationId: currentConversation.id, provider: result.provider, response: finalResponse }
   }
 
   /** Generates and persists an AI report of the given type; returns insufficientData flag if profile/metrics are missing. */
@@ -155,9 +163,9 @@ export class AIService {
     })
 
     return {
-      id: report.id,
-      provider: result.provider,
-      response: result.text,
+      id:               report.id,
+      provider:         result.provider,
+      response:         result.text + DISCLAIMER,
       insufficientData: false,
     }
   }
