@@ -131,7 +131,7 @@ export class AIService {
   async generateReport(access: MemberAccess, type: AIReportType, agentType: AIAgentType, task: string) {
     const context = await getMemberAIContext(access.memberId, access.coachId)
     if (!context) throw new Error('MEMBER_NOT_FOUND')
-    const hasEnoughData = type === 'WORKOUT_PLAN' || type === 'NUTRITION_PLAN'
+    const hasEnoughData = type === 'WORKOUT_PLAN' || type === 'NUTRITION_PLAN' || type === 'MEMBER_ANALYSIS'
       ? context.dataQuality.hasProfile
       : hasEnoughDataForAnalysis(context)
 
