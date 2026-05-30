@@ -127,7 +127,7 @@ export class AIProviderService {
       const body: Record<string, unknown> = {
         systemInstruction: system ? { parts: [{ text: system }] } : undefined,
         contents,
-        generationConfig: { temperature: 0.35, maxOutputTokens: 1600 },
+        generationConfig: { temperature: 0.35, maxOutputTokens: 3000 },
       }
 
       if (tools?.length && toolCallsUsed < MAX_TOOL_CALLS) {
@@ -179,7 +179,7 @@ export class AIProviderService {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
-      body: JSON.stringify({ model: GROQ_MODEL, temperature: 0.35, max_tokens: 1600, messages }),
+      body: JSON.stringify({ model: GROQ_MODEL, temperature: 0.35, max_tokens: 3000, messages }),
     })
 
     if (!res.ok) {
