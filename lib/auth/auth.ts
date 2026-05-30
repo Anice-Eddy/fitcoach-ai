@@ -5,10 +5,51 @@ import Credentials from 'next-auth/providers/credentials'
 import { compare } from 'bcryptjs'
 import { prisma } from '@/lib/prisma/client'
 
+const baseAdapter = PrismaAdapter(prisma)
+
+/**
+ * Custom adapter that auto-heals a stale Google account link.
+ * NextAuth throws OAuthAccountNotLinked when an Account(Google) row points
+ * to a different userId than the user found by email.  We fix this by
+ * re-linking the account inside getUserByAccount before NextAuth compares
+ * the two users — so both lookups return the same user and the error never fires.
+ */
+const healingAdapter = {
+  ...baseAdapter,
+  async getUserByAccount(providerAccount: { provider: string; providerAccountId: string }) {
+    const account = await prisma.account.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider:          providerAccount.provider,
+          providerAccountId: providerAccount.providerAccountId,
+        },
+      },
+      include: { user: true },
+    })
+    if (!account) return null
+
+    // Find the canonical user for this email
+    const canonical = account.user?.email
+      ? await prisma.user.findUnique({ where: { email: account.user.email } })
+      : null
+
+    if (canonical && canonical.id !== account.userId) {
+      // Stale link — re-point the account to the canonical user
+      await prisma.account.update({
+        where: { id: account.id },
+        data:  { userId: canonical.id },
+      })
+      return canonical
+    }
+
+    return account.user
+  },
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret:    process.env.AUTH_SECRET,
   trustHost: true,
-  adapter:   PrismaAdapter(prisma),
+  adapter:   healingAdapter,
 
   providers: [
     Google({

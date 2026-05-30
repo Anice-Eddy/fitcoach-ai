@@ -42,9 +42,7 @@ function SignInForm() {
   }, [authError])
 
   const urlError = authError === 'OAuthAccountNotLinked'
-    ? mode === 'coach'
-      ? "Un utilisateur existe déjà avec cette adresse email. Connectez-vous avec la méthode utilisée à l'inscription pour accéder à votre espace coach."
-      : "Un utilisateur existe déjà avec cette adresse email. Connectez-vous avec la méthode utilisée à l'inscription."
+    ? "Ce compte Google est déjà lié à un autre utilisateur. Essayez de vous connecter avec votre email et mot de passe, ou contactez le support."
     : authError === 'CredentialsSignin'
       ? 'Email ou mot de passe incorrect.'
       : ''
