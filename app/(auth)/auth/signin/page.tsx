@@ -88,6 +88,16 @@ function SignInForm() {
         return
       }
 
+      // Role mismatch check — prevent a coach from logging in as member and vice versa
+      if (mode === 'member' && validation.isCoach && !validation.isMember) {
+        setError("Ce compte est un compte coach. Basculez sur l'onglet « Coach » pour vous connecter.")
+        return
+      }
+      if (mode === 'coach' && !validation.isCoach) {
+        setError("Ce compte est un compte membre. Basculez sur l'onglet « Membre » pour vous connecter.")
+        return
+      }
+
       const result = await signIn('credentials', {
         email:    form.email,
         password: form.password,
@@ -96,7 +106,7 @@ function SignInForm() {
 
       if (result?.ok) {
         sessionStorage.removeItem('bodyops:last-auth-context')
-        router.push(mode === 'coach' ? '/auth/coach/complete' : '/dashboard')
+        router.push(mode === 'coach' ? '/coach/dashboard' : '/dashboard')
       } else {
         setError('Mot de passe incorrect.')
       }

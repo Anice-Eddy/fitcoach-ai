@@ -18,8 +18,12 @@ export async function POST(req: Request) {
   }
 
   const user = await prisma.user.findUnique({
-    where: { email: parsed.data.email },
-    select: { password: true },
+    where:  { email: parsed.data.email },
+    select: {
+      password:     true,
+      coachProfile: { select: { id: true } },
+      profile:      { select: { id: true } },
+    },
   })
 
   if (!user) {
@@ -35,5 +39,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ valid: false, reason: 'BAD_PASSWORD' }, { status: 401 })
   }
 
-  return NextResponse.json({ valid: true })
+  return NextResponse.json({
+    valid:    true,
+    isCoach:  !!user.coachProfile,
+    isMember: !!user.profile,
+  })
 }
