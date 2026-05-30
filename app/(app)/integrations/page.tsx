@@ -5,7 +5,6 @@ import { PageWrapper }        from '@/components/layout/PageWrapper'
 import { Header }             from '@/components/layout/Header'
 import { IntegrationCard }    from '@/components/integrations/IntegrationCard'
 import { EvoltImport }        from '@/components/integrations/EvoltImport'
-import { useUserStore }       from '@/stores/userStore'
 import { toast }              from 'sonner'
 import type { IntegrationStatus } from '@/types'
 
@@ -68,8 +67,6 @@ const INTEGRATIONS: IntegrationStatus[] = [
 
 /** Integrations settings page: shows available third-party data integrations (e.g., Evolt Active) and handles import callbacks. */
 export default function IntegrationsPage() {
-  const { profile } = useUserStore()
-
   const handleEvoltImport = (data: { bodyFatPercent?: number; muscleMassKg?: number }) => {
     toast.success(`Evolt importé — Masse grasse : ${data.bodyFatPercent ?? '—'}%, Masse musculaire : ${data.muscleMassKg ?? '—'}kg`)
   }

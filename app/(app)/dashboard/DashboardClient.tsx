@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/stores/userStore'
@@ -92,7 +93,7 @@ function CoachCard({ relation }: { relation: CoachRelation }) {
       {/* Coach identity */}
       <div className="flex items-center gap-3">
         {avatar ? (
-          <img src={avatar} alt={displayName} className="size-12 rounded-full object-cover" />
+          <Image src={avatar} alt={displayName} width={48} height={48} className="size-12 rounded-full object-cover" />
         ) : (
           <div className="size-12 rounded-full bg-[#C8F135]/10 flex items-center justify-center text-sm font-bold text-[#C8F135]">
             {initials(coach.name, coach.email)}

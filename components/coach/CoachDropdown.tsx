@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { signOut, useSession } from 'next-auth/react'
-import { ChevronDown, LogOut, UserCircle } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { ChevronDown, LayoutDashboard, LogOut, UserCircle } from 'lucide-react'
+import { signOutAndClear } from '@/lib/auth/client-session'
 
 /** Coach account dropdown showing name, email, avatar, profile link, and sign-out button; closes on outside pointer events. */
 export function CoachDropdown() {
@@ -50,7 +51,7 @@ export function CoachDropdown() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-11 z-50 w-72 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/40">
+        <div className="fixed left-4 right-4 top-16 z-50 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/40 sm:absolute sm:left-auto sm:right-0 sm:top-11 sm:w-72">
           <div className="px-4 py-3">
             <p className="truncate text-sm font-medium text-white">{name}</p>
             <p className="truncate text-xs text-zinc-500">{email}</p>
@@ -71,10 +72,25 @@ export function CoachDropdown() {
           </div>
 
           <div className="h-px bg-zinc-800" />
+          {session?.user?.hasMemberProfile && (
+            <>
+              <div className="py-1">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#C8F135] transition-colors hover:bg-[#C8F135]/10"
+                >
+                  <LayoutDashboard className="size-4" />
+                  Passer à l'espace membre
+                </Link>
+              </div>
+              <div className="h-px bg-zinc-800" />
+            </>
+          )}
 
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: '/' })}
+            onClick={() => signOutAndClear('/')}
             className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200"
           >
             <LogOut className="size-4" />

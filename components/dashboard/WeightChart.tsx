@@ -9,6 +9,11 @@ import { TrendingUp } from 'lucide-react'
 
 interface DataPoint { date: string; weight: number }
 interface Props     { data: DataPoint[]; targetWeight?: number }
+interface WeightTooltipProps {
+  active?: boolean
+  payload?: Array<{ value: number }>
+  label?: string
+}
 
 const RANGES = [
   { label: '7j',  days: 7 },
@@ -33,7 +38,7 @@ export function WeightChart({ data, targetWeight }: Props) {
     )
   }
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: WeightTooltipProps) => {
     if (!active || !payload?.length) return null
     return (
       <div className="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">

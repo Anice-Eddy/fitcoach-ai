@@ -153,7 +153,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         })
         token.plan             = dbUser?.subscriptionPlan   ?? 'FREE'
         token.status           = dbUser?.subscriptionStatus ?? 'INACTIVE'
-        token.isCoach          = !!dbUser?.coachProfile && !dbUser?.profile
+        // A single account can own both spaces: member data stays in Profile,
+        // while professional data lives in CoachProfile.
+        token.isCoach          = !!dbUser?.coachProfile
         token.hasRoleConflict  = !!dbUser?.coachProfile && !!dbUser?.profile
         token.hasMemberProfile = !!dbUser?.profile
       }

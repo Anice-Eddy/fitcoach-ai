@@ -164,7 +164,8 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 422 })
     }
 
-    const { noteId, followUpAt, memberId: _mid, ...data } = parsed.data
+    const { noteId, followUpAt, memberId, ...data } = parsed.data
+    void memberId
     const note = await prisma.coachNote.findFirst({
       where: { id: noteId, coachId: coach!.coachProfile!.id },
     })

@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import {
-  Search, User, CalendarPlus, Mail, FileText, Activity, Calendar,
-  Send, Scale, Target, Clock, CheckCircle, XCircle, AlertCircle,
-  ChevronRight, Trash2, Plus, X, Pin, Eye, EyeOff, Lock, Unlock,
+  Search, User, CalendarPlus, Mail, FileText, Calendar,
+  Send, ChevronRight, Trash2, Plus, X, Pin, Eye, Lock, Unlock,
   MessageSquare, ChevronDown, ChevronUp, Pencil, Check, PlusCircle,
   Footprints, Moon, Droplets, Battery, Brain, Camera,
 } from 'lucide-react'

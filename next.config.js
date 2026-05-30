@@ -35,6 +35,8 @@ const nextConfig = {
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'm.media-amazon.com' },
+      { protocol: 'https', hostname: 'img.youtube.com' },
+      { protocol: 'https', hostname: 'www.nutrimuscle.com' },
     ],
   },
   // Headers CORS pour les webhooks Stripe (route /api/stripe/webhook)

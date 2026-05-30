@@ -1,12 +1,13 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { signIn, signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Dumbbell, Users } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { PageBackground } from '@/components/landing/PageBackground'
+import { clearClientAccountState } from '@/lib/auth/client-session'
 
 /** Sign-in page shell wrapping the SignInForm in a Suspense boundary for searchParams access. */
 export default function SignInPage() {
@@ -23,6 +24,7 @@ export default function SignInPage() {
 function SignInForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
+  const { status } = useSession()
   const callbackParam = searchParams?.get('callbackUrl')
   const authError     = searchParams?.get('error') ?? ''
 
@@ -98,6 +100,11 @@ function SignInForm() {
         return
       }
 
+      if (status === 'authenticated') {
+        clearClientAccountState()
+        await signOut({ redirect: false })
+      }
+
       const result = await signIn('credentials', {
         email:    form.email,
         password: form.password,
@@ -119,8 +126,12 @@ function SignInForm() {
 
   const handleGoogle = async () => {
     setLoadingGoogle(true)
+    clearClientAccountState()
+    if (status === 'authenticated') {
+      await signOut({ redirect: false })
+    }
     sessionStorage.setItem('bodyops:last-auth-context', mode)
-    await signIn('google', { callbackUrl: mode === 'coach' ? '/auth/coach/complete' : '/dashboard' })
+    await signIn('google', { callbackUrl: mode === 'coach' ? '/auth/coach/complete' : '/dashboard' }, { prompt: 'select_account' })
   }
 
   return (

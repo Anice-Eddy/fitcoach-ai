@@ -13,7 +13,7 @@ import { Download, Upload, FileJson, FileText, AlertCircle } from 'lucide-react'
 
 /** Data export/import page: allows downloading profile as JSON or PDF, and importing a previously exported JSON file. */
 export default function ExportsPage() {
-  const { profile, setProfile } = useUserStore()
+  const { profile } = useUserStore()
   const fileRef      = useRef<HTMLInputElement>(null)
   const [loading, setLoading]   = useState<string | null>(null)
   const [preview, setPreview]   = useState<unknown>(null)

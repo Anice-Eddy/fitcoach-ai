@@ -14,10 +14,10 @@ export function RestTimer() {
 
   // Track the initial total each time a new timer starts
   useEffect(() => {
-    if (isActive && seconds > 0 && seconds > totalSecs - 5) {
+    if (isActive && seconds > totalSecs) {
       setTotalSecs(seconds)
     }
-  }, [isActive])
+  }, [isActive, seconds, totalSecs])
 
   useEffect(() => {
     if (!isActive) return

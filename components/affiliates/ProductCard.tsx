@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { ExternalLink, Tag } from 'lucide-react'
 import type { AffiliateProduct } from '@/types'
 import { trackAffiliateClick } from '@/lib/affiliates/tracking'
@@ -19,12 +20,13 @@ export function ProductCard({ product }: Props) {
       {/* Image / category banner */}
       <div className="relative h-40 bg-zinc-800 overflow-hidden flex items-center justify-center">
         {product.imageUrl && !imgError ? (
-          <img
+          <Image
             src={product.imageUrl}
             alt={product.name}
+            fill
+            sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={() => setImgError(true)}
-            loading="lazy"
           />
         ) : (
           <span className="text-6xl select-none">{meta?.emoji ?? '📦'}</span>

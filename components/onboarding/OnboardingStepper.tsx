@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import { UnitsStep }        from './steps/UnitsStep'
 import { IdentityStep }     from './steps/IdentityStep'
@@ -41,6 +42,7 @@ const slideVariants = {
 /** Multi-step animated onboarding form that hydrates from localStorage, cloud profile, or saved progress; persists each step and saves the final profile on completion. */
 export function OnboardingStepper() {
   const router         = useRouter()
+  const { update: updateSession } = useSession()
   const { profile, setProfile } = useUserStore()
   const [step, setStep]     = useState(0)
   const [direction, setDir] = useState(1)
@@ -129,6 +131,7 @@ export function OnboardingStepper() {
       }
 
       setProfile(savedProfile)
+      await updateSession()
       await storage.clearOnboardingProgress()
       toast.success('Profil prêt. Choisis maintenant ton accompagnement.')
       router.push('/choose?returnTo=/dashboard')

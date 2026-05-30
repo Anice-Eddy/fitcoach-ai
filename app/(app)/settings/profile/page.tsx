@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { Header } from '@/components/layout/Header'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { useUserStore } from '@/stores/userStore'
 import { toast } from 'sonner'
-import { AlertTriangle, Save } from 'lucide-react'
+import { AlertTriangle, BriefcaseBusiness, Save } from 'lucide-react'
 
 type CoachVerificationIssue = { field: string; message: string }
 
 type CoachProfileVerification = {
+  id: string
   verificationStatus: 'PENDING_VERIFICATION' | 'NEEDS_CORRECTION' | 'VERIFIED' | 'REJECTED'
   verificationIssues: CoachVerificationIssue[] | null
   documentFileName: string | null
@@ -24,6 +26,7 @@ type CoachProfileVerification = {
 
 /** Profile settings page: update display name, avatar, timezone, and account email/password; includes account deletion. */
 export default function ProfileSettingsPage() {
+  const router = useRouter()
   const { data: session, update } = useSession()
   const { profile, updateProfile, timezone, setTimezone } = useUserStore()
   const [firstName, setFirstName] = useState(profile?.firstName ?? session?.user?.name ?? '')
@@ -33,6 +36,7 @@ export default function ProfileSettingsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>((profile?.language as 'fr' | 'en') ?? 'fr')
   const [tz, setTz] = useState(timezone)
   const [saving, setSaving] = useState(false)
+  const [creatingCoach, setCreatingCoach] = useState(false)
   const [coachProfile, setCoachProfile] = useState<CoachProfileVerification | null>(null)
 
   useEffect(() => {
@@ -88,6 +92,31 @@ export default function ProfileSettingsPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const createCoachSpace = async () => {
+    setCreatingCoach(true)
+    try {
+      // Create a CoachProfile on the existing account, then refresh the session
+      // so middleware allows access to the coach completion flow immediately.
+      const res = await fetch('/api/coach/profile', { method: 'POST' })
+      if (!res.ok) throw new Error('coach-profile')
+      const data = await res.json()
+      setCoachProfile(data)
+      await update()
+      toast.success('Espace coach créé')
+      router.push('/auth/coach/complete')
+    } catch {
+      toast.error("Impossible de créer l'espace coach")
+    } finally {
+      setCreatingCoach(false)
+    }
+  }
+
+  const openCoachSpace = async () => {
+    // Refresh the JWT before entering /coach so newly created coach access is recognized.
+    await update()
+    router.push('/coach/dashboard')
   }
 
   return (
@@ -163,6 +192,37 @@ export default function ProfileSettingsPage() {
                   <input value={tz} onChange={(e) => setTz(e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#C8F135]" />
                 </label>
               </div>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-base font-semibold text-white">Espace coach</h2>
+                <p className="mt-1 text-sm leading-6 text-zinc-400">
+                  Utilise le même compte pour gérer ton profil professionnel, tes disponibilités et tes membres.
+                </p>
+              </div>
+              {coachProfile ? (
+                <button
+                  type="button"
+                  onClick={openCoachSpace}
+                  className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-[#C8F135] hover:text-[#C8F135]"
+                >
+                  <BriefcaseBusiness className="size-4" />
+                  Ouvrir mon espace coach
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={createCoachSpace}
+                  disabled={creatingCoach}
+                  className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <BriefcaseBusiness className="size-4" />
+                  {creatingCoach ? 'Création...' : 'Créer mon espace coach'}
+                </button>
+              )}
             </div>
           </section>
         </div>

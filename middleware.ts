@@ -21,11 +21,6 @@ const PUBLIC_PREFIXES = [
   '/coaches/',
 ]
 
-const COACH_PREFIXES = [
-  '/coach',
-  '/api/coach',
-]
-
 const MEMBER_PREFIXES = [
   '/dashboard',
   '/training',
@@ -61,22 +56,22 @@ export default auth((req: NextAuthRequest) => {
 
   if (session?.user) {
     const isCoach = session.user.isCoach === true
-    const isCoachRoute = COACH_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+    const hasMemberProfile = session.user.hasMemberProfile === true
     const isMemberRoute = MEMBER_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
 
-    if (isCoach && isMemberRoute) {
+    // Coach-only accounts stay out of member screens, but dual member+coach
+    // accounts can switch between both spaces from the same email.
+    const isMemberBootstrap = pathname === '/onboarding' || pathname === '/choose' || pathname === '/api/user/profile'
+
+    if (isCoach && !hasMemberProfile && isMemberRoute && !isMemberBootstrap) {
       if (pathname.startsWith('/api/')) {
         return NextResponse.json({ error: 'Accès réservé aux membres.' }, { status: 403 })
       }
       return NextResponse.redirect(new URL('/coach/dashboard', req.url))
     }
 
-    if (!isCoach && isCoachRoute) {
-      if (pathname.startsWith('/api/')) {
-        return NextResponse.json({ error: 'Accès réservé aux coachs.' }, { status: 403 })
-      }
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
+    // Coach pages and APIs verify CoachProfile from the database themselves.
+    // Middleware only prevents coach-only accounts from entering member pages.
   }
 
   // Public routes are needed for local-first onboarding.

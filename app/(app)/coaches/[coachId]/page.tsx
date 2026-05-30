@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import Image from 'next/image'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useUserStore } from '@/stores/userStore'
 import { toast } from 'sonner'
@@ -19,19 +20,6 @@ interface CoachData {
     isVerified: boolean
     _count: { coachMembers: number }
   }
-}
-
-const DEMO_COACH: CoachData = {
-  id: 'coach-1',
-  name: 'Sarah B.',
-  image: null,
-  coachProfile: {
-    id: 'demo-coach-profile',
-    bio: 'Coach certifiée en musculation, recomposition corporelle et accompagnement débutant.',
-    specialties: ['Musculation', 'Perte de poids', 'Mobilité'],
-    isVerified: true,
-    _count: { coachMembers: 24 },
-  },
 }
 
 const GOAL_LABEL: Record<string, string> = {
@@ -90,14 +78,15 @@ export default function CoachBookingPage() {
   useEffect(() => {
     if (!coachId) { setLoading(false); return }
     fetch(`/api/coaches/${coachId}`)
-      .then(r => r.ok ? r.json() as Promise<CoachData> : (coachId === 'coach-1' ? DEMO_COACH : null))
+      .then(r => r.ok ? r.json() as Promise<CoachData> : null)
       .then(data => { setCoachData(data); setLoading(false) })
-      .catch(() => { setCoachData(coachId === 'coach-1' ? DEMO_COACH : null); setLoading(false) })
+      .catch(() => { setCoachData(null); setLoading(false) })
   }, [coachId])
 
-  // Fetch real availability slots for the next 14 days once the coach is known
+  // Fetch real availability slots for the next 14 days once the coach is known.
   useEffect(() => {
-    if (!coachData || coachData.id === 'coach-1') return
+    if (!coachData) return
+
     setSlotsLoading(true)
     const from = new Date(); from.setDate(from.getDate() + 1); from.setHours(0, 0, 0, 0)
     const to   = new Date(from.getTime() + 13 * 86_400_000)
@@ -129,13 +118,6 @@ export default function CoachBookingPage() {
     const scheduledAt = new Date(selectedSlot)
     const slotDuration = allSlots.find(s => s.datetime === selectedSlot)?.duration ?? 60
 
-    if (coachData.id === 'coach-1') {
-      // Never create local demo appointments; synced coach panels must reflect the database only.
-      toast.error('Aucun coach réel disponible pour le moment.')
-      setBusy(false)
-      return
-    }
-
     try {
       const res = await fetch('/api/user/appointments', {
         method:  'POST',
@@ -151,7 +133,9 @@ export default function CoachBookingPage() {
       if (!res.ok) throw new Error()
 
       toast.success('Demande envoyée avec succès !')
-      router.push('/coaching/status')
+      // Après réservation, on revient vers la page qui a lancé le choix du coach.
+      // Sans origine explicite, "Mon accompagnement" reste la page de confirmation naturelle.
+      router.replace(safeReturnTo || '/coaching/status')
     } catch {
       toast.error('Erreur lors de la réservation')
       setBusy(false)
@@ -189,7 +173,7 @@ export default function CoachBookingPage() {
             <div className="border-b border-zinc-700 pb-6">
               <div className="flex items-center gap-4">
                 {coach.image ? (
-                  <img src={coach.image} alt={coach.name ?? ''} className="size-[58px] rounded-full object-cover shrink-0" />
+                  <Image src={coach.image} alt={coach.name ?? ''} width={58} height={58} className="size-[58px] rounded-full object-cover shrink-0" />
                 ) : (
                   <div className="size-[58px] rounded-full bg-zinc-700 flex items-center justify-center text-xl font-bold text-white shrink-0">
                     {(coach.name ?? '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
@@ -259,7 +243,7 @@ export default function CoachBookingPage() {
               <div className="grid grid-cols-7 gap-2">
                 {days.map(({ date, dayLabel }) => {
                   const selected  = selectedDay?.toDateString() === date.toDateString()
-                  const hasSlots  = coachData?.id === 'coach-1' || daysWithSlots.has(date.toDateString())
+                  const hasSlots  = daysWithSlots.has(date.toDateString())
                   return (
                     <button
                       key={date.toISOString()}
@@ -290,7 +274,7 @@ export default function CoachBookingPage() {
                 </p>
                 {slotsLoading ? (
                   <p className="text-xs text-zinc-500">Chargement des créneaux…</p>
-                ) : daySlots.length === 0 && coachData?.id !== 'coach-1' ? (
+                ) : daySlots.length === 0 ? (
                   <p className="text-xs text-zinc-500">Aucun créneau disponible ce jour.</p>
                 ) : (
                   <div className="grid grid-cols-3 gap-3">

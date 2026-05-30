@@ -43,7 +43,6 @@ export default async function CoachLayout({ children }: { children: React.ReactN
     },
   })
   if (!user?.coachProfile) redirect('/dashboard')
-  if (user.profile) redirect('/dashboard')
   if (!isCoachProfileComplete(user.coachProfile)) redirect('/auth/coach/complete')
 
   return (

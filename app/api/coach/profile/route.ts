@@ -61,6 +61,16 @@ export async function GET() {
   return NextResponse.json(profile)
 }
 
+/** Creates the authenticated user's coach space without duplicating the account email. */
+export async function POST() {
+  const session = await auth()
+  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+
+  // The upsert keeps this action idempotent if the button is clicked twice.
+  const profile = await getCoachProfile(session.user.id)
+  return NextResponse.json(profile, { status: 201 })
+}
+
 /** Updates the coach profile from a multipart form; analyzes any uploaded certification document and sets the verification status accordingly. */
 export async function PATCH(req: Request) {
   const session = await auth()

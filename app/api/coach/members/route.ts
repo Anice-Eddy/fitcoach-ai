@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 
 /** Returns the coach's member list with latest body metrics; auto-adds any members who have an appointment but are missing a CoachMember record. */
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth()
 

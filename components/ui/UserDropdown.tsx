@@ -3,11 +3,13 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { signOut, useSession } from 'next-auth/react'
-import { ChevronDown, LogOut, User, Ruler, Sparkles, SlidersHorizontal } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { BriefcaseBusiness, ChevronDown, LogOut, User, Ruler, Sparkles, SlidersHorizontal, Settings } from 'lucide-react'
 import { useUserStore } from '@/stores/userStore'
+import { signOutAndClear } from '@/lib/auth/client-session'
 
 const MEMBER_LINKS = [
+  { href: '/settings', label: 'Tous les paramètres', icon: Settings },
   { href: '/settings/profile', label: 'Mon profil', icon: User },
   { href: '/settings/body', label: 'Mes informations physiques', icon: Ruler },
   { href: '/settings/plan', label: 'Mon accompagnement', icon: Sparkles },
@@ -57,12 +59,15 @@ export function UserDropdown() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-11 z-50 w-72 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/40">
+        <div className="fixed left-4 right-4 top-16 z-50 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/40 sm:absolute sm:left-auto sm:right-0 sm:top-11 sm:w-72">
           <div className="px-4 py-3">
             <p className="truncate text-sm font-medium text-white">{name}</p>
             <p className="truncate text-xs text-zinc-500">{email}</p>
           </div>
           <div className="h-px bg-zinc-800" />
+          <p className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600">
+            Raccourcis paramètres
+          </p>
           <div className="py-1">
             {MEMBER_LINKS.map(({ href, label, icon: Icon }) => (
               <Link
@@ -77,9 +82,24 @@ export function UserDropdown() {
             ))}
           </div>
           <div className="h-px bg-zinc-800" />
+          {session?.user?.isCoach && (
+            <>
+              <div className="py-1">
+                <Link
+                  href="/coach/dashboard"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#C8F135] transition-colors hover:bg-[#C8F135]/10"
+                >
+                  <BriefcaseBusiness className="size-4" />
+                  Passer à l'espace coach
+                </Link>
+              </div>
+              <div className="h-px bg-zinc-800" />
+            </>
+          )}
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: '/' })}
+            onClick={() => signOutAndClear('/')}
             className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:opacity-50"
             aria-label="Se déconnecter"
           >

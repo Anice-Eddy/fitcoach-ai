@@ -9,12 +9,20 @@ import type { UserProfile } from '@/lib/storage/StorageAdapter'
 /** Invisible component that fetches and syncs the cloud profile into the Zustand store after the user authenticates. */
 export function ProfileSync() {
   const { data: session, status }              = useSession()
-  const { profile, setProfile, setProfileChecked } = useUserStore()
+  const { profile, setProfile, setProfileChecked, reset } = useUserStore()
   const { setLocale }                          = useLocale()
+  const profileId = profile?.id
+  const profileReady = Boolean(profile?.fitnessGoal && profile?.fitnessLevel && profile?.onboardingCompleted)
 
   useEffect(() => {
+    if (status === 'unauthenticated') {
+      reset()
+      return
+    }
     if (status !== 'authenticated') return
-    if (profile?.fitnessGoal && profile?.fitnessLevel && profile?.onboardingCompleted) {
+
+    const sessionUserId = session?.user?.id
+    if (profileId === sessionUserId && profileReady) {
       setProfileChecked(true)
       return
     }
@@ -23,6 +31,7 @@ export function ProfileSync() {
       .then(res => res.json())
       .then((p: Record<string, unknown> | null) => {
         if (!p || !p.fitnessGoal) {
+          reset()
           setProfileChecked(true)
           return
         }
@@ -62,7 +71,7 @@ export function ProfileSync() {
         if (lang === 'fr' || lang === 'en') setLocale(lang)
       })
       .catch(() => { setProfileChecked(true) })
-  }, [status, session?.user?.id])
+  }, [profileId, profileReady, reset, session?.user?.id, setLocale, setProfile, setProfileChecked, status])
 
   return null
 }

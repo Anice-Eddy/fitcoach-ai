@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import {
-  BarChart2, TrendingUp, TrendingDown, Users, Calendar, MessageSquare,
+  TrendingUp, TrendingDown, Users, Calendar, MessageSquare,
   CheckCircle, Award, Activity, RefreshCw, Minus, Bot, Loader2,
 } from 'lucide-react'
 import { format } from 'date-fns'

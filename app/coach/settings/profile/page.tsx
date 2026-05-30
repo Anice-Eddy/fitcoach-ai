@@ -2,27 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { signOut, useSession } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { UserCircle, Save, Camera, LogOut, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { DeleteAccountModal } from '@/components/ui/DeleteAccountModal'
-
-interface CoachProfile {
-  id:              string
-  bio:             string | null
-  specialties:     string[]
-  certifications:  string[]
-  yearsExperience: number | null
-  city:            string | null
-  phone:           string | null
-  memberLimit:     number
-  avatarUrl:       string | null
-}
+import { signOutAndClear } from '@/lib/auth/client-session'
 
 /** Coach profile settings page: edit bio, specialties, certifications, and upload a verification document. */
 export default function CoachSettingsProfilePage() {
   const { data: session, update: updateSession } = useSession()
-  const [profile, setProfile]   = useState<CoachProfile | null>(null)
   const [loading, setLoading]   = useState(true)
   const [saving, setSaving]     = useState(false)
   const [showDel, setShowDel]   = useState(false)
@@ -46,7 +34,6 @@ export default function CoachSettingsProfilePage() {
       fetch('/api/coach/profile').then(r => r.ok ? r.json() : null),
     ]).then(([p]) => {
       if (p) {
-        setProfile(p)
         setBio(p.bio ?? '')
         setSpecialties((p.specialties ?? []).join(', '))
         setCertifications((p.certifications ?? []).join(', '))
@@ -74,7 +61,7 @@ export default function CoachSettingsProfilePage() {
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error ?? 'Erreur lors de la suppression')
       }
-      await signOut({ callbackUrl: '/' })
+      await signOutAndClear('/')
     } catch (e) {
       setDeleting(false)
       throw e
@@ -282,13 +269,13 @@ export default function CoachSettingsProfilePage() {
           </button>
         </div>
 
-        {/* Danger zone */}
+        {/* Account actions */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
           <div className="px-5 py-4 border-b border-zinc-800">
-            <h2 className="text-sm font-semibold text-zinc-300">Danger</h2>
+            <h2 className="text-sm font-semibold text-zinc-300">Compte et sécurité</h2>
           </div>
           <button
-            onClick={() => signOut({ callbackUrl: '/' })}
+            onClick={() => signOutAndClear('/')}
             className="flex items-center gap-3 w-full px-5 py-3.5 border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors text-left"
           >
             <LogOut className="size-4 text-zinc-400" />

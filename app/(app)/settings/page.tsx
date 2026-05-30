@@ -1,16 +1,18 @@
 'use client'
 
 import { useState, useEffect, useCallback, type ReactNode } from 'react'
-import { signOut, useSession }  from 'next-auth/react'
+import { useSession }           from 'next-auth/react'
 import Link from 'next/link'
 import { useUserStore }         from '@/stores/userStore'
 import { PageWrapper }          from '@/components/layout/PageWrapper'
+import { Header }               from '@/components/layout/Header'
 import { toast }                from 'sonner'
 import { kgToLb, lbToKg, cmToFtIn, ftInToCm } from '@/utils/unit-conversions'
 import { Home, Dumbbell, Building2, TreePine, LogOut, Trash2, Save, User, Sparkles, ArrowRight, Scale, Target, CalendarDays, Plus, X, AlertTriangle } from 'lucide-react'
 import type { InjuryEntry } from '@/utils/validators'
 import { DeleteAccountModal } from '@/components/ui/DeleteAccountModal'
 import { useMyCoach } from '@/lib/coach/use-my-coach'
+import { signOutAndClear } from '@/lib/auth/client-session'
 
 // ─── constantes (mirrors onboarding steps) ──────────────────────────────────
 
@@ -241,7 +243,7 @@ export default function SettingsPage() {
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error ?? 'Erreur lors de la suppression')
       }
-      await signOut({ callbackUrl: '/' })
+      await signOutAndClear('/')
     } catch (e) {
       setDeleting(false)
       throw e
@@ -251,16 +253,18 @@ export default function SettingsPage() {
   // ─── render ────────────────────────────────────────────────────────────────
 
   return (
-    <PageWrapper>
-      {showDel && (
-        <DeleteAccountModal
-          onConfirm={handleDeleteAccount}
-          onCancel={() => setShowDel(false)}
-          deleting={deleting}
-        />
-      )}
+    <>
+      <Header title="Paramètres" />
+      <PageWrapper>
+        {showDel && (
+          <DeleteAccountModal
+            onConfirm={handleDeleteAccount}
+            onCancel={() => setShowDel(false)}
+            deleting={deleting}
+          />
+        )}
 
-      <div className="mx-auto w-full max-w-7xl space-y-6 pb-10">
+        <div className="mx-auto w-full max-w-7xl space-y-6 pb-10">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -747,13 +751,13 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        {/* Danger zone */}
+        {/* Account actions */}
         <section className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden xl:col-span-2">
           <div className="px-5 py-4 border-b border-zinc-800">
-            <h2 className="text-sm font-semibold text-zinc-300">Danger</h2>
+            <h2 className="text-sm font-semibold text-zinc-300">Compte et sécurité</h2>
           </div>
           <button
-            onClick={() => signOut({ callbackUrl: '/' })}
+            onClick={() => signOutAndClear('/')}
             className="flex items-center gap-3 w-full px-5 py-3.5 border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors text-left"
           >
             <LogOut className="size-4 text-zinc-400" />
@@ -771,7 +775,8 @@ export default function SettingsPage() {
             <p className="text-xs text-center text-zinc-600 xl:col-span-2">BodyOps v1.0</p>
           </div>
         </div>
-      </div>
-    </PageWrapper>
+        </div>
+      </PageWrapper>
+    </>
   )
 }

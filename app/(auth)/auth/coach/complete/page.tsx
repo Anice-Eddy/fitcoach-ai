@@ -23,7 +23,6 @@ export default async function CompleteCoachProfilePage() {
     select: {
       id: true,
       name: true,
-      profile: { select: { id: true } },
       coachProfile: {
         select: {
           firstName: true,
@@ -42,29 +41,6 @@ export default async function CompleteCoachProfilePage() {
 
   if (!user) {
     redirect('/auth/signin?callbackUrl=/coach/dashboard')
-  }
-
-  if (user.profile) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 py-8 text-white">
-        <section className="w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center">
-          <div className="mb-6 flex justify-center">
-            <Logo href="/" size="lg" />
-          </div>
-          <h1 className="text-xl font-semibold text-white">Ce Gmail est déjà un compte membre</h1>
-          <p className="mt-3 text-sm leading-6 text-zinc-400">
-            Pour éviter de mélanger vos données membre et coach, ce compte ne peut pas être converti en espace coach.
-            Utilisez une autre adresse email pour créer ou connecter un compte coach.
-          </p>
-          <a
-            href="/dashboard"
-            className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-[#C8F135] px-4 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-[#d4f54d]"
-          >
-            Retour à mon espace membre
-          </a>
-        </section>
-      </main>
-    )
   }
 
   const coachProfile = user.coachProfile ?? await prisma.coachProfile.create({

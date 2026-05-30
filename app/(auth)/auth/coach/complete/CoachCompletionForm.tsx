@@ -62,7 +62,8 @@ export function CoachCompletionForm({ initialProfile }: CoachProfileFormProps) {
     setIssues(Array.isArray(data.verificationIssues) ? data.verificationIssues : [])
     toast.success('Profil coach envoyé en vérification')
     await updateSession()
-    router.push('/coach/dashboard')
+    router.refresh()
+    router.replace('/coach/dashboard')
   }
 
   return (

@@ -81,8 +81,6 @@ export default function CoachingStatusPage() {
   }, [])
 
   const upcoming = now ? appointments.filter(a => new Date(a.scheduledAt) >= now && a.status !== 'CANCELLED') : []
-  const past     = now ? appointments.filter(a => new Date(a.scheduledAt) < now || a.status === 'COMPLETED') : []
-
   if (loading) {
     return (
       <div className="min-h-screen bg-black px-4 py-12 text-white">

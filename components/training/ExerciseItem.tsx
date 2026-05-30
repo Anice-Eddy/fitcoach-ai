@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, CheckCircle2, Circle, ExternalLink, RefreshCw, Youtube } from 'lucide-react'
 
@@ -183,9 +184,11 @@ export function ExerciseItem({ exercise, index }: Props) {
                   className="block relative rounded-xl overflow-hidden group/yt"
                 >
                   {videoId && !ytImgError ? (
-                    <img
+                    <Image
                       src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
                       alt={`Tutoriel ${exercise.name}`}
+                      width={480}
+                      height={360}
                       className="w-full h-36 object-cover"
                       onError={() => setYtImgError(true)}
                     />

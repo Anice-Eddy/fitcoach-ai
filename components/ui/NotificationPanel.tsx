@@ -37,11 +37,9 @@ export function NotificationPanel() {
   const [open, setOpen]                 = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading]           = useState(false)
-  const [hydrated, setHydrated]         = useState(false)
   const ref                             = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setHydrated(true)
     function onPointerDown(e: PointerEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }

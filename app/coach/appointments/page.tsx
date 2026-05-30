@@ -8,6 +8,7 @@ import {
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -83,6 +84,19 @@ function isHourAvailable(day: Date, hour: number, rules: AvailabilityRule[]) {
     hour * 60 >= r.startHour * 60 + r.startMinute &&
     (hour + 1) * 60 <= r.endHour * 60 + r.endMinute,
   )
+}
+function findAvailabilityRuleForHour(day: Date, hour: number, rules: AvailabilityRule[]) {
+  const iso = isoDay(day)
+  const start = hour * 60
+  const end = (hour + 1) * 60
+  return rules.find(r =>
+    r.dayOfWeek === iso &&
+    start >= r.startHour * 60 + r.startMinute &&
+    end <= r.endHour * 60 + r.endMinute,
+  )
+}
+function availabilityCellKey(day: Date, hour: number) {
+  return `${day.toISOString().slice(0, 10)}-${hour}`
 }
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
@@ -520,6 +534,7 @@ export default function AgendaPage() {
   const [prefillDate,  setPrefillDate]  = useState<string | undefined>()
   const [selectedId,   setSelectedId]   = useState<string | null>(null)
   const [showAvail,    setShowAvail]    = useState(false)
+  const [addingAvailability, setAddingAvailability] = useState<string | null>(null)
   const aptRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({})
   const listRef = useRef<HTMLDivElement>(null)
 
@@ -562,11 +577,93 @@ export default function AgendaPage() {
     }
   }
 
-  const clickSlot = (day: Date, hour: number) => {
-    const dt = new Date(day); dt.setHours(hour, 0, 0, 0)
-    const pad = (n: number) => String(n).padStart(2, '0')
-    const local = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:00`
-    setPrefillDate(local); setShowNew(true)
+  const addAvailabilityFromCalendar = async (day: Date, hour: number) => {
+    const key = availabilityCellKey(day, hour)
+    setAddingAvailability(key)
+    try {
+      // A calendar click creates a simple one-hour weekly availability rule.
+      const res = await fetch('/api/coach/availability', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          dayOfWeek:    isoDay(day),
+          startHour:    hour,
+          startMinute:  0,
+          endHour:      hour + 1,
+          endMinute:    0,
+          slotDuration: 60,
+        }),
+      })
+      if (!res.ok) throw new Error('availability')
+      await fetchRules()
+      toast.success(`Disponibilité ajoutée ${DAY_FULL[isoDay(day) - 1]} à ${fmtTime(hour, 0)}`)
+    } catch {
+      toast.error("Impossible d'ajouter cette disponibilité")
+    } finally {
+      setAddingAvailability(null)
+    }
+  }
+
+  const saveAvailabilityRule = async (rule: Omit<AvailabilityRule, 'id'>) => {
+    return fetch('/api/coach/availability', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(rule),
+    })
+  }
+
+  const removeAvailabilityFromCalendar = async (day: Date, hour: number) => {
+    const key = availabilityCellKey(day, hour)
+    const rule = findAvailabilityRuleForHour(day, hour, rules)
+    if (!rule) return
+
+    setAddingAvailability(key)
+    try {
+      // If the clicked hour is inside a larger rule, delete the original and
+      // recreate the remaining parts around the removed hour.
+      const removedStart = hour * 60
+      const removedEnd = (hour + 1) * 60
+      const ruleStart = rule.startHour * 60 + rule.startMinute
+      const ruleEnd = rule.endHour * 60 + rule.endMinute
+
+      const del = await fetch(`/api/coach/availability/${rule.id}`, { method: 'DELETE' })
+      if (!del.ok) throw new Error('delete-availability')
+
+      const remainingRules: Omit<AvailabilityRule, 'id'>[] = []
+      if (ruleStart < removedStart) {
+        remainingRules.push({
+          dayOfWeek:    rule.dayOfWeek,
+          startHour:    rule.startHour,
+          startMinute:  rule.startMinute,
+          endHour:      Math.floor(removedStart / 60),
+          endMinute:    removedStart % 60,
+          slotDuration: rule.slotDuration,
+        })
+      }
+      if (removedEnd < ruleEnd) {
+        remainingRules.push({
+          dayOfWeek:    rule.dayOfWeek,
+          startHour:    Math.floor(removedEnd / 60),
+          startMinute:  removedEnd % 60,
+          endHour:      rule.endHour,
+          endMinute:    rule.endMinute,
+          slotDuration: rule.slotDuration,
+        })
+      }
+
+      for (const remaining of remainingRules) {
+        const res = await saveAvailabilityRule(remaining)
+        if (!res.ok) throw new Error('restore-availability')
+      }
+
+      await fetchRules()
+      toast.success(`Disponibilité retirée ${DAY_FULL[isoDay(day) - 1]} à ${fmtTime(hour, 0)}`)
+    } catch {
+      toast.error("Impossible de retirer cette disponibilité")
+      await fetchRules()
+    } finally {
+      setAddingAvailability(null)
+    }
   }
 
   const pending  = appointments.filter(a => a.status === 'PENDING')
@@ -602,6 +699,18 @@ export default function AgendaPage() {
           </div>
         </div>
 
+        {/* Availability accordion */}
+        <div className="border-b border-zinc-800 shrink-0 bg-zinc-950">
+          <button
+            onClick={() => setShowAvail(v => !v)}
+            className="flex w-full items-center justify-between px-4 py-2.5 text-xs font-medium text-zinc-300 hover:text-white transition-colors"
+          >
+            <span className="flex items-center gap-1.5"><Settings2 className="size-3.5 text-[#C8F135]" /> Disponibilités hebdomadaires</span>
+            {showAvail ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+          </button>
+          {showAvail && <AvailabilityPanel rules={rules} onRefresh={fetchRules} />}
+        </div>
+
         {/* Calendar grid */}
         <div className="flex-1 overflow-y-auto">
           <table className="w-full border-collapse text-xs">
@@ -626,17 +735,21 @@ export default function AgendaPage() {
                   </td>
                   {days.map((day, di) => {
                     const avail = isHourAvailable(day, hour, rules)
+                    const cellKey = availabilityCellKey(day, hour)
                     const apt   = appointments.find(a => {
                       const d = new Date(a.scheduledAt)
                       return d.toDateString() === day.toDateString() && d.getHours() === hour
                     })
                     return (
                       <td key={di}
-                        onClick={() => apt ? selectApt(apt.id) : avail ? clickSlot(day, hour) : undefined}
+                        onClick={() => apt ? selectApt(apt.id) : avail ? removeAvailabilityFromCalendar(day, hour) : addAvailabilityFromCalendar(day, hour)}
+                        aria-label={apt ? 'Voir le rendez-vous' : avail ? 'Retirer cette disponibilité' : 'Ajouter une disponibilité'}
                         className={cn(
-                          'border-l border-zinc-800/40 h-10 px-0.5 py-0.5 align-top cursor-default',
-                          avail && !apt ? 'bg-[#C8F135]/5 cursor-pointer hover:bg-[#C8F135]/10' : '',
+                          'group border-l border-zinc-800/40 h-10 px-0.5 py-0.5 align-top cursor-pointer',
+                          avail && !apt ? 'bg-[#C8F135]/5 cursor-pointer hover:bg-red-500/10' : '',
+                          !avail && !apt ? 'hover:bg-[#C8F135]/5' : '',
                           apt ? 'cursor-pointer' : '',
+                          addingAvailability === cellKey ? 'bg-[#C8F135]/10 opacity-70' : '',
                         )}
                       >
                         {apt ? (
@@ -652,8 +765,14 @@ export default function AgendaPage() {
                             <span className="opacity-70 truncate block">{apt.title.slice(0, 12)}</span>
                           </div>
                         ) : avail ? (
-                          <div className="h-full rounded border border-dashed border-[#C8F135]/15" />
-                        ) : null}
+                          <div className="flex h-full items-center justify-center rounded border border-dashed border-[#C8F135]/15 text-[10px] text-red-300/0 transition-colors group-hover:border-red-400/30 group-hover:text-red-300/80">
+                            {addingAvailability === cellKey ? '...' : '×'}
+                          </div>
+                        ) : (
+                          <div className="flex h-full items-center justify-center rounded border border-transparent text-[10px] text-[#C8F135]/0 transition-colors group-hover:border-[#C8F135]/20 group-hover:text-[#C8F135]/70">
+                            {addingAvailability === cellKey ? '...' : '+'}
+                          </div>
+                        )}
                       </td>
                     )
                   })}
@@ -663,17 +782,6 @@ export default function AgendaPage() {
           </table>
         </div>
 
-        {/* Availability accordion */}
-        <div className="border-t border-zinc-800 shrink-0">
-          <button
-            onClick={() => setShowAvail(v => !v)}
-            className="flex w-full items-center justify-between px-4 py-2.5 text-xs font-medium text-zinc-400 hover:text-white transition-colors"
-          >
-            <span className="flex items-center gap-1.5"><Settings2 className="size-3.5" /> Disponibilités hebdomadaires</span>
-            {showAvail ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-          </button>
-          {showAvail && <AvailabilityPanel rules={rules} onRefresh={fetchRules} />}
-        </div>
       </div>
 
       {/* ── RIGHT: Appointments list ──────────────────────────────── */}

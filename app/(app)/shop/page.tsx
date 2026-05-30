@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { PageWrapper }          from '@/components/layout/PageWrapper'
+import { Header }               from '@/components/layout/Header'
 import { ProductCard }          from '@/components/affiliates/ProductCard'
 import { CategoryFilter }       from '@/components/affiliates/CategoryFilter'
 import { AffiliateDisclosure }  from '@/components/affiliates/AffiliateDisclosure'
@@ -40,8 +41,10 @@ export default function ShopPage() {
   }, [selected, userGoal])
 
   return (
-    <PageWrapper>
-      <div className="space-y-6">
+    <>
+      <Header title="Boutique" />
+      <PageWrapper>
+        <div className="space-y-6">
 
         {/* Header */}
         <div>
@@ -74,7 +77,8 @@ export default function ShopPage() {
             ))}
           </div>
         )}
-      </div>
-    </PageWrapper>
+        </div>
+      </PageWrapper>
+    </>
   )
 }

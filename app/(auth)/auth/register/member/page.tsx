@@ -1,17 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { signIn, signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, ChevronLeft } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { toast } from 'sonner'
 import { PageBackground } from '@/components/landing/PageBackground'
+import { clearClientAccountState } from '@/lib/auth/client-session'
 
 /** Member registration form: collects name, email, and password; posts to /api/auth/register and redirects on success. */
 export default function MemberRegisterPage() {
   const router = useRouter()
+  const { status } = useSession()
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [loadingGoogle, setLoadingGoogle] = useState(false)
@@ -48,6 +50,11 @@ export default function MemberRegisterPage() {
       return
     }
 
+    if (status === 'authenticated') {
+      clearClientAccountState()
+      await signOut({ redirect: false })
+    }
+
     const result = await signIn('credentials', {
       email:    form.email,
       password: form.password,
@@ -65,7 +72,11 @@ export default function MemberRegisterPage() {
 
   const handleGoogle = async () => {
     setLoadingGoogle(true)
-    await signIn('google', { callbackUrl: '/onboarding' })
+    clearClientAccountState()
+    if (status === 'authenticated') {
+      await signOut({ redirect: false })
+    }
+    await signIn('google', { callbackUrl: '/onboarding' }, { prompt: 'select_account' })
   }
 
   return (

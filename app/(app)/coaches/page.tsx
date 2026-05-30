@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Star, Users, CheckCircle, ArrowLeft } from 'lucide-react'
@@ -17,19 +18,6 @@ interface Coach {
     isVerified: boolean
     _count: { coachMembers: number }
   }
-}
-
-const FALLBACK_COACH: Coach = {
-  id: 'coach-1',
-  name: 'Sarah B.',
-  image: null,
-  coachProfile: {
-    id: 'demo-coach-profile',
-    bio: 'Coach certifiée en musculation, recomposition corporelle et accompagnement débutant.',
-    specialties: ['Musculation', 'Perte de poids', 'Mobilité'],
-    isVerified: true,
-    _count: { coachMembers: 24 },
-  },
 }
 
 /** Displays the public coach directory fetched from /api/coaches, with a search bar and coach cards. */
@@ -59,16 +47,9 @@ function CoachesInner() {
 
   const goBack = () => {
     // Prefer the explicit origin passed by settings/onboarding over browser history.
-    if (safeReturnTo) {
-      router.replace(safeReturnTo)
-      return
-    }
-
-    if (window.history.length > 1) {
-      router.back()
-      return
-    }
-    router.push('/dashboard')
+    // Do NOT use router.back() — it creates a loop when the user navigated here from
+    // a coach detail page ("Choisir un autre coach" → /coaches → back → coach detail again).
+    router.push(safeReturnTo || '/dashboard')
   }
 
   return (
@@ -99,11 +80,11 @@ function CoachesInner() {
           <div className="space-y-5">
             {coaches.length === 0 && (
               <div className="rounded-2xl border border-[#C8F135]/30 bg-[#C8F135]/10 p-4 text-sm text-[#e8ff91]">
-                Aucun coach réel n'est encore disponible. Vous pouvez réserver avec notre coach de démonstration.
+                Aucun coach réel n'est encore disponible.
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {(coaches.length > 0 ? coaches : [FALLBACK_COACH]).map(coach => (
+              {coaches.map(coach => (
                 <Link
                   key={coach.id}
                   href={`/coaches/${coach.id}${returnQuery}`}
@@ -111,7 +92,7 @@ function CoachesInner() {
                 >
                   <div className="flex items-start gap-4">
                     {coach.image ? (
-                      <img src={coach.image} alt={coach.name ?? ''} className="size-14 rounded-full object-cover shrink-0" />
+                      <Image src={coach.image} alt={coach.name ?? ''} width={56} height={56} className="size-14 rounded-full object-cover shrink-0" />
                     ) : (
                       <div className="size-14 rounded-full bg-zinc-700 flex items-center justify-center text-xl font-bold text-white shrink-0">
                         {getInitials(coach.name)}
