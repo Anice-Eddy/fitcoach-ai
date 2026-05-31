@@ -1,4 +1,4 @@
 {
-  "buildCommand": "npx prisma migrate deploy && npx prisma generate && next build",
+  "buildCommand": "npx prisma migrate resolve --rolled-back 20260531000000_add_ai_usage_daily; npx prisma migrate deploy && npx prisma generate && next build",
   "installCommand": "npm install --include=dev && npx prisma generate"
 }
