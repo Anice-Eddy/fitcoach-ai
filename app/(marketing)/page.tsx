@@ -105,7 +105,6 @@ export default function LandingPage() {
         <div className="mx-auto max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-3">
           <span>© <CurrentYear /> BodyOps</span>
           <div className="flex items-center gap-5">
-            <a href="mailto:hello@bodyops.app" className="hover:text-zinc-300 transition-colors">Contact</a>
             <Link href="/terms"   className="hover:text-zinc-300 transition-colors">CGU</Link>
             <Link href="/privacy" className="hover:text-zinc-300 transition-colors">Confidentialité</Link>
           </div>

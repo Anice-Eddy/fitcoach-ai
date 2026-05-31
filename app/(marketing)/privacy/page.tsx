@@ -10,8 +10,6 @@ export const metadata: Metadata = {
 }
 
 const LAST_UPDATED = '31 mai 2026'
-const COMPANY_EMAIL = 'privacy@bodyops.app'
-const DPO_EMAIL = 'dpo@bodyops.app'
 
 export default function PrivacyPage() {
   return (
@@ -107,8 +105,7 @@ export default function PrivacyPage() {
             <li><strong>Retrait du consentement</strong> — à tout moment, sans effet rétroactif</li>
           </ul>
           <p className="mt-3">
-            Pour exercer vos droits, contactez notre DPO à{' '}
-            <a href={`mailto:${DPO_EMAIL}`} className="text-[#C8F135] hover:underline">{DPO_EMAIL}</a>.
+            Pour exercer vos droits, utilisez la page de contact de l'application (Paramètres → Contact).
             Vous pouvez également introduire une réclamation auprès de la{' '}
             <strong>CNIL</strong> (France) ou de l'autorité compétente de votre pays de résidence.
           </p>
@@ -130,8 +127,8 @@ export default function PrivacyPage() {
 
         <Section title="9. Contact">
           <p>
-            Pour toute question relative à la protection de vos données :{' '}
-            <a href={`mailto:${COMPANY_EMAIL}`} className="text-[#C8F135] hover:underline">{COMPANY_EMAIL}</a>
+            Pour toute question relative à la protection de vos données, utilisez la page de contact
+            accessible depuis les Paramètres de l'application.
           </p>
         </Section>
 
