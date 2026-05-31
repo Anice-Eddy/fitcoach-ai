@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Logo } from '@/components/ui/Logo'
 import { PageBackground } from '@/components/landing/PageBackground'
-import { ChevronLeft } from 'lucide-react'
+import { BackButton } from '@/components/ui/BackButton'
 
 export const metadata: Metadata = {
   title: 'Politique de confidentialité — BodyOps',
@@ -20,12 +20,7 @@ export default function PrivacyPage() {
 
       <header className="relative z-10 flex items-center gap-4 px-6 py-5 border-b border-zinc-800/60">
         <Logo href="/" size="md" />
-        <Link
-          href="/"
-          className="ml-auto inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors"
-        >
-          <ChevronLeft className="size-4" /> Retour
-        </Link>
+        <BackButton className="ml-auto inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors" />
       </header>
 
       <main className="relative z-10 max-w-3xl mx-auto px-6 py-12 space-y-10">

@@ -101,8 +101,15 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-zinc-800/60 px-6 py-8 text-center text-sm text-zinc-500">
-        © <CurrentYear /> BodyOps · <a href="mailto:hello@bodyops.app" className="hover:text-zinc-300">Contact</a>
+      <footer className="relative z-10 border-t border-zinc-800/60 px-6 py-8 text-sm text-zinc-500">
+        <div className="mx-auto max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-3">
+          <span>© <CurrentYear /> BodyOps</span>
+          <div className="flex items-center gap-5">
+            <a href="mailto:hello@bodyops.app" className="hover:text-zinc-300 transition-colors">Contact</a>
+            <Link href="/terms"   className="hover:text-zinc-300 transition-colors">CGU</Link>
+            <Link href="/privacy" className="hover:text-zinc-300 transition-colors">Confidentialité</Link>
+          </div>
+        </div>
       </footer>
     </div>
   )
