@@ -8,7 +8,14 @@ import { AffiliateDisclosure } from '@/components/affiliates/AffiliateDisclosure
 import { AFFILIATE_CATEGORIES } from '@/lib/affiliates/categories'
 import { getAffiliateProductsForMarket } from '@/lib/affiliates/products'
 import { ChevronRight } from 'lucide-react'
-import type { AffiliateMarket } from '@/types'
+import type { AffiliateMarket, AffiliateCategory } from '@/types'
+
+const CATEGORY_STYLE: Record<AffiliateCategory, { iconBg: string; iconColor: string }> = {
+  SUPPLEMENTS: { iconBg: 'bg-[#C8F135]/15', iconColor: 'text-[#C8F135]'       },
+  EQUIPMENT:   { iconBg: 'bg-sky-500/15',   iconColor: 'text-sky-400'          },
+  CLOTHING:    { iconBg: 'bg-violet-500/15', iconColor: 'text-violet-400'      },
+  BOOKS:       { iconBg: 'bg-amber-500/15', iconColor: 'text-amber-400'        },
+}
 
 const MARKET_KEY = 'BodyOps:shop-market'
 
@@ -78,14 +85,15 @@ export default function ShopPage() {
             {AFFILIATE_CATEGORIES.map((cat) => {
               const Icon  = cat.icon
               const count = counts[cat.id] ?? 0
+              const style = CATEGORY_STYLE[cat.id]
               return (
                 <Link
                   key={cat.id}
                   href={`/shop/${cat.id.toLowerCase()}`}
-                  className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center hover:border-[#C8F135]/40 hover:bg-zinc-800 transition-all"
+                  className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center transition-all hover:border-[#C8F135]/40 hover:bg-zinc-800"
                 >
-                  <div className="flex size-14 items-center justify-center rounded-2xl bg-zinc-800 group-hover:bg-[#C8F135]/10 transition-colors">
-                    <Icon className="size-7 text-zinc-300 group-hover:text-[#C8F135] transition-colors" />
+                  <div className={`flex size-14 items-center justify-center rounded-2xl transition-colors ${style.iconBg}`}>
+                    <Icon className={`size-7 transition-colors ${style.iconColor}`} />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-white">{cat.label}</p>
