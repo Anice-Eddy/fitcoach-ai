@@ -1,7 +1,3 @@
-// HMAC-based personal access token for the Apple Health iOS Shortcut.
-// Token = base64url( HMAC-SHA256( "apple-health:" + userId, AUTH_SECRET ) )
-// No DB migration needed — deterministic and verifiable server-side.
-
 import { createHmac } from 'crypto'
 
 const SECRET = process.env.AUTH_SECRET ?? ''
@@ -9,13 +5,16 @@ const SECRET = process.env.AUTH_SECRET ?? ''
 export function generateAppleHealthToken(userId: string): string {
   return createHmac('sha256', SECRET)
     .update(`apple-health:${userId}`)
-    .digest('base64url')
+    .digest('hex')
 }
 
-export function verifyAppleHealthToken(token: string): string | null {
-  // We can't reverse-derive userId from the token, so the token must be sent
-  // alongside the userId (in the Authorization header as "Bearer userId:token").
-  const [userId, providedToken] = token.split(':')
+export function verifyAppleHealthToken(raw: string): string | null {
+  const clean = raw.trim()
+  // Format: "{userId}:{hmac}"  — find LAST colon to be safe
+  const colonIdx = clean.lastIndexOf(':')
+  if (colonIdx === -1) return null
+  const userId        = clean.substring(0, colonIdx).trim()
+  const providedToken = clean.substring(colonIdx + 1).trim()
   if (!userId || !providedToken) return null
   const expected = generateAppleHealthToken(userId)
   return providedToken === expected ? userId : null

@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 import { NextResponse }              from 'next/server'
 import { prisma }                    from '@/lib/prisma/client'
@@ -15,14 +16,22 @@ interface ShortcutPayload {
   date?:         string  // ISO date string, défaut = aujourd'hui
 }
 
+/** Quick token test: GET /api/user/metrics/apple-health?token={userId}:{hmac} */
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const token  = searchParams.get('token') ?? ''
+  const userId = verifyAppleHealthToken(token)
+  return NextResponse.json({ valid: !!userId, userId: userId ?? null })
+}
+
 /**
  * Called by the BodyOps iOS Shortcut.
  * Auth: Authorization: Bearer {userId}:{hmac-token}
  * Body: JSON payload from HealthKit.
  */
 export async function POST(req: Request) {
-  const authHeader = req.headers.get('Authorization') ?? ''
-  const token = authHeader.replace('Bearer ', '').trim()
+  const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization') ?? ''
+  const token  = authHeader.replace(/^[Bb]earer\s+/i, '').trim()
   const userId = verifyAppleHealthToken(token)
 
   if (!userId) {
