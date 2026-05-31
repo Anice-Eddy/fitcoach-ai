@@ -23,7 +23,8 @@ const STEPS = [
       { label: 'Rechercher les données de santé', detail: 'Type : Masse corporelle · Limite : 1 · Trié par : Date (décroissant)' },
       { label: 'Rechercher les données de santé', detail: 'Type : Nombre de pas · Plage de dates : Hier' },
       { label: 'Rechercher les données de santé', detail: 'Type : Analyse du sommeil · Plage de dates : Hier' },
-      { label: 'Créer un dictionnaire', detail: 'weightKg → Élément de santé[1] · steps → Somme(Pas) · sleepHours → Durée sommeil / 3600' },
+      { label: 'Rechercher les données de santé', detail: 'Type : Masse musculaire · Limite : 1 · Trié par : Date (décroissant)' },
+      { label: 'Créer un dictionnaire', detail: 'weightKg → Élément de santé[1] (Masse corporelle) · bodyFatPct → Élément de santé[1] (% graisse) · muscleMassKg → Élément de santé[1] (Masse musculaire) · steps → Somme(Pas) · sleepHours → Durée sommeil / 3600' },
       { label: 'Obtenir le contenu de l\'URL', detail: `URL : ${WEBHOOK_URL}\nMéthode : POST\nEn-têtes : Authorization → Bearer [colle ton token]\nCorps : JSON → dictionnaire ci-dessus` },
     ],
   },
@@ -119,7 +120,7 @@ export function AppleHealthShortcut() {
           <li>
             <p className="text-xs font-semibold text-white">5. Données synchronisées</p>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {['Poids', 'Masse grasse', 'Pas', 'Sommeil', 'Fréquence cardiaque', 'Calories actives'].map(d => (
+              {['Poids', 'Masse grasse %', 'Masse musculaire', 'Pas', 'Sommeil', 'Fréquence cardiaque', 'Calories actives'].map(d => (
                 <span key={d} className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">{d}</span>
               ))}
             </div>

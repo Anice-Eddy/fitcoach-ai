@@ -7,20 +7,21 @@ import { verifyAppleHealthToken }    from '@/lib/integrations/apple-health-token
 
 // Payload envoyé par le Raccourci iOS BodyOps
 interface ShortcutPayload {
-  weightKg?:     number
-  bodyFatPct?:   number
-  steps?:        number
-  sleepHours?:   number
-  heartRateAvg?: number  // stocké dans notes
+  weightKg?:      number
+  bodyFatPct?:    number
+  muscleMassKg?:  number
+  steps?:         number
+  sleepHours?:    number
+  heartRateAvg?:  number  // stocké dans notes
   caloriesActive?: number // stocké dans notes
-  date?:         string  // ISO date string, défaut = aujourd'hui
+  date?:          string  // ISO date string, défaut = aujourd'hui
 }
 
 /** Quick token test: GET /api/user/metrics/apple-health?token={userId}:{hmac} */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const token  = searchParams.get('token') ?? ''
-  const userId = verifyAppleHealthToken(token)
+  const userId = await verifyAppleHealthToken(token)
   return NextResponse.json({ valid: !!userId, userId: userId ?? null })
 }
 
@@ -32,10 +33,18 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization') ?? ''
   const token  = authHeader.replace(/^[Bb]earer\s+/i, '').trim()
-  const userId = verifyAppleHealthToken(token)
+  const userId = await verifyAppleHealthToken(token)
 
   if (!userId) {
-    return NextResponse.json({ error: 'Token invalide ou expiré' }, { status: 401 })
+    return NextResponse.json({
+      error: 'Token invalide ou expiré',
+      debug: {
+        headerReceived:  authHeader.substring(0, 40),
+        tokenLength:     token.length,
+        colonIdx:        token.lastIndexOf(':'),
+        secretAvailable: !!process.env.AUTH_SECRET,
+      },
+    }, { status: 401 })
   }
 
   let body: ShortcutPayload
@@ -63,10 +72,11 @@ export async function POST(req: Request) {
 
   const payload = {
     date,
-    ...(body.weightKg   !== undefined && { weightKg:     body.weightKg }),
-    ...(body.bodyFatPct !== undefined && { bodyFatPct:   body.bodyFatPct }),
-    ...(body.steps      !== undefined && { steps:        Math.round(body.steps) }),
-    ...(body.sleepHours !== undefined && { sleepHours:   body.sleepHours }),
+    ...(body.weightKg     !== undefined && { weightKg:     body.weightKg }),
+    ...(body.bodyFatPct   !== undefined && { bodyFatPct:   body.bodyFatPct }),
+    ...(body.muscleMassKg !== undefined && { muscleMassKg: body.muscleMassKg }),
+    ...(body.steps        !== undefined && { steps:        Math.round(body.steps) }),
+    ...(body.sleepHours   !== undefined && { sleepHours:   body.sleepHours }),
     ...(notes && { notes }),
   }
 
