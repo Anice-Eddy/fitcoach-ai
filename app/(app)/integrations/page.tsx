@@ -1,12 +1,8 @@
 'use client'
-// Page intégrations — connecteurs mockés + import Evolt manuel
 
-import { PageWrapper }        from '@/components/layout/PageWrapper'
-import { Header }             from '@/components/layout/Header'
-import { IntegrationCard }    from '@/components/integrations/IntegrationCard'
-import { EvoltImport }        from '@/components/integrations/EvoltImport'
-import { RenphoImport }       from '@/components/integrations/RenphoImport'
-import { toast }              from 'sonner'
+import { PageWrapper }     from '@/components/layout/PageWrapper'
+import { Header }          from '@/components/layout/Header'
+import { IntegrationCard } from '@/components/integrations/IntegrationCard'
 import type { IntegrationStatus } from '@/types'
 
 const INTEGRATIONS: IntegrationStatus[] = [
@@ -58,7 +54,7 @@ const INTEGRATIONS: IntegrationStatus[] = [
   {
     id:          'myfitnesspal',
     label:       'MyFitnessPal',
-    description: 'Préparez la synchro calories, macros et litres d’eau depuis MyFitnessPal.',
+    description: 'Préparez la synchro calories, macros et litres d\'eau depuis MyFitnessPal.',
     logoSrc:     '/icons/myfitnesspal.svg',
     isConnected: false,
     isMocked:    true,
@@ -66,12 +62,7 @@ const INTEGRATIONS: IntegrationStatus[] = [
   },
 ]
 
-/** Integrations settings page: shows available third-party data integrations (e.g., Evolt Active) and handles import callbacks. */
 export default function IntegrationsPage() {
-  const handleEvoltImport = (data: { bodyFatPercent?: number; muscleMassKg?: number }) => {
-    toast.success(`Evolt importé — Masse grasse : ${data.bodyFatPercent ?? '—'}%, Masse musculaire : ${data.muscleMassKg ?? '—'}kg`)
-  }
-
   return (
     <>
       <Header title="Intégrations" />
@@ -86,18 +77,12 @@ export default function IntegrationsPage() {
 
           <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 text-sm text-amber-300">
             🚧 Les intégrations OAuth (Google Fit, Strava, Fitbit, Garmin, MyFitnessPal) arrivent prochainement.
-            Import Evolt disponible dès maintenant.
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {INTEGRATIONS.map((integration) => (
               <IntegrationCard key={integration.id} integration={integration} />
             ))}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <EvoltImport onImport={handleEvoltImport} />
-            <RenphoImport />
           </div>
         </div>
       </PageWrapper>
