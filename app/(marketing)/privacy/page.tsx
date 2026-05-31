@@ -18,7 +18,7 @@ export default function PrivacyPage() {
 
       <header className="relative z-10 flex items-center gap-4 px-6 py-5 border-b border-zinc-800/60">
         <Logo href="/" size="md" />
-        <BackButton className="ml-auto inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors" />
+        <BackButton fallbackHref="/dashboard" className="ml-auto inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors" />
       </header>
 
       <main className="relative z-10 max-w-3xl mx-auto px-6 py-12 space-y-10">
