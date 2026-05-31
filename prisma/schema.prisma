@@ -289,6 +289,18 @@ model BodyMetric {
   evoltBwi    Float?
   evoltBmr    Float?
 
+  // Données Renpho (balance connectée)
+  renphoFatFreeMassKg    Float?
+  renphoSubcutaneousFatPct Float?
+  renphoVisceralFat      Float?
+  renphoBodyWaterPct     Float?
+  renphoSkeletalMusclePct Float?
+  renphoBoneMassKg       Float?
+  renphoProteinPct       Float?
+  renphoBmr              Float?
+  renphoMetabolicAge     Int?
+  renphoBmi              Float?
+
   notes String?
 
   createdAt DateTime @default(now())

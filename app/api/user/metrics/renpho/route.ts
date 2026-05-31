@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { NextResponse }      from 'next/server'
 import { auth }              from '@/lib/auth/auth'
 import { prisma }            from '@/lib/prisma/client'
-import { parseRenphoCSV }    from '@/lib/integrations/renpho'
+import { parseRenphoCSV }   from '@/lib/integrations/renpho'
 
 /** Accepts a Renpho CSV text body, parses it, and bulk-upserts body metrics (deduped by userId+date). */
 export async function POST(req: Request) {
@@ -33,11 +33,20 @@ export async function POST(req: Request) {
     })
 
     const payload = {
-      date:         row.date,
-      weightKg:     row.weightKg,
-      bodyFatPct:   row.bodyFatPct,
-      muscleMassKg: row.muscleMassKg,
-      notes:        row.notes,
+      date:                     row.date,
+      weightKg:                 row.weightKg,
+      bodyFatPct:               row.bodyFatPct,
+      muscleMassKg:             row.muscleMassKg,
+      renphoBmi:                row.renphoBmi,
+      renphoFatFreeMassKg:      row.renphoFatFreeMassKg,
+      renphoSubcutaneousFatPct: row.renphoSubcutaneousFatPct,
+      renphoVisceralFat:        row.renphoVisceralFat,
+      renphoBodyWaterPct:       row.renphoBodyWaterPct,
+      renphoSkeletalMusclePct:  row.renphoSkeletalMusclePct,
+      renphoBoneMassKg:         row.renphoBoneMassKg,
+      renphoProteinPct:         row.renphoProteinPct,
+      renphoBmr:                row.renphoBmr,
+      renphoMetabolicAge:       row.renphoMetabolicAge != null ? Math.round(row.renphoMetabolicAge) : undefined,
     }
 
     if (existing) {

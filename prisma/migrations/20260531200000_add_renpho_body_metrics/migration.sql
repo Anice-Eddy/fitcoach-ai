@@ -1,0 +1,11 @@
+ALTER TABLE "body_metrics"
+  ADD COLUMN IF NOT EXISTS "renphoFatFreeMassKg"     DOUBLE PRECISION,
+  ADD COLUMN IF NOT EXISTS "renphoSubcutaneousFatPct" DOUBLE PRECISION,
+  ADD COLUMN IF NOT EXISTS "renphoVisceralFat"        DOUBLE PRECISION,
+  ADD COLUMN IF NOT EXISTS "renphoBodyWaterPct"       DOUBLE PRECISION,
+  ADD COLUMN IF NOT EXISTS "renphoSkeletalMusclePct"  DOUBLE PRECISION,
+  ADD COLUMN IF NOT EXISTS "renphoBoneMassKg"         DOUBLE PRECISION,
+  ADD COLUMN IF NOT EXISTS "renphoProteinPct"         DOUBLE PRECISION,
+  ADD COLUMN IF NOT EXISTS "renphoBmr"                DOUBLE PRECISION,
+  ADD COLUMN IF NOT EXISTS "renphoMetabolicAge"       INTEGER,
+  ADD COLUMN IF NOT EXISTS "renphoBmi"                DOUBLE PRECISION;

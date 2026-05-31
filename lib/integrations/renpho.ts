@@ -2,31 +2,38 @@
 // Export obtenu depuis l'app Renpho : Profil → Exporter les données → CSV
 
 export interface RenphoRow {
-  date:         Date
-  weightKg:     number | undefined
-  bodyFatPct:   number | undefined
-  muscleMassKg: number | undefined
-  notes:        string | undefined
+  date:                    Date
+  weightKg:                number | undefined
+  bodyFatPct:              number | undefined
+  muscleMassKg:            number | undefined
+  renphoBmi:               number | undefined
+  renphoFatFreeMassKg:     number | undefined
+  renphoSubcutaneousFatPct: number | undefined
+  renphoVisceralFat:       number | undefined
+  renphoBodyWaterPct:      number | undefined
+  renphoSkeletalMusclePct: number | undefined
+  renphoBoneMassKg:        number | undefined
+  renphoProteinPct:        number | undefined
+  renphoBmr:               number | undefined
+  renphoMetabolicAge:      number | undefined
 }
 
-// Renpho CSV columns mapped to our schema.
 const COL_MAP: Record<string, keyof RenphoRow | null> = {
-  'Time of Measurement': null, // handled separately as date
-  'Weight(kg)':          'weightKg',
-  'Body Fat(%)':         'bodyFatPct',
-  'Muscle Mass(kg)':     'muscleMassKg',
-  // Parsed but stored in notes as extra context
-  'BMI':                 null,
-  'Visceral Fat':        null,
-  'Body Water(%)':       null,
-  'Skeletal Muscle(%)':  null,
-  'Bone Mass(kg)':       null,
-  'Protein(%)':          null,
-  'BMR(kcal)':           null,
-  'Metabolic Age':       null,
+  'Time of Measurement':      null, // handled separately as date
+  'Weight(kg)':               'weightKg',
+  'BMI':                      'renphoBmi',
+  'Body Fat(%)':              'bodyFatPct',
+  'Fat-free Body Weight(kg)': 'renphoFatFreeMassKg',
+  'Subcutaneous Fat(%)':      'renphoSubcutaneousFatPct',
+  'Visceral Fat':             'renphoVisceralFat',
+  'Body Water(%)':            'renphoBodyWaterPct',
+  'Skeletal Muscle(%)':       'renphoSkeletalMusclePct',
+  'Muscle Mass(kg)':          'muscleMassKg',
+  'Bone Mass(kg)':            'renphoBoneMassKg',
+  'Protein(%)':               'renphoProteinPct',
+  'BMR(kcal)':                'renphoBmr',
+  'Metabolic Age':            'renphoMetabolicAge',
 }
-
-const EXTRA_NOTES_COLS = ['BMI', 'Visceral Fat', 'Body Water(%)', 'Skeletal Muscle(%)', 'Bone Mass(kg)', 'Protein(%)', 'BMR(kcal)', 'Metabolic Age']
 
 function parseNum(val: string): number | undefined {
   const n = parseFloat(val.trim())
@@ -37,8 +44,7 @@ export function parseRenphoCSV(csvText: string): RenphoRow[] {
   const lines = csvText.trim().split('\n').filter(Boolean)
   if (lines.length < 2) throw new Error('CSV vide ou invalide')
 
-  // Detect separator (comma or semicolon)
-  const sep  = lines[0].includes(';') ? ';' : ','
+  const sep     = lines[0].includes(';') ? ';' : ','
   const headers = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g, ''))
 
   const dateIdx = headers.indexOf('Time of Measurement')
@@ -50,29 +56,26 @@ export function parseRenphoCSV(csvText: string): RenphoRow[] {
     const cols = lines[i].split(sep).map(c => c.trim().replace(/^"|"$/g, ''))
     if (cols.length < 2) continue
 
-    const rawDate = cols[dateIdx]
-    const date    = new Date(rawDate)
+    const date = new Date(cols[dateIdx])
     if (isNaN(date.getTime())) continue
 
-    const row: RenphoRow = { date, weightKg: undefined, bodyFatPct: undefined, muscleMassKg: undefined, notes: undefined }
-
-    // Extra data packed into notes
-    const extras: string[] = []
+    const row: RenphoRow = {
+      date,
+      weightKg: undefined, bodyFatPct: undefined, muscleMassKg: undefined,
+      renphoBmi: undefined, renphoFatFreeMassKg: undefined, renphoSubcutaneousFatPct: undefined,
+      renphoVisceralFat: undefined, renphoBodyWaterPct: undefined, renphoSkeletalMusclePct: undefined,
+      renphoBoneMassKg: undefined, renphoProteinPct: undefined, renphoBmr: undefined,
+      renphoMetabolicAge: undefined,
+    }
 
     headers.forEach((header, idx) => {
-      const val = cols[idx] ?? ''
+      const val   = cols[idx] ?? ''
       const field = COL_MAP[header]
-      if (field && field !== null && val) {
+      if (field && val) {
         (row as unknown as Record<string, unknown>)[field] = parseNum(val)
-      }
-      if (EXTRA_NOTES_COLS.includes(header) && val) {
-        extras.push(`${header}: ${val}`)
       }
     })
 
-    if (extras.length) row.notes = `Renpho — ${extras.join(' | ')}`
-
-    // Only include rows that have at least weight or body fat
     if (row.weightKg !== undefined || row.bodyFatPct !== undefined) {
       rows.push(row)
     }
