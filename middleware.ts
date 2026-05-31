@@ -45,6 +45,7 @@ const MEMBER_PREFIXES = [
   '/api/user/notes',
   '/api/user/notifications',
   '/api/user/profile',
+  '/api/user/apple-health-token',
   '/api/user/training',
 ]
 
