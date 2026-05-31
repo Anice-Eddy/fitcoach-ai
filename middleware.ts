@@ -14,6 +14,8 @@ const PUBLIC_ROUTES = [
   '/choose',
   '/coaches',
   '/coaching/status',
+  '/terms',
+  '/privacy',
 ]
 
 const PUBLIC_PREFIXES = [
