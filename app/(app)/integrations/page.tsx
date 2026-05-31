@@ -5,6 +5,7 @@ import { PageWrapper }        from '@/components/layout/PageWrapper'
 import { Header }             from '@/components/layout/Header'
 import { IntegrationCard }    from '@/components/integrations/IntegrationCard'
 import { EvoltImport }        from '@/components/integrations/EvoltImport'
+import { RenphoImport }       from '@/components/integrations/RenphoImport'
 import { toast }              from 'sonner'
 import type { IntegrationStatus } from '@/types'
 
@@ -94,7 +95,10 @@ export default function IntegrationsPage() {
             ))}
           </div>
 
-          <EvoltImport onImport={handleEvoltImport} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <EvoltImport onImport={handleEvoltImport} />
+            <RenphoImport />
+          </div>
         </div>
       </PageWrapper>
     </>
