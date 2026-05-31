@@ -57,6 +57,9 @@ export default auth((req: NextAuthRequest) => {
   // Static assets and auth API routes stay public.
   if (pathname.startsWith('/api/auth')) return NextResponse.next()
 
+  // Webhook endpoints that use Bearer token auth bypass session middleware.
+  if (pathname === '/api/user/metrics/apple-health') return NextResponse.next()
+
   if (session?.user) {
     const isCoach = session.user.isCoach === true
     const hasMemberProfile = session.user.hasMemberProfile === true
@@ -94,5 +97,6 @@ export default auth((req: NextAuthRequest) => {
 })
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|icons|images|manifest.json|sw.js).*)'],
+  // Exclude static assets AND webhook endpoints that use their own Bearer token auth.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|icons|images|manifest.json|sw.js|api/user/metrics/apple-health).*)'],
 }
