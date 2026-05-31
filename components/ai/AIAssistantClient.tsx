@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Bot, Brain, Dumbbell, Loader2, MessageSquare, Send, Sparkles, Utensils, Users } from 'lucide-react'
+import { AlertTriangle, Bot, Brain, Dumbbell, Loader2, MessageSquare, Send, Sparkles, Utensils, Users } from 'lucide-react'
 import { InsightCards, MemoryStrip } from '@/components/ai/InsightCards'
 import type { InsightsPayload } from '@/app/api/ai/insights/route'
 
@@ -184,7 +184,10 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-white sm:text-2xl">Assistant IA</h1>
-          <p className="mt-1 text-sm text-zinc-400">Analyse personnalisée basée sur tes données réelles.</p>
+          <p className="mt-1 text-sm text-zinc-400">
+            Analyse personnalisée basée sur tes données réelles.{' '}
+            <span className="text-zinc-600">L'IA est un outil d'aide, pas un substitut à un professionnel de santé.</span>
+          </p>
         </div>
         {mode === 'coach' && (
           <label className="min-w-64">
@@ -208,6 +211,22 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
           </label>
         )}
       </div>
+
+      {/* ── AI disclaimer ─────────────────────────────────────── */}
+      {mode === 'member' && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/8 px-4 py-3">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-400" />
+          <p className="text-xs text-amber-200/75 leading-relaxed">
+            <strong className="text-amber-300 font-semibold">Information importante —</strong>{' '}
+            L'assistant IA de BodyOps est un outil d'aide à la planification et ne remplace pas un coach certifié,
+            un nutritionniste ou un médecin. Consultez un professionnel de santé avant tout changement significatif
+            de régime alimentaire ou d'entraînement.{' '}
+            <a href="/terms" target="_blank" className="underline hover:text-amber-300 transition-colors">CGU</a>
+            {' · '}
+            <a href="/privacy" target="_blank" className="underline hover:text-amber-300 transition-colors">Confidentialité</a>
+          </p>
+        </div>
+      )}
 
       {/* ── Insight badges ────────────────────────────────────── */}
       {insights && <InsightCards insights={insights.insights} />}
