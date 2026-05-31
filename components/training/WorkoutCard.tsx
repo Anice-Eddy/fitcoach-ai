@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Clock, Dumbbell, CheckCircle2, Circle, PlayCircle } from 'lucide-react'
 import type { WorkoutSession } from '@/types'
 
-interface Props { session: WorkoutSession; index: number }
+interface Props { session: WorkoutSession; index: number; isToday?: boolean }
 
 const STATUS_CONFIG = {
   PLANNED:     { icon: Circle,       color: 'text-zinc-400', bg: 'bg-zinc-400/10',  label: 'Planifiée' },
@@ -16,7 +16,7 @@ const STATUS_CONFIG = {
 }
 
 /** Animated workout session card showing status icon, duration estimate, and exercise list with a link to start or view the session. */
-export function WorkoutCard({ session, index }: Props) {
+export function WorkoutCard({ session, index, isToday = false }: Props) {
   const config     = STATUS_CONFIG[session.status]
   const StatusIcon = config.icon
 
@@ -25,7 +25,9 @@ export function WorkoutCard({ session, index }: Props) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06 }}
-      className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5 hover:border-zinc-700 transition-colors"
+      className={`rounded-2xl bg-zinc-900 border p-5 hover:border-zinc-700 transition-colors ${
+        isToday ? 'border-[#C8F135]/40' : 'border-zinc-800'
+      }`}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -33,7 +35,14 @@ export function WorkoutCard({ session, index }: Props) {
             <StatusIcon className={`size-4 ${config.color}`} />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-white">{session.name}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-white">{session.name}</h3>
+              {isToday && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-[#C8F135]/15 text-[#C8F135] font-semibold">
+                  Aujourd&apos;hui
+                </span>
+              )}
+            </div>
             <span className={`text-xs ${config.color}`}>{config.label}</span>
           </div>
         </div>

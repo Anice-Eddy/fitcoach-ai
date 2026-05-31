@@ -29,11 +29,12 @@ export function ProductCard({ product }: Props) {
             onError={() => setImgError(true)}
           />
         ) : (
-          <span className="text-6xl select-none">{meta?.emoji ?? '📦'}</span>
+          meta ? <meta.icon className="size-14 text-zinc-600" /> : null
         )}
         {/* Category chip */}
-        <span className="absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full bg-zinc-900/80 text-zinc-300 backdrop-blur-sm">
-          {meta?.emoji} {meta?.label}
+        <span className="absolute top-2 right-2 flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-zinc-900/80 text-zinc-300 backdrop-blur-sm">
+          {meta && <meta.icon className="size-3" />}
+          {meta?.label}
         </span>
       </div>
 

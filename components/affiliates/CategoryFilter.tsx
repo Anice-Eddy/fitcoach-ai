@@ -1,8 +1,9 @@
 'use client'
-// Filtre par catégorie — chips sélectionnables pour la boutique affiliée
 
+import { ShoppingBag } from 'lucide-react'
 import { AFFILIATE_CATEGORIES } from '@/lib/affiliates/categories'
 import type { AffiliateCategory } from '@/types'
+import type { LucideIcon } from 'lucide-react'
 
 interface Props {
   selected: AffiliateCategory | 'ALL'
@@ -10,16 +11,16 @@ interface Props {
   counts:   Record<string, number>
 }
 
-/** Renders category filter chip buttons for the affiliate shop; highlights the active category and shows per-category product counts. */
 export function CategoryFilter({ selected, onChange, counts }: Props) {
-  const all = [
-    { id: 'ALL' as const, label: 'Tous',  emoji: '🛍️' },
-    ...AFFILIATE_CATEGORIES.map((c) => ({ id: c.id, label: c.label, emoji: c.emoji })),
+  const all: { id: AffiliateCategory | 'ALL'; label: string; icon: LucideIcon }[] = [
+    { id: 'ALL', label: 'Tous', icon: ShoppingBag },
+    ...AFFILIATE_CATEGORIES.map((c) => ({ id: c.id, label: c.label, icon: c.icon })),
   ]
 
   return (
     <div className="flex flex-wrap gap-2">
       {all.map((cat) => {
+        const Icon   = cat.icon
         const count  = cat.id === 'ALL' ? Object.values(counts).reduce((a, b) => a + b, 0) : (counts[cat.id] ?? 0)
         const active = selected === cat.id
 
@@ -33,7 +34,8 @@ export function CategoryFilter({ selected, onChange, counts }: Props) {
                 : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
             }`}
           >
-            {cat.emoji} {cat.label}
+            <Icon className="size-3.5" />
+            {cat.label}
             <span className={`text-xs px-1 rounded ${active ? 'bg-zinc-900/20' : 'bg-zinc-700 text-zinc-400'}`}>
               {count}
             </span>

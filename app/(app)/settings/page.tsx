@@ -8,7 +8,8 @@ import { PageWrapper }          from '@/components/layout/PageWrapper'
 import { Header }               from '@/components/layout/Header'
 import { toast }                from 'sonner'
 import { kgToLb, lbToKg, cmToFtIn, ftInToCm } from '@/utils/unit-conversions'
-import { Home, Dumbbell, Building2, TreePine, LogOut, Trash2, Save, User, Sparkles, ArrowRight, Scale, Target, CalendarDays, Plus, X, AlertTriangle } from 'lucide-react'
+import { Home, Dumbbell, Building2, TreePine, LogOut, Trash2, Save, User, Sparkles, ArrowRight, Scale, Target, CalendarDays, Plus, X, AlertTriangle, Flame, Activity, Leaf } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { InjuryEntry } from '@/utils/validators'
 import { DeleteAccountModal } from '@/components/ui/DeleteAccountModal'
 import { useMyCoach } from '@/lib/coach/use-my-coach'
@@ -31,13 +32,13 @@ const ACTIVITY_OPTIONS = [
   { value: 'EXTREMELY_ACTIVE',  label: 'Extrêmement actif', desc: 'Athlète, 2×/jour' },
 ]
 
-const GOAL_OPTIONS = [
-  { value: 'WEIGHT_LOSS',     emoji: '🔥', label: 'Perte de poids',      desc: 'Déficit de 500 kcal/jour' },
-  { value: 'MUSCLE_GAIN',     emoji: '💪', label: 'Prise de masse',       desc: 'Surplus de 300 kcal/jour' },
-  { value: 'MAINTENANCE',     emoji: '⚖️', label: 'Maintien',             desc: 'Calories de stabilité' },
-  { value: 'ENDURANCE',       emoji: '🏃', label: 'Endurance',            desc: 'Performance cardio' },
-  { value: 'GENERAL_FITNESS', emoji: '🎯', label: 'Forme générale',       desc: 'Santé et bien-être' },
-  { value: 'FLEXIBILITY',     emoji: '🧘', label: 'Souplesse / Mobilité', desc: 'Yoga, étirements' },
+const GOAL_OPTIONS: { value: string; icon: LucideIcon; label: string; desc: string }[] = [
+  { value: 'WEIGHT_LOSS',     icon: Flame,    label: 'Perte de poids',      desc: 'Déficit de 500 kcal/jour' },
+  { value: 'MUSCLE_GAIN',     icon: Dumbbell, label: 'Prise de masse',       desc: 'Surplus de 300 kcal/jour' },
+  { value: 'MAINTENANCE',     icon: Scale,    label: 'Maintien',             desc: 'Calories de stabilité' },
+  { value: 'ENDURANCE',       icon: Activity, label: 'Endurance',            desc: 'Performance cardio' },
+  { value: 'GENERAL_FITNESS', icon: Target,   label: 'Forme générale',       desc: 'Santé et bien-être' },
+  { value: 'FLEXIBILITY',     icon: Leaf,     label: 'Souplesse / Mobilité', desc: 'Yoga, étirements' },
 ]
 
 const LEVEL_OPTIONS = [
@@ -670,18 +671,24 @@ export default function SettingsPage() {
           <div>
             <p className="text-xs text-zinc-500 mb-2">Objectif principal</p>
             <div className="grid grid-cols-2 gap-2">
-              {GOAL_OPTIONS.map((opt) => (
-                <button key={opt.value} type="button"
-                  onClick={() => setFitnessGoal(fitnessGoal === opt.value ? '' : opt.value)}
-                  className={`p-3 rounded-xl border text-left transition-all ${
-                    fitnessGoal === opt.value ? 'border-[#C8F135] bg-[#C8F135]/10' : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
-                  }`}
-                >
-                  <div className="text-xl mb-1">{opt.emoji}</div>
-                  <p className={`text-xs font-semibold ${fitnessGoal === opt.value ? 'text-[#C8F135]' : 'text-white'}`}>{opt.label}</p>
-                  <p className="text-xs text-zinc-500">{opt.desc}</p>
-                </button>
-              ))}
+              {GOAL_OPTIONS.map((opt) => {
+                const Icon     = opt.icon
+                const isActive = fitnessGoal === opt.value
+                return (
+                  <button key={opt.value} type="button"
+                    onClick={() => setFitnessGoal(isActive ? '' : opt.value)}
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      isActive ? 'border-[#C8F135] bg-[#C8F135]/10' : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
+                    }`}
+                  >
+                    <div className="mb-1.5">
+                      <Icon className={`size-5 ${isActive ? 'text-[#C8F135]' : 'text-zinc-400'}`} />
+                    </div>
+                    <p className={`text-xs font-semibold ${isActive ? 'text-[#C8F135]' : 'text-white'}`}>{opt.label}</p>
+                    <p className="text-xs text-zinc-500">{opt.desc}</p>
+                  </button>
+                )
+              })}
             </div>
           </div>
 

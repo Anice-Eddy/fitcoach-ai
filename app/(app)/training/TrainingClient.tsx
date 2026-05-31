@@ -132,9 +132,12 @@ export function TrainingClient() {
           />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {sessions.map((s, i) => (
-              <WorkoutCard key={s.id} session={s} index={i} />
-            ))}
+            {(() => {
+              const todayIdx = sessions.findIndex(s => s.status === 'IN_PROGRESS' || s.status === 'PLANNED')
+              return sessions.map((s, i) => (
+                <WorkoutCard key={s.id} session={s} index={i} isToday={i === todayIdx} />
+              ))
+            })()}
           </div>
         )}
       </div>

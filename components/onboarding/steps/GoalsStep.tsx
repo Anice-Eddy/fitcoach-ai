@@ -1,9 +1,10 @@
 'use client'
-// Étape 4 : objectif principal, poids cible optionnel, niveau sportif
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { goalsSchema, type GoalsData } from '@/utils/validators'
+import { Flame, Dumbbell, Scale, Activity, Target, Leaf, ChevronsUp, ChevronsDown, Zap } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 interface Props {
   defaultValues?: Partial<GoalsData>
@@ -11,13 +12,13 @@ interface Props {
   onBack: () => void
 }
 
-const GOAL_OPTIONS = [
-  { value: 'WEIGHT_LOSS',     emoji: '🔥', label: 'Perte de poids',     desc: 'Déficit de 500 kcal/jour' },
-  { value: 'MUSCLE_GAIN',     emoji: '💪', label: 'Prise de masse',      desc: 'Surplus de 300 kcal/jour' },
-  { value: 'MAINTENANCE',     emoji: '⚖️', label: 'Maintien',            desc: 'Calories de stabilité' },
-  { value: 'ENDURANCE',       emoji: '🏃', label: 'Endurance',           desc: 'Performance cardio' },
-  { value: 'GENERAL_FITNESS', emoji: '🎯', label: 'Forme générale',      desc: 'Santé et bien-être' },
-  { value: 'FLEXIBILITY',     emoji: '🧘', label: 'Souplesse / Mobilité', desc: 'Yoga, étirements' },
+const GOAL_OPTIONS: { value: string; icon: LucideIcon; label: string; desc: string }[] = [
+  { value: 'WEIGHT_LOSS',     icon: Flame,    label: 'Perte de poids',      desc: 'Déficit de 500 kcal/jour' },
+  { value: 'MUSCLE_GAIN',     icon: Dumbbell, label: 'Prise de masse',       desc: 'Surplus de 300 kcal/jour' },
+  { value: 'MAINTENANCE',     icon: Scale,    label: 'Maintien',             desc: 'Calories de stabilité' },
+  { value: 'ENDURANCE',       icon: Activity, label: 'Endurance',            desc: 'Performance cardio' },
+  { value: 'GENERAL_FITNESS', icon: Target,   label: 'Forme générale',       desc: 'Santé et bien-être' },
+  { value: 'FLEXIBILITY',     icon: Leaf,     label: 'Souplesse / Mobilité', desc: 'Yoga, étirements' },
 ]
 
 const LEVEL_OPTIONS = [
@@ -27,13 +28,12 @@ const LEVEL_OPTIONS = [
   { value: 'ATHLETE',      label: 'Athlète',       desc: '5 ans+' },
 ]
 
-const FOCUS_OPTIONS = [
-  { value: 'UPPER_BODY', emoji: '💪', label: 'Haut du corps',  desc: 'Pecs, dos, épaules, bras' },
-  { value: 'LOWER_BODY', emoji: '🦵', label: 'Bas du corps',   desc: 'Fessiers, cuisses, mollets' },
-  { value: 'FULL_BODY',  emoji: '⚡', label: 'Corps entier',   desc: 'Équilibre haut & bas' },
+const FOCUS_OPTIONS: { value: string; icon: LucideIcon; label: string; desc: string }[] = [
+  { value: 'UPPER_BODY', icon: ChevronsUp,   label: 'Haut du corps',  desc: 'Pecs, dos, épaules, bras' },
+  { value: 'LOWER_BODY', icon: ChevronsDown, label: 'Bas du corps',   desc: 'Fessiers, cuisses, mollets' },
+  { value: 'FULL_BODY',  icon: Zap,          label: 'Corps entier',   desc: 'Équilibre haut & bas' },
 ]
 
-/** Onboarding step for selecting the primary fitness goal, optional target weight, and fitness level. */
 export function GoalsStep({ defaultValues, onNext, onBack }: Props) {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<GoalsData>({
     resolver:      zodResolver(goalsSchema),
@@ -50,25 +50,29 @@ export function GoalsStep({ defaultValues, onNext, onBack }: Props) {
       <div>
         <label className="block text-sm font-medium text-zinc-300 mb-3">Objectif principal</label>
         <div className="grid grid-cols-2 gap-2">
-          {GOAL_OPTIONS.map((opt) => (
-            <button key={opt.value} type="button"
-              onClick={() => setValue('fitnessGoal', goal === opt.value ? (undefined as unknown as GoalsData['fitnessGoal']) : opt.value as GoalsData['fitnessGoal'])}
-              className={`p-3 rounded-xl border text-left transition-all ${
-                goal === opt.value
-                  ? 'border-[#C8F135] bg-[#C8F135]/10'
-                  : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
-              }`}
-            >
-              <div className="text-xl mb-1">{opt.emoji}</div>
-              <p className={`text-xs font-semibold ${goal === opt.value ? 'text-[#C8F135]' : 'text-white'}`}>{opt.label}</p>
-              <p className="text-xs text-zinc-500">{opt.desc}</p>
-            </button>
-          ))}
+          {GOAL_OPTIONS.map((opt) => {
+            const Icon     = opt.icon
+            const isActive = goal === opt.value
+            return (
+              <button key={opt.value} type="button"
+                onClick={() => setValue('fitnessGoal', isActive ? (undefined as unknown as GoalsData['fitnessGoal']) : opt.value as GoalsData['fitnessGoal'])}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  isActive ? 'border-[#C8F135] bg-[#C8F135]/10' : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
+                }`}
+              >
+                <div className="mb-1.5">
+                  <Icon className={`size-5 ${isActive ? 'text-[#C8F135]' : 'text-zinc-400'}`} />
+                </div>
+                <p className={`text-xs font-semibold ${isActive ? 'text-[#C8F135]' : 'text-white'}`}>{opt.label}</p>
+                <p className="text-xs text-zinc-500">{opt.desc}</p>
+              </button>
+            )
+          })}
         </div>
         {errors.fitnessGoal && <p className="mt-1.5 text-xs text-red-400">{errors.fitnessGoal.message}</p>}
       </div>
 
-      {/* Poids cible (optionnel, affiché si perte/prise de masse) */}
+      {/* Poids cible (optionnel) */}
       {(goal === 'WEIGHT_LOSS' || goal === 'MUSCLE_GAIN') && (
         <div>
           <label className="block text-sm font-medium text-zinc-300 mb-2">
@@ -88,9 +92,7 @@ export function GoalsStep({ defaultValues, onNext, onBack }: Props) {
             <button key={opt.value} type="button"
               onClick={() => setValue('fitnessLevel', level === opt.value ? (undefined as unknown as GoalsData['fitnessLevel']) : opt.value as GoalsData['fitnessLevel'])}
               className={`p-3 rounded-xl border text-left transition-all ${
-                level === opt.value
-                  ? 'border-[#C8F135] bg-[#C8F135]/10'
-                  : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
+                level === opt.value ? 'border-[#C8F135] bg-[#C8F135]/10' : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
               }`}
             >
               <p className={`text-sm font-semibold ${level === opt.value ? 'text-[#C8F135]' : 'text-white'}`}>{opt.label}</p>
@@ -108,20 +110,24 @@ export function GoalsStep({ defaultValues, onNext, onBack }: Props) {
         </label>
         <p className="text-xs text-zinc-500 mb-3">L&apos;IA adaptera le ratio haut/bas du corps dans chaque programme.</p>
         <div className="grid grid-cols-3 gap-2">
-          {FOCUS_OPTIONS.map((opt) => (
-            <button key={opt.value} type="button"
-              onClick={() => setValue('bodyFocus', focus === opt.value ? undefined : opt.value as GoalsData['bodyFocus'])}
-              className={`p-3 rounded-xl border text-left transition-all ${
-                focus === opt.value
-                  ? 'border-[#C8F135] bg-[#C8F135]/10'
-                  : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
-              }`}
-            >
-              <div className="text-xl mb-1">{opt.emoji}</div>
-              <p className={`text-xs font-semibold ${focus === opt.value ? 'text-[#C8F135]' : 'text-white'}`}>{opt.label}</p>
-              <p className="text-xs text-zinc-500 leading-tight">{opt.desc}</p>
-            </button>
-          ))}
+          {FOCUS_OPTIONS.map((opt) => {
+            const Icon     = opt.icon
+            const isActive = focus === opt.value
+            return (
+              <button key={opt.value} type="button"
+                onClick={() => setValue('bodyFocus', isActive ? undefined : opt.value as GoalsData['bodyFocus'])}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  isActive ? 'border-[#C8F135] bg-[#C8F135]/10' : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
+                }`}
+              >
+                <div className="mb-1.5">
+                  <Icon className={`size-5 ${isActive ? 'text-[#C8F135]' : 'text-zinc-400'}`} />
+                </div>
+                <p className={`text-xs font-semibold ${isActive ? 'text-[#C8F135]' : 'text-white'}`}>{opt.label}</p>
+                <p className="text-xs text-zinc-500 leading-tight">{opt.desc}</p>
+              </button>
+            )
+          })}
         </div>
       </div>
 
