@@ -29,7 +29,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
   const { profile } = useUserStore()
   const {
     activeSession, startSession, setCurrentExercise,
-    toggleExercise, replaceExercise, startRestTimer, endSession,
+    toggleExercise, startRestTimer, endSession,
   } = useTrainingStore()
 
   const [showSummary, setShowSummary] = useState(false)
