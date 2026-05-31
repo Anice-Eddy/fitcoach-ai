@@ -92,7 +92,7 @@ export default function PrivacyPage() {
           <ul className="mt-2 list-disc list-inside space-y-1">
             <li><strong>Hébergement</strong> — Vercel (États-Unis, certifié EU-US Data Privacy Framework)</li>
             <li><strong>Base de données</strong> — Neon / Supabase (UE)</li>
-            <li><strong>IA</strong> — Anthropic Claude API (États-Unis, données non conservées après traitement)</li>
+            <li><strong>IA</strong> — Anthropic Claude API (États-Unis, logs conservés 30 jours à des fins de sécurité, non utilisés pour entraîner les modèles — <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-300">politique Anthropic</a>)</li>
           </ul>
         </Section>
 
