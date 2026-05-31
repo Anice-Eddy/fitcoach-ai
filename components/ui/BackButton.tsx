@@ -1,21 +1,21 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { ChevronLeft } from 'lucide-react'
 
 interface Props {
   label?: string
-  fallbackHref?: string
   className?: string
 }
 
-export function BackButton({ label = 'Retour', fallbackHref = '/', className }: Props) {
-  const router = useRouter()
+export function BackButton({ label = 'Retour', className }: Props) {
+  const router  = useRouter()
+  const { status } = useSession()
 
   const handleBack = () => {
-    // Nouvel onglet (target="_blank") → pas d'historique, history.length === 1
     if (window.history.length <= 1) {
-      router.push(fallbackHref)
+      router.push(status === 'authenticated' ? '/dashboard' : '/')
     } else {
       router.back()
     }
