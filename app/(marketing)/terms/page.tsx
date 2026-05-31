@@ -98,7 +98,6 @@ export default function TermsPage() {
 
         <div className="pt-6 border-t border-zinc-800 flex flex-wrap gap-4 text-sm text-zinc-500">
           <Link href="/privacy" className="hover:text-white transition-colors">Politique de confidentialité →</Link>
-          <Link href="/" className="hover:text-white transition-colors">Retour à l'accueil</Link>
         </div>
       </main>
     </div>

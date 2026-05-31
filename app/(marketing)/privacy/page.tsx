@@ -134,7 +134,6 @@ export default function PrivacyPage() {
 
         <div className="pt-6 border-t border-zinc-800 flex flex-wrap gap-4 text-sm text-zinc-500">
           <Link href="/terms" className="hover:text-white transition-colors">Conditions d'utilisation →</Link>
-          <Link href="/" className="hover:text-white transition-colors">Retour à l'accueil</Link>
         </div>
       </main>
     </div>
