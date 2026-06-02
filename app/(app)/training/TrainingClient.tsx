@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { useUserStore }    from '@/stores/userStore'
-import { generateProgram } from '@/lib/training/generate-program'
-import { WorkoutCard }     from '@/components/training/WorkoutCard'
-import { EmptyState }      from '@/components/ui/EmptyState'
-import { ListSkeleton }    from '@/components/ui/LoadingSkeleton'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { useUserStore }      from '@/stores/userStore'
+import { useTrainingStore }  from '@/stores/trainingStore'
+import { generateProgram }   from '@/lib/training/generate-program'
+import { WorkoutCard }       from '@/components/training/WorkoutCard'
+import { EmptyState }        from '@/components/ui/EmptyState'
+import { ListSkeleton }      from '@/components/ui/LoadingSkeleton'
 import type { WorkoutSession } from '@/types'
 import { Dumbbell, RefreshCw } from 'lucide-react'
 
@@ -14,21 +15,36 @@ interface DBProgram { id: string; name: string; currentWeek: number; weeksTotal:
 
 /** Interactive training view: fetches the active workout program and renders each session with exercise details and status controls. */
 export function TrainingClient() {
-  const { profile }             = useUserStore()
-  const [sessions, setSessions] = useState<WorkoutSession[]>([])
-  const [programName, setProgramName]   = useState('')
-  const [programWeek, setProgramWeek]   = useState({ current: 1, total: 8 })
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState<string | null>(null)
+  const { profile }     = useUserStore()
+  const { programCache, setProgramCache, clearProgramCache, isProgramCacheFresh } = useTrainingStore()
 
-  // Sérialiser l'équipement pour éviter que la référence tableau change à chaque render
+  const [sessions,     setSessions]     = useState<WorkoutSession[]>(programCache?.sessions ?? [])
+  const [programName,  setProgramName]  = useState(programCache?.programName ?? '')
+  const [programWeek,  setProgramWeek]  = useState(programCache?.programWeek ?? { current: 1, total: 8 })
+  const [loading,      setLoading]      = useState(!isProgramCacheFresh())
+  const [error,        setError]        = useState<string | null>(null)
+
+  // Ref pour éviter le double-fetch du React Strict Mode en développement
+  const fetchingRef = useRef(false)
+
+  // Sérialiser l'équipement — évite que la référence tableau déstabilise useCallback
   const equipmentKey = JSON.stringify(profile?.availableEquipment ?? [])
 
-  const loadProgram = useCallback(() => {
+  const fetchAndCache = useCallback((force = false) => {
     if (!profile?.fitnessGoal || !profile?.fitnessLevel) {
       setLoading(false)
       return
     }
+    // Utiliser le cache si frais et pas de forçage
+    if (!force && isProgramCacheFresh() && programCache) {
+      setSessions(programCache.sessions)
+      setProgramName(programCache.programName)
+      setProgramWeek(programCache.programWeek)
+      setLoading(false)
+      return
+    }
+    if (fetchingRef.current) return
+    fetchingRef.current = true
     setLoading(true)
     setError(null)
 
@@ -38,9 +54,6 @@ export function TrainingClient() {
         return res.json() as Promise<DBProgram>
       })
       .then(program => {
-        setProgramName(program.name)
-        setProgramWeek({ current: program.currentWeek, total: program.weeksTotal })
-
         const generated = generateProgram({
           fitnessGoal:         profile.fitnessGoal!,
           fitnessLevel:        profile.fitnessLevel!,
@@ -59,23 +72,45 @@ export function TrainingClient() {
             durationMinutes: dbSess.durationMinutes ?? gen.durationMinutes,
           }
         })
+
+        const cache = {
+          sessions:    combined,
+          programName: program.name,
+          programWeek: { current: program.currentWeek, total: program.weeksTotal },
+          cachedAt:    Date.now(),
+        }
+        setProgramCache(cache)
         setSessions(combined)
+        setProgramName(program.name)
+        setProgramWeek({ current: program.currentWeek, total: program.weeksTotal })
         setLoading(false)
       })
       .catch(() => {
         setError('Impossible de charger le programme.')
         setLoading(false)
       })
+      .finally(() => { fetchingRef.current = false })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.fitnessGoal, profile?.fitnessLevel, profile?.trainingDaysPerWeek, equipmentKey])
 
-  useEffect(() => { loadProgram() }, [loadProgram])
+  useEffect(() => { fetchAndCache() }, [fetchAndCache])
 
   const regenerate = async () => {
+    clearProgramCache()
     setLoading(true)
     await fetch('/api/user/training', { method: 'DELETE' })
-    loadProgram()
+    fetchAndCache(true)
   }
+
+  // Mise à jour de l'état local si le cache change (ex: autre onglet)
+  useEffect(() => {
+    if (programCache && isProgramCacheFresh()) {
+      setSessions(programCache.sessions)
+      setProgramName(programCache.programName)
+      setProgramWeek(programCache.programWeek)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [programCache])
 
   if (loading) return <ListSkeleton rows={4} />
 

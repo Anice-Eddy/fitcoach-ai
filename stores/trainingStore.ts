@@ -3,7 +3,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { SessionExercise } from '@/types'
+import type { SessionExercise, WorkoutSession } from '@/types'
 
 export interface ActiveSession {
   sessionId:       string
@@ -15,13 +15,26 @@ export interface ActiveSession {
   restSecondsLeft: number
 }
 
+export interface ProgramCache {
+  sessions:      WorkoutSession[]
+  programName:   string
+  programWeek:   { current: number; total: number }
+  cachedAt:      number // timestamp ms
+}
+
+const PROGRAM_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
 interface TrainingState {
   activeProgramId: string | null
   activeSession:   ActiveSession | null
+  programCache:    ProgramCache | null
   isLoading:       boolean
   error:           string | null
 
   setActiveProgram:    (id: string | null) => void
+  setProgramCache:     (cache: ProgramCache) => void
+  clearProgramCache:   () => void
+  isProgramCacheFresh: () => boolean
   startSession:        (session: Omit<ActiveSession, 'startedAt'>) => void
   completeExercise:    (index: number, log: Partial<SessionExercise>) => void
   toggleExercise:      (index: number, log?: Partial<SessionExercise>) => void
@@ -38,13 +51,20 @@ interface TrainingState {
 
 export const useTrainingStore = create<TrainingState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       activeProgramId: null,
       activeSession:   null,
+      programCache:    null,
       isLoading:       false,
       error:           null,
 
-      setActiveProgram: (id) => set({ activeProgramId: id }),
+      setActiveProgram:  (id) => set({ activeProgramId: id }),
+      setProgramCache:   (cache) => set({ programCache: cache }),
+      clearProgramCache: () => set({ programCache: null }),
+      isProgramCacheFresh: () => {
+        const c = get().programCache
+        return !!c && Date.now() - c.cachedAt < PROGRAM_CACHE_TTL
+      },
 
       startSession: (session) =>
         set({ activeSession: { ...session, startedAt: new Date(), restTimerActive: false, restSecondsLeft: 0 } }),
@@ -112,6 +132,6 @@ export const useTrainingStore = create<TrainingState>()(
       setLoading:  (isLoading) => set({ isLoading }),
       setError:    (error) => set({ error }),
     }),
-    { name: 'BodyOps:training', skipHydration: true, partialize: (s) => ({ activeProgramId: s.activeProgramId, activeSession: s.activeSession }) },
+    { name: 'BodyOps:training', skipHydration: true, partialize: (s) => ({ activeProgramId: s.activeProgramId, activeSession: s.activeSession, programCache: s.programCache }) },
   ),
 )

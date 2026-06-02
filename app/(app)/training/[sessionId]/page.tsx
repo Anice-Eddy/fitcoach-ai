@@ -86,7 +86,10 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
           currentExercise: 0, restTimerActive: false, restSecondsLeft: 0,
         })
       })
-  }, [params.sessionId, profile, activeSession?.sessionId, startSession])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.sessionId, profile?.fitnessGoal, profile?.fitnessLevel, profile?.trainingDaysPerWeek,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      JSON.stringify(profile?.availableEquipment), activeSession?.sessionId])
 
   // Init per-exercise local state once session is ready
   useEffect(() => {
