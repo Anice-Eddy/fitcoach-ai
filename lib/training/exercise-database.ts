@@ -974,6 +974,707 @@ export const EXERCISE_DATABASE: Exercise[] = [
     muscleGroups: ['CARDIO', 'BACK', 'QUADS', 'CORE'], equipment: ['CARDIO_MACHINE'], isCompound: true,
     videoUrl: 'https://www.youtube.com/watch?v=H0r_HNxe-Cc',
   },
+
+  // ── CHEST — variantes avancées ─────────────────────────────────────────────
+  {
+    id: 'ex-decline-bench-press', name: 'Développé décliné barre',
+    description: 'Développé couché sur banc décliné ciblant le bas des pectoraux.',
+    instructions: [
+      'S\'installer sur le banc décliné, pieds calés dans les supports.',
+      'Descendre la barre jusqu\'au bas de la poitrine.',
+      'Pousser en extension complète.',
+    ],
+    muscleGroups: ['CHEST', 'TRICEPS'], equipment: ['BARBELL', 'BENCH'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=LfyQBUKR8SE',
+  },
+  {
+    id: 'ex-incline-bench-press', name: 'Développé incliné barre',
+    description: 'Développé sur banc incliné à 30–45°, cible le haut des pectoraux.',
+    instructions: [
+      'Régler le banc à 30–45°.',
+      'Descendre la barre jusqu\'au haut de la poitrine.',
+      'Pousser vers le haut et légèrement en arrière.',
+    ],
+    muscleGroups: ['CHEST', 'SHOULDERS', 'TRICEPS'], equipment: ['BARBELL', 'BENCH'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=IP4oeKh1Sd4',
+  },
+  {
+    id: 'ex-decline-db-press', name: 'Développé décliné haltères',
+    description: 'Développé décliné aux haltères pour l\'amplitude maximale sur le bas des pectoraux.',
+    instructions: [
+      'S\'installer sur banc décliné, haltères en main.',
+      'Descendre les haltères de chaque côté de la poitrine basse.',
+      'Pousser les haltères vers le haut en contractant les pectoraux.',
+    ],
+    muscleGroups: ['CHEST', 'TRICEPS'], equipment: ['DUMBBELL', 'BENCH'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=4M0UzRaMU8k',
+  },
+  {
+    id: 'ex-db-fly', name: 'Écartés haltères couché',
+    description: 'Mouvement d\'isolation par excellence pour les pectoraux.',
+    instructions: [
+      'Allongé sur le banc plat, haltères à bout de bras au-dessus de la poitrine.',
+      'Ouvrir les bras en arc de cercle jusqu\'à ressentir l\'étirement.',
+      'Ramener les haltères en contractant les pectoraux.',
+      'Garder une légère flexion du coude tout au long du mouvement.',
+    ],
+    muscleGroups: ['CHEST'], equipment: ['DUMBBELL', 'BENCH'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=eozdVDA78K0',
+  },
+  {
+    id: 'ex-incline-db-fly', name: 'Écartés inclinés haltères',
+    description: 'Écartés sur banc incliné pour cibler le haut des pectoraux.',
+    instructions: [
+      'Banc incliné à 30–45°.',
+      'Ouvrir les bras en arc jusqu\'à l\'étirement du haut des pectoraux.',
+      'Ramener les haltères en contractant.',
+    ],
+    muscleGroups: ['CHEST', 'SHOULDERS'], equipment: ['DUMBBELL', 'BENCH'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=AoqRTb9u2rE',
+  },
+  {
+    id: 'ex-high-to-low-cable-fly', name: 'Câble fly haute poulie',
+    description: 'Câble en croix de la poulie haute vers le bas, cible le bas des pectoraux.',
+    instructions: [
+      'Se placer au centre, poulies hautes.',
+      'Tirer les câbles vers le bas et vers l\'intérieur en arc de cercle.',
+      'Les mains se croisent légèrement devant le bassin.',
+      'Remonter lentement.',
+    ],
+    muscleGroups: ['CHEST'], equipment: ['CABLE_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=Iwe6AmxVf7o',
+  },
+  {
+    id: 'ex-low-to-high-cable-fly', name: 'Câble fly basse poulie',
+    description: 'Câble de la poulie basse vers le haut, cible le haut des pectoraux.',
+    instructions: [
+      'Se placer au centre, poulies basses.',
+      'Tirer les câbles vers le haut et vers l\'intérieur.',
+      'Les mains se rejoignent en hauteur.',
+    ],
+    muscleGroups: ['CHEST'], equipment: ['CABLE_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=Way1FqBjxdg',
+  },
+  {
+    id: 'ex-diamond-push-up', name: 'Pompes diamant',
+    description: 'Pompes prise serrée, charge maximale sur les triceps et partie interne des pectoraux.',
+    instructions: [
+      'Poser les mains au sol en formant un losange avec les pouces et index.',
+      'Descendre le buste en gardant les coudes serrés.',
+      'Pousser en extension complète.',
+    ],
+    muscleGroups: ['CHEST', 'TRICEPS'], equipment: ['BODYWEIGHT'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=J0DnG1_S92I',
+  },
+  {
+    id: 'ex-pullover', name: 'Pull-over haltère',
+    description: 'Étirement des pectoraux et dorsaux en même temps, grand dentelé inclus.',
+    instructions: [
+      'Allongé perpendiculairement au banc, dos sur le banc, pieds au sol.',
+      'Tenir l\'haltère à deux mains au-dessus de la poitrine, bras légèrement fléchis.',
+      'Descendre l\'haltère en arc derrière la tête jusqu\'à l\'étirement.',
+      'Revenir à la position initiale.',
+    ],
+    muscleGroups: ['CHEST', 'BACK'], equipment: ['DUMBBELL', 'BENCH'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=0g5HCsFotS8',
+  },
+
+  // ── BACK — variantes avancées ──────────────────────────────────────────────
+  {
+    id: 'ex-shrug-barbell', name: 'Shrug barre',
+    description: 'Exercice de référence pour les trapèzes supérieurs.',
+    instructions: [
+      'Debout, barre en pronation devant les cuisses.',
+      'Hausser les épaules le plus haut possible, sans tourner.',
+      'Tenir 1 seconde en haut, descendre lentement.',
+    ],
+    muscleGroups: ['BACK', 'SHOULDERS'], equipment: ['BARBELL'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=g6qbq4Lf1FI',
+  },
+  {
+    id: 'ex-shrug-dumbbell', name: 'Shrug haltères',
+    description: 'Shrug aux haltères pour plus d\'amplitude latérale.',
+    instructions: [
+      'Debout, haltères de chaque côté.',
+      'Hausser les épaules en contractant les trapèzes.',
+      'Tenir 1 seconde, descendre.',
+    ],
+    muscleGroups: ['BACK', 'SHOULDERS'], equipment: ['DUMBBELL'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=aFgCBMx0-gI',
+  },
+  {
+    id: 'ex-rack-pull', name: 'Rack Pull',
+    description: 'Soulevé de terre partiel depuis la cage, permet des charges maximales pour le dos.',
+    instructions: [
+      'Régler les butées de la cage à mi-cuisse.',
+      'Saisir la barre en pronation, dos plat.',
+      'Tirer la barre en extension complète des hanches.',
+      'Contrôler la descente.',
+    ],
+    muscleGroups: ['BACK', 'GLUTES', 'HAMSTRINGS'], equipment: ['BARBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=P2MJoGD1T40',
+  },
+  {
+    id: 'ex-underhand-row', name: 'Rowing barre prise inversée',
+    description: 'Rowing penché en supination, recrutement plus important des biceps et dorsaux inférieurs.',
+    instructions: [
+      'Penché à 45°, barre en supination (paumes vers le haut).',
+      'Tirer la barre vers le nombril en gardant les coudes près du corps.',
+      'Contrôler la descente.',
+    ],
+    muscleGroups: ['BACK', 'BICEPS'], equipment: ['BARBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=kBWAon7ItDw',
+  },
+  {
+    id: 'ex-chest-supported-row', name: 'Rowing poitrine appuyée',
+    description: 'Rowing incliné avec poitrine appuyée sur un banc incliné : isole le dos sans solliciter les lombaires.',
+    instructions: [
+      'S\'allonger face contre un banc incliné à 30–45°.',
+      'Laisser les haltères pendre en bas.',
+      'Tirer les haltères vers les hanches en rétractant les omoplates.',
+      'Descendre lentement.',
+    ],
+    muscleGroups: ['BACK', 'BICEPS'], equipment: ['DUMBBELL', 'BENCH'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=xQNrFHEMhI4',
+  },
+  {
+    id: 'ex-weighted-pull-up', name: 'Tractions lestées',
+    description: 'Tractions avec ceinture de lest pour progresser au-delà du poids de corps.',
+    instructions: [
+      'Fixer un disque ou un kettlebell à la ceinture de lest.',
+      'Effectuer les tractions normalement, dos bien contracté.',
+      'Ne pas balancer les jambes.',
+    ],
+    muscleGroups: ['BACK', 'BICEPS'], equipment: ['PULL_UP_BAR', 'BODYWEIGHT'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=V7dLgCjSgLk',
+  },
+  {
+    id: 'ex-superman', name: 'Superman (extension dorsale sol)',
+    description: 'Exercice au sol pour les érecteurs du rachis et le bas du dos.',
+    instructions: [
+      'Allongé face au sol, bras devant.',
+      'Lever simultanément les bras, la poitrine et les jambes.',
+      'Contracter les fessiers et les lombaires.',
+      'Tenir 2 secondes, redescendre.',
+    ],
+    muscleGroups: ['BACK', 'GLUTES'], equipment: ['BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=z6PJMT2y8GQ',
+  },
+  {
+    id: 'ex-close-grip-pulldown', name: 'Tirage vertical prise serrée',
+    description: 'Tirage vertical prise étroite en supination pour le bas des dorsaux.',
+    instructions: [
+      'Saisir la barre en supination, mains proches l\'une de l\'autre.',
+      'Tirer vers la poitrine en rentrant les coudes.',
+      'Remonter lentement.',
+    ],
+    muscleGroups: ['BACK', 'BICEPS'], equipment: ['CABLE_MACHINE'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=mW_JoUEbDH0',
+  },
+
+  // ── SHOULDERS — variantes avancées ────────────────────────────────────────
+  {
+    id: 'ex-seated-db-press', name: 'Développé épaules haltères assis',
+    description: 'Développé militaire assis aux haltères, amplitude maximale.',
+    instructions: [
+      'Assis sur un banc, dos droit, haltères à hauteur d\'épaules.',
+      'Pousser les haltères vers le haut jusqu\'à extension (sans verrouiller).',
+      'Revenir lentement à hauteur d\'épaules.',
+    ],
+    muscleGroups: ['SHOULDERS', 'TRICEPS'], equipment: ['DUMBBELL', 'BENCH'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=qEwKCR5JCog',
+  },
+  {
+    id: 'ex-reverse-pec-deck', name: 'Pec Deck inversé (deltoïdes postérieurs)',
+    description: 'Machine en position inversée pour cibler les deltoïdes postérieurs.',
+    instructions: [
+      'S\'asseoir face au dossier de la machine Pec Deck.',
+      'Attraper les poignées, coudes légèrement fléchis.',
+      'Ouvrir les bras en arrière en contractant les deltoïdes postérieurs.',
+      'Revenir lentement.',
+    ],
+    muscleGroups: ['SHOULDERS', 'BACK'], equipment: ['CHEST_PRESS_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=Bwv55P2LoI8',
+  },
+  {
+    id: 'ex-landmine-press', name: 'Landmine Press',
+    description: 'Presse avec barre fixée au sol en angle, idéale pour les épaules douloureuses.',
+    instructions: [
+      'Fixer une extrémité de la barre au sol ou dans un support.',
+      'Tenir l\'autre extrémité à hauteur d\'épaule, un genou au sol.',
+      'Pousser en arc vers le haut.',
+      'Revenir lentement.',
+    ],
+    muscleGroups: ['SHOULDERS', 'CHEST', 'TRICEPS'], equipment: ['BARBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=6N8rVKFWHJI',
+  },
+  {
+    id: 'ex-ytw', name: 'Y-T-W (Élastique / sol)',
+    description: 'Exercice de mobilité et stabilité pour les épaules, rotateurs et rhomboïdes.',
+    instructions: [
+      'Allongé face au sol ou debout penché, élastique en mains.',
+      'Former un Y : lever les bras en V au-dessus de la tête.',
+      'Former un T : ouvrir les bras perpendiculairement au corps.',
+      'Former un W : coudes fléchis, mains à hauteur d\'oreilles.',
+    ],
+    muscleGroups: ['SHOULDERS', 'BACK'], equipment: ['RESISTANCE_BAND', 'BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=bYRXQE_dq5g',
+  },
+
+  // ── BICEPS — variantes avancées ────────────────────────────────────────────
+  {
+    id: 'ex-incline-db-curl', name: 'Curl haltères incliné',
+    description: 'Curl sur banc incliné : étirement maximal du biceps en bas du mouvement.',
+    instructions: [
+      'Assis sur banc incliné à 45–60°, bras qui pendent.',
+      'Fléchir lentement en supinant le poignet.',
+      'Contrôler la descente jusqu\'à extension complète.',
+    ],
+    muscleGroups: ['BICEPS'], equipment: ['DUMBBELL', 'BENCH'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=soxrZlIl35U',
+  },
+  {
+    id: 'ex-reverse-curl', name: 'Curl inversé (Reverse Curl)',
+    description: 'Curl en pronation pour les brachio-radiaux et avant-bras.',
+    instructions: [
+      'Saisir la barre ou les haltères en pronation (paumes vers le bas).',
+      'Fléchir sans changer la position des poignets.',
+      'Contrôler la descente.',
+    ],
+    muscleGroups: ['BICEPS', 'FOREARMS'], equipment: ['BARBELL', 'DUMBBELL'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=nZiYRMbRFck',
+  },
+  {
+    id: 'ex-zottman-curl', name: 'Zottman Curl',
+    description: 'Combinaison curl + reverse curl en un seul mouvement : biceps et avant-bras.',
+    instructions: [
+      'Monter en supination (paumes vers le haut).',
+      'En haut, pivoter les poignets en pronation.',
+      'Descendre en pronation.',
+      'Repivot en supination en bas.',
+    ],
+    muscleGroups: ['BICEPS', 'FOREARMS'], equipment: ['DUMBBELL'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=ZrTDs5fJq2Q',
+  },
+  {
+    id: 'ex-spider-curl', name: 'Spider Curl',
+    description: 'Curl sur banc incliné face vers le bas : pic du biceps maximal.',
+    instructions: [
+      'S\'allonger face au sol sur un banc incliné.',
+      'Laisser les bras pendre, haltères en main.',
+      'Fléchir lentement, contrôler la descente.',
+    ],
+    muscleGroups: ['BICEPS'], equipment: ['DUMBBELL', 'BENCH'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=GlUMCuB0XJ8',
+  },
+
+  // ── TRICEPS — variantes avancées ──────────────────────────────────────────
+  {
+    id: 'ex-triceps-rope-pushdown', name: 'Pushdown câble avec corde',
+    description: 'Pushdown avec corde : rotation des poignets en bas pour activer les 3 chefs.',
+    instructions: [
+      'Saisir la corde à deux mains, poulie haute.',
+      'Tirer vers le bas en séparant la corde en fin de mouvement.',
+      'Rotation des poignets vers l\'extérieur pour maximiser la contraction.',
+    ],
+    muscleGroups: ['TRICEPS'], equipment: ['CABLE_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=d_KZxkY_0cM',
+  },
+  {
+    id: 'ex-ez-skull-crusher', name: 'Skull Crusher barre EZ',
+    description: 'Skull crusher avec barre EZ : moins de contraintes sur les poignets.',
+    instructions: [
+      'Allongé sur le banc, barre EZ à bout de bras au-dessus de la poitrine.',
+      'Fléchir uniquement les coudes pour descendre la barre vers le front.',
+      'Étendre en contractant les triceps.',
+    ],
+    muscleGroups: ['TRICEPS'], equipment: ['BARBELL', 'BENCH'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=NIyoCzNxRFQ',
+  },
+  {
+    id: 'ex-bench-dip', name: 'Dips sur banc',
+    description: 'Dips au poids du corps sur un banc, idéal pour débutants.',
+    instructions: [
+      'Mains sur le bord du banc, jambes tendues devant.',
+      'Descendre en fléchissant les coudes jusqu\'à 90°.',
+      'Remonter en extension.',
+    ],
+    muscleGroups: ['TRICEPS', 'CHEST'], equipment: ['BENCH', 'BODYWEIGHT'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=0326dy_-CzM',
+  },
+
+  // ── LEGS — variantes avancées ──────────────────────────────────────────────
+  {
+    id: 'ex-reverse-lunge', name: 'Fentes arrière',
+    description: 'Fentes en reculant, moins d\'impact sur les genoux que les fentes avant.',
+    instructions: [
+      'Debout, faire un grand pas en arrière.',
+      'Descendre le genou arrière jusqu\'à 2 cm du sol.',
+      'Pousser sur le pied avant pour revenir.',
+      'Alterner les côtés.',
+    ],
+    muscleGroups: ['QUADS', 'GLUTES', 'HAMSTRINGS'], equipment: ['BODYWEIGHT', 'DUMBBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=xrjMX8grXQs',
+  },
+  {
+    id: 'ex-walking-lunge', name: 'Fentes marchées',
+    description: 'Fentes en marche avant pour développer les jambes et la coordination.',
+    instructions: [
+      'Faire un grand pas en avant en descendant le genou arrière près du sol.',
+      'Se relever et avancer avec l\'autre jambe.',
+      'Maintenir le buste droit tout au long du parcours.',
+    ],
+    muscleGroups: ['QUADS', 'GLUTES', 'HAMSTRINGS'], equipment: ['BODYWEIGHT', 'DUMBBELL', 'BARBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=L8fvypPrzzs',
+  },
+  {
+    id: 'ex-lateral-lunge', name: 'Fentes latérales',
+    description: 'Fentes sur le côté pour les adducteurs et le côté interne des cuisses.',
+    instructions: [
+      'Faire un grand pas latéral, pied d\'appui tourné légèrement vers l\'extérieur.',
+      'Plier le genou de la jambe d\'appui, jambe opposée tendue.',
+      'Pousser pour revenir au centre.',
+    ],
+    muscleGroups: ['QUADS', 'GLUTES'], equipment: ['BODYWEIGHT', 'DUMBBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=gwWv7aPcD88',
+  },
+  {
+    id: 'ex-box-jump', name: 'Box Jump',
+    description: 'Saut sur boîte pliométrique pour la puissance explosive des jambes.',
+    instructions: [
+      'Se placer à 30–50 cm de la boîte, pieds à largeur d\'épaules.',
+      'Fléchir les genoux puis sauter en balançant les bras.',
+      'Atterrir en douceur avec les genoux fléchis.',
+      'Descendre en marchant (ne pas sauter en arrière).',
+    ],
+    muscleGroups: ['QUADS', 'GLUTES', 'CARDIO'], equipment: ['BODYWEIGHT'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=52r_Ul5k03g',
+  },
+  {
+    id: 'ex-jump-squat', name: 'Squat sauté',
+    description: 'Squat explosif avec saut pour développer la puissance et brûler des calories.',
+    instructions: [
+      'Effectuer un squat jusqu\'à 90°.',
+      'Exploser vers le haut en sautant le plus haut possible.',
+      'Atterrir en douceur en amortissant avec les jambes.',
+    ],
+    muscleGroups: ['QUADS', 'GLUTES', 'CARDIO'], equipment: ['BODYWEIGHT'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=YfP4MnFGFHE',
+  },
+  {
+    id: 'ex-wall-sit', name: 'Chaise (Wall Sit)',
+    description: 'Isométrique pour les quadriceps, excellent pour l\'endurance musculaire.',
+    instructions: [
+      'Dos contre le mur, descendre jusqu\'à 90° de flexion des genoux.',
+      'Pieds à largeur d\'épaules, à plat sur le sol.',
+      'Tenir la position le temps imparti.',
+    ],
+    muscleGroups: ['QUADS'], equipment: ['BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=-cdph8hv0O0',
+  },
+  {
+    id: 'ex-nordic-curl', name: 'Nordic Curl',
+    description: 'Exercice excentrique intense pour les ischio-jambiers, prévient les blessures.',
+    instructions: [
+      'À genoux, chevilles maintenues par un partenaire ou un support.',
+      'Descendre lentement vers le sol en retenant avec les ischio-jambiers.',
+      'Se pousser avec les mains pour remonter si nécessaire.',
+    ],
+    muscleGroups: ['HAMSTRINGS'], equipment: ['BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=d8oBFGMEMkI',
+  },
+  {
+    id: 'ex-single-leg-press', name: 'Presse unilatérale',
+    description: 'Presse à cuisses sur une jambe pour corriger les déséquilibres.',
+    instructions: [
+      'Placer un seul pied au centre de la plateforme.',
+      'Déverrouiller et descendre jusqu\'à 90°.',
+      'Pousser en extension sans verrouiller le genou.',
+    ],
+    muscleGroups: ['QUADS', 'GLUTES'], equipment: ['SMITH_MACHINE'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=IZxyjW7MPJQ',
+  },
+  {
+    id: 'ex-hip-adduction', name: 'Adducteurs machine',
+    description: 'Machine d\'adduction pour l\'intérieur des cuisses.',
+    instructions: [
+      'S\'asseoir dans la machine, genoux sur les coussins écartés.',
+      'Fermer les jambes en contractant les adducteurs.',
+      'Revenir lentement.',
+    ],
+    muscleGroups: ['QUADS'], equipment: ['CHEST_PRESS_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=I8vAJMoB-HU',
+  },
+  {
+    id: 'ex-seated-leg-curl', name: 'Leg Curl assis',
+    description: 'Curl ischio-jambiers sur machine assise, étirement plus grand qu\'en décubitus.',
+    instructions: [
+      'S\'installer dans la machine assise, rouleau sous les chevilles.',
+      'Fléchir les genoux jusqu\'à 90° ou plus.',
+      'Contrôler la remontée.',
+    ],
+    muscleGroups: ['HAMSTRINGS'], equipment: ['CARDIO_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=p5qhKUYOYL8',
+  },
+  {
+    id: 'ex-glute-ham-raise', name: 'Glute Ham Raise (GHR)',
+    description: 'Exercice complet pour les ischio-jambiers et les fessiers sur machine GHR.',
+    instructions: [
+      'S\'installer sur la machine GHR, cuisses sur le coussin.',
+      'Descendre en avant en maintenant le dos droit.',
+      'Remonter en contractant les ischio-jambiers et les fessiers.',
+    ],
+    muscleGroups: ['HAMSTRINGS', 'GLUTES', 'BACK'], equipment: ['BODYWEIGHT'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=Q_o4nBXXHAA',
+  },
+
+  // ── GLUTES — variantes avancées ───────────────────────────────────────────
+  {
+    id: 'ex-single-leg-hip-thrust', name: 'Hip Thrust unilatéral',
+    description: 'Hip thrust sur une jambe pour corriger les asymétries et intensifier le travail.',
+    instructions: [
+      'Dos contre le banc, un pied au sol, autre jambe tendue.',
+      'Pousser la hanche vers le haut sur une seule jambe.',
+      'Contracter le fessier de la jambe d\'appui.',
+    ],
+    muscleGroups: ['GLUTES', 'HAMSTRINGS'], equipment: ['BENCH', 'BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=FVzDSMSSBtE',
+  },
+  {
+    id: 'ex-frog-pump', name: 'Frog Pump',
+    description: 'Ponts fessiers avec pieds joints en grenouille, activation intense des fessiers.',
+    instructions: [
+      'Allongé sur le dos, plantes des pieds l\'une contre l\'autre, genoux ouverts.',
+      'Pousser les hanches vers le haut en contractant fort les fessiers.',
+      'Tenir 1 seconde en haut.',
+    ],
+    muscleGroups: ['GLUTES'], equipment: ['BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=7ZMhNJBWH8w',
+  },
+  {
+    id: 'ex-side-lying-abduction', name: 'Abduction latérale couchée',
+    description: 'Exercice allongé sur le côté pour les abducteurs et le fessier moyen.',
+    instructions: [
+      'Allongé sur le côté, corps aligné.',
+      'Lever la jambe du dessus vers le plafond.',
+      'Contrôler la descente.',
+    ],
+    muscleGroups: ['GLUTES'], equipment: ['BODYWEIGHT', 'RESISTANCE_BAND'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=Oy0J4CEXC64',
+  },
+  {
+    id: 'ex-cable-glute-kickback', name: 'Kickback fessier debout (câble)',
+    description: 'Extension de hanche au câble en position debout, isolation maximale du grand fessier.',
+    instructions: [
+      'Face à la machine câble basse, sangle à la cheville.',
+      'Garder le buste légèrement incliné, hanche stable.',
+      'Pousser la jambe vers l\'arrière en contractant le fessier.',
+    ],
+    muscleGroups: ['GLUTES'], equipment: ['CABLE_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=ExCKub9ibdg',
+  },
+
+  // ── CORE — variantes avancées ─────────────────────────────────────────────
+  {
+    id: 'ex-pallof-press', name: 'Pallof Press (anti-rotation)',
+    description: 'Exercice anti-rotation pour renforcer la stabilité du tronc.',
+    instructions: [
+      'Se placer de côté à la machine câble, poignée à hauteur de poitrine.',
+      'Pousser les mains devant soi en gardant le buste stable.',
+      'Ne pas laisser le câble faire tourner les hanches.',
+      'Revenir lentement.',
+    ],
+    muscleGroups: ['CORE'], equipment: ['CABLE_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=AH_QZLm_0-s',
+  },
+  {
+    id: 'ex-cable-crunch', name: 'Crunch câble',
+    description: 'Crunch avec résistance du câble pour des abdominaux plus sollicités.',
+    instructions: [
+      'À genoux face à la poulie haute, corde derrière la tête.',
+      'Fléchir la colonne vers le bas en contractant les abdos.',
+      'Revenir lentement sans étendre complètement.',
+    ],
+    muscleGroups: ['CORE'], equipment: ['CABLE_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=AV5Ph5kK25w',
+  },
+  {
+    id: 'ex-hanging-leg-raise', name: 'Relevé de jambes tendu (suspendu)',
+    description: 'Version avancée du relevé de genoux : jambes tendues pour les abdominaux inférieurs.',
+    instructions: [
+      'Suspendu à la barre.',
+      'Lever les jambes tendues jusqu\'à l\'horizontale ou au-delà.',
+      'Contrôler la descente sans balancer.',
+    ],
+    muscleGroups: ['CORE'], equipment: ['PULL_UP_BAR'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=hdng3Nm1x_E',
+  },
+  {
+    id: 'ex-hollow-body', name: 'Hollow Body Hold',
+    description: 'Position isométrique gymnique qui renforce toute la chaîne antérieure.',
+    instructions: [
+      'Allongé sur le dos, bras tendus derrière la tête.',
+      'Lever légèrement les épaules et les jambes tendues.',
+      'Creuser le ventre et tenir la position en respirant.',
+    ],
+    muscleGroups: ['CORE'], equipment: ['BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=BcC8e7QRj1g',
+  },
+  {
+    id: 'ex-dragon-flag', name: 'Dragon Flag',
+    description: 'Exercice iconique de Bruce Lee : contrôle total du corps en gainage dynamique.',
+    instructions: [
+      'Allongé sur un banc, attraper le banc derrière la tête.',
+      'Lever le corps à la verticale en gardant le corps rigide.',
+      'Descendre lentement en gardant la ligne droite.',
+    ],
+    muscleGroups: ['CORE'], equipment: ['BENCH', 'BODYWEIGHT'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=ID1dMJyHHKw',
+  },
+  {
+    id: 'ex-l-sit', name: 'L-Sit',
+    description: 'Position isométrique avancée : corps en L, bras tendus, jambes à l\'horizontale.',
+    instructions: [
+      'Assis au sol, mains de chaque côté des hanches.',
+      'Pousser pour décoller les fessiers du sol.',
+      'Tendre les jambes à l\'horizontale.',
+      'Tenir le plus longtemps possible.',
+    ],
+    muscleGroups: ['CORE', 'TRICEPS'], equipment: ['BODYWEIGHT'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=IUZJoSP66HI',
+  },
+  {
+    id: 'ex-oblique-crunch', name: 'Crunch oblique',
+    description: 'Rotation du tronc pour cibler les obliques.',
+    instructions: [
+      'Allongé, genoux fléchis, mains derrière la nuque.',
+      'Porter l\'épaule droite vers le genou gauche.',
+      'Alterner de façon contrôlée.',
+    ],
+    muscleGroups: ['CORE'], equipment: ['BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=Xyd_fa5zoEU',
+  },
+
+  // ── FOREARMS ──────────────────────────────────────────────────────────────
+  {
+    id: 'ex-wrist-curl', name: 'Curl de poignets',
+    description: 'Flexion des poignets pour les fléchisseurs des avant-bras.',
+    instructions: [
+      'Avant-bras posés sur les cuisses, paumes vers le haut.',
+      'Fléchir les poignets en levant les haltères ou la barre.',
+      'Descendre lentement.',
+    ],
+    muscleGroups: ['FOREARMS'], equipment: ['DUMBBELL', 'BARBELL'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=J3l6iJe4x4I',
+  },
+  {
+    id: 'ex-reverse-wrist-curl', name: 'Curl de poignets inversé',
+    description: 'Extension des poignets pour les extenseurs des avant-bras.',
+    instructions: [
+      'Avant-bras posés sur les cuisses, paumes vers le bas.',
+      'Lever les mains vers le haut.',
+      'Contrôler la descente.',
+    ],
+    muscleGroups: ['FOREARMS'], equipment: ['DUMBBELL', 'BARBELL'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=g9G5EZZ4lUQ',
+  },
+  {
+    id: 'ex-farmers-walk', name: 'Farmer\'s Walk',
+    description: 'Marche avec charges lourdes : grip, avant-bras, trapèzes, core.',
+    instructions: [
+      'Saisir deux haltères lourds ou des poignées de farmer\'s walk.',
+      'Marcher sur une distance définie en maintenant le dos droit.',
+      'Pas rapides et contrôlés, tête haute.',
+    ],
+    muscleGroups: ['FOREARMS', 'BACK', 'CORE'], equipment: ['DUMBBELL', 'KETTLEBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=rt17lmnaLSM',
+  },
+
+  // ── CALVES — variantes ─────────────────────────────────────────────────────
+  {
+    id: 'ex-leg-press-calf-raise', name: 'Élévation mollets à la presse',
+    description: 'Mollets sur presse à cuisses : grande amplitude et charges plus lourdes.',
+    instructions: [
+      'Sur la presse, placer seulement la pointe des pieds sur le bas de la plateforme.',
+      'Déverrouiller, fléchir les chevilles pour descendre.',
+      'Monter sur la pointe des pieds, tenir 1 seconde.',
+    ],
+    muscleGroups: ['CALVES'], equipment: ['SMITH_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=Ij4aH6wJPLo',
+  },
+  {
+    id: 'ex-single-leg-calf-raise', name: 'Élévation mollet unilatérale',
+    description: 'Mollet sur une seule jambe avec poids du corps : charge doublée, équilibre requis.',
+    instructions: [
+      'Se tenir sur un pied sur le bord d\'une marche.',
+      'Monter sur la pointe du pied en contractant le mollet.',
+      'Descendre sous l\'horizontale pour l\'étirement.',
+    ],
+    muscleGroups: ['CALVES'], equipment: ['BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=8zqFUPPIQ0c',
+  },
+
+  // ── CARDIO — variantes ─────────────────────────────────────────────────────
+  {
+    id: 'ex-elliptical', name: 'Elliptique',
+    description: 'Cardio low-impact sur elliptique, préserve les articulations.',
+    instructions: [
+      'Monter sur l\'elliptique, saisir les poignées.',
+      'Pédaler en synchronisant bras et jambes.',
+      'Maintenir une cadence régulière (60–80 rpm).',
+      'Viser 20–45 min selon l\'objectif.',
+    ],
+    muscleGroups: ['CARDIO', 'QUADS', 'GLUTES'], equipment: ['CARDIO_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=kN0PaW8YGFA',
+  },
+  {
+    id: 'ex-stair-climber', name: 'Stepper / Escalier',
+    description: 'Montée d\'escalier sur machine ou réelle : cardio intense + fessiers.',
+    instructions: [
+      'Monter sur le stepper, saisir légèrement les rampes.',
+      'Monter les marches à cadence régulière.',
+      'Ne pas s\'appuyer sur les rampes.',
+      'Viser 15–30 min.',
+    ],
+    muscleGroups: ['CARDIO', 'GLUTES', 'QUADS'], equipment: ['CARDIO_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=dv_5VJHHC1M',
+  },
+  {
+    id: 'ex-power-clean', name: 'Power Clean',
+    description: 'Mouvement olympique full body pour la puissance et l\'explosivité.',
+    instructions: [
+      'Barre au sol, dos plat, hanches basses.',
+      'Tirer la barre en extension complète des hanches et sur la pointe des pieds.',
+      'Soulever les épaules puis attraper en position frontale.',
+      'Absorber la réception en fléchissant légèrement les genoux.',
+    ],
+    muscleGroups: ['BACK', 'QUADS', 'GLUTES', 'SHOULDERS'], equipment: ['BARBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=F8xH5b1OyXs',
+  },
+  {
+    id: 'ex-thruster', name: 'Thruster',
+    description: 'Enchaînement squat frontal + développé militaire en un seul mouvement.',
+    instructions: [
+      'Tenir la barre ou les haltères en position frontale.',
+      'Descendre en squat.',
+      'Exploser vers le haut et pousser les bras en extension.',
+      'Revenir en position squat et répéter.',
+    ],
+    muscleGroups: ['QUADS', 'GLUTES', 'SHOULDERS', 'CORE'], equipment: ['BARBELL', 'DUMBBELL', 'KETTLEBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=L219ltL15zk',
+  },
+  {
+    id: 'ex-turkish-get-up', name: 'Turkish Get-Up',
+    description: 'Mouvement complet de sol à debout : mobilité, stabilité et force fonctionnelle.',
+    instructions: [
+      'Allongé sur le dos, un kettlebell à bout de bras.',
+      'Se lever progressivement en gardant le bras tendu.',
+      'Enchaîner les étapes : coude, main, genou, debout.',
+      'Refaire en sens inverse.',
+    ],
+    muscleGroups: ['CORE', 'SHOULDERS', 'GLUTES'], equipment: ['KETTLEBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=0bWRPC49-KI',
+  },
 ]
 
 export function getExerciseById(id: string): Exercise | undefined {
