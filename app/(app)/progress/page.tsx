@@ -330,7 +330,9 @@ export default function ProgressPage() {
 
               {/* Interprétation VFC */}
               {lastMetric.hrv != null && (
-                <p className="text-xs text-zinc-500 mt-3">
+                <p className={`text-xs mt-3 ${
+                  lastMetric.hrv >= 60 ? 'text-emerald-400' : lastMetric.hrv >= 40 ? 'text-amber-400' : 'text-red-400'
+                }`}>
                   {lastMetric.hrv >= 60
                     ? 'VFC élevée — bonne récupération, corps prêt pour l\'effort.'
                     : lastMetric.hrv >= 40
@@ -340,7 +342,9 @@ export default function ProgressPage() {
               )}
               {/* Interprétation FC repos */}
               {lastMetric.restingHeartRate != null && (
-                <p className="text-xs text-zinc-500 mt-1">
+                <p className={`text-xs mt-1 ${
+                  lastMetric.restingHeartRate < 60 ? 'text-emerald-400' : lastMetric.restingHeartRate < 70 ? 'text-zinc-400' : 'text-red-400'
+                }`}>
                   {lastMetric.restingHeartRate < 50
                     ? 'FC repos excellente (athlète).'
                     : lastMetric.restingHeartRate < 60
