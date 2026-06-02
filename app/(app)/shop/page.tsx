@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { PageWrapper }         from '@/components/layout/PageWrapper'
 import { Header }              from '@/components/layout/Header'
 import { AffiliateDisclosure } from '@/components/affiliates/AffiliateDisclosure'
 import { AFFILIATE_CATEGORIES } from '@/lib/affiliates/categories'
 import { getAffiliateProductsForMarket } from '@/lib/affiliates/products'
-import { ChevronRight } from 'lucide-react'
-import type { AffiliateMarket, AffiliateCategory } from '@/types'
+import { ChevronRight, Search, X, ExternalLink } from 'lucide-react'
+import type { AffiliateMarket, AffiliateCategory, AffiliateProduct } from '@/types'
 
 const CATEGORY_STYLE: Record<AffiliateCategory, { iconBg: string; iconColor: string }> = {
   SUPPLEMENTS: { iconBg: 'bg-[#C8F135]/15', iconColor: 'text-[#C8F135]'       },
@@ -29,8 +30,16 @@ function detectMarket(): AffiliateMarket {
     ? 'CA' : 'FR'
 }
 
+const CATEGORY_LABEL: Record<AffiliateCategory, string> = {
+  SUPPLEMENTS: 'Suppléments',
+  EQUIPMENT:   'Équipement',
+  CLOTHING:    'Vêtements',
+  BOOKS:       'Livres',
+}
+
 export default function ShopPage() {
-  const [market, setMarket] = useState<AffiliateMarket>('FR')
+  const [market,  setMarket]  = useState<AffiliateMarket>('FR')
+  const [query,   setQuery]   = useState('')
 
   useEffect(() => { setMarket(detectMarket()) }, [])
 
@@ -47,6 +56,18 @@ export default function ShopPage() {
     return c
   }, [products])
 
+  const searchResults = useMemo<AffiliateProduct[]>(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return []
+    return products.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      p.brand?.toLowerCase().includes(q) ||
+      p.description?.toLowerCase().includes(q),
+    ).slice(0, 12)
+  }, [query, products])
+
+  const isSearching = query.trim().length > 0
+
   return (
     <>
       <Header title="Boutique" />
@@ -62,50 +83,132 @@ export default function ShopPage() {
             </p>
           </div>
 
-          {/* Market toggle */}
-          <div className="inline-flex rounded-xl border border-zinc-800 bg-zinc-900 p-1">
-            {(['FR', 'CA'] as AffiliateMarket[]).map((m) => (
+          {/* ── Barre de recherche ─────────────────────────────── */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-zinc-500 pointer-events-none" />
+            <input
+              type="search"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Rechercher un produit, une marque…"
+              className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 pl-11 pr-10 py-3.5 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[#C8F135] transition-colors"
+            />
+            {query && (
               <button
-                key={m}
                 type="button"
-                onClick={() => changeMarket(m)}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                  market === m ? 'bg-[#C8F135] text-zinc-950' : 'text-zinc-400 hover:text-white'
-                }`}
+                onClick={() => setQuery('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
               >
-                {m === 'FR' ? 'France' : 'Canada'}
+                <X className="size-4" />
               </button>
-            ))}
+            )}
           </div>
 
-          <AffiliateDisclosure />
+          {/* ── Résultats de recherche ─────────────────────────── */}
+          {isSearching ? (
+            <div className="space-y-3">
+              <p className="text-xs text-zinc-500">
+                {searchResults.length > 0
+                  ? `${searchResults.length} résultat${searchResults.length > 1 ? 's' : ''} pour « ${query} »`
+                  : `Aucun résultat pour « ${query} »`
+                }
+              </p>
+              {searchResults.length === 0 ? (
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-center">
+                  <Search className="size-8 text-zinc-700 mx-auto mb-2" />
+                  <p className="text-sm text-zinc-400">Aucun produit trouvé</p>
+                  <p className="text-xs text-zinc-600 mt-1">Essaie un autre terme de recherche</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {searchResults.map(product => (
+                    <a
+                      key={product.id}
+                      href={product.affiliateUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-3 hover:border-[#C8F135]/40 hover:bg-zinc-800 transition-all group"
+                    >
+                      {product.imageUrl && (
+                        <div className="relative size-16 shrink-0 rounded-xl overflow-hidden bg-zinc-800">
+                          <Image
+                            src={product.imageUrl}
+                            alt={product.name}
+                            fill
+                            className="object-contain p-1"
+                            sizes="64px"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-semibold text-white leading-snug line-clamp-2">
+                            {product.name}
+                          </p>
+                          <ExternalLink className="size-3.5 text-zinc-600 group-hover:text-[#C8F135] transition-colors shrink-0 mt-0.5" />
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-0.5">
+                          {product.brand && <span className="text-zinc-400">{product.brand} · </span>}
+                          {CATEGORY_LABEL[product.category as AffiliateCategory]}
+                        </p>
+                        {product.price && (
+                          <p className="text-xs text-[#C8F135] font-semibold mt-1">{product.price.toFixed(2)} €</p>
+                        )}
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* ── Vue catégories (défaut) ──────────────────────── */
+            <>
+              {/* Market toggle */}
+              <div className="inline-flex rounded-xl border border-zinc-800 bg-zinc-900 p-1">
+                {(['FR', 'CA'] as AffiliateMarket[]).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => changeMarket(m)}
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                      market === m ? 'bg-[#C8F135] text-zinc-950' : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    {m === 'FR' ? 'France' : 'Canada'}
+                  </button>
+                ))}
+              </div>
 
-          {/* Category cards */}
-          <div className="grid grid-cols-2 gap-4">
-            {AFFILIATE_CATEGORIES.map((cat) => {
-              const Icon  = cat.icon
-              const count = counts[cat.id] ?? 0
-              const style = CATEGORY_STYLE[cat.id]
-              return (
-                <Link
-                  key={cat.id}
-                  href={`/shop/${cat.id.toLowerCase()}`}
-                  className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center transition-all hover:border-[#C8F135]/40 hover:bg-zinc-800"
-                >
-                  <div className={`flex size-14 items-center justify-center rounded-2xl transition-colors ${style.iconBg}`}>
-                    <Icon className={`size-7 transition-colors ${style.iconColor}`} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-white">{cat.label}</p>
-                    <p className="text-xs text-zinc-500 mt-0.5">{count} produits</p>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-zinc-500 group-hover:text-[#C8F135] transition-colors">
-                    Voir <ChevronRight className="size-3.5" />
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
+              <AffiliateDisclosure />
+
+              {/* Category cards */}
+              <div className="grid grid-cols-2 gap-4">
+                {AFFILIATE_CATEGORIES.map((cat) => {
+                  const Icon  = cat.icon
+                  const count = counts[cat.id] ?? 0
+                  const style = CATEGORY_STYLE[cat.id]
+                  return (
+                    <Link
+                      key={cat.id}
+                      href={`/shop/${cat.id.toLowerCase()}`}
+                      className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center transition-all hover:border-[#C8F135]/40 hover:bg-zinc-800"
+                    >
+                      <div className={`flex size-14 items-center justify-center rounded-2xl transition-colors ${style.iconBg}`}>
+                        <Icon className={`size-7 transition-colors ${style.iconColor}`} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white">{cat.label}</p>
+                        <p className="text-xs text-zinc-500 mt-0.5">{count} produits</p>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-zinc-500 group-hover:text-[#C8F135] transition-colors">
+                        Voir <ChevronRight className="size-3.5" />
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </>
+          )}
 
         </div>
       </PageWrapper>
