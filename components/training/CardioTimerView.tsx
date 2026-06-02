@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
-  Play, Pause, RotateCcw, CheckCircle2, Flame,
+  Play, Pause, RotateCcw, Flame,
   Timer, Ruler, Wind, MoveUp, Activity,
 } from 'lucide-react'
 import type { SessionExercise } from '@/types'

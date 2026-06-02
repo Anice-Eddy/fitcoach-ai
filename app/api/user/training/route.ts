@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { generateProgram } from '@/lib/training/generate-program'
-import type { FitnessGoal, FitnessLevel } from '@prisma/client'
+import type { Equipment, FitnessGoal, FitnessLevel, MuscleGroup } from '@prisma/client'
 
 /** Returns the user's active workout program; generates and persists a new program from the user's profile if none is active. */
 export async function GET() {
@@ -15,7 +15,17 @@ export async function GET() {
 
   const existing = await prisma.workoutProgram.findFirst({
     where: { userId, isActive: true },
-    include: { sessions: { orderBy: { dayOfWeek: 'asc' } } },
+    include: {
+      sessions: {
+        orderBy: { dayOfWeek: 'asc' },
+        include: {
+          exerciseLogs: {
+            orderBy: { order: 'asc' },
+            include: { exercise: true },
+          },
+        },
+      },
+    },
   })
 
   if (existing) return NextResponse.json(existing)
@@ -45,11 +55,50 @@ export async function GET() {
           userId,
           name:      s.name,
           dayOfWeek: i,
+          weekNumber: 1,
+          durationMinutes: s.durationMinutes,
           status:    'PLANNED' as const,
+          exerciseLogs: {
+            create: s.exercises.map((exercise, order) => ({
+              order,
+              sets:        exercise.sets,
+              reps:        exercise.reps,
+              weightKg:    exercise.weightKg,
+              restSeconds: exercise.restSeconds,
+              tempo:       exercise.tempo,
+              isCompleted: false,
+              exercise: {
+                connectOrCreate: {
+                  where: { id: exercise.id },
+                  create: {
+                    id:           exercise.id,
+                    name:         exercise.name,
+                    description:  exercise.description,
+                    instructions: exercise.instructions,
+                    muscleGroups: exercise.muscleGroups as MuscleGroup[],
+                    equipment:    exercise.equipment as Equipment[],
+                    imageUrl:     exercise.imageUrl,
+                    videoUrl:     exercise.videoUrl,
+                    isCompound:   exercise.isCompound,
+                  },
+                },
+              },
+            })),
+          },
         })),
       },
     },
-    include: { sessions: { orderBy: { dayOfWeek: 'asc' } } },
+    include: {
+      sessions: {
+        orderBy: { dayOfWeek: 'asc' },
+        include: {
+          exerciseLogs: {
+            orderBy: { order: 'asc' },
+            include: { exercise: true },
+          },
+        },
+      },
+    },
   })
 
   return NextResponse.json(program)

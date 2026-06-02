@@ -148,9 +148,19 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
         body: JSON.stringify(requestBody({ agentType: agent, message: text, conversationId, provider: 'AUTO' })),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data?.error ?? 'Erreur IA')
+      if (!res.ok) {
+        // data.error peut être un objet Zod → le sérialiser en string lisible
+        const errMsg = typeof data?.error === 'string'
+          ? data.error
+          : data?.error?.fieldErrors
+            ? Object.entries(data.error.fieldErrors).map(([k, v]) => `${k}: ${(v as string[]).join(', ')}`).join(' · ')
+            : 'Erreur IA'
+        throw new Error(errMsg)
+      }
       setConversationId(data.conversationId)
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
+      // Garantir que la réponse est bien une string avant de la stocker
+      const responseText = typeof data.response === 'string' ? data.response : JSON.stringify(data.response ?? '')
+      setMessages(prev => [...prev, { role: 'assistant', content: responseText }])
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Erreur IA')
     } finally {
@@ -168,8 +178,12 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
         body: JSON.stringify(requestBody()),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data?.error ?? 'Erreur IA')
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
+      if (!res.ok) {
+        const errMsg = typeof data?.error === 'string' ? data.error : 'Erreur IA'
+        throw new Error(errMsg)
+      }
+      const responseText = typeof data.response === 'string' ? data.response : JSON.stringify(data.response ?? '')
+      setMessages(prev => [...prev, { role: 'assistant', content: responseText }])
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Erreur IA')
     } finally {
@@ -340,25 +354,38 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
           </div>
         )}
 
-        <div className="sticky bottom-0 flex gap-2 border-t border-zinc-800 bg-zinc-900 p-3 sm:gap-3 sm:p-4">
-          <input
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
-            placeholder={mode === 'coach' && !memberId ? 'Sélectionnez un membre...' : 'Votre message…'}
-            disabled={loading || (mode === 'coach' && !memberId)}
-            className="min-w-0 flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-3 text-base text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-[#C8F135] disabled:opacity-50 sm:px-4 sm:text-sm"
-          />
-          <button
-            type="button"
-            disabled={!canSend}
-            onClick={sendMessage}
-            className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#C8F135] text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="Envoyer"
-          >
-            {loading ? <Loader2 className="size-5 animate-spin" /> : <Send className="size-5" />}
-          </button>
+        <div className="sticky bottom-0 border-t border-zinc-800 bg-zinc-900 p-3 sm:p-4">
+          <div className="flex gap-2 sm:gap-3">
+            <div className="relative flex-1 min-w-0">
+              <input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
+                placeholder={mode === 'coach' && !memberId ? 'Sélectionnez un membre...' : 'Votre message…'}
+                disabled={loading || (mode === 'coach' && !memberId)}
+                maxLength={2000}
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-3 text-base text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-[#C8F135] disabled:opacity-50 sm:px-4 sm:text-sm"
+              />
+              {message.length > 0 && (
+                <span className={`absolute bottom-1.5 right-3 text-[10px] tabular-nums ${
+                  message.length > 1800 ? 'text-red-400' : message.length > 1500 ? 'text-amber-400' : 'text-zinc-600'
+                }`}>
+                  {message.length}/2000
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              disabled={!canSend}
+              onClick={sendMessage}
+              className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#C8F135] text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Envoyer"
+            >
+              {loading ? <Loader2 className="size-5 animate-spin" /> : <Send className="size-5" />}
+            </button>
+          </div>
         </div>
+
       </div>
 
     </div>

@@ -46,6 +46,7 @@ export type MemberAIContext = {
   workoutPrograms: unknown[]
   workoutSessions: unknown[]
   nutritionPlans: unknown[]
+  nutritionLogs: unknown[]
   coachNotes: unknown[]
   appointments: unknown[]
   userNotes: unknown[]
@@ -54,6 +55,7 @@ export type MemberAIContext = {
     metricsCount: number
     completedSessionsCount: number
     nutritionPlansCount: number
+    nutritionLogsCount: number
     coachNotesCount: number
   }
 }

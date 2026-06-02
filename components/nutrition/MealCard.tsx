@@ -28,7 +28,7 @@ const MEAL_COLORS: Record<string, string> = {
 
 interface Props { meal: Meal }
 
-/** Expandable meal card showing food items and macros; toggling logs or unlogs the meal via the nutrition store. */
+/** Expandable meal card showing food items and macros; toggling logs locally and in the cloud nutrition journal. */
 export function MealCard({ meal }: Props) {
   const [expanded, setExpanded] = useState(false)
   const [substituteOpen, setSubstituteOpen] = useState(false)
@@ -48,6 +48,32 @@ export function MealCard({ meal }: Props) {
       loggedAt: new Date().toISOString(),
     }
     toggleMeal(mealLog)
+
+    // L'UI reste instantanée, puis l'API garde le journal fiable pour coach/dashboard/IA.
+    const payload = {
+      clientKey: `meal:${meal.id}`,
+      source:    'PLANNED',
+      mealType:  meal.type,
+      name:      meal.name,
+      calories:  Math.round(meal.totalCalories),
+      proteinG:  Math.round(meal.totalProteinG),
+      carbsG:    Math.round(meal.totalCarbsG),
+      fatG:      Math.round(meal.totalFatG),
+      items:     meal.foodItems.map(item => ({
+        name:        item.name,
+        gramsAmount: item.gramsAmount,
+        calories:    item.calories,
+        proteinG:    item.proteinG,
+        carbsG:      item.carbsG,
+        fatG:        item.fatG,
+      })),
+    }
+
+    fetch('/api/user/nutrition/logs', {
+      method:  isLogged ? 'DELETE' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(isLogged ? { clientKey: payload.clientKey } : payload),
+    }).catch(() => {})
   }
 
   return (

@@ -10,10 +10,31 @@ import { useEffect } from 'react'
 
 /** Displays today's macro consumption as a ring chart and three progress bars compared to the user's daily targets. */
 export function NutritionSummary() {
-  const { ensureTodayLog, getTodayTotals } = useNutritionStore()
+  const { ensureTodayLog, getTodayTotals, setTodayMeals } = useNutritionStore()
   const { profile }        = useUserStore()
 
-  useEffect(() => { ensureTodayLog() }, [ensureTodayLog])
+  useEffect(() => {
+    ensureTodayLog()
+    fetch('/api/user/nutrition/logs')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!data || !Array.isArray(data.logs)) return
+        setTodayMeals(data.logs.map((log: {
+          clientKey: string; name: string; mealType: string | null; calories: number
+          proteinG: number; carbsG: number; fatG: number; loggedAt: string
+        }) => ({
+          mealId:   log.clientKey.replace(/^meal:|^manual:/, ''),
+          name:     log.name,
+          type:     log.mealType ?? 'MANUAL',
+          calories:  Math.round(log.calories),
+          proteinG:  Math.round(log.proteinG),
+          carbsG:    Math.round(log.carbsG),
+          fatG:      Math.round(log.fatG),
+          loggedAt:  log.loggedAt,
+        })))
+      })
+      .catch(() => {})
+  }, [ensureTodayLog, setTodayMeals])
 
   const totals = getTodayTotals()
 

@@ -99,6 +99,23 @@ enum MealType {
   POST_WORKOUT
 }
 
+enum HabitType {
+  WATER
+  SLEEP
+  PROTEIN
+  STEPS
+  CARDIO
+  MEDITATION
+}
+
+enum MissionType {
+  HABIT
+  NUTRITION
+  TRAINING
+  RECOVERY
+  CUSTOM
+}
+
 enum ExportType {
   PDF_TRAINING
   PDF_NUTRITION
@@ -179,6 +196,10 @@ model User {
   workoutPrograms     WorkoutProgram[]
   workoutSessions     WorkoutSession[]
   nutritionPlans      NutritionPlan[]
+  nutritionLogs       NutritionLog[]
+  dailyHabitLogs      DailyHabitLog[]
+  dailyMissions       DailyMission[]
+  bodyOpsScores       BodyOpsScore[]
   shoppingLists       ShoppingList[]
   integrationAccounts IntegrationAccount[]
   exportHistory       ExportHistory[]
@@ -494,6 +515,106 @@ model FoodItem {
 
   @@index([mealId])
   @@map("food_items")
+}
+
+// Journal nutritionnel quotidien réellement saisi par l'utilisateur
+model NutritionLog {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date      String   // YYYY-MM-DD, stable pour les resets quotidiens côté dashboard
+  clientKey String   // meal:<id> ou manual:<id>, unique par jour
+  source    String   @default("PLANNED")
+  mealType  MealType?
+  name      String
+
+  calories Float
+  proteinG Float
+  carbsG   Float
+  fatG     Float
+  items    Json?
+
+  loggedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date, clientKey])
+  @@index([userId, date])
+  @@index([userId, loggedAt])
+  @@map("nutrition_logs")
+}
+
+// Suivi quotidien des habitudes clés BodyOps
+model DailyHabitLog {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date        String
+  type        HabitType
+  targetValue Float?
+  actualValue Float?
+  unit        String?
+  isCompleted Boolean @default(false)
+  source      String  @default("USER")
+  metadata    Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date, type])
+  @@index([userId, date])
+  @@map("daily_habit_logs")
+}
+
+// Mission quotidienne calculée ou validée par l'utilisateur
+model DailyMission {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date        String
+  key         String
+  title       String
+  type        MissionType
+  targetValue Float?
+  actualValue Float?
+  unit        String?
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  metadata    Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date, key])
+  @@index([userId, date])
+  @@map("daily_missions")
+}
+
+// Score quotidien BodyOps /100, composé des piliers principaux
+model BodyOpsScore {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date             String
+  score            Int
+  nutritionScore   Int @default(0)
+  trainingScore    Int @default(0)
+  recoveryScore    Int @default(0)
+  habitScore       Int @default(0)
+  progressionScore Int @default(0)
+  activityScore    Int @default(0)
+  metadata         Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("bodyops_scores")
 }
 
 // Liste de courses générée depuis le plan nutritionnel

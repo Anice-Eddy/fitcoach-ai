@@ -145,6 +145,10 @@ export async function getMemberAIContext(memberId: string, coachId?: string | nu
           },
         },
       },
+      nutritionLogs: {
+        orderBy: { loggedAt: 'desc' },
+        take: 30,
+      },
       userNotes: {
         orderBy: { createdAt: 'desc' },
         take: 10,
@@ -275,6 +279,7 @@ export async function getMemberAIContext(memberId: string, coachId?: string | nu
     workoutPrograms: member.workoutPrograms,
     workoutSessions: member.workoutSessions,
     nutritionPlans: member.nutritionPlans,
+    nutritionLogs: member.nutritionLogs,
     coachNotes,
     appointments,
     userNotes: member.userNotes,
@@ -283,6 +288,7 @@ export async function getMemberAIContext(memberId: string, coachId?: string | nu
       metricsCount: member.bodyMetrics.length,
       completedSessionsCount,
       nutritionPlansCount: member.nutritionPlans.length,
+      nutritionLogsCount: member.nutritionLogs.length,
       coachNotesCount: coachNotes.length,
     },
   }
@@ -294,6 +300,7 @@ export function hasEnoughDataForAnalysis(context: MemberAIContext) {
     && (context.dataQuality.metricsCount > 0
       || context.dataQuality.completedSessionsCount > 0
       || context.dataQuality.nutritionPlansCount > 0
+      || context.dataQuality.nutritionLogsCount > 0
       || context.dataQuality.coachNotesCount > 0)
 }
 
@@ -307,7 +314,7 @@ export function serializeContext(context: MemberAIContext) {
 
 /** Builds a compact, coach-readable text summary of the member context — replaces raw JSON for AI prompts. */
 export function serializeContextCompact(context: MemberAIContext): string {
-  const { userFacts, missingData, workoutSessions, nutritionPlans } = context
+  const { userFacts, missingData, workoutSessions, nutritionPlans, nutritionLogs } = context
   const lines: string[] = []
 
   // --- Profil ---
@@ -364,6 +371,18 @@ export function serializeContextCompact(context: MemberAIContext): string {
     lines.push(`NUTRITION: plan "${String(plan['name'] ?? 'actif')}" — ${meals?.length ?? 0} repas configurés`)
   } else {
     lines.push('NUTRITION: aucun plan actif')
+  }
+
+  const logs = nutritionLogs as Array<Record<string, unknown>>
+  if (logs.length) {
+    // Résume les vrais repas consommés sans envoyer tout le détail au provider IA.
+    const recentLogs = logs.slice(0, 8).map(log => {
+      const date = String(log['date'] ?? '?')
+      const calories = Math.round(Number(log['calories'] ?? 0))
+      const protein = Math.round(Number(log['proteinG'] ?? 0))
+      return `${date}:${String(log['name'] ?? 'repas')}(${calories}kcal,P${protein}g)`
+    })
+    lines.push(`JOURNAL NUTRITION RÉEL: ${recentLogs.join(' | ')}`)
   }
 
   // --- Blessures/restrictions ---

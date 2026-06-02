@@ -10,8 +10,62 @@ import { ListSkeleton }      from '@/components/ui/LoadingSkeleton'
 import type { WorkoutSession } from '@/types'
 import { Dumbbell, RefreshCw } from 'lucide-react'
 
-interface DBSession { id: string; name: string; status: string; dayOfWeek: number | null; durationMinutes: number | null }
+interface DBExercise {
+  id: string
+  name: string
+  description: string | null
+  instructions: string[]
+  muscleGroups: string[]
+  equipment: string[]
+  imageUrl: string | null
+  videoUrl: string | null
+  isCompound: boolean
+}
+interface DBExerciseLog {
+  id: string
+  order: number
+  sets: number
+  reps: number
+  weightKg: number | null
+  restSeconds: number | null
+  tempo: string | null
+  rpe: number | null
+  isCompleted: boolean
+  exercise: DBExercise
+}
+interface DBSession {
+  id: string
+  name: string
+  status: string
+  dayOfWeek: number | null
+  durationMinutes: number | null
+  exerciseLogs?: DBExerciseLog[]
+}
 interface DBProgram { id: string; name: string; currentWeek: number; weeksTotal: number; sessions: DBSession[] }
+
+function mapPersistedExercises(session: DBSession): WorkoutSession['exercises'] {
+  return (session.exerciseLogs ?? []).map((log) => ({
+    id:           log.exercise.id,
+    name:         log.exercise.name,
+    description:  log.exercise.description ?? undefined,
+    instructions: log.exercise.instructions,
+    muscleGroups: log.exercise.muscleGroups as WorkoutSession['exercises'][number]['muscleGroups'],
+    equipment:    log.exercise.equipment as WorkoutSession['exercises'][number]['equipment'],
+    imageUrl:     log.exercise.imageUrl ?? undefined,
+    videoUrl:     log.exercise.videoUrl ?? undefined,
+    isCompound:   log.exercise.isCompound,
+    order:        log.order,
+    sets:         log.sets,
+    reps:         log.reps,
+    weightKg:     log.weightKg,
+    restSeconds:  log.restSeconds ?? 90,
+    tempo:        log.tempo ?? undefined,
+    rpe:          log.rpe ?? undefined,
+    isCompleted:  log.isCompleted,
+    // Les exercices cardio persistés récupèrent la durée de séance comme fallback.
+    durationMinutes: log.exercise.muscleGroups.includes('CARDIO') ? session.durationMinutes ?? undefined : undefined,
+  }))
+}
 
 /** Interactive training view: fetches the active workout program and renders each session with exercise details and status controls. */
 export function TrainingClient() {
@@ -65,11 +119,13 @@ export function TrainingClient() {
           const gen = generated.sessions.find(s => s.name === dbSess.name)
             ?? generated.sessions[dbSess.dayOfWeek ?? 0]
             ?? generated.sessions[0]
+          const persistedExercises = mapPersistedExercises(dbSess)
           return {
             ...gen,
             id:              dbSess.id,
             status:          dbSess.status as WorkoutSession['status'],
             durationMinutes: dbSess.durationMinutes ?? gen.durationMinutes,
+            exercises:       persistedExercises.length > 0 ? persistedExercises : gen.exercises,
           }
         })
 

@@ -37,6 +37,7 @@ interface NutritionState {
   logMeal:        (meal: LoggedMeal) => void
   toggleMeal:     (meal: LoggedMeal) => void
   removeMeal:     (mealId: string) => void
+  setTodayMeals:  (meals: LoggedMeal[]) => void
   clearTodayLog:  () => void
   ensureTodayLog: () => void
   setLoading:     (loading: boolean) => void
@@ -76,6 +77,9 @@ export const useNutritionStore = create<NutritionState>()(
 
       removeMeal: (mealId) =>
         set((s) => ({ currentDate: localDateKey(), todayMeals: s.todayMeals.filter(isLoggedToday).filter((m) => m.mealId !== mealId) })),
+
+      setTodayMeals: (meals) =>
+        set({ currentDate: localDateKey(), todayMeals: meals.filter(isLoggedToday) }),
 
       clearTodayLog: () => set({ currentDate: localDateKey(), todayMeals: [] }),
       ensureTodayLog: () => set((s) => {
