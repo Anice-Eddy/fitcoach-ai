@@ -130,7 +130,7 @@ export function AppleHealthShortcut() {
               {[
                 'Poids', 'Masse grasse %', 'Masse musculaire',
                 'Pas', 'Calories actives', 'Sommeil',
-                'FC moy.', 'FC repos ⌚', 'VO₂ max ⌚', 'VFC / HRV ⌚', 'SpO₂ ⌚',
+                'FC moy.', 'FC repos (Watch)', 'VO₂ max (Watch)', 'VFC / HRV (Watch)', 'SpO₂ (Watch)',
               ].map(d => (
                 <span key={d} className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">{d}</span>
               ))}

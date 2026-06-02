@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Star, Users, CheckCircle, ArrowLeft } from 'lucide-react'
+import { Star, Users, CheckCircle, ArrowLeft, MapPin, Award } from 'lucide-react'
 import { ListSkeleton } from '@/components/ui/LoadingSkeleton'
 
 interface Coach {
@@ -122,13 +122,15 @@ function CoachesInner() {
                           {coach.coachProfile._count.coachMembers} membre{coach.coachProfile._count.coachMembers !== 1 ? 's' : ''}
                         </div>
                         {(coach.coachProfile.city || coach.coachProfile.country) && (
-                          <span className="text-xs text-zinc-500">
-                            📍 {[coach.coachProfile.city, coach.coachProfile.country].filter(Boolean).join(', ')}
+                          <span className="flex items-center gap-1 text-xs text-zinc-500">
+                            <MapPin className="size-3" />
+                            {[coach.coachProfile.city, coach.coachProfile.country].filter(Boolean).join(', ')}
                           </span>
                         )}
                         {coach.coachProfile.yearsExperience != null && (
-                          <span className="text-xs text-zinc-500">
-                            🏅 {coach.coachProfile.yearsExperience} ans
+                          <span className="flex items-center gap-1 text-xs text-zinc-500">
+                            <Award className="size-3" />
+                            {coach.coachProfile.yearsExperience} ans
                           </span>
                         )}
                         <div className="flex items-center gap-0.5">

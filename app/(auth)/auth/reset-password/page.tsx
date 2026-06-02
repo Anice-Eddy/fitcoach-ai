@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Logo } from '@/components/ui/Logo'
 import { PageBackground } from '@/components/landing/PageBackground'
@@ -92,7 +92,7 @@ function ResetPasswordForm() {
 
         {done ? (
           <div className="rounded-2xl bg-[#C8F135]/10 border border-[#C8F135]/30 p-6 text-center">
-            <div className="text-4xl mb-3">✅</div>
+            <div className="flex justify-center mb-3"><CheckCircle className="size-10 text-[#C8F135]" /></div>
             <p className="text-white font-semibold mb-1">Mot de passe mis à jour !</p>
             <p className="text-zinc-400 text-sm">Redirection vers la connexion…</p>
           </div>

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useUserStore } from '@/stores/userStore'
 import { toast } from 'sonner'
-import { Star, CheckCircle, ArrowLeft, CalendarDays } from 'lucide-react'
+import { Star, CheckCircle, ArrowLeft, CalendarDays, MapPin, Award } from 'lucide-react'
 import Link from 'next/link'
 import { ListSkeleton } from '@/components/ui/LoadingSkeleton'
 
@@ -198,13 +198,15 @@ export default function CoachBookingPage() {
                     ))}
                     <span className="text-xs text-zinc-500 ml-1">{coach.coachProfile._count.coachMembers} membres</span>
                     {(coach.coachProfile.city || coach.coachProfile.country) && (
-                      <span className="text-xs text-zinc-500 ml-2">
-                        📍 {[coach.coachProfile.city, coach.coachProfile.country].filter(Boolean).join(', ')}
+                      <span className="flex items-center gap-1 text-xs text-zinc-500 ml-2">
+                        <MapPin className="size-3" />
+                        {[coach.coachProfile.city, coach.coachProfile.country].filter(Boolean).join(', ')}
                       </span>
                     )}
                     {coach.coachProfile.yearsExperience != null && (
-                      <span className="text-xs text-zinc-500 ml-2">
-                        🏅 {coach.coachProfile.yearsExperience} ans d'exp.
+                      <span className="flex items-center gap-1 text-xs text-zinc-500 ml-2">
+                        <Award className="size-3" />
+                        {coach.coachProfile.yearsExperience} ans d'exp.
                       </span>
                     )}
                   </div>

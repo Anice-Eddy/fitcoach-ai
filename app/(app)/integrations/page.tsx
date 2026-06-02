@@ -4,6 +4,7 @@ import { PageWrapper }            from '@/components/layout/PageWrapper'
 import { Header }                 from '@/components/layout/Header'
 import { IntegrationCard }        from '@/components/integrations/IntegrationCard'
 import { AppleHealthShortcut }    from '@/components/integrations/AppleHealthShortcut'
+import { Clock }                  from 'lucide-react'
 import type { IntegrationStatus } from '@/types'
 
 const INTEGRATIONS: IntegrationStatus[] = [
@@ -73,8 +74,9 @@ export default function IntegrationsPage() {
           {/* Autres intégrations OAuth — prochainement */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">Prochainement</p>
-            <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 text-sm text-amber-300 mb-4">
-              🚧 Les intégrations OAuth (Google Fit, Strava, Fitbit, Garmin, MyFitnessPal) arrivent prochainement.
+            <div className="flex items-center gap-2 rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 text-sm text-amber-300 mb-4">
+              <Clock className="size-4 shrink-0" />
+              Les intégrations OAuth (Google Fit, Strava, Fitbit, Garmin, MyFitnessPal) arrivent prochainement.
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {INTEGRATIONS.map((integration) => (

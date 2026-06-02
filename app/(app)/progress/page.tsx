@@ -332,22 +332,22 @@ export default function ProgressPage() {
               {lastMetric.hrv != null && (
                 <p className="text-xs text-zinc-500 mt-3">
                   {lastMetric.hrv >= 60
-                    ? '✅ VFC élevée — bonne récupération, corps prêt pour l\'effort.'
+                    ? 'VFC élevée — bonne récupération, corps prêt pour l\'effort.'
                     : lastMetric.hrv >= 40
-                    ? '🟡 VFC modérée — récupération correcte, entraînement modéré conseillé.'
-                    : '🔴 VFC faible — récupération insuffisante, privilégier repos ou cardio léger.'}
+                    ? 'VFC modérée — récupération correcte, entraînement modéré conseillé.'
+                    : 'VFC faible — récupération insuffisante, privilégier repos ou cardio léger.'}
                 </p>
               )}
               {/* Interprétation FC repos */}
               {lastMetric.restingHeartRate != null && (
                 <p className="text-xs text-zinc-500 mt-1">
                   {lastMetric.restingHeartRate < 50
-                    ? '🏅 FC repos excellente (athlète).'
+                    ? 'FC repos excellente (athlète).'
                     : lastMetric.restingHeartRate < 60
-                    ? '✅ FC repos très bonne (< 60 bpm).'
+                    ? 'FC repos très bonne (< 60 bpm).'
                     : lastMetric.restingHeartRate < 70
-                    ? '🟡 FC repos normale.'
-                    : '🔴 FC repos élevée — surveiller stress, hydratation, sommeil.'}
+                    ? 'FC repos normale.'
+                    : 'FC repos élevée — surveiller stress, hydratation, sommeil.'}
                 </p>
               )}
             </div>

@@ -248,7 +248,7 @@ export function CardioTimerView({ exercise, isCompleted, onCardioChange, onCompl
                   mode === m ? 'bg-[#C8F135] text-zinc-900' : 'text-zinc-400 hover:text-white'
                 }`}
               >
-                {m === 'minuteur' ? '⏳ Décompte' : '⏱ Chrono'}
+                {m === 'minuteur' ? 'Décompte' : 'Chrono'}
               </button>
             ))}
           </div>
@@ -310,7 +310,7 @@ export function CardioTimerView({ exercise, isCompleted, onCardioChange, onCompl
 
         {done && (
           <div className="rounded-xl bg-[#C8F135]/10 border border-[#C8F135]/30 px-4 py-2.5 text-center">
-            <p className="text-sm font-semibold text-[#C8F135]">🎉 Cardio terminé !</p>
+            <p className="text-sm font-semibold text-[#C8F135]">Cardio terminé !</p>
           </div>
         )}
       </div>

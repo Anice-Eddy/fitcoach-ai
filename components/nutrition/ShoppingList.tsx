@@ -2,19 +2,29 @@
 // Liste de courses groupée par catégorie avec ajout manuel, export texte et impression PDF
 
 import { useState } from 'react'
-import { Check, ShoppingCart, Download, Printer, RotateCcw, Plus, CheckCheck } from 'lucide-react'
+import { Check, ShoppingCart, Download, Printer, RotateCcw, Plus, CheckCheck, Beef, Wheat, Droplets, Leaf, Apple, GlassWater, ShoppingBasket, Pencil } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import type { GroupedShoppingList, FoodCategory, ShoppingItem } from '@/lib/nutrition/shopping-list'
 import { shoppingListToText } from '@/lib/nutrition/shopping-list'
 
-const CATEGORY_ICONS: Record<FoodCategory, string> = {
-  'Protéines':         '🥩',
-  'Glucides':          '🍚',
-  'Lipides':           '🥑',
-  'Légumes':           '🥦',
-  'Fruits':            '🍎',
-  'Produits laitiers': '🥛',
-  'Autres':            '🛒',
+const CATEGORY_ICONS: Record<FoodCategory, React.ElementType> = {
+  'Protéines':         Beef,
+  'Glucides':          Wheat,
+  'Lipides':           Droplets,
+  'Légumes':           Leaf,
+  'Fruits':            Apple,
+  'Produits laitiers': GlassWater,
+  'Autres':            ShoppingBasket,
+}
+
+const CATEGORY_COLORS: Record<FoodCategory, string> = {
+  'Protéines':         'text-red-400',
+  'Glucides':          'text-amber-400',
+  'Lipides':           'text-yellow-400',
+  'Légumes':           'text-green-400',
+  'Fruits':            'text-emerald-400',
+  'Produits laitiers': 'text-sky-400',
+  'Autres':            'text-zinc-400',
 }
 
 interface Props {
@@ -143,7 +153,7 @@ export function ShoppingList({ grouped }: Props) {
       {nonEmptyCategories.map(([category, items]) => (
         <div key={category}>
           <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <span>{CATEGORY_ICONS[category]}</span>
+            {(() => { const Icon = CATEGORY_ICONS[category]; return <Icon className={`size-3.5 ${CATEGORY_COLORS[category]}`} /> })()}
             {category}
             <span className="ml-auto text-zinc-600 normal-case tracking-normal">
               {items.filter(i => checked.has(i.name)).length}/{items.length}
@@ -182,7 +192,7 @@ export function ShoppingList({ grouped }: Props) {
       {custom.length > 0 && (
         <div>
           <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <span>✏️</span> Ajoutés manuellement
+            <Pencil className="size-3.5 text-zinc-500" /> Ajoutés manuellement
             <span className="ml-auto text-zinc-600 normal-case tracking-normal">
               {custom.filter(i => checked.has(i.name)).length}/{custom.length}
             </span>

@@ -248,7 +248,7 @@ export default async function MemberDetailPage({ params }: { params: { memberId:
                         member.bodyMetrics[0].restingHeartRate < 70 ? 'text-amber-400' : 'text-red-400'
                       }`}>
                         {member.bodyMetrics[0].restingHeartRate} bpm
-                        {member.bodyMetrics[0].restingHeartRate < 60 ? ' ✅' : member.bodyMetrics[0].restingHeartRate > 70 ? ' ⚠️' : ''}
+                        {member.bodyMetrics[0].restingHeartRate < 60 ? <span className="ml-1 text-emerald-400 text-[10px]">Bon</span> : member.bodyMetrics[0].restingHeartRate > 70 ? <span className="ml-1 text-amber-400 text-[10px]">Élevé</span> : null}
                       </span>
                     </div>
                   )}
@@ -263,7 +263,7 @@ export default async function MemberDetailPage({ params }: { params: { memberId:
                   {member.bodyMetrics[0].vo2Max && (
                     <div className="flex justify-between text-xs py-1 border-b border-zinc-800/60">
                       <span className="flex items-center gap-1.5 text-zinc-500">
-                        <Wind className="size-3 text-emerald-400" /> VO₂ max ⌚
+                        <Wind className="size-3 text-emerald-400" /> VO₂ max
                       </span>
                       <span className="text-emerald-300 font-mono">{member.bodyMetrics[0].vo2Max.toFixed(1)} ml/kg/min</span>
                     </div>
@@ -271,27 +271,27 @@ export default async function MemberDetailPage({ params }: { params: { memberId:
                   {member.bodyMetrics[0].hrv && (
                     <div className="flex justify-between text-xs py-1 border-b border-zinc-800/60">
                       <span className="flex items-center gap-1.5 text-zinc-500">
-                        <Activity className="size-3 text-violet-400" /> VFC / HRV ⌚
+                        <Activity className="size-3 text-violet-400" /> VFC / HRV
                       </span>
                       <span className={`font-mono ${
                         member.bodyMetrics[0].hrv >= 60 ? 'text-emerald-400' :
                         member.bodyMetrics[0].hrv >= 40 ? 'text-amber-400' : 'text-red-400'
                       }`}>
                         {Math.round(member.bodyMetrics[0].hrv)} ms
-                        {member.bodyMetrics[0].hrv >= 60 ? ' ✅' : member.bodyMetrics[0].hrv < 40 ? ' ⚠️' : ''}
+                        {member.bodyMetrics[0].hrv >= 60 ? <span className="ml-1 text-emerald-400 text-[10px]">Bon</span> : member.bodyMetrics[0].hrv < 40 ? <span className="ml-1 text-amber-400 text-[10px]">Faible</span> : null}
                       </span>
                     </div>
                   )}
                   {member.bodyMetrics[0].spo2 && (
                     <div className="flex justify-between text-xs py-1">
                       <span className="flex items-center gap-1.5 text-zinc-500">
-                        <Droplets className="size-3 text-blue-400" /> SpO₂ ⌚
+                        <Droplets className="size-3 text-blue-400" /> SpO₂
                       </span>
                       <span className={`font-mono ${
                         member.bodyMetrics[0].spo2 >= 95 ? 'text-emerald-400' : 'text-red-400'
                       }`}>
                         {member.bodyMetrics[0].spo2.toFixed(1)}%
-                        {member.bodyMetrics[0].spo2 < 95 ? ' ⚠️' : ''}
+                        {member.bodyMetrics[0].spo2 < 95 ? <span className="ml-1 text-red-400 text-[10px]">Bas</span> : null}
                       </span>
                     </div>
                   )}

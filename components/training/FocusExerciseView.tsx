@@ -364,7 +364,7 @@ export function FocusExerciseView({
               : 'border border-zinc-700 text-zinc-300 hover:bg-zinc-900'
           }`}
         >
-          {!hasNext ? (isAllDone ? 'Terminer 🎉' : 'Terminer quand même') : (isAllDone ? 'Suivant ✓' : 'Passer')}
+          {!hasNext ? 'Terminer' : (isAllDone ? 'Suivant' : 'Passer')}
           <ChevronRight className="size-4" />
         </button>
       </div>

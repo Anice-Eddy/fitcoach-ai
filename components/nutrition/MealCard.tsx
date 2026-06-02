@@ -3,14 +3,27 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, Check, RefreshCw } from 'lucide-react'
+import { ChevronDown, Check, RefreshCw, Sun, Apple, Salad, Zap, Moon, Dumbbell } from 'lucide-react'
 import type { Meal } from '@/types'
 import { useNutritionStore } from '@/stores/nutritionStore'
 import { FOOD_DATABASE } from '@/lib/nutrition/food-database'
 
-const MEAL_EMOJIS: Record<string, string> = {
-  BREAKFAST: '🌅', MORNING_SNACK: '🍎', LUNCH: '🥗',
-  PRE_WORKOUT: '⚡', DINNER: '🍽️', POST_WORKOUT: '🥛',
+const MEAL_ICONS: Record<string, React.ElementType> = {
+  BREAKFAST:     Sun,
+  MORNING_SNACK: Apple,
+  LUNCH:         Salad,
+  PRE_WORKOUT:   Zap,
+  DINNER:        Moon,
+  POST_WORKOUT:  Dumbbell,
+}
+
+const MEAL_COLORS: Record<string, string> = {
+  BREAKFAST:     'text-amber-400',
+  MORNING_SNACK: 'text-green-400',
+  LUNCH:         'text-emerald-400',
+  PRE_WORKOUT:   'text-yellow-400',
+  DINNER:        'text-violet-400',
+  POST_WORKOUT:  'text-sky-400',
 }
 
 interface Props { meal: Meal }
@@ -44,7 +57,7 @@ export function MealCard({ meal }: Props) {
       className={`rounded-2xl border transition-colors ${isLogged ? 'border-[#C8F135]/30' : 'border-zinc-800'}`}
     >
       <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center gap-3 p-4 text-left">
-        <span className="text-2xl">{MEAL_EMOJIS[meal.type] ?? '🍴'}</span>
+        {(() => { const Icon = MEAL_ICONS[meal.type] ?? Salad; return <Icon className={`size-5 ${MEAL_COLORS[meal.type] ?? 'text-zinc-400'}`} /> })()}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white truncate">{meal.name}</p>
           <p className="text-xs text-zinc-400">{meal.scheduledTime} · {Math.round(meal.totalCalories)} kcal</p>
