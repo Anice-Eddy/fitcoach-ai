@@ -351,12 +351,25 @@ export const EXERCISE_DATABASE: Exercise[] = [
   // ── CHEST (suite) ──────────────────────────────────────────────────────────
   {
     id: 'ex-db-bench-press', name: 'Développé couché haltères',
-    description: 'Variante haltères du développé couché pour une amplitude plus grande et un travail unilatéral.',
+    description: 'Variante haltères du développé couché : amplitude plus grande, travail symétrique des deux bras.',
     instructions: [
       'Allongé sur un banc plat, haltères en main à hauteur de poitrine.',
-      'Pousser les haltères vers le haut jusqu\'à extension complète.',
+      'Pousser les deux haltères vers le haut simultanément jusqu\'à extension.',
       'Descendre lentement en ouvrant les coudes à 45–60°.',
-      'Amplitudes plus larges qu\'avec la barre.',
+      'L\'amplitude est plus large qu\'avec la barre.',
+    ],
+    muscleGroups: ['CHEST', 'TRICEPS', 'SHOULDERS'], equipment: ['DUMBBELL', 'BENCH'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=QsYre__-aro',
+  },
+  {
+    id: 'ex-db-bench-press-alt', name: 'Développé couché haltères alterné',
+    description: 'Presse haltères en alternant les bras : chaque côté travaille de façon indépendante, parfait pour corriger les déséquilibres.',
+    instructions: [
+      'Allongé sur un banc plat, haltères des deux côtés à hauteur de poitrine.',
+      'Pousser un haltère vers le haut pendant que l\'autre reste en bas.',
+      'Descendre le premier haltère et pousser le second simultanément.',
+      'Garder les coudes à 45° du corps, contrôler la descente.',
+      'Alterner de façon fluide sans bloquer en bas.',
     ],
     muscleGroups: ['CHEST', 'TRICEPS', 'SHOULDERS'], equipment: ['DUMBBELL', 'BENCH'], isCompound: true,
     videoUrl: 'https://www.youtube.com/watch?v=QsYre__-aro',

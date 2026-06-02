@@ -5,42 +5,54 @@ import type { WorkoutProgram, WorkoutSession, SessionExercise } from '@/types'
 import { EXERCISE_DATABASE } from './exercise-database'
 
 interface ProgramParams {
-  fitnessGoal:        string
-  fitnessLevel:       string
+  fitnessGoal:         string
+  fitnessLevel:        string
   trainingDaysPerWeek: number
-  availableEquipment: string[]
+  availableEquipment:  string[]
 }
 
-// Filters exercises to those requiring at least one piece of equipment the user has available.
 function filterByEquipment(exercises: typeof EXERCISE_DATABASE, equipment: string[]) {
+  if (equipment.length === 0) return exercises
   return exercises.filter((ex) => ex.equipment.some((eq) => equipment.includes(eq)))
 }
 
-// Selects exercises targeting the given muscle groups (primary first, then secondary) and builds a WorkoutSession.
+/**
+ * Builds a WorkoutSession.
+ * @param offset — rotation offset so two sessions with the same muscle groups
+ *                 pick different exercises (Push A vs Push B, etc.)
+ */
 function buildSession(
-  name: string,
+  name:         string,
   muscleGroups: string[],
-  equipment: string[],
-  level: string,
+  equipment:    string[],
+  level:        string,
+  offset  = 0,
+  goal    = '',
 ): WorkoutSession {
   const available = filterByEquipment(EXERCISE_DATABASE, equipment)
+    .filter(ex => ex.muscleGroups[0] !== 'CARDIO') // cardio handled separately
+
   const target = level === 'BEGINNER' ? 4 : level === 'INTERMEDIATE' ? 5 : 6
-  const seen = new Set<string>()
+  const seen   = new Set<string>()
   const picked: typeof EXERCISE_DATABASE = []
 
-  // Pass 1: primary muscle match only (first element of muscleGroups array)
+  // Pass 1 — primary muscle match, with offset so each session picks different variants
   for (const muscle of muscleGroups) {
     const perGroup = Math.max(1, Math.round(target / muscleGroups.length))
-    const matches = available.filter(
+    const matches  = available.filter(
       (ex) => ex.muscleGroups[0] === muscle && !seen.has(ex.id),
     )
-    for (const ex of matches.slice(0, perGroup)) {
+    // Apply offset rotation: skip the first `offset` matches and wrap around
+    const rotated = offset > 0
+      ? [...matches.slice(offset), ...matches.slice(0, offset)]
+      : matches
+    for (const ex of rotated.slice(0, perGroup)) {
       seen.add(ex.id)
       picked.push(ex)
     }
   }
 
-  // Pass 2: fill remaining slots with secondary muscle matches
+  // Pass 2 — fill remaining slots with secondary muscle matches
   if (picked.length < target) {
     for (const muscle of muscleGroups) {
       const matches = available.filter(
@@ -55,67 +67,120 @@ function buildSession(
     }
   }
 
+  // Paramètres selon le niveau et l'objectif
+  const sets       = level === 'BEGINNER' ? 3 : 4
+  const reps       = goal === 'MUSCLE_GAIN' ? 8 : goal === 'WEIGHT_LOSS' ? 15 : 12
+  const restSecs   = goal === 'MUSCLE_GAIN' ? 120 : goal === 'WEIGHT_LOSS' ? 45 : 90
+
   const exercises: SessionExercise[] = picked.slice(0, target).map((ex, i) => ({
-      ...ex,
-      order:       i,
-      sets:        level === 'BEGINNER' ? 3 : 4,
-      reps:        12,
-      weightKg:    null,
-      restSeconds: 90,
-      isCompleted: false,
-    }))
+    ...ex,
+    order:       i,
+    sets,
+    reps,
+    weightKg:    null,
+    restSeconds: restSecs,
+    isCompleted: false,
+  }))
 
   return {
     id:              `local-${name.toLowerCase().replace(/[\s/—]+/g, '-').replace(/[^a-z0-9-]/g, '')}`,
     name,
     status:          'PLANNED',
     exercises,
-    durationMinutes: exercises.length * 10 + 10,
+    durationMinutes: exercises.length * 12 + 10,
+  }
+}
+
+/** Builds a cardio-only session (for weight-loss programs). */
+function buildCardioSession(
+  name:      string,
+  exercises: string[], // exercise IDs
+): WorkoutSession {
+  const cardioExs = EXERCISE_DATABASE.filter(ex => exercises.includes(ex.id))
+  const sessionExercises: SessionExercise[] = cardioExs.map((ex, i) => ({
+    ...ex,
+    order:           i,
+    sets:            1,
+    reps:            1,
+    weightKg:        null,
+    restSeconds:     60,
+    isCompleted:     false,
+    durationMinutes: 30,
+  }))
+  return {
+    id:              `local-${name.toLowerCase().replace(/[\s/—]+/g, '-').replace(/[^a-z0-9-]/g, '')}`,
+    name,
+    status:          'PLANNED',
+    exercises:       sessionExercises,
+    durationMinutes: 35,
   }
 }
 
 /** Generates a full-week WorkoutProgram (Full Body, PPL, or Upper/Lower) based on fitness goal, level, and available training days. */
 export function generateProgram(params: ProgramParams): WorkoutProgram {
   const { fitnessGoal, fitnessLevel, trainingDaysPerWeek, availableEquipment } = params
+  const g = fitnessGoal
 
   let sessions: WorkoutSession[] = []
 
   if (trainingDaysPerWeek <= 3) {
-    // Programme Full Body 3j
+    // ── Full Body 3j ────────────────────────────────────────────
     sessions = [
-      buildSession('Full Body A', ['CHEST', 'BACK', 'QUADS'], availableEquipment, fitnessLevel),
-      buildSession('Full Body B', ['SHOULDERS', 'HAMSTRINGS', 'BICEPS', 'TRICEPS'], availableEquipment, fitnessLevel),
-      buildSession('Full Body C', ['CHEST', 'BACK', 'GLUTES', 'CORE'], availableEquipment, fitnessLevel),
+      buildSession('Full Body A', ['CHEST', 'BACK', 'QUADS'],              availableEquipment, fitnessLevel, 0, g),
+      buildSession('Full Body B', ['SHOULDERS', 'HAMSTRINGS', 'BICEPS', 'TRICEPS'], availableEquipment, fitnessLevel, 1, g),
+      buildSession('Full Body C', ['CHEST', 'BACK', 'GLUTES', 'CORE'],     availableEquipment, fitnessLevel, 2, g),
     ].slice(0, trainingDaysPerWeek)
+
   } else if (trainingDaysPerWeek <= 5) {
-    // Programme PPL (Push / Pull / Legs)
-    sessions = [
-      buildSession('Push — Pectoraux / Épaules / Triceps', ['CHEST', 'SHOULDERS', 'TRICEPS'], availableEquipment, fitnessLevel),
-      buildSession('Pull — Dos / Biceps',                  ['BACK', 'BICEPS'],                availableEquipment, fitnessLevel),
-      buildSession('Legs — Jambes / Fessiers',             ['QUADS', 'HAMSTRINGS', 'GLUTES'], availableEquipment, fitnessLevel),
-      buildSession('Push B — Force',                       ['CHEST', 'SHOULDERS', 'TRICEPS'], availableEquipment, fitnessLevel),
-      buildSession('Pull B — Hypertrophie',                ['BACK', 'BICEPS', 'CORE'],        availableEquipment, fitnessLevel),
-    ].slice(0, trainingDaysPerWeek)
+    // ── PPL — Push / Pull / Legs ────────────────────────────────
+    if (g === 'WEIGHT_LOSS') {
+      // Perte de poids : PPL allégé + cardio intégré
+      sessions = [
+        buildSession('Push — Pectoraux / Épaules / Triceps', ['CHEST', 'SHOULDERS', 'TRICEPS'], availableEquipment, fitnessLevel, 0, g),
+        buildCardioSession('Cardio — HIIT',    ['ex-hiit']),
+        buildSession('Pull — Dos / Biceps',    ['BACK', 'BICEPS'],               availableEquipment, fitnessLevel, 0, g),
+        buildCardioSession('Cardio — Marche inclinée', ['ex-incline-walk', 'ex-treadmill-12-3-30']),
+        buildSession('Legs — Jambes / Fessiers', ['QUADS', 'HAMSTRINGS', 'GLUTES'], availableEquipment, fitnessLevel, 0, g),
+      ].slice(0, trainingDaysPerWeek)
+    } else {
+      sessions = [
+        // offset 0 → barbell/compound en premier
+        buildSession('Push A — Pectoraux / Épaules / Triceps', ['CHEST', 'SHOULDERS', 'TRICEPS'], availableEquipment, fitnessLevel, 0, g),
+        buildSession('Pull A — Dos / Biceps',                  ['BACK', 'BICEPS'],                availableEquipment, fitnessLevel, 0, g),
+        buildSession('Legs A — Jambes / Fessiers',             ['QUADS', 'HAMSTRINGS', 'GLUTES'], availableEquipment, fitnessLevel, 0, g),
+        // offset 1 → haltères/variantes
+        buildSession('Push B — Épaules / Triceps / Chest', ['CHEST', 'SHOULDERS', 'TRICEPS'], availableEquipment, fitnessLevel, 1, g),
+        buildSession('Pull B — Biceps / Dos / Core',       ['BACK', 'BICEPS', 'CORE'],        availableEquipment, fitnessLevel, 1, g),
+      ].slice(0, trainingDaysPerWeek)
+    }
+
   } else {
-    // Upper / Lower 6-7j
+    // ── Upper / Lower 6-7j ──────────────────────────────────────
     sessions = [
-      buildSession('Upper A', ['CHEST', 'BACK', 'SHOULDERS'],    availableEquipment, fitnessLevel),
-      buildSession('Lower A', ['QUADS', 'HAMSTRINGS', 'GLUTES'], availableEquipment, fitnessLevel),
-      buildSession('Upper B', ['CHEST', 'BACK', 'BICEPS', 'TRICEPS'], availableEquipment, fitnessLevel),
-      buildSession('Lower B', ['QUADS', 'GLUTES', 'CALVES', 'CORE'], availableEquipment, fitnessLevel),
-      buildSession('Full Body', ['CHEST', 'BACK', 'QUADS', 'SHOULDERS'], availableEquipment, fitnessLevel),
-      buildSession('Accessoires', ['BICEPS', 'TRICEPS', 'CORE', 'CALVES'], availableEquipment, fitnessLevel),
+      buildSession('Upper A — Force',        ['CHEST', 'BACK', 'SHOULDERS'],           availableEquipment, fitnessLevel, 0, g),
+      buildSession('Lower A — Quadriceps',   ['QUADS', 'HAMSTRINGS', 'GLUTES'],         availableEquipment, fitnessLevel, 0, g),
+      buildSession('Upper B — Hypertrophie', ['CHEST', 'BACK', 'BICEPS', 'TRICEPS'],   availableEquipment, fitnessLevel, 1, g),
+      buildSession('Lower B — Fessiers',     ['QUADS', 'GLUTES', 'CALVES', 'CORE'],     availableEquipment, fitnessLevel, 1, g),
+      buildSession('Full Body — Puissance',  ['CHEST', 'BACK', 'QUADS', 'SHOULDERS'],   availableEquipment, fitnessLevel, 2, g),
+      buildSession('Accessoires',            ['BICEPS', 'TRICEPS', 'CORE', 'CALVES'],   availableEquipment, fitnessLevel, 0, g),
     ].slice(0, trainingDaysPerWeek)
   }
 
+  const goalLabel = g === 'MUSCLE_GAIN'     ? 'Prise de masse'
+                  : g === 'WEIGHT_LOSS'     ? 'Perte de poids'
+                  : g === 'ENDURANCE'       ? 'Endurance'
+                  : g === 'FLEXIBILITY'     ? 'Souplesse'
+                  : g === 'MAINTENANCE'     ? 'Maintien'
+                  : 'Fitness général'
+
   return {
-    id:          `local-program`,
-    name:        `Programme ${fitnessLevel} — ${fitnessGoal === 'MUSCLE_GAIN' ? 'Prise de masse' : fitnessGoal === 'WEIGHT_LOSS' ? 'Perte de poids' : 'Fitness général'}`,
-    fitnessGoal: fitnessGoal as never,
+    id:           'local-program',
+    name:         `Programme ${fitnessLevel} — ${goalLabel}`,
+    fitnessGoal:  fitnessGoal as never,
     fitnessLevel: fitnessLevel as never,
-    weeksTotal:  8,
-    currentWeek: 1,
-    isActive:    true,
+    weeksTotal:   8,
+    currentWeek:  1,
+    isActive:     true,
     sessions,
   }
 }
