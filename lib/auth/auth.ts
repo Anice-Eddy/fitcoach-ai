@@ -194,29 +194,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
 
     async jwt({ token, user }) {
-      const rawUserId = user?.id ?? token.userId
-      const userId = typeof rawUserId === 'string' ? rawUserId : undefined
-      if (userId) {
-        token.userId = userId
+      // Only query the DB on sign-in (user object present) — NOT on every auth() call.
+      // Token fields persist in the signed JWT cookie; no need to re-fetch each request.
+      if (user?.id) {
+        token.userId = user.id
         const isEdgeRuntime = typeof (globalThis as { EdgeRuntime?: string }).EdgeRuntime === 'string'
-        if (isEdgeRuntime) return token
-
-        const dbUser = await prisma.user.findUnique({
-          where:  { id: userId },
-          select: {
-            subscriptionPlan: true,
-            subscriptionStatus: true,
-            profile: { select: { id: true } },
-            coachProfile: { select: { id: true } },
-          },
-        })
-        token.plan             = dbUser?.subscriptionPlan   ?? 'FREE'
-        token.status           = dbUser?.subscriptionStatus ?? 'INACTIVE'
-        // A single account can own both spaces: member data stays in Profile,
-        // while professional data lives in CoachProfile.
-        token.isCoach          = !!dbUser?.coachProfile
-        token.hasRoleConflict  = !!dbUser?.coachProfile && !!dbUser?.profile
-        token.hasMemberProfile = !!dbUser?.profile
+        if (!isEdgeRuntime) {
+          const dbUser = await prisma.user.findUnique({
+            where:  { id: user.id },
+            select: {
+              subscriptionPlan:   true,
+              subscriptionStatus: true,
+              profile:            { select: { id: true } },
+              coachProfile:       { select: { id: true } },
+            },
+          })
+          token.plan             = dbUser?.subscriptionPlan   ?? 'FREE'
+          token.status           = dbUser?.subscriptionStatus ?? 'INACTIVE'
+          token.isCoach          = !!dbUser?.coachProfile
+          token.hasRoleConflict  = !!dbUser?.coachProfile && !!dbUser?.profile
+          token.hasMemberProfile = !!dbUser?.profile
+        }
       }
       return token
     },

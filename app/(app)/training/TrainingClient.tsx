@@ -21,6 +21,9 @@ export function TrainingClient() {
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState<string | null>(null)
 
+  // Sérialiser l'équipement pour éviter que la référence tableau change à chaque render
+  const equipmentKey = JSON.stringify(profile?.availableEquipment ?? [])
+
   const loadProgram = useCallback(() => {
     if (!profile?.fitnessGoal || !profile?.fitnessLevel) {
       setLoading(false)
@@ -63,7 +66,8 @@ export function TrainingClient() {
         setError('Impossible de charger le programme.')
         setLoading(false)
       })
-  }, [profile?.fitnessGoal, profile?.fitnessLevel, profile?.trainingDaysPerWeek, profile?.availableEquipment])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.fitnessGoal, profile?.fitnessLevel, profile?.trainingDaysPerWeek, equipmentKey])
 
   useEffect(() => { loadProgram() }, [loadProgram])
 
