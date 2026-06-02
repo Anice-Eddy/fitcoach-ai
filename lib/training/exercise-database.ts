@@ -348,6 +348,31 @@ export const EXERCISE_DATABASE: Exercise[] = [
     videoUrl: 'https://www.youtube.com/watch?v=1Tq3QdYUuHs',
   },
 
+  // ── CHEST (suite) ──────────────────────────────────────────────────────────
+  {
+    id: 'ex-db-bench-press', name: 'Développé couché haltères',
+    description: 'Variante haltères du développé couché pour une amplitude plus grande et un travail unilatéral.',
+    instructions: [
+      'Allongé sur un banc plat, haltères en main à hauteur de poitrine.',
+      'Pousser les haltères vers le haut jusqu\'à extension complète.',
+      'Descendre lentement en ouvrant les coudes à 45–60°.',
+      'Amplitudes plus larges qu\'avec la barre.',
+    ],
+    muscleGroups: ['CHEST', 'TRICEPS', 'SHOULDERS'], equipment: ['DUMBBELL', 'BENCH'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=QsYre__-aro',
+  },
+  {
+    id: 'ex-machine-chest-press', name: 'Développé couché machine',
+    description: 'Développé guidé en machine, idéal pour isoler les pectoraux en sécurité.',
+    instructions: [
+      'Régler le siège pour aligner les poignées avec la poitrine.',
+      'Pousser les poignées en avant jusqu\'à extension.',
+      'Revenir lentement sans laisser le poids toucher les butées.',
+    ],
+    muscleGroups: ['CHEST', 'TRICEPS'], equipment: ['CHEST_PRESS_MACHINE'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=xUm0BiZCWlQ',
+  },
+
   // ── GLUTES ─────────────────────────────────────────────────────────────────
   {
     id: 'ex-hip-thrust', name: 'Hip Thrust',
@@ -359,6 +384,30 @@ export const EXERCISE_DATABASE: Exercise[] = [
       'Maintenir brièvement en haut, redescendre.',
     ],
     muscleGroups: ['GLUTES', 'HAMSTRINGS'], equipment: ['BARBELL', 'BENCH'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=xDmFkJxPzeM',
+  },
+  {
+    id: 'ex-hip-thrust-db', name: 'Hip Thrust haltères',
+    description: 'Hip thrust avec haltère ou kettlebell, sans barre — accessible à domicile.',
+    instructions: [
+      'Appuyer le haut du dos contre un banc, haltère posé sur le bas-ventre.',
+      'Pieds à plat, à largeur d\'épaules.',
+      'Pousser les hanches vers le haut en contractant les fessiers.',
+      'Tenir 1 seconde en haut, redescendre lentement.',
+    ],
+    muscleGroups: ['GLUTES', 'HAMSTRINGS'], equipment: ['DUMBBELL', 'BENCH'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=Zp26q4BY5HE',
+  },
+  {
+    id: 'ex-hip-thrust-machine', name: 'Hip Thrust machine',
+    description: 'Hip thrust guidé sur machine dédiée, charge parfaitement contrôlée.',
+    instructions: [
+      'S\'installer dans la machine hip thrust, dos bien calé.',
+      'Ajuster la résistance et la position du coussinet sur les hanches.',
+      'Pousser les hanches vers le haut jusqu\'à extension complète.',
+      'Redescendre de façon contrôlée.',
+    ],
+    muscleGroups: ['GLUTES', 'HAMSTRINGS'], equipment: ['HIP_THRUST_MACHINE'], isCompound: true,
     videoUrl: 'https://www.youtube.com/watch?v=xDmFkJxPzeM',
   },
   {
@@ -443,6 +492,81 @@ export const EXERCISE_DATABASE: Exercise[] = [
     ],
     muscleGroups: ['CALVES'], equipment: ['DUMBBELL', 'SMITH_MACHINE'], isCompound: false,
     videoUrl: 'https://www.youtube.com/watch?v=JbyjNymZOt0',
+  },
+
+  // ── CARDIO ─────────────────────────────────────────────────────────────────
+  {
+    id: 'ex-hiit', name: 'HIIT',
+    description: 'Entraînement par intervalles haute intensité : alternance sprint/récupération.',
+    instructions: [
+      'Échauffement 3–5 min à intensité modérée.',
+      'Sprint 20–40 sec à effort maximal.',
+      'Récupération active 40–60 sec (marche ou trot).',
+      'Répéter 8–12 cycles selon le niveau.',
+      'Retour au calme 3–5 min.',
+    ],
+    muscleGroups: ['CARDIO'], equipment: ['BODYWEIGHT', 'CARDIO_MACHINE'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=ml6cT4AZdqI',
+  },
+  {
+    id: 'ex-treadmill-12-3-30', name: 'Tapis 12-3-30',
+    description: 'Protocole viral : inclinaison 12 %, vitesse 3 mph, 30 minutes — brûle des graisses efficacement.',
+    instructions: [
+      'Régler le tapis : inclinaison 12 %, vitesse 4,8 km/h (3 mph).',
+      'Marcher sans s\'appuyer sur les rampes.',
+      'Maintenir pendant 30 minutes à ce rythme.',
+      'Ne pas diminuer l\'inclinaison — c\'est la clé du protocole.',
+    ],
+    muscleGroups: ['CARDIO', 'GLUTES', 'HAMSTRINGS'], equipment: ['CARDIO_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=oCWFNdO1LWw',
+  },
+  {
+    id: 'ex-incline-walk', name: 'Marche inclinée',
+    description: 'Marche sur tapis à pente élevée pour brûler des calories sans impact articulaire.',
+    instructions: [
+      'Régler l\'inclinaison entre 8 et 15 %.',
+      'Choisir une vitesse confortable (4–6 km/h).',
+      'Garder le dos droit, ne pas s\'appuyer sur les rampes.',
+      'Maintenir 20–45 minutes selon l\'objectif.',
+    ],
+    muscleGroups: ['CARDIO', 'GLUTES', 'CALVES'], equipment: ['CARDIO_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=ldJOH-5f9LQ',
+  },
+  {
+    id: 'ex-cycling', name: 'Vélo / Cycling',
+    description: 'Cardio low-impact sur vélo statique ou home trainer, idéal pour la récupération active.',
+    instructions: [
+      'Régler la selle à hauteur de hanche.',
+      'Pédaler à cadence régulière (70–100 rpm).',
+      'Ajuster la résistance selon l\'intensité souhaitée.',
+      'Viser 20–60 min selon l\'objectif.',
+    ],
+    muscleGroups: ['CARDIO', 'QUADS', 'HAMSTRINGS'], equipment: ['CARDIO_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=9L2b2khySLE',
+  },
+  {
+    id: 'ex-running', name: 'Running extérieur',
+    description: 'Course à pied en extérieur, exercice cardio complet à impact modéré.',
+    instructions: [
+      'Échauffement 5 min en marchant vite.',
+      'Courir à une allure permettant de tenir une conversation (zone 2).',
+      'Maintenir la posture : dos droit, regard vers l\'avant.',
+      'Retour au calme 5 min en marchant.',
+    ],
+    muscleGroups: ['CARDIO', 'QUADS', 'HAMSTRINGS', 'CALVES'], equipment: ['BODYWEIGHT'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=brFHyOtTwH4',
+  },
+  {
+    id: 'ex-rowing', name: 'Rameur',
+    description: 'Exercice cardio complet sollicitant 86 % des groupes musculaires, idéal pour brûler des calories.',
+    instructions: [
+      'S\'asseoir sur le siège, pieds calés dans les repose-pieds.',
+      'Tirer la rame vers le bas-ventre en s\'allongeant.',
+      'Repousser avec les jambes d\'abord, puis tirer avec les bras.',
+      'Viser 20–40 min à intensité modérée ou faire des intervalles.',
+    ],
+    muscleGroups: ['CARDIO', 'BACK', 'QUADS', 'CORE'], equipment: ['CARDIO_MACHINE'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=H0r_HNxe-Cc',
   },
 ]
 

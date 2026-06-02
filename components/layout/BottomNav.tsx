@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Dumbbell, UtensilsCrossed, TrendingUp, Settings } from 'lucide-react'
+import { LayoutDashboard, Dumbbell, UtensilsCrossed, TrendingUp, Bot } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLocale } from '@/contexts/LocaleContext'
 
@@ -11,7 +11,7 @@ const TABS = [
   { href: '/training',  key: 'nav.training',  icon: Dumbbell },
   { href: '/nutrition', key: 'nav.nutrition', icon: UtensilsCrossed },
   { href: '/progress',  key: 'nav.progress',  icon: TrendingUp },
-  { href: '/settings',  key: 'nav.settings',  icon: Settings },
+  { href: '/ai',        key: 'nav.ai',        icon: Bot },
 ]
 
 /** Mobile-only fixed bottom navigation bar with five translated tab links; highlights the active route. */
