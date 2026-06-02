@@ -36,11 +36,24 @@ function buildSession(
   const seen   = new Set<string>()
   const picked: typeof EXERCISE_DATABASE = []
 
-  // Pass 1 — primary muscle match, with offset so each session picks different variants
+  // Graine basée sur le nom de la session pour un ordre stable mais varié entre sessions
+  const seed   = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), offset * 97)
+  const seededRand = (i: number) => Math.abs(Math.sin(seed + i)) // pseudo-random déterministe
+
+  const shuffle = <T,>(arr: T[]): T[] => {
+    const a = [...arr]
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(seededRand(i) * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]]
+    }
+    return a
+  }
+
+  // Pass 1 — primary muscle match, mélangé + offset pour varier entre sessions A/B
   for (const muscle of muscleGroups) {
     const perGroup = Math.max(1, Math.round(target / muscleGroups.length))
-    const matches  = available.filter(
-      (ex) => ex.muscleGroups[0] === muscle && !seen.has(ex.id),
+    const matches  = shuffle(
+      available.filter((ex) => ex.muscleGroups[0] === muscle && !seen.has(ex.id)),
     )
     // Apply offset rotation: skip the first `offset` matches and wrap around
     const rotated = offset > 0

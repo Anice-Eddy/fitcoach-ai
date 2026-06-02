@@ -56,13 +56,17 @@ export default function ShopPage() {
     return c
   }, [products])
 
+  // Normalise une chaîne : minuscules + suppression des accents
+  const normalize = (s: string) =>
+    s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+
   const searchResults = useMemo<AffiliateProduct[]>(() => {
-    const q = query.trim().toLowerCase()
+    const q = normalize(query.trim())
     if (!q) return []
     return products.filter(p =>
-      p.name.toLowerCase().includes(q) ||
-      p.brand?.toLowerCase().includes(q) ||
-      p.description?.toLowerCase().includes(q),
+      normalize(p.name).includes(q) ||
+      normalize(p.brand ?? '').includes(q) ||
+      normalize(p.description ?? '').includes(q),
     ).slice(0, 12)
   }, [query, products])
 

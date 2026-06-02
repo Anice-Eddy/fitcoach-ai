@@ -129,9 +129,18 @@ export function FocusExerciseView({
     [exercise.videoUrl],
   )
 
-  const alternatives = EXERCISE_DATABASE.filter(
-    item => item.id !== exercise.id && item.muscleGroups.some(g => exercise.muscleGroups.includes(g)),
-  ).slice(0, 5)
+  const alternatives = useMemo(() => {
+    const matches = EXERCISE_DATABASE.filter(
+      item => item.id !== exercise.id && item.muscleGroups.some(g => exercise.muscleGroups.includes(g)),
+    )
+    // Mélange Fisher-Yates pour que tous les exercices aient une chance d'apparaître
+    const shuffled = [...matches]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+    return shuffled.slice(0, 10)
+  }, [exercise.id, exercise.muscleGroups])
 
   const chooseAlternative = (item: typeof EXERCISE_DATABASE[number]) => {
     replaceExercise(exerciseIndex, {
