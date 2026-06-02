@@ -3,13 +3,11 @@
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  ChevronLeft, ChevronRight, ChevronDown, Youtube, RefreshCw, CheckCircle2,
-  Timer, Flame, Ruler, Wind, MoveUp,
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Youtube, RefreshCw, CheckCircle2 } from 'lucide-react'
 import type { SessionExercise } from '@/types'
 import { useTrainingStore } from '@/stores/trainingStore'
 import { EXERCISE_DATABASE } from '@/lib/training/exercise-database'
+import { CardioTimerView } from './CardioTimerView'
 
 function extractYtId(url: string): string | null {
   const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
@@ -186,66 +184,14 @@ export function FocusExerciseView({
         </p>
       </motion.div>
 
-      {/* ── VUE CARDIO ───────────────────────────────────────── */}
+      {/* ── VUE CARDIO — délégué à CardioTimerView ───────────── */}
       {isCardio ? (
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <Stepper label="Durée (min)" value={exercise.durationMinutes ?? 30} unit="min" step={5} min={1}
-              onChange={v => onCardioChange({ durationMinutes: v })} />
-            <Stepper label="Distance (km)" value={exercise.distanceKm ?? 0} unit="km" step={0.5} min={0}
-              onChange={v => onCardioChange({ distanceKm: v })} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Stepper label="Vitesse (km/h)" value={exercise.speedKmH ?? 0} unit="km/h" step={0.5} min={0}
-              onChange={v => onCardioChange({ speedKmH: v })} />
-            <Stepper label="Pente (%)" value={exercise.inclinePct ?? 0} unit="%" step={1} min={0}
-              onChange={v => onCardioChange({ inclinePct: v })} />
-          </div>
-
-          {/* Résumé */}
-          <div className="flex flex-wrap gap-2">
-            {(exercise.durationMinutes ?? 0) > 0 && (
-              <span className="flex items-center gap-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 px-3 py-1.5 text-xs text-sky-300">
-                <Timer className="size-3.5" /> {exercise.durationMinutes} min
-              </span>
-            )}
-            {(exercise.distanceKm ?? 0) > 0 && (
-              <span className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 text-xs text-emerald-300">
-                <Ruler className="size-3.5" /> {exercise.distanceKm} km
-              </span>
-            )}
-            {(exercise.speedKmH ?? 0) > 0 && (
-              <span className="flex items-center gap-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 text-xs text-amber-300">
-                <Wind className="size-3.5" /> {exercise.speedKmH} km/h
-              </span>
-            )}
-            {(exercise.inclinePct ?? 0) > 0 && (
-              <span className="flex items-center gap-1.5 rounded-lg bg-violet-500/10 border border-violet-500/20 px-3 py-1.5 text-xs text-violet-300">
-                <MoveUp className="size-3.5" /> {exercise.inclinePct}%
-              </span>
-            )}
-          </div>
-
-          {(exercise.durationMinutes ?? 0) > 0 && (
-            <div className="flex items-center gap-2 rounded-xl bg-orange-500/10 border border-orange-500/20 px-4 py-2.5 text-xs text-orange-300">
-              <Flame className="size-3.5 shrink-0" />
-              Estimé : ~{Math.round((exercise.durationMinutes ?? 0) * 7.5)} kcal brûlées
-            </div>
-          )}
-
-          {/* Bouton terminer cardio */}
-          <button
-            type="button"
-            onClick={onSetComplete}
-            className={`w-full py-4 rounded-2xl text-sm font-bold transition-all active:scale-95 ${
-              isAllDone
-                ? 'bg-[#C8F135]/15 text-[#C8F135] border border-[#C8F135]/30'
-                : 'bg-[#C8F135] text-zinc-900 shadow-lg hover:bg-[#d4f54d]'
-            }`}
-          >
-            {isAllDone ? '✓ Cardio enregistré' : 'Marquer comme terminé'}
-          </button>
-        </div>
+        <CardioTimerView
+          exercise={exercise}
+          isCompleted={isAllDone}
+          onCardioChange={onCardioChange}
+          onComplete={onSetComplete}
+        />
       ) : (
         /* ── VUE MUSCULATION ─────────────────────────────────── */
         <>

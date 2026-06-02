@@ -104,28 +104,39 @@ function buildSession(
   }
 }
 
-/** Builds a cardio-only session (for weight-loss programs). */
+// IDs des exercices HIIT bodyweight (pas de machine)
+const HIIT_EXERCISE_IDS = [
+  'ex-burpee', 'ex-mountain-climber', 'ex-jump-rope',
+  'ex-jump-squat', 'ex-box-jump', 'ex-hiit',
+]
+
+/** Builds a cardio session.
+ *  - HIIT: exercices bodyweight avec durée courte (30–45s work / 15s rest)
+ *  - Steady-state: tapis, vélo, rameur avec durée longue
+ */
 function buildCardioSession(
   name:      string,
-  exercises: string[], // exercise IDs
+  exerciseIds: string[],
+  isHIIT = false,
 ): WorkoutSession {
-  const cardioExs = EXERCISE_DATABASE.filter(ex => exercises.includes(ex.id))
+  const cardioExs = EXERCISE_DATABASE.filter(ex => exerciseIds.includes(ex.id))
+  const dur = isHIIT ? 20 : 30
   const sessionExercises: SessionExercise[] = cardioExs.map((ex, i) => ({
     ...ex,
     order:           i,
-    sets:            1,
-    reps:            1,
+    sets:            isHIIT ? 4 : 1,   // HIIT: 4 rounds, steady: 1 session
+    reps:            isHIIT ? 12 : 1,
     weightKg:        null,
-    restSeconds:     60,
+    restSeconds:     isHIIT ? 30 : 60,
     isCompleted:     false,
-    durationMinutes: 30,
+    durationMinutes: dur,
   }))
   return {
     id:              `local-${name.toLowerCase().replace(/[\s/—]+/g, '-').replace(/[^a-z0-9-]/g, '')}`,
     name,
     status:          'PLANNED',
     exercises:       sessionExercises,
-    durationMinutes: 35,
+    durationMinutes: dur + 5,
   }
 }
 
@@ -150,9 +161,9 @@ export function generateProgram(params: ProgramParams): WorkoutProgram {
       // Perte de poids : PPL allégé + cardio intégré
       sessions = [
         buildSession('Push — Pectoraux / Épaules / Triceps', ['CHEST', 'SHOULDERS', 'TRICEPS'], availableEquipment, fitnessLevel, 0, g),
-        buildCardioSession('Cardio — HIIT',    ['ex-hiit']),
-        buildSession('Pull — Dos / Biceps',    ['BACK', 'BICEPS'],               availableEquipment, fitnessLevel, 0, g),
-        buildCardioSession('Cardio — Marche inclinée', ['ex-incline-walk', 'ex-treadmill-12-3-30']),
+        buildCardioSession('HIIT — Circuit Cardio', HIIT_EXERCISE_IDS, true),
+        buildSession('Pull — Dos / Biceps', ['BACK', 'BICEPS'], availableEquipment, fitnessLevel, 0, g),
+        buildCardioSession('Cardio — Marche inclinée / Tapis', ['ex-incline-walk', 'ex-treadmill-12-3-30', 'ex-cycling'], false),
         buildSession('Legs — Jambes / Fessiers', ['QUADS', 'HAMSTRINGS', 'GLUTES'], availableEquipment, fitnessLevel, 0, g),
       ].slice(0, trainingDaysPerWeek)
     } else {

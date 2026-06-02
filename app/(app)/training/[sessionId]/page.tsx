@@ -231,6 +231,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
         </div>
 
         <FocusExerciseView
+          key={exercise.id}
           exercise={exercise}
           exerciseIndex={currentIdx}
           totalExercises={totalEx}
