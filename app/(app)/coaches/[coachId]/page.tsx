@@ -14,11 +14,16 @@ interface CoachData {
   name: string | null
   image: string | null
   coachProfile: {
-    id: string
-    bio: string | null
-    specialties: string[]
-    isVerified: boolean
-    _count: { coachMembers: number }
+    id:              string
+    bio:             string | null
+    specialties:     string[]
+    certifications:  string[]
+    isVerified:      boolean
+    city:            string | null
+    country:         string | null
+    yearsExperience: number | null
+    avatarUrl:       string | null
+    _count: { coachMembers: number; appointments: number }
   }
 }
 
@@ -187,11 +192,21 @@ export default function CoachBookingPage() {
                   {coach.coachProfile.specialties.length > 0 && (
                     <p className="text-xs text-zinc-400">{coach.coachProfile.specialties.join(' · ')}</p>
                   )}
-                  <div className="flex items-center gap-1 mt-0.5">
+                  <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star key={i} className={`size-3.5 ${i < 4 ? 'fill-[#C8F135] text-[#C8F135]' : 'text-zinc-600'}`} />
                     ))}
                     <span className="text-xs text-zinc-500 ml-1">{coach.coachProfile._count.coachMembers} membres</span>
+                    {(coach.coachProfile.city || coach.coachProfile.country) && (
+                      <span className="text-xs text-zinc-500 ml-2">
+                        📍 {[coach.coachProfile.city, coach.coachProfile.country].filter(Boolean).join(', ')}
+                      </span>
+                    )}
+                    {coach.coachProfile.yearsExperience != null && (
+                      <span className="text-xs text-zinc-500 ml-2">
+                        🏅 {coach.coachProfile.yearsExperience} ans d'exp.
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

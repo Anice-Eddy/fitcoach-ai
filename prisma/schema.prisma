@@ -683,6 +683,7 @@ model CoachProfile {
   certifications  String[]
   yearsExperience Int?
   city            String?
+  country         String? // Pays du coach (affiché sur le profil public)
   phone           String?
   isVerified      Boolean  @default(false)
   memberLimit     Int      @default(10)

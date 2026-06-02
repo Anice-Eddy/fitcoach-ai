@@ -26,6 +26,7 @@ export default function CoachSettingsProfilePage() {
   const [certifications, setCertifications] = useState('')
   const [yearsExp, setYearsExp]         = useState('')
   const [city, setCity]                 = useState('')
+  const [country, setCountry]           = useState('')
   const [phone, setPhone]               = useState('')
   const [memberLimit, setMemberLimit]   = useState(10)
 
@@ -39,6 +40,7 @@ export default function CoachSettingsProfilePage() {
         setCertifications((p.certifications ?? []).join(', '))
         setYearsExp(p.yearsExperience?.toString() ?? '')
         setCity(p.city ?? '')
+        setCountry(p.country ?? '')
         setPhone(p.phone ?? '')
         setMemberLimit(p.memberLimit ?? 10)
         setAvatarUrl(p.avatarUrl ?? '')
@@ -87,8 +89,9 @@ export default function CoachSettingsProfilePage() {
           specialties:     specialties.split(',').map(s => s.trim()).filter(Boolean),
           certifications:  certifications.split(',').map(s => s.trim()).filter(Boolean),
           yearsExperience: yearsExp ? parseInt(yearsExp) : null,
-          city:            city.trim() || null,
-          phone:           phone.trim() || null,
+          city:            city.trim()    || null,
+          country:         country.trim() || null,
+          phone:           phone.trim()   || null,
           memberLimit,
           avatarUrl:       avatarUrl.trim() || null,
         }),
@@ -244,6 +247,25 @@ export default function CoachSettingsProfilePage() {
                 placeholder="Paris"
                 className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
               />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Pays</label>
+              <input
+                list="country-list"
+                type="text"
+                value={country}
+                onChange={e => setCountry(e.target.value)}
+                placeholder="France"
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
+              />
+              <datalist id="country-list">
+                {[
+                  'France','Canada','Belgique','Suisse','Luxembourg','Maroc','Algérie',
+                  'Tunisie','Sénégal','Côte d\'Ivoire','Madagascar','Cameroun',
+                  'États-Unis','Royaume-Uni','Espagne','Italie','Allemagne','Portugal',
+                  'Pays-Bas','Australie','Nouvelle-Zélande','Autre',
+                ].map(c => <option key={c} value={c} />)}
+              </datalist>
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-1.5">Téléphone</label>

@@ -13,10 +13,13 @@ export async function GET() {
       image: true,
       coachProfile: {
         select: {
-          id: true,
-          bio: true,
-          specialties: true,
-          isVerified: true,
+          id:             true,
+          bio:            true,
+          specialties:    true,
+          isVerified:     true,
+          city:           true,
+          country:        true,
+          yearsExperience: true,
           _count: { select: { coachMembers: true } },
         },
       },

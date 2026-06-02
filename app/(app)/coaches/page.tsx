@@ -12,10 +12,13 @@ interface Coach {
   name: string | null
   image: string | null
   coachProfile: {
-    id: string
-    bio: string | null
-    specialties: string[]
-    isVerified: boolean
+    id:              string
+    bio:             string | null
+    specialties:     string[]
+    isVerified:      boolean
+    city:            string | null
+    country:         string | null
+    yearsExperience: number | null
     _count: { coachMembers: number }
   }
 }
@@ -113,11 +116,21 @@ function CoachesInner() {
                       {coach.coachProfile.bio && (
                         <p className="text-xs text-zinc-500 mt-2 line-clamp-2">{coach.coachProfile.bio}</p>
                       )}
-                      <div className="flex items-center gap-3 mt-3">
+                      <div className="flex items-center gap-3 mt-3 flex-wrap">
                         <div className="flex items-center gap-1 text-xs text-zinc-500">
                           <Users className="size-3" />
                           {coach.coachProfile._count.coachMembers} membre{coach.coachProfile._count.coachMembers !== 1 ? 's' : ''}
                         </div>
+                        {(coach.coachProfile.city || coach.coachProfile.country) && (
+                          <span className="text-xs text-zinc-500">
+                            📍 {[coach.coachProfile.city, coach.coachProfile.country].filter(Boolean).join(', ')}
+                          </span>
+                        )}
+                        {coach.coachProfile.yearsExperience != null && (
+                          <span className="text-xs text-zinc-500">
+                            🏅 {coach.coachProfile.yearsExperience} ans
+                          </span>
+                        )}
                         <div className="flex items-center gap-0.5">
                           {Array.from({ length: 5 }).map((_, i) => (
                             <Star key={i} className={`size-3 ${i < 4 ? 'fill-[#C8F135] text-[#C8F135]' : 'text-zinc-700'}`} />
