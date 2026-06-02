@@ -156,15 +156,45 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
   }
 
   const handleFinish = async () => {
+    // 1. Marquer la séance comme terminée
     await fetch(`/api/user/training/sessions/${params.sessionId}`, {
       method:  'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
-        status:         'COMPLETED',
+        status:          'COMPLETED',
         durationMinutes: minutes,
-        caloriesBurned: Math.round(minutes * 6.5),
+        caloriesBurned:  Math.round(minutes * 6.5),
       }),
     }).catch(() => {})
+
+    // 2. Enregistrer les logs d'exercices pour la progression
+    if (activeSession) {
+      const logs = activeSession.exercises.map((ex, i) => ({
+        exerciseName:    ex.name,
+        exerciseLocalId: ex.id,
+        order:           ex.order ?? i,
+        sets:            ex.sets,
+        reps:            repsArr[i] ?? ex.reps,
+        weightKg:        weights[i] ?? ex.weightKg,
+        restSeconds:     ex.restSeconds,
+        isCompleted:     ex.isCompleted || (setProgress[i] ?? 0) >= ex.sets,
+        muscleGroups:    ex.muscleGroups as string[],
+        equipment:       ex.equipment as string[],
+        isCompound:      ex.isCompound,
+        instructions:    ex.instructions,
+        durationMinutes: ex.durationMinutes,
+        distanceKm:      ex.distanceKm,
+        speedKmH:        ex.speedKmH,
+        inclinePct:      ex.inclinePct,
+      }))
+
+      await fetch(`/api/user/training/sessions/${params.sessionId}/logs`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ logs }),
+      }).catch(() => {})
+    }
+
     setShowSummary(true)
   }
 

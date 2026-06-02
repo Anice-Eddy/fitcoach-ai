@@ -3,7 +3,10 @@
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, ChevronDown, Youtube, RefreshCw, CheckCircle2, Timer, Flame, Ruler, Wind, MoveUp } from 'lucide-react'
+import {
+  ChevronLeft, ChevronRight, ChevronDown, Youtube, RefreshCw, CheckCircle2,
+  Timer, Flame, Ruler, Wind, MoveUp,
+} from 'lucide-react'
 import type { SessionExercise } from '@/types'
 import { useTrainingStore } from '@/stores/trainingStore'
 import { EXERCISE_DATABASE } from '@/lib/training/exercise-database'
@@ -13,33 +16,77 @@ function extractYtId(url: string): string | null {
   return m?.[1] ?? null
 }
 
-// +/- stepper control
+// ── Stepper avec champ numérique éditable à la main ─────────────────────────
 function Stepper({
-  label, value, unit, step = 1, min = 0, onChange, className = '',
+  label, value, unit, step = 1, min = 0, max, onChange,
 }: {
-  label: string; value: number; unit?: string; step?: number; min?: number
-  onChange: (v: number) => void; className?: string
+  label: string; value: number; unit?: string; step?: number; min?: number; max?: number
+  onChange: (v: number) => void
 }) {
+  const [editing, setEditing] = useState(false)
+  const [draft,   setDraft]   = useState('')
+
+  const commit = () => {
+    const parsed = parseFloat(draft.replace(',', '.'))
+    if (!isNaN(parsed)) {
+      let clamped = parsed
+      if (min !== undefined) clamped = Math.max(min, clamped)
+      if (max !== undefined) clamped = Math.min(max, clamped)
+      onChange(+clamped.toFixed(2))
+    }
+    setEditing(false)
+  }
+
   return (
-    <div className={`rounded-2xl bg-zinc-900 border border-zinc-800 p-4 ${className}`}>
+    <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4">
       <label className="block text-xs text-zinc-400 mb-2">{label}</label>
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={() => onChange(Math.max(min, +(value - step).toFixed(2)))}
-          className="size-9 rounded-lg bg-zinc-800 text-white text-lg font-bold hover:bg-zinc-700 shrink-0 active:scale-95 transition-transform"
+          onClick={() => onChange(Math.max(min ?? 0, +(value - step).toFixed(2)))}
+          className="size-10 rounded-xl bg-zinc-800 text-white text-xl font-bold hover:bg-zinc-700 shrink-0 active:scale-95 transition-transform"
         >−</button>
-        <span className="flex-1 text-center text-xl font-bold text-white tabular-nums">
-          {value}{unit && <span className="text-sm text-zinc-500 ml-1">{unit}</span>}
-        </span>
+
+        {editing ? (
+          <input
+            autoFocus
+            type="number"
+            inputMode="decimal"
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={e => { if (e.key === 'Enter') commit() }}
+            className="flex-1 text-center text-2xl font-bold text-white bg-zinc-800 rounded-xl py-1 outline-none focus:ring-2 focus:ring-[#C8F135] tabular-nums"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => { setDraft(String(value)); setEditing(true) }}
+            className="flex-1 text-center text-2xl font-bold text-white py-1 hover:text-[#C8F135] transition-colors tabular-nums"
+            title="Appuyer pour modifier"
+          >
+            {value}{unit && <span className="text-sm text-zinc-500 ml-1">{unit}</span>}
+          </button>
+        )}
+
         <button
           type="button"
           onClick={() => onChange(+(value + step).toFixed(2))}
-          className="size-9 rounded-lg bg-zinc-800 text-white text-lg font-bold hover:bg-zinc-700 shrink-0 active:scale-95 transition-transform"
+          className="size-10 rounded-xl bg-zinc-800 text-white text-xl font-bold hover:bg-zinc-700 shrink-0 active:scale-95 transition-transform"
         >+</button>
       </div>
+      <p className="text-[10px] text-zinc-600 text-center mt-1">Appuie sur la valeur pour saisir</p>
     </div>
   )
+}
+
+// Formate les secondes en "1m 30s" ou "45s"
+function formatRestLabel(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  if (m > 0 && s > 0) return `${m}m ${s}s`
+  if (m > 0) return `${m}m`
+  return `${s}s`
 }
 
 interface Props {
@@ -68,13 +115,14 @@ export function FocusExerciseView({
 }: Props) {
   const [showInstructions, setShowInstructions] = useState(false)
   const [showAlternatives, setShowAlternatives] = useState(false)
-  const [ytImgError, setYtImgError]             = useState(false)
-  const { replaceExercise }                     = useTrainingStore()
+  const [ytImgError,       setYtImgError]       = useState(false)
+  const { replaceExercise } = useTrainingStore()
 
   const isCardio  = exercise.muscleGroups[0] === 'CARDIO'
+  const totalSets = exercise.sets
   const isAllDone = isCardio
-    ? (exercise.durationMinutes ?? 0) > 0 && completedSets >= exercise.sets
-    : completedSets >= exercise.sets
+    ? completedSets >= 1
+    : completedSets >= totalSets
 
   const videoId = useMemo(
     () => exercise.videoUrl ? extractYtId(exercise.videoUrl) : null,
@@ -99,16 +147,10 @@ export function FocusExerciseView({
     setShowAlternatives(false)
   }
 
-  const restMin = Math.floor(exercise.restSeconds / 60)
-  const restSec = exercise.restSeconds % 60
-  const restLabel = restMin > 0
-    ? `${restMin}m${restSec > 0 ? ` ${restSec}s` : ''}`
-    : `${exercise.restSeconds}s`
-
   return (
     <div className="space-y-4">
 
-      {/* Exercise header */}
+      {/* ── En-tête exercice ─────────────────────────────────── */}
       <motion.div
         key={exercise.id}
         initial={{ opacity: 0, x: 24 }}
@@ -120,7 +162,9 @@ export function FocusExerciseView({
       >
         <p className="text-xs text-zinc-500 mb-1">
           Exercice {exerciseIndex + 1} / {totalExercises}
-          {isCardio && <span className="ml-2 px-1.5 py-0.5 rounded-md bg-sky-500/15 text-sky-400 text-[10px] font-semibold">CARDIO</span>}
+          {isCardio && (
+            <span className="ml-2 px-1.5 py-0.5 rounded-md bg-sky-500/15 text-sky-400 text-[10px] font-semibold">CARDIO</span>
+          )}
         </p>
         <div className="flex items-center gap-2">
           {isAllDone && <CheckCircle2 className="size-5 text-[#C8F135] shrink-0" />}
@@ -133,75 +177,50 @@ export function FocusExerciseView({
         </p>
       </motion.div>
 
-      {/* ── VUE CARDIO ─────────────────────────────────────────── */}
+      {/* ── VUE CARDIO ───────────────────────────────────────── */}
       {isCardio ? (
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <Stepper
-              label="Durée (min)"
-              value={exercise.durationMinutes ?? 30}
-              unit="min"
-              step={5}
-              min={1}
-              onChange={v => onCardioChange({ durationMinutes: v })}
-            />
-            <Stepper
-              label="Distance (km)"
-              value={exercise.distanceKm ?? 0}
-              unit="km"
-              step={0.5}
-              min={0}
-              onChange={v => onCardioChange({ distanceKm: v })}
-            />
+            <Stepper label="Durée (min)" value={exercise.durationMinutes ?? 30} unit="min" step={5} min={1}
+              onChange={v => onCardioChange({ durationMinutes: v })} />
+            <Stepper label="Distance (km)" value={exercise.distanceKm ?? 0} unit="km" step={0.5} min={0}
+              onChange={v => onCardioChange({ distanceKm: v })} />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Stepper
-              label="Vitesse (km/h)"
-              value={exercise.speedKmH ?? 0}
-              unit="km/h"
-              step={0.5}
-              min={0}
-              onChange={v => onCardioChange({ speedKmH: v })}
-            />
-            <Stepper
-              label="Pente (%)"
-              value={exercise.inclinePct ?? 0}
-              unit="%"
-              step={1}
-              min={0}
-              onChange={v => onCardioChange({ inclinePct: v })}
-            />
+            <Stepper label="Vitesse (km/h)" value={exercise.speedKmH ?? 0} unit="km/h" step={0.5} min={0}
+              onChange={v => onCardioChange({ speedKmH: v })} />
+            <Stepper label="Pente (%)" value={exercise.inclinePct ?? 0} unit="%" step={1} min={0}
+              onChange={v => onCardioChange({ inclinePct: v })} />
           </div>
 
-          {/* Résumé cardio */}
-          <div className="flex flex-wrap gap-2 mt-1">
-            {exercise.durationMinutes && (
-              <div className="flex items-center gap-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 px-3 py-1.5 text-xs text-sky-300">
+          {/* Résumé */}
+          <div className="flex flex-wrap gap-2">
+            {(exercise.durationMinutes ?? 0) > 0 && (
+              <span className="flex items-center gap-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 px-3 py-1.5 text-xs text-sky-300">
                 <Timer className="size-3.5" /> {exercise.durationMinutes} min
-              </div>
+              </span>
             )}
             {(exercise.distanceKm ?? 0) > 0 && (
-              <div className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 text-xs text-emerald-300">
+              <span className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 text-xs text-emerald-300">
                 <Ruler className="size-3.5" /> {exercise.distanceKm} km
-              </div>
+              </span>
             )}
             {(exercise.speedKmH ?? 0) > 0 && (
-              <div className="flex items-center gap-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 text-xs text-amber-300">
+              <span className="flex items-center gap-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 text-xs text-amber-300">
                 <Wind className="size-3.5" /> {exercise.speedKmH} km/h
-              </div>
+              </span>
             )}
             {(exercise.inclinePct ?? 0) > 0 && (
-              <div className="flex items-center gap-1.5 rounded-lg bg-violet-500/10 border border-violet-500/20 px-3 py-1.5 text-xs text-violet-300">
+              <span className="flex items-center gap-1.5 rounded-lg bg-violet-500/10 border border-violet-500/20 px-3 py-1.5 text-xs text-violet-300">
                 <MoveUp className="size-3.5" /> {exercise.inclinePct}%
-              </div>
+              </span>
             )}
           </div>
 
-          {/* Calories estimées */}
-          {exercise.durationMinutes && exercise.durationMinutes > 0 && (
+          {(exercise.durationMinutes ?? 0) > 0 && (
             <div className="flex items-center gap-2 rounded-xl bg-orange-500/10 border border-orange-500/20 px-4 py-2.5 text-xs text-orange-300">
               <Flame className="size-3.5 shrink-0" />
-              Estimé : ~{Math.round(exercise.durationMinutes * 7.5)} kcal brûlées
+              Estimé : ~{Math.round((exercise.durationMinutes ?? 0) * 7.5)} kcal brûlées
             </div>
           )}
 
@@ -215,29 +234,23 @@ export function FocusExerciseView({
                 : 'bg-[#C8F135] text-zinc-900 shadow-lg hover:bg-[#d4f54d]'
             }`}
           >
-            {isAllDone ? '✓ Cardio terminé' : 'Marquer comme terminé'}
+            {isAllDone ? '✓ Cardio enregistré' : 'Marquer comme terminé'}
           </button>
         </div>
       ) : (
         /* ── VUE MUSCULATION ─────────────────────────────────── */
         <>
-          {/* Weight + Reps */}
+          {/* Charge + Répétitions */}
           <div className="grid grid-cols-2 gap-3">
-            <Stepper label="Charge (kg)" value={weight} step={2.5} min={0} onChange={onWeightChange} />
-            <Stepper label="Répétitions" value={reps}   step={1}   min={1} onChange={onRepsChange} />
+            <Stepper label="Charge (kg)" value={weight} step={2.5} min={0}   onChange={onWeightChange} />
+            <Stepper label="Répétitions" value={reps}   step={1}   min={1}   onChange={onRepsChange} />
           </div>
 
-          {/* Séries + Repos éditables */}
+          {/* Séries + Repos */}
           <div className="grid grid-cols-2 gap-3">
+            <Stepper label="Séries" value={totalSets} step={1} min={1} max={10} onChange={onSetsChange} />
             <Stepper
-              label="Nombre de séries"
-              value={exercise.sets}
-              step={1}
-              min={1}
-              onChange={onSetsChange}
-            />
-            <Stepper
-              label={`Repos (${restLabel})`}
+              label={`Repos (${formatRestLabel(exercise.restSeconds)})`}
               value={exercise.restSeconds}
               unit="s"
               step={15}
@@ -246,44 +259,67 @@ export function FocusExerciseView({
             />
           </div>
 
-          {/* Set tracker */}
-          <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4">
-            <p className="text-xs text-zinc-400 mb-3">
-              Séries &nbsp;·&nbsp;
-              <span className={isAllDone ? 'text-[#C8F135] font-semibold' : 'text-white font-semibold'}>
-                {completedSets}
-              </span>
-              <span className="text-zinc-500"> / {exercise.sets}</span>
-            </p>
+          {/* ── Suivi des séries ─────────────────────────────── */}
+          <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 space-y-3">
+            {/* Progression */}
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-zinc-400">
+                Progression des séries
+              </p>
+              <p className="text-xs font-semibold">
+                <span className={completedSets >= totalSets ? 'text-[#C8F135]' : 'text-white'}>
+                  {completedSets}
+                </span>
+                <span className="text-zinc-500"> / {totalSets}</span>
+              </p>
+            </div>
+
+            {/* Pastilles de séries */}
             <div className="flex gap-2 flex-wrap">
-              {Array.from({ length: exercise.sets }, (_, i) => {
+              {Array.from({ length: totalSets }, (_, i) => {
                 const isDone    = i < completedSets
                 const isCurrent = i === completedSets
                 return (
-                  <button
+                  <div
                     key={i}
-                    type="button"
-                    disabled={!isCurrent}
-                    onClick={isCurrent ? onSetComplete : undefined}
-                    aria-label={isDone ? `Série ${i + 1} terminée` : isCurrent ? `Démarrer série ${i + 1}` : `Série ${i + 1}`}
-                    className={`flex-1 min-w-[44px] py-3.5 rounded-xl text-sm font-bold transition-all ${
+                    className={`flex-1 min-w-[40px] py-2.5 rounded-xl text-xs font-bold text-center transition-all ${
                       isDone
-                        ? 'bg-[#C8F135]/15 text-[#C8F135] border border-[#C8F135]/30 cursor-default'
+                        ? 'bg-[#C8F135]/15 text-[#C8F135] border border-[#C8F135]/30'
                         : isCurrent
-                        ? 'bg-[#C8F135] text-zinc-900 shadow-lg active:scale-95'
-                        : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                        ? 'border border-zinc-600 text-zinc-400 bg-zinc-800'
+                        : 'bg-zinc-900 border border-zinc-800 text-zinc-700'
                     }`}
                   >
                     {isDone ? '✓' : i + 1}
-                  </button>
+                  </div>
                 )
               })}
             </div>
+
+            {/* Bouton principal — Valider la série */}
+            {completedSets < totalSets && (
+              <button
+                type="button"
+                onClick={onSetComplete}
+                className="w-full py-4 rounded-2xl bg-[#C8F135] text-zinc-900 text-base font-bold shadow-lg hover:bg-[#d4f54d] active:scale-95 transition-all"
+              >
+                Valider la série {completedSets + 1} / {totalSets}
+              </button>
+            )}
+
+            {completedSets >= totalSets && (
+              <div className="w-full py-3 rounded-2xl bg-[#C8F135]/10 border border-[#C8F135]/30 text-center">
+                <p className="text-sm font-semibold text-[#C8F135]">✓ Toutes les séries terminées</p>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  {weight > 0 ? `${weight} kg × ${reps} rép.` : `${reps} rép.`}
+                </p>
+              </div>
+            )}
           </div>
         </>
       )}
 
-      {/* YouTube tutorial */}
+      {/* ── Tutoriel YouTube ─────────────────────────────────── */}
       {exercise.videoUrl && (
         <a
           href={exercise.videoUrl}
@@ -314,7 +350,7 @@ export function FocusExerciseView({
         </a>
       )}
 
-      {/* Instructions (collapsible) */}
+      {/* ── Instructions ─────────────────────────────────────── */}
       {exercise.instructions.length > 0 && (
         <div className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
           <button
@@ -345,7 +381,7 @@ export function FocusExerciseView({
         </div>
       )}
 
-      {/* Replace exercise */}
+      {/* ── Remplacer ─────────────────────────────────────────── */}
       <button
         type="button"
         onClick={() => setShowAlternatives(true)}
@@ -354,7 +390,7 @@ export function FocusExerciseView({
         <RefreshCw className="size-4" /> Remplacer cet exercice
       </button>
 
-      {/* Prev / Next */}
+      {/* ── Précédent / Suivant ───────────────────────────────── */}
       <div className="flex gap-3 pt-1">
         <button
           type="button"
@@ -373,12 +409,12 @@ export function FocusExerciseView({
               : 'border border-zinc-700 text-zinc-300 hover:bg-zinc-900'
           }`}
         >
-          {!hasNext ? (isAllDone ? 'Terminer 🎉' : 'Terminer') : (isAllDone ? 'Suivant ✓' : 'Suivant')}
+          {!hasNext ? (isAllDone ? 'Terminer 🎉' : 'Terminer quand même') : (isAllDone ? 'Suivant ✓' : 'Passer')}
           <ChevronRight className="size-4" />
         </button>
       </div>
 
-      {/* Alternatives modal */}
+      {/* ── Modal alternatives ────────────────────────────────── */}
       <AnimatePresence>
         {showAlternatives && (
           <motion.div
@@ -395,22 +431,14 @@ export function FocusExerciseView({
             >
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-base font-semibold text-white">Exercices alternatifs</h3>
-                <button
-                  type="button"
-                  onClick={() => setShowAlternatives(false)}
-                  className="text-sm text-zinc-400 hover:text-white transition-colors"
-                >
-                  Fermer
-                </button>
+                <button type="button" onClick={() => setShowAlternatives(false)}
+                  className="text-sm text-zinc-400 hover:text-white transition-colors">Fermer</button>
               </div>
               <div className="space-y-2">
                 {alternatives.length === 0 ? (
-                  <p className="text-sm text-zinc-500 text-center py-4">Aucun exercice similaire trouvé.</p>
+                  <p className="text-sm text-zinc-500 text-center py-4">Aucun exercice similaire.</p>
                 ) : alternatives.map(item => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => chooseAlternative(item)}
+                  <button key={item.id} type="button" onClick={() => chooseAlternative(item)}
                     className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-left hover:border-[#C8F135]/50 hover:bg-zinc-800 transition-colors"
                   >
                     <p className="text-sm font-medium text-white">{item.name}</p>

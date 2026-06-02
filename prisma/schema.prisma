@@ -136,6 +136,7 @@ enum MuscleGroup {
   GLUTES
   CALVES
   FULL_BODY
+  CARDIO
 }
 
 enum Equipment {
@@ -149,6 +150,8 @@ enum Equipment {
   SMITH_MACHINE
   BODYWEIGHT
   CARDIO_MACHINE
+  CHEST_PRESS_MACHINE
+  HIP_THRUST_MACHINE
 }
 
 // ============================================================
