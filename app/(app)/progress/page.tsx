@@ -5,19 +5,31 @@ import { PageWrapper }  from '@/components/layout/PageWrapper'
 import { WeightChart }  from '@/components/dashboard/WeightChart'
 import { useUserStore } from '@/stores/userStore'
 import { toast } from 'sonner'
-import { Plus, Scale, Target, TrendingDown, TrendingUp, Activity, Trash2, Ruler, Footprints, Moon, Droplets, Battery, Brain, Camera } from 'lucide-react'
+import { Plus, Scale, Target, TrendingDown, TrendingUp, Activity, Trash2, Ruler, Footprints, Moon, Droplets, Battery, Brain, Camera, Heart, Wind, Zap, HeartPulse } from 'lucide-react'
 import { MetricCard } from '@/components/ui/MetricCard'
 
 interface BodyMetric {
-  id: string
-  weightKg?: number | null
-  date: string
-  bodyFatPct?: number | null
-  steps?: number | null
-  sleepHours?: number | null
-  waterLiters?: number | null
-  energyLevel?: number | null
-  stressLevel?: number | null
+  id:               string
+  date:             string
+  // Composition corporelle
+  weightKg?:        number | null
+  bodyFatPct?:      number | null
+  muscleMassKg?:    number | null
+  // Activité quotidienne
+  steps?:           number | null
+  caloriesActive?:  number | null
+  // Récupération
+  sleepHours?:      number | null
+  waterLiters?:     number | null
+  energyLevel?:     number | null
+  stressLevel?:     number | null
+  // Cardiovasculaire (Apple Health / Apple Watch)
+  heartRateAvg?:     number | null
+  restingHeartRate?: number | null
+  vo2Max?:           number | null
+  hrv?:              number | null
+  spo2?:             number | null
+  // Divers
   progressPhotoUrl?: string | null
 }
 interface WeightPoint { date: string; weight: number }
@@ -256,7 +268,7 @@ export default function ProgressPage() {
             </div>
           </div>
 
-          {/* Récupération */}
+          {/* Récupération quotidienne */}
           {lastMetric && (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
               <MetricCard title="Pas" value={lastMetric.steps ?? '—'} icon={<Footprints className="size-4" />} accentColor="#38bdf8" />
@@ -264,6 +276,80 @@ export default function ProgressPage() {
               <MetricCard title="Litres d'eau" value={lastMetric.waterLiters ?? '—'} unit={lastMetric.waterLiters ? 'L' : ''} icon={<Droplets className="size-4" />} accentColor="#22d3ee" />
               <MetricCard title="Énergie" value={lastMetric.energyLevel ?? '—'} unit={lastMetric.energyLevel ? '/5' : ''} icon={<Battery className="size-4" />} accentColor="#4ade80" />
               <MetricCard title="Stress" value={lastMetric.stressLevel ?? '—'} unit={lastMetric.stressLevel ? '/5' : ''} icon={<Brain className="size-4" />} accentColor="#f87171" />
+            </div>
+          )}
+
+          {/* Apple Health — données cardiovasculaires */}
+          {lastMetric && (
+            lastMetric.heartRateAvg || lastMetric.restingHeartRate || lastMetric.caloriesActive ||
+            lastMetric.vo2Max || lastMetric.hrv || lastMetric.spo2 || lastMetric.muscleMassKg
+          ) && (
+            <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                {/* Logo Apple Health */}
+                <div className="size-5 rounded-full bg-red-500 flex items-center justify-center">
+                  <Heart className="size-3 text-white fill-white" />
+                </div>
+                <h3 className="text-sm font-semibold text-white">Apple Health</h3>
+                <span className="text-xs text-zinc-500 ml-auto">
+                  {lastMetric.date
+                    ? new Date(lastMetric.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                    : ''}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                {lastMetric.heartRateAvg != null && (
+                  <MetricCard title="FC moy." value={lastMetric.heartRateAvg} unit="bpm"
+                    icon={<HeartPulse className="size-4" />} accentColor="#f87171" />
+                )}
+                {lastMetric.restingHeartRate != null && (
+                  <MetricCard title="FC repos" value={lastMetric.restingHeartRate} unit="bpm"
+                    icon={<Heart className="size-4" />} accentColor="#fb923c" />
+                )}
+                {lastMetric.caloriesActive != null && (
+                  <MetricCard title="Cal. actives" value={lastMetric.caloriesActive} unit="kcal"
+                    icon={<Zap className="size-4" />} accentColor="#fbbf24" />
+                )}
+                {lastMetric.vo2Max != null && (
+                  <MetricCard title="VO₂ max" value={lastMetric.vo2Max.toFixed(1)} unit="ml/kg/min"
+                    icon={<Wind className="size-4" />} accentColor="#34d399" />
+                )}
+                {lastMetric.hrv != null && (
+                  <MetricCard title="VFC (HRV)" value={Math.round(lastMetric.hrv)} unit="ms"
+                    icon={<Activity className="size-4" />} accentColor="#a78bfa" />
+                )}
+                {lastMetric.spo2 != null && (
+                  <MetricCard title="SpO₂" value={lastMetric.spo2.toFixed(1)} unit="%"
+                    icon={<Droplets className="size-4" />} accentColor="#60a5fa" />
+                )}
+                {lastMetric.muscleMassKg != null && (
+                  <MetricCard title="Masse musc." value={lastMetric.muscleMassKg.toFixed(1)} unit="kg"
+                    icon={<Activity className="size-4" />} accentColor="#C8F135" />
+                )}
+              </div>
+
+              {/* Interprétation VFC */}
+              {lastMetric.hrv != null && (
+                <p className="text-xs text-zinc-500 mt-3">
+                  {lastMetric.hrv >= 60
+                    ? '✅ VFC élevée — bonne récupération, corps prêt pour l\'effort.'
+                    : lastMetric.hrv >= 40
+                    ? '🟡 VFC modérée — récupération correcte, entraînement modéré conseillé.'
+                    : '🔴 VFC faible — récupération insuffisante, privilégier repos ou cardio léger.'}
+                </p>
+              )}
+              {/* Interprétation FC repos */}
+              {lastMetric.restingHeartRate != null && (
+                <p className="text-xs text-zinc-500 mt-1">
+                  {lastMetric.restingHeartRate < 50
+                    ? '🏅 FC repos excellente (athlète).'
+                    : lastMetric.restingHeartRate < 60
+                    ? '✅ FC repos très bonne (< 60 bpm).'
+                    : lastMetric.restingHeartRate < 70
+                    ? '🟡 FC repos normale.'
+                    : '🔴 FC repos élevée — surveiller stress, hydratation, sommeil.'}
+                </p>
+              )}
             </div>
           )}
 
@@ -307,9 +393,16 @@ export default function ProgressPage() {
                     <span className="text-xs text-zinc-400">
                       {new Date(m.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap justify-end">
                       {typeof m.weightKg === 'number' ? <span className="text-sm font-semibold text-white">{m.weightKg} kg</span> : null}
-                      {m.bodyFatPct ? <span className="text-xs text-zinc-500">{m.bodyFatPct}% MG</span> : null}
+                      {m.bodyFatPct    ? <span className="text-xs text-zinc-500">{m.bodyFatPct}% MG</span>          : null}
+                      {m.muscleMassKg  ? <span className="text-xs text-zinc-500">{m.muscleMassKg}kg mus.</span>     : null}
+                      {m.steps         ? <span className="text-xs text-zinc-600">{m.steps.toLocaleString()} pas</span> : null}
+                      {m.heartRateAvg  ? <span className="text-xs text-red-400/70">{m.heartRateAvg} bpm</span>      : null}
+                      {m.restingHeartRate ? <span className="text-xs text-orange-400/70">{m.restingHeartRate} bpm↓</span> : null}
+                      {m.vo2Max        ? <span className="text-xs text-emerald-400/70">VO₂ {m.vo2Max.toFixed(1)}</span> : null}
+                      {m.hrv           ? <span className="text-xs text-violet-400/70">HRV {Math.round(m.hrv)}ms</span> : null}
+                      {m.spo2          ? <span className="text-xs text-blue-400/70">SpO₂ {m.spo2}%</span>          : null}
                       {m.progressPhotoUrl ? <Camera className="size-3.5 text-zinc-500" aria-label="Photo de progression enregistrée" /> : null}
                       <button
                         type="button"

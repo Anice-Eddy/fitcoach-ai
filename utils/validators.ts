@@ -144,22 +144,22 @@ export const bodyMetricSchema = z.object({
   energyLevel:      z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().int().min(1).max(5).optional()),
   stressLevel:      z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().int().min(1).max(5).optional()),
   progressPhotoUrl: z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().url().max(1000).optional()),
-  notes:        z.string().max(500).optional(),
+  notes:            z.string().max(500).optional(),
+  // Données Apple Health — cardiovasculaire et récupération
+  heartRateAvg:     z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().int().min(30).max(250).optional()),
+  caloriesActive:   z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().int().min(0).max(10000).optional()),
+  restingHeartRate: z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().int().min(20).max(200).optional()),
+  vo2Max:           z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(10).max(100).optional()),
+  hrv:              z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(0).max(300).optional()),
+  spo2:             z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(70).max(100).optional()),
 }).refine((metric) => {
   // Une mesure peut être seulement hydratation/sommeil/etc., mais elle ne doit jamais être vide.
   return [
-    metric.weightKg,
-    metric.bodyFatPct,
-    metric.muscleMassKg,
-    metric.waistCm,
-    metric.hipsCm,
-    metric.steps,
-    metric.sleepHours,
-    metric.waterLiters,
-    metric.energyLevel,
-    metric.stressLevel,
-    metric.progressPhotoUrl,
-    metric.notes,
+    metric.weightKg, metric.bodyFatPct, metric.muscleMassKg, metric.waistCm, metric.hipsCm,
+    metric.steps, metric.sleepHours, metric.waterLiters, metric.energyLevel, metric.stressLevel,
+    metric.progressPhotoUrl, metric.notes,
+    metric.heartRateAvg, metric.caloriesActive, metric.restingHeartRate,
+    metric.vo2Max, metric.hrv, metric.spo2,
   ].some(value => value !== undefined && value !== '')
 }, {
   message: 'Renseignez au moins une donnée à enregistrer',

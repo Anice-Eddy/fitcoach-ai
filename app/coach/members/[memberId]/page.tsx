@@ -1,6 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, MessageSquare, CalendarPlus } from 'lucide-react'
+import { ArrowLeft, MessageSquare, CalendarPlus, Heart, HeartPulse, Wind, Activity, Zap, Droplets } from 'lucide-react'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { NotesEditor } from './NotesEditor'
@@ -190,22 +190,111 @@ export default async function MemberDetailPage({ params }: { params: { memberId:
               )}
             </Card>
 
-            {/* Weight history */}
+            {/* Composition corporelle */}
             {member.bodyMetrics.length > 0 && (
               <Card className="p-4">
                 <Label>Dernière mensuration</Label>
                 <div className="space-y-1.5">
                   {[
-                    { k: 'Poids',       v: member.bodyMetrics[0].weightKg ? `${member.bodyMetrics[0].weightKg} kg` : '—' },
-                    { k: 'Masse grasse', v: member.bodyMetrics[0].bodyFatPct ? `${member.bodyMetrics[0].bodyFatPct}%` : '—' },
-                    { k: 'Tour de taille', v: member.bodyMetrics[0].waistCm ? `${member.bodyMetrics[0].waistCm} cm` : '—' },
-                    { k: 'Date', v: new Date(member.bodyMetrics[0].date).toLocaleDateString('fr-FR') },
+                    { k: 'Poids',          v: member.bodyMetrics[0].weightKg    ? `${member.bodyMetrics[0].weightKg} kg`    : '—' },
+                    { k: 'Masse grasse',   v: member.bodyMetrics[0].bodyFatPct  ? `${member.bodyMetrics[0].bodyFatPct}%`   : '—' },
+                    { k: 'Masse musc.',    v: member.bodyMetrics[0].muscleMassKg ? `${member.bodyMetrics[0].muscleMassKg} kg` : '—' },
+                    { k: 'Tour de taille', v: member.bodyMetrics[0].waistCm     ? `${member.bodyMetrics[0].waistCm} cm`    : '—' },
+                    { k: 'Pas',            v: member.bodyMetrics[0].steps       ? member.bodyMetrics[0].steps.toLocaleString('fr-FR') : '—' },
+                    { k: 'Sommeil',        v: member.bodyMetrics[0].sleepHours  ? `${member.bodyMetrics[0].sleepHours} h`  : '—' },
+                    { k: 'Date',           v: new Date(member.bodyMetrics[0].date).toLocaleDateString('fr-FR') },
                   ].map(r => (
                     <div key={r.k} className="flex justify-between text-xs py-1 border-b border-zinc-800/60 last:border-0">
                       <span className="text-zinc-500">{r.k}</span>
                       <span className="text-white font-mono">{r.v}</span>
                     </div>
                   ))}
+                </div>
+              </Card>
+            )}
+
+            {/* Apple Health — données cardiovasculaires */}
+            {member.bodyMetrics.length > 0 && (
+              member.bodyMetrics[0].heartRateAvg ||
+              member.bodyMetrics[0].restingHeartRate ||
+              member.bodyMetrics[0].vo2Max ||
+              member.bodyMetrics[0].hrv ||
+              member.bodyMetrics[0].spo2 ||
+              member.bodyMetrics[0].caloriesActive
+            ) && (
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="size-4 rounded-full bg-red-500 flex items-center justify-center">
+                    <Heart className="size-2.5 text-white fill-white" />
+                  </div>
+                  <Label>Apple Health</Label>
+                </div>
+                <div className="space-y-1.5">
+                  {member.bodyMetrics[0].heartRateAvg && (
+                    <div className="flex justify-between text-xs py-1 border-b border-zinc-800/60">
+                      <span className="flex items-center gap-1.5 text-zinc-500">
+                        <HeartPulse className="size-3 text-red-400" /> FC moyenne
+                      </span>
+                      <span className="text-red-300 font-mono">{member.bodyMetrics[0].heartRateAvg} bpm</span>
+                    </div>
+                  )}
+                  {member.bodyMetrics[0].restingHeartRate && (
+                    <div className="flex justify-between text-xs py-1 border-b border-zinc-800/60">
+                      <span className="flex items-center gap-1.5 text-zinc-500">
+                        <Heart className="size-3 text-orange-400" /> FC repos
+                      </span>
+                      <span className={`font-mono ${
+                        member.bodyMetrics[0].restingHeartRate < 60 ? 'text-emerald-400' :
+                        member.bodyMetrics[0].restingHeartRate < 70 ? 'text-amber-400' : 'text-red-400'
+                      }`}>
+                        {member.bodyMetrics[0].restingHeartRate} bpm
+                        {member.bodyMetrics[0].restingHeartRate < 60 ? ' ✅' : member.bodyMetrics[0].restingHeartRate > 70 ? ' ⚠️' : ''}
+                      </span>
+                    </div>
+                  )}
+                  {member.bodyMetrics[0].caloriesActive && (
+                    <div className="flex justify-between text-xs py-1 border-b border-zinc-800/60">
+                      <span className="flex items-center gap-1.5 text-zinc-500">
+                        <Zap className="size-3 text-amber-400" /> Cal. actives
+                      </span>
+                      <span className="text-amber-300 font-mono">{member.bodyMetrics[0].caloriesActive} kcal</span>
+                    </div>
+                  )}
+                  {member.bodyMetrics[0].vo2Max && (
+                    <div className="flex justify-between text-xs py-1 border-b border-zinc-800/60">
+                      <span className="flex items-center gap-1.5 text-zinc-500">
+                        <Wind className="size-3 text-emerald-400" /> VO₂ max ⌚
+                      </span>
+                      <span className="text-emerald-300 font-mono">{member.bodyMetrics[0].vo2Max.toFixed(1)} ml/kg/min</span>
+                    </div>
+                  )}
+                  {member.bodyMetrics[0].hrv && (
+                    <div className="flex justify-between text-xs py-1 border-b border-zinc-800/60">
+                      <span className="flex items-center gap-1.5 text-zinc-500">
+                        <Activity className="size-3 text-violet-400" /> VFC / HRV ⌚
+                      </span>
+                      <span className={`font-mono ${
+                        member.bodyMetrics[0].hrv >= 60 ? 'text-emerald-400' :
+                        member.bodyMetrics[0].hrv >= 40 ? 'text-amber-400' : 'text-red-400'
+                      }`}>
+                        {Math.round(member.bodyMetrics[0].hrv)} ms
+                        {member.bodyMetrics[0].hrv >= 60 ? ' ✅' : member.bodyMetrics[0].hrv < 40 ? ' ⚠️' : ''}
+                      </span>
+                    </div>
+                  )}
+                  {member.bodyMetrics[0].spo2 && (
+                    <div className="flex justify-between text-xs py-1">
+                      <span className="flex items-center gap-1.5 text-zinc-500">
+                        <Droplets className="size-3 text-blue-400" /> SpO₂ ⌚
+                      </span>
+                      <span className={`font-mono ${
+                        member.bodyMetrics[0].spo2 >= 95 ? 'text-emerald-400' : 'text-red-400'
+                      }`}>
+                        {member.bodyMetrics[0].spo2.toFixed(1)}%
+                        {member.bodyMetrics[0].spo2 < 95 ? ' ⚠️' : ''}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </Card>
             )}

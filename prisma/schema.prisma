@@ -287,6 +287,14 @@ model BodyMetric {
   stressLevel      Int?
   progressPhotoUrl String?
 
+  // Données Apple Health — synchronisées via le Raccourci iOS BodyOps.
+  heartRateAvg     Int?   // FC moyenne journalière (bpm)
+  caloriesActive   Int?   // Calories actives brûlées (kcal)
+  restingHeartRate Int?   // FC au repos (bpm) — meilleur indicateur de forme cardiovasculaire
+  vo2Max           Float? // VO2 max estimé (ml/kg/min) — nécessite Apple Watch
+  hrv              Float? // Variabilité FC SDNN (ms) — indicateur de récupération, Apple Watch
+  spo2             Float? // Saturation O2 sanguin (%) — Apple Watch Series 6+
+
   // Données Evolt Active (composition corporelle avancée)
   evoltBioAge Float?
   evoltBwi    Float?
