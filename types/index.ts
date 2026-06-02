@@ -72,13 +72,18 @@ export interface ExerciseSet {
 }
 
 export interface SessionExercise extends Exercise {
-  order:       number
-  sets:        number
-  reps:        number
-  weightKg:    number | null
-  restSeconds: number
-  tempo?:      string
-  isCompleted: boolean
+  order:            number
+  sets:             number
+  reps:             number
+  weightKg:         number | null
+  restSeconds:      number
+  tempo?:           string
+  isCompleted:      boolean
+  // Champs spécifiques aux exercices cardio
+  durationMinutes?: number
+  distanceKm?:      number
+  speedKmH?:        number
+  inclinePct?:      number
 }
 
 export interface WorkoutSession {

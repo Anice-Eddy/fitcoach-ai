@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, ChevronDown, Youtube, RefreshCw, CheckCircle2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Youtube, RefreshCw, CheckCircle2, Timer, Flame, Ruler, Wind, MoveUp } from 'lucide-react'
 import type { SessionExercise } from '@/types'
 import { useTrainingStore } from '@/stores/trainingStore'
 import { EXERCISE_DATABASE } from '@/lib/training/exercise-database'
@@ -13,32 +13,68 @@ function extractYtId(url: string): string | null {
   return m?.[1] ?? null
 }
 
+// +/- stepper control
+function Stepper({
+  label, value, unit, step = 1, min = 0, onChange, className = '',
+}: {
+  label: string; value: number; unit?: string; step?: number; min?: number
+  onChange: (v: number) => void; className?: string
+}) {
+  return (
+    <div className={`rounded-2xl bg-zinc-900 border border-zinc-800 p-4 ${className}`}>
+      <label className="block text-xs text-zinc-400 mb-2">{label}</label>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(min, +(value - step).toFixed(2)))}
+          className="size-9 rounded-lg bg-zinc-800 text-white text-lg font-bold hover:bg-zinc-700 shrink-0 active:scale-95 transition-transform"
+        >−</button>
+        <span className="flex-1 text-center text-xl font-bold text-white tabular-nums">
+          {value}{unit && <span className="text-sm text-zinc-500 ml-1">{unit}</span>}
+        </span>
+        <button
+          type="button"
+          onClick={() => onChange(+(value + step).toFixed(2))}
+          className="size-9 rounded-lg bg-zinc-800 text-white text-lg font-bold hover:bg-zinc-700 shrink-0 active:scale-95 transition-transform"
+        >+</button>
+      </div>
+    </div>
+  )
+}
+
 interface Props {
-  exercise:        SessionExercise
-  exerciseIndex:   number
-  totalExercises:  number
-  completedSets:   number
-  weight:          number
-  reps:            number
-  onWeightChange:  (w: number) => void
-  onRepsChange:    (r: number) => void
-  onSetComplete:   () => void
-  onPrev:          () => void
-  onNext:          () => void
-  hasPrev:         boolean
-  hasNext:         boolean
+  exercise:          SessionExercise
+  exerciseIndex:     number
+  totalExercises:    number
+  completedSets:     number
+  weight:            number
+  reps:              number
+  onWeightChange:    (w: number) => void
+  onRepsChange:      (r: number) => void
+  onSetsChange:      (s: number) => void
+  onRestChange:      (r: number) => void
+  onCardioChange:    (fields: Partial<Pick<SessionExercise, 'durationMinutes' | 'distanceKm' | 'speedKmH' | 'inclinePct'>>) => void
+  onSetComplete:     () => void
+  onPrev:            () => void
+  onNext:            () => void
+  hasPrev:           boolean
+  hasNext:           boolean
 }
 
 export function FocusExerciseView({
   exercise, exerciseIndex, totalExercises, completedSets,
-  weight, reps, onWeightChange, onRepsChange, onSetComplete,
-  onPrev, onNext, hasPrev, hasNext,
+  weight, reps, onWeightChange, onRepsChange, onSetsChange, onRestChange, onCardioChange,
+  onSetComplete, onPrev, onNext, hasPrev, hasNext,
 }: Props) {
   const [showInstructions, setShowInstructions] = useState(false)
   const [showAlternatives, setShowAlternatives] = useState(false)
   const [ytImgError, setYtImgError]             = useState(false)
   const { replaceExercise }                     = useTrainingStore()
-  const isAllDone = completedSets >= exercise.sets
+
+  const isCardio  = exercise.muscleGroups[0] === 'CARDIO'
+  const isAllDone = isCardio
+    ? (exercise.durationMinutes ?? 0) > 0 && completedSets >= exercise.sets
+    : completedSets >= exercise.sets
 
   const videoId = useMemo(
     () => exercise.videoUrl ? extractYtId(exercise.videoUrl) : null,
@@ -63,6 +99,12 @@ export function FocusExerciseView({
     setShowAlternatives(false)
   }
 
+  const restMin = Math.floor(exercise.restSeconds / 60)
+  const restSec = exercise.restSeconds % 60
+  const restLabel = restMin > 0
+    ? `${restMin}m${restSec > 0 ? ` ${restSec}s` : ''}`
+    : `${exercise.restSeconds}s`
+
   return (
     <div className="space-y-4">
 
@@ -78,6 +120,7 @@ export function FocusExerciseView({
       >
         <p className="text-xs text-zinc-500 mb-1">
           Exercice {exerciseIndex + 1} / {totalExercises}
+          {isCardio && <span className="ml-2 px-1.5 py-0.5 rounded-md bg-sky-500/15 text-sky-400 text-[10px] font-semibold">CARDIO</span>}
         </p>
         <div className="flex items-center gap-2">
           {isAllDone && <CheckCircle2 className="size-5 text-[#C8F135] shrink-0" />}
@@ -85,68 +128,160 @@ export function FocusExerciseView({
             {exercise.name}
           </h2>
         </div>
-        <p className="text-xs text-zinc-500 mt-1">{exercise.muscleGroups.join(' · ')}</p>
+        <p className="text-xs text-zinc-500 mt-1">
+          {exercise.muscleGroups.filter(g => g !== 'CARDIO').join(' · ') || exercise.muscleGroups.join(' · ')}
+        </p>
       </motion.div>
 
-      {/* Weight + Reps */}
-      <div className="grid grid-cols-2 gap-3">
-        {[
-          { label: 'Charge (kg)', value: weight, step: 2.5, min: 0, onChange: onWeightChange },
-          { label: 'Répétitions', value: reps,   step: 1,   min: 1, onChange: onRepsChange },
-        ].map(({ label, value, step, min, onChange }) => (
-          <div key={label} className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4">
-            <label className="block text-xs text-zinc-400 mb-2">{label}</label>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => onChange(Math.max(min, +(value - step).toFixed(1)))}
-                className="size-9 rounded-lg bg-zinc-800 text-white text-lg font-bold hover:bg-zinc-700 shrink-0"
-              >−</button>
-              <span className="flex-1 text-center text-xl font-bold text-white">{value}</span>
-              <button
-                type="button"
-                onClick={() => onChange(+(value + step).toFixed(1))}
-                className="size-9 rounded-lg bg-zinc-800 text-white text-lg font-bold hover:bg-zinc-700 shrink-0"
-              >+</button>
+      {/* ── VUE CARDIO ─────────────────────────────────────────── */}
+      {isCardio ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Stepper
+              label="Durée (min)"
+              value={exercise.durationMinutes ?? 30}
+              unit="min"
+              step={5}
+              min={1}
+              onChange={v => onCardioChange({ durationMinutes: v })}
+            />
+            <Stepper
+              label="Distance (km)"
+              value={exercise.distanceKm ?? 0}
+              unit="km"
+              step={0.5}
+              min={0}
+              onChange={v => onCardioChange({ distanceKm: v })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Stepper
+              label="Vitesse (km/h)"
+              value={exercise.speedKmH ?? 0}
+              unit="km/h"
+              step={0.5}
+              min={0}
+              onChange={v => onCardioChange({ speedKmH: v })}
+            />
+            <Stepper
+              label="Pente (%)"
+              value={exercise.inclinePct ?? 0}
+              unit="%"
+              step={1}
+              min={0}
+              onChange={v => onCardioChange({ inclinePct: v })}
+            />
+          </div>
+
+          {/* Résumé cardio */}
+          <div className="flex flex-wrap gap-2 mt-1">
+            {exercise.durationMinutes && (
+              <div className="flex items-center gap-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 px-3 py-1.5 text-xs text-sky-300">
+                <Timer className="size-3.5" /> {exercise.durationMinutes} min
+              </div>
+            )}
+            {(exercise.distanceKm ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 text-xs text-emerald-300">
+                <Ruler className="size-3.5" /> {exercise.distanceKm} km
+              </div>
+            )}
+            {(exercise.speedKmH ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 text-xs text-amber-300">
+                <Wind className="size-3.5" /> {exercise.speedKmH} km/h
+              </div>
+            )}
+            {(exercise.inclinePct ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5 rounded-lg bg-violet-500/10 border border-violet-500/20 px-3 py-1.5 text-xs text-violet-300">
+                <MoveUp className="size-3.5" /> {exercise.inclinePct}%
+              </div>
+            )}
+          </div>
+
+          {/* Calories estimées */}
+          {exercise.durationMinutes && exercise.durationMinutes > 0 && (
+            <div className="flex items-center gap-2 rounded-xl bg-orange-500/10 border border-orange-500/20 px-4 py-2.5 text-xs text-orange-300">
+              <Flame className="size-3.5 shrink-0" />
+              Estimé : ~{Math.round(exercise.durationMinutes * 7.5)} kcal brûlées
+            </div>
+          )}
+
+          {/* Bouton terminer cardio */}
+          <button
+            type="button"
+            onClick={onSetComplete}
+            className={`w-full py-4 rounded-2xl text-sm font-bold transition-all active:scale-95 ${
+              isAllDone
+                ? 'bg-[#C8F135]/15 text-[#C8F135] border border-[#C8F135]/30'
+                : 'bg-[#C8F135] text-zinc-900 shadow-lg hover:bg-[#d4f54d]'
+            }`}
+          >
+            {isAllDone ? '✓ Cardio terminé' : 'Marquer comme terminé'}
+          </button>
+        </div>
+      ) : (
+        /* ── VUE MUSCULATION ─────────────────────────────────── */
+        <>
+          {/* Weight + Reps */}
+          <div className="grid grid-cols-2 gap-3">
+            <Stepper label="Charge (kg)" value={weight} step={2.5} min={0} onChange={onWeightChange} />
+            <Stepper label="Répétitions" value={reps}   step={1}   min={1} onChange={onRepsChange} />
+          </div>
+
+          {/* Séries + Repos éditables */}
+          <div className="grid grid-cols-2 gap-3">
+            <Stepper
+              label="Nombre de séries"
+              value={exercise.sets}
+              step={1}
+              min={1}
+              onChange={onSetsChange}
+            />
+            <Stepper
+              label={`Repos (${restLabel})`}
+              value={exercise.restSeconds}
+              unit="s"
+              step={15}
+              min={15}
+              onChange={onRestChange}
+            />
+          </div>
+
+          {/* Set tracker */}
+          <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4">
+            <p className="text-xs text-zinc-400 mb-3">
+              Séries &nbsp;·&nbsp;
+              <span className={isAllDone ? 'text-[#C8F135] font-semibold' : 'text-white font-semibold'}>
+                {completedSets}
+              </span>
+              <span className="text-zinc-500"> / {exercise.sets}</span>
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {Array.from({ length: exercise.sets }, (_, i) => {
+                const isDone    = i < completedSets
+                const isCurrent = i === completedSets
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    disabled={!isCurrent}
+                    onClick={isCurrent ? onSetComplete : undefined}
+                    aria-label={isDone ? `Série ${i + 1} terminée` : isCurrent ? `Démarrer série ${i + 1}` : `Série ${i + 1}`}
+                    className={`flex-1 min-w-[44px] py-3.5 rounded-xl text-sm font-bold transition-all ${
+                      isDone
+                        ? 'bg-[#C8F135]/15 text-[#C8F135] border border-[#C8F135]/30 cursor-default'
+                        : isCurrent
+                        ? 'bg-[#C8F135] text-zinc-900 shadow-lg active:scale-95'
+                        : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                    }`}
+                  >
+                    {isDone ? '✓' : i + 1}
+                  </button>
+                )
+              })}
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Set tracker */}
-      <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4">
-        <p className="text-xs text-zinc-400 mb-3">
-          Séries &nbsp;·&nbsp;
-          <span className={isAllDone ? 'text-[#C8F135] font-semibold' : 'text-white font-semibold'}>
-            {completedSets}
-          </span>
-          <span className="text-zinc-500"> / {exercise.sets}</span>
-        </p>
-        <div className="flex gap-2">
-          {Array.from({ length: exercise.sets }, (_, i) => {
-            const isDone    = i < completedSets
-            const isCurrent = i === completedSets
-            return (
-              <button
-                key={i}
-                type="button"
-                disabled={!isCurrent}
-                onClick={isCurrent ? onSetComplete : undefined}
-                aria-label={isDone ? `Série ${i + 1} terminée` : isCurrent ? `Démarrer série ${i + 1}` : `Série ${i + 1}`}
-                className={`flex-1 py-3.5 rounded-xl text-sm font-bold transition-all ${
-                  isDone
-                    ? 'bg-[#C8F135]/15 text-[#C8F135] border border-[#C8F135]/30 cursor-default'
-                    : isCurrent
-                    ? 'bg-[#C8F135] text-zinc-900 shadow-lg active:scale-95'
-                    : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-                }`}
-              >
-                {isDone ? '✓' : i + 1}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+        </>
+      )}
 
       {/* YouTube tutorial */}
       {exercise.videoUrl && (
@@ -269,7 +404,9 @@ export function FocusExerciseView({
                 </button>
               </div>
               <div className="space-y-2">
-                {alternatives.map(item => (
+                {alternatives.length === 0 ? (
+                  <p className="text-sm text-zinc-500 text-center py-4">Aucun exercice similaire trouvé.</p>
+                ) : alternatives.map(item => (
                   <button
                     key={item.id}
                     type="button"

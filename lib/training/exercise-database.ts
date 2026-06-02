@@ -494,6 +494,399 @@ export const EXERCISE_DATABASE: Exercise[] = [
     videoUrl: 'https://www.youtube.com/watch?v=JbyjNymZOt0',
   },
 
+  // ── CHEST (suite) ──────────────────────────────────────────────────────────
+  {
+    id: 'ex-pec-deck', name: 'Pec Deck / Butterfly machine',
+    description: 'Machine d\'isolation pectoraux guidée, idéale pour finir la séance.',
+    instructions: [
+      'Régler les bras à hauteur de poitrine.',
+      'Fermer les bras devant soi en contractant les pectoraux.',
+      'Revenir lentement sans laisser les coudes partir en arrière.',
+    ],
+    muscleGroups: ['CHEST'], equipment: ['CHEST_PRESS_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=Z57CtFmRMxA',
+  },
+  {
+    id: 'ex-cable-crossover', name: 'Crossover câble',
+    description: 'Écartés en câble pour une tension constante sur les pectoraux.',
+    instructions: [
+      'Se placer au centre du câble, pouliés en haut.',
+      'Tirer les deux câbles vers le bas et vers l\'intérieur, mains qui se croisent.',
+      'Garder une légère flexion du coude tout au long du mouvement.',
+      'Remonter lentement.',
+    ],
+    muscleGroups: ['CHEST'], equipment: ['CABLE_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=taI4XduLpTk',
+  },
+
+  // ── BACK (suite) ───────────────────────────────────────────────────────────
+  {
+    id: 'ex-lat-pulldown', name: 'Tirage vertical barre (Lat Pulldown)',
+    description: 'Exercice fondamental pour les grands dorsaux sur machine à câble.',
+    instructions: [
+      'Saisir la barre en pronation, plus large que les épaules.',
+      'Tirer la barre vers le bas de la poitrine en écartant les coudes.',
+      'Contracter les dorsaux en bas du mouvement.',
+      'Remonter lentement jusqu\'à extension complète des bras.',
+    ],
+    muscleGroups: ['BACK', 'BICEPS'], equipment: ['CABLE_MACHINE'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=CAwf7n6Luuc',
+  },
+  {
+    id: 'ex-lat-pulldown-neutral', name: 'Tirage vertical prise neutre',
+    description: 'Tirage vertical avec poignée triangle pour plus de travail biceps et dorsaux internes.',
+    instructions: [
+      'Utiliser la poignée triangle (prise neutre).',
+      'Tirer vers le bas de la poitrine, coudes près du corps.',
+      'Contracter fort en bas, remonter en contrôlant.',
+    ],
+    muscleGroups: ['BACK', 'BICEPS'], equipment: ['CABLE_MACHINE'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=nO1f6DJMkIY',
+  },
+  {
+    id: 'ex-cable-row', name: 'Rowing câble assis',
+    description: 'Rowing horizontal à la machine câble, excellent pour l\'épaisseur du dos.',
+    instructions: [
+      'Assis face à la machine, pieds sur les repose-pieds.',
+      'Tirer les poignées vers le nombril en ramenant les coudes en arrière.',
+      'Garder le dos droit, ne pas s\'affaisser.',
+      'Revenir lentement en gardant le contrôle.',
+    ],
+    muscleGroups: ['BACK', 'BICEPS'], equipment: ['CABLE_MACHINE'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=GZbfZ033f74',
+  },
+  {
+    id: 'ex-tbar-row', name: 'T-Bar Row',
+    description: 'Rowing barre en T pour un travail intense de l\'épaisseur du dos.',
+    instructions: [
+      'Se positionner à cheval sur la barre, pieds de chaque côté.',
+      'Saisir les poignées, dos plat, légère flexion avant.',
+      'Tirer la barre vers le sternum en ramenant les coudes.',
+      'Descendre lentement.',
+    ],
+    muscleGroups: ['BACK', 'BICEPS'], equipment: ['BARBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=j3Igk5nyZE4',
+  },
+  {
+    id: 'ex-hyperextension', name: 'Hyperextension / Good morning',
+    description: 'Renforcement des érecteurs du rachis, fessiers et ischio-jambiers.',
+    instructions: [
+      'Sur le banc à lombaires ou debout barre sur les épaules.',
+      'Incliner le buste vers l\'avant en gardant le dos plat.',
+      'Remonter en contractant les fessiers et le bas du dos.',
+    ],
+    muscleGroups: ['BACK', 'GLUTES', 'HAMSTRINGS'], equipment: ['BODYWEIGHT', 'BARBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=ph3pddpKzzw',
+  },
+
+  // ── SHOULDERS (suite) ─────────────────────────────────────────────────────
+  {
+    id: 'ex-upright-row', name: 'Rowing menton (Upright Row)',
+    description: 'Cible les trapèzes et deltoïdes latéraux.',
+    instructions: [
+      'Debout, saisir barre ou haltères en pronation devant les cuisses.',
+      'Tirer verticalement jusqu\'au menton, coudes au-dessus des mains.',
+      'Descendre lentement.',
+    ],
+    muscleGroups: ['SHOULDERS', 'BACK'], equipment: ['BARBELL', 'DUMBBELL'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=amCSHA5F_5I',
+  },
+  {
+    id: 'ex-front-raise', name: 'Élévation frontale',
+    description: 'Isolation du deltoïde antérieur.',
+    instructions: [
+      'Debout, haltères en main devant les cuisses.',
+      'Lever les bras devant soi jusqu\'à hauteur des épaules.',
+      'Redescendre lentement.',
+    ],
+    muscleGroups: ['SHOULDERS'], equipment: ['DUMBBELL', 'BARBELL'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=sOoBsL5CKUQ',
+  },
+  {
+    id: 'ex-cable-lateral-raise', name: 'Élévations latérales câble',
+    description: 'Version câble des élévations latérales : tension constante sur le deltoïde moyen.',
+    instructions: [
+      'Se positionner de côté à la machine câble, poignée basse.',
+      'Lever le bras latéralement jusqu\'à hauteur d\'épaule.',
+      'Contrôler la descente.',
+    ],
+    muscleGroups: ['SHOULDERS'], equipment: ['CABLE_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=PPdLtSSmUys',
+  },
+
+  // ── LEGS (suite) ──────────────────────────────────────────────────────────
+  {
+    id: 'ex-leg-extension', name: 'Extension jambes (Leg Extension)',
+    description: 'Isolation des quadriceps sur machine.',
+    instructions: [
+      'S\'asseoir dans la machine, rouleau sur le bas des tibias.',
+      'Étendre les jambes jusqu\'à extension complète.',
+      'Maintenir 1 seconde, redescendre lentement.',
+    ],
+    muscleGroups: ['QUADS'], equipment: ['CARDIO_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=YyvSfVjQeL0',
+  },
+  {
+    id: 'ex-hack-squat', name: 'Hack Squat',
+    description: 'Squat guidé en machine, accent sur les quadriceps.',
+    instructions: [
+      'Se positionner dans la machine, pieds à largeur d\'épaules sur la plateforme.',
+      'Déverrouiller la sécurité et descendre jusqu\'à 90° de flexion.',
+      'Pousser fort pour remonter.',
+    ],
+    muscleGroups: ['QUADS', 'GLUTES'], equipment: ['SMITH_MACHINE'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=EdtPAD2GBwg',
+  },
+  {
+    id: 'ex-sumo-squat', name: 'Squat sumo',
+    description: 'Squat écart large ciblant l\'intérieur des cuisses et les fessiers.',
+    instructions: [
+      'Pieds très écartés, orteils pointés vers l\'extérieur.',
+      'Tenir un haltère ou kettlebell entre les jambes.',
+      'Descendre en gardant le dos droit et les genoux dans l\'axe des orteils.',
+      'Remonter en contractant les fessiers.',
+    ],
+    muscleGroups: ['QUADS', 'GLUTES'], equipment: ['DUMBBELL', 'KETTLEBELL', 'BARBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=qiLCBNKWVGU',
+  },
+  {
+    id: 'ex-step-up', name: 'Step-up',
+    description: 'Montée sur banc, exercice unilatéral pour les jambes et les fessiers.',
+    instructions: [
+      'Face à un banc ou box, haltères en mains.',
+      'Poser un pied sur le banc et pousser pour monter.',
+      'Redescendre lentement sans s\'aider de la jambe arrière.',
+      'Alterner les côtés.',
+    ],
+    muscleGroups: ['QUADS', 'GLUTES'], equipment: ['DUMBBELL', 'BENCH'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=dQqApCGd5Ss',
+  },
+  {
+    id: 'ex-sumo-deadlift', name: 'Soulevé de terre sumo',
+    description: 'Variante sumo du deadlift, moins de sollicitation lombaire, plus de fessiers.',
+    instructions: [
+      'Pieds très écartés, orteils en dehors, prise de barre en dedans.',
+      'Dos plat, hanches basses, pousser les genoux dans l\'axe des orteils.',
+      'Pousser sur les talons pour monter, étendre hanches et genoux simultanément.',
+    ],
+    muscleGroups: ['HAMSTRINGS', 'GLUTES', 'BACK'], equipment: ['BARBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=Ota0SqE8fgQ',
+  },
+
+  // ── GLUTES (suite) ────────────────────────────────────────────────────────
+  {
+    id: 'ex-cable-kickback', name: 'Kickback câble',
+    description: 'Isolation des fessiers au câble avec amplitude maximale.',
+    instructions: [
+      'Se mettre debout face à la machine câble basse, cheville fixée à la sangle.',
+      'Partir en légère flexion avant, bras sur le support.',
+      'Ramener la jambe vers l\'arrière en contractant le fessier.',
+      'Revenir lentement.',
+    ],
+    muscleGroups: ['GLUTES'], equipment: ['CABLE_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=Ex5tMl7C3Ug',
+  },
+  {
+    id: 'ex-abductor-machine', name: 'Abducteurs machine',
+    description: 'Isolation des abducteurs et fessiers moyens sur machine.',
+    instructions: [
+      'S\'asseoir dans la machine, genoux contre les coussins.',
+      'Écarter les jambes vers l\'extérieur en contractant les fessiers.',
+      'Revenir lentement à la position initiale.',
+    ],
+    muscleGroups: ['GLUTES'], equipment: ['CHEST_PRESS_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=6yFBFoQlZ2A',
+  },
+
+  // ── BICEPS (suite) ────────────────────────────────────────────────────────
+  {
+    id: 'ex-preacher-curl', name: 'Curl pupitre',
+    description: 'Curl sur pupitre (Scott) pour isoler les biceps sans balancement.',
+    instructions: [
+      'S\'installer sur le pupitre, bras sur le coussin incliné.',
+      'Fléchir les coudes lentement pour monter la barre ou les haltères.',
+      'Contrôler la descente jusqu\'à extension presque complète.',
+    ],
+    muscleGroups: ['BICEPS'], equipment: ['BARBELL', 'DUMBBELL'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=fIWP-FRFNU0',
+  },
+  {
+    id: 'ex-concentration-curl', name: 'Curl concentration',
+    description: 'Concentration maximale sur le biceps, un bras à la fois.',
+    instructions: [
+      'Assis, coude appuyé contre l\'intérieur de la cuisse.',
+      'Fléchir l\'avant-bras en supinant le poignet.',
+      'Contrôler la descente.',
+    ],
+    muscleGroups: ['BICEPS'], equipment: ['DUMBBELL'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=0AUGkch3tzc',
+  },
+  {
+    id: 'ex-cable-curl', name: 'Curl câble',
+    description: 'Curl au câble pour une tension constante du début à la fin.',
+    instructions: [
+      'Se positionner face à la poulie basse, prise de la poignée en supination.',
+      'Fléchir les coudes sans bouger les épaules.',
+      'Contrôler la descente.',
+    ],
+    muscleGroups: ['BICEPS'], equipment: ['CABLE_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=soxrZlIl35U',
+  },
+  {
+    id: 'ex-ez-bar-curl', name: 'Curl barre EZ',
+    description: 'Curl barre EZ pour réduire les contraintes sur les poignets.',
+    instructions: [
+      'Saisir la barre EZ sur les parties inclinées en supination.',
+      'Fléchir les coudes en gardant les bras le long du corps.',
+      'Contrôler la descente.',
+    ],
+    muscleGroups: ['BICEPS'], equipment: ['BARBELL'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=SVZrOrjfNHU',
+  },
+
+  // ── TRICEPS (suite) ───────────────────────────────────────────────────────
+  {
+    id: 'ex-close-grip-bench', name: 'Développé couché prise serrée',
+    description: 'Variante du développé couché pour isoler les triceps.',
+    instructions: [
+      'Saisir la barre à largeur d\'épaules (ou moins).',
+      'Descendre la barre vers la poitrine basse en gardant les coudes près du corps.',
+      'Pousser fort en extension.',
+    ],
+    muscleGroups: ['TRICEPS', 'CHEST'], equipment: ['BARBELL', 'BENCH'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=nEF0bv2FW94',
+  },
+  {
+    id: 'ex-overhead-triceps-cable', name: 'Extension triceps câble overhead',
+    description: 'Étire la longue portion du triceps en position haute.',
+    instructions: [
+      'Se positionner dos à la poulie haute.',
+      'Tenir la corde derrière la tête, coudes pointés vers le plafond.',
+      'Étendre les avant-bras vers l\'avant, revenir lentement.',
+    ],
+    muscleGroups: ['TRICEPS'], equipment: ['CABLE_MACHINE'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=Kl-bqMz7hCU',
+  },
+  {
+    id: 'ex-triceps-kickback', name: 'Kickback triceps',
+    description: 'Isolation du triceps en extension complète.',
+    instructions: [
+      'En appui sur un banc, bras parallèle au sol.',
+      'Étendre l\'avant-bras vers l\'arrière jusqu\'à extension complète.',
+      'Revenir lentement sans que le coude ne bouge.',
+    ],
+    muscleGroups: ['TRICEPS'], equipment: ['DUMBBELL'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=6SS6K3lAwZ8',
+  },
+
+  // ── CORE (suite) ──────────────────────────────────────────────────────────
+  {
+    id: 'ex-dead-bug', name: 'Dead Bug',
+    description: 'Exercice de gainage profond pour la stabilité lombaire.',
+    instructions: [
+      'Allongé sur le dos, bras tendus vers le plafond, genoux à 90°.',
+      'Abaisser simultanément le bras droit et la jambe gauche sans toucher le sol.',
+      'Revenir et alterner les côtés.',
+      'Garder le bas du dos plaqué au sol.',
+    ],
+    muscleGroups: ['CORE'], equipment: ['BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=4XLEnwUr1d8',
+  },
+  {
+    id: 'ex-bicycle-crunch', name: 'Crunch vélo',
+    description: 'Travaille les obliques et abdominaux en rotation.',
+    instructions: [
+      'Allongé sur le dos, mains derrière la tête.',
+      'Ramener un genou et le coude opposé simultanément.',
+      'Alterner de façon contrôlée.',
+    ],
+    muscleGroups: ['CORE'], equipment: ['BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=9FGilxCbdz8',
+  },
+  {
+    id: 'ex-leg-raise', name: 'Relevé de jambes allongé',
+    description: 'Travaille les abdominaux inférieurs.',
+    instructions: [
+      'Allongé sur le dos, jambes tendues.',
+      'Monter les jambes à la verticale en contractant les abdos.',
+      'Descendre lentement sans toucher le sol.',
+    ],
+    muscleGroups: ['CORE'], equipment: ['BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=JB2oyawG9KI',
+  },
+  {
+    id: 'ex-side-plank', name: 'Planche latérale',
+    description: 'Gainage isométrique ciblant les obliques.',
+    instructions: [
+      'En appui sur l\'avant-bras, corps aligné de la tête aux pieds.',
+      'Maintenir les hanches hautes.',
+      'Tenir le temps indiqué, changer de côté.',
+    ],
+    muscleGroups: ['CORE'], equipment: ['BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=wqzrb67Dwf8',
+  },
+  {
+    id: 'ex-ab-wheel', name: 'Rouleau abdominal (Ab Wheel)',
+    description: 'Un des exercices abdominaux les plus efficaces.',
+    instructions: [
+      'À genoux, tenir le rouleau à deux mains.',
+      'Dérouler lentement vers l\'avant jusqu\'à quasi-extension.',
+      'Revenir en contractant les abdominaux.',
+      'Garder les lombaires neutres.',
+    ],
+    muscleGroups: ['CORE'], equipment: ['BODYWEIGHT'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=4Gg9BxXGqsA',
+  },
+
+  // ── FULL BODY ─────────────────────────────────────────────────────────────
+  {
+    id: 'ex-kettlebell-swing', name: 'Kettlebell Swing',
+    description: 'Mouvement balistique pour la puissance des hanches, fessiers et cardio.',
+    instructions: [
+      'Pieds à largeur d\'épaules, kettlebell devant soi.',
+      'Saisir la kettlebell et l\'amener entre les jambes (hinge hip).',
+      'Propulser les hanches vers l\'avant pour faire monter la kettlebell à hauteur des yeux.',
+      'Laisser retomber et répéter.',
+    ],
+    muscleGroups: ['GLUTES', 'HAMSTRINGS', 'BACK'], equipment: ['KETTLEBELL'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=YSxHifyI6s8',
+  },
+  {
+    id: 'ex-burpee', name: 'Burpee',
+    description: 'Exercice full body intense pour la cardio et la puissance.',
+    instructions: [
+      'Depuis debout, se baisser et poser les mains au sol.',
+      'Sauter les pieds en arrière (position pompes).',
+      'Faire une pompe (optionnel).',
+      'Ramener les pieds et sauter vers le haut avec les bras.',
+    ],
+    muscleGroups: ['CARDIO', 'CHEST', 'QUADS'], equipment: ['BODYWEIGHT'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=auBLPXO8Fww',
+  },
+  {
+    id: 'ex-mountain-climber', name: 'Mountain Climbers',
+    description: 'Cardio intense en position de gainage : core et endurance.',
+    instructions: [
+      'En position de pompe, corps en ligne droite.',
+      'Alterner rapidement en ramenant chaque genou vers la poitrine.',
+      'Garder les hanches basses, pas de balancement.',
+    ],
+    muscleGroups: ['CARDIO', 'CORE'], equipment: ['BODYWEIGHT'], isCompound: true,
+    videoUrl: 'https://www.youtube.com/watch?v=kLh-uczlPLg',
+  },
+  {
+    id: 'ex-jump-rope', name: 'Corde à sauter',
+    description: 'Cardio classique excellent pour la coordination et la combustion calorique.',
+    instructions: [
+      'Tenir les poignées à hauteur de hanche, coudes près du corps.',
+      'Sauter légèrement sur la plante des pieds.',
+      'Tourner la corde avec les poignets (pas les bras).',
+      'Commencer 30 sec, progresser jusqu\'à 5–10 min sans arrêt.',
+    ],
+    muscleGroups: ['CARDIO', 'CALVES'], equipment: ['BODYWEIGHT'], isCompound: false,
+    videoUrl: 'https://www.youtube.com/watch?v=1BZM2Vre5oc',
+  },
+
   // ── CARDIO ─────────────────────────────────────────────────────────────────
   {
     id: 'ex-hiit', name: 'HIIT',

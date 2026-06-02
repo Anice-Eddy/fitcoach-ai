@@ -21,18 +21,19 @@ interface TrainingState {
   isLoading:       boolean
   error:           string | null
 
-  setActiveProgram:   (id: string | null) => void
-  startSession:       (session: Omit<ActiveSession, 'startedAt'>) => void
-  completeExercise:   (index: number, log: Partial<SessionExercise>) => void
-  toggleExercise:     (index: number, log?: Partial<SessionExercise>) => void
-  replaceExercise:    (index: number, exercise: SessionExercise) => void
-  setCurrentExercise: (index: number) => void
-  startRestTimer:     (seconds: number) => void
-  tickRestTimer:      () => void
-  stopRestTimer:      () => void
-  endSession:         () => void
-  setLoading:         (loading: boolean) => void
-  setError:           (error: string | null) => void
+  setActiveProgram:    (id: string | null) => void
+  startSession:        (session: Omit<ActiveSession, 'startedAt'>) => void
+  completeExercise:    (index: number, log: Partial<SessionExercise>) => void
+  toggleExercise:      (index: number, log?: Partial<SessionExercise>) => void
+  replaceExercise:     (index: number, exercise: SessionExercise) => void
+  updateExerciseField: (index: number, fields: Partial<SessionExercise>) => void
+  setCurrentExercise:  (index: number) => void
+  startRestTimer:      (seconds: number) => void
+  tickRestTimer:       () => void
+  stopRestTimer:       () => void
+  endSession:          () => void
+  setLoading:          (loading: boolean) => void
+  setError:            (error: string | null) => void
 }
 
 export const useTrainingStore = create<TrainingState>()(
@@ -70,6 +71,14 @@ export const useTrainingStore = create<TrainingState>()(
           if (!s.activeSession) return s
           const exercises = [...s.activeSession.exercises]
           exercises[index] = exercise
+          return { activeSession: { ...s.activeSession, exercises } }
+        }),
+
+      updateExerciseField: (index, fields) =>
+        set((s) => {
+          if (!s.activeSession) return s
+          const exercises = [...s.activeSession.exercises]
+          exercises[index] = { ...exercises[index], ...fields }
           return { activeSession: { ...s.activeSession, exercises } }
         }),
 

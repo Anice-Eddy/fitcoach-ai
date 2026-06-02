@@ -12,14 +12,7 @@ import { generateProgram }     from '@/lib/training/generate-program'
 import { useUserStore }        from '@/stores/userStore'
 import { Clock, ChevronLeft }  from 'lucide-react'
 import Link from 'next/link'
-
-function calcRestSeconds(goal: string | undefined, isCompound: boolean): number {
-  const base: Record<string, number> = {
-    MUSCLE_GAIN: 120, WEIGHT_LOSS: 45, ENDURANCE: 30,
-    GENERAL_FITNESS: 75, MAINTENANCE: 60, FLEXIBILITY: 45,
-  }
-  return (base[goal ?? 'GENERAL_FITNESS'] ?? 75) + (isCompound ? 30 : 0)
-}
+import type { SessionExercise } from '@/types'
 
 interface DBSession { id: string; name: string; status: string; durationMinutes: number | null }
 
@@ -29,7 +22,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
   const { profile } = useUserStore()
   const {
     activeSession, startSession, setCurrentExercise,
-    toggleExercise, startRestTimer, endSession,
+    toggleExercise, startRestTimer, endSession, updateExerciseField,
   } = useTrainingStore()
 
   const [showSummary, setShowSummary] = useState(false)
@@ -113,15 +106,37 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
   const secs          = elapsed % 60
 
   const handleSetComplete = () => {
-    const done    = (setProgress[currentIdx] ?? 0) + 1
-    const next    = [...setProgress]
+    const isCardio = exercise.muscleGroups[0] === 'CARDIO'
+    const done     = (setProgress[currentIdx] ?? 0) + 1
+    const next     = [...setProgress]
     next[currentIdx] = done
     setSetProgress(next)
 
     if (done >= exercise.sets) {
       toggleExercise(currentIdx, { weightKg: weights[currentIdx], reps: repsArr[currentIdx] })
     }
-    startRestTimer(calcRestSeconds(profile?.fitnessGoal, exercise.isCompound))
+    // Pour le cardio, pas de timer de repos automatique
+    if (!isCardio) {
+      startRestTimer(exercise.restSeconds)
+    }
+  }
+
+  const handleSetsChange = (newSets: number) => {
+    updateExerciseField(currentIdx, { sets: newSets })
+    // Si des séries déjà faites dépassent le nouveau total, cap
+    setSetProgress(prev => {
+      const next = [...prev]
+      next[currentIdx] = Math.min(prev[currentIdx] ?? 0, newSets)
+      return next
+    })
+  }
+
+  const handleRestChange = (newRest: number) => {
+    updateExerciseField(currentIdx, { restSeconds: newRest })
+  }
+
+  const handleCardioChange = (fields: Partial<Pick<SessionExercise, 'durationMinutes' | 'distanceKm' | 'speedKmH' | 'inclinePct'>>) => {
+    updateExerciseField(currentIdx, fields)
   }
 
   const handleNext = () => {
@@ -167,7 +182,9 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
             </Link>
             <div className="flex items-center gap-2 text-xs text-zinc-400">
               <Clock className="size-3.5" />
-              {minutes}:{String(secs).padStart(2, '0')}
+              <span className="tabular-nums font-mono">
+                {minutes}:{String(secs).padStart(2, '0')}
+              </span>
               <span className="text-zinc-600">·</span>
               {completedExs}/{totalEx} terminés
             </div>
@@ -189,6 +206,9 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
           reps={repsArr[currentIdx] ?? exercise.reps}
           onWeightChange={w => { const n = [...weights]; n[currentIdx] = w; setWeights(n) }}
           onRepsChange={r => { const n = [...repsArr]; n[currentIdx] = r; setRepsArr(n) }}
+          onSetsChange={handleSetsChange}
+          onRestChange={handleRestChange}
+          onCardioChange={handleCardioChange}
           onSetComplete={handleSetComplete}
           onPrev={handlePrev}
           onNext={handleNext}
