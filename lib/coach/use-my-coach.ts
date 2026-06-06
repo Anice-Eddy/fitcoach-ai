@@ -18,6 +18,8 @@ export type MyCoachRelation = {
     specialties: string[]
     certifications: string[]
     yearsExperience: number | null
+    publicRating: number | null
+    publicRatingCount: number
     city: string | null
     memberLimit: number
   }

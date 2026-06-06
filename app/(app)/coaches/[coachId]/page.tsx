@@ -22,8 +22,12 @@ interface CoachData {
     city:            string | null
     country:         string | null
     yearsExperience: number | null
+    publicRating:    number | null
+    publicRatingCount: number
+    discoveryCallTitle: string | null
+    discoveryCallDuration: number | null
     avatarUrl:       string | null
-    _count: { coachMembers: number; appointments: number }
+    _count: { coachMembers: number | null; appointments: number }
   }
 }
 
@@ -129,7 +133,7 @@ export default function CoachBookingPage() {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
           coachProfileId: coachData.coachProfile.id,
-          title:          'Entretien découverte',
+          title:          coachData.coachProfile.discoveryCallTitle ?? 'Entretien découverte',
           description:    msg || undefined,
           scheduledAt:    scheduledAt.toISOString(),
           duration:       slotDuration,
@@ -193,10 +197,20 @@ export default function CoachBookingPage() {
                     <p className="text-xs text-zinc-400">{coach.coachProfile.specialties.join(' · ')}</p>
                   )}
                   <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className={`size-3.5 ${i < 4 ? 'fill-[#C8F135] text-[#C8F135]' : 'text-zinc-600'}`} />
-                    ))}
-                    <span className="text-xs text-zinc-500 ml-1">{coach.coachProfile._count.coachMembers} membres</span>
+                    {coach.coachProfile.publicRating != null && (
+                      <>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star key={i} className={`size-3.5 ${i < Math.round(coach.coachProfile.publicRating ?? 0) ? 'fill-[#C8F135] text-[#C8F135]' : 'text-zinc-600'}`} />
+                        ))}
+                        <span className="text-xs text-zinc-500 ml-1">
+                          {coach.coachProfile.publicRating.toFixed(1)}
+                          {coach.coachProfile.publicRatingCount > 0 ? ` (${coach.coachProfile.publicRatingCount})` : ''}
+                        </span>
+                      </>
+                    )}
+                    {coach.coachProfile._count.coachMembers != null && (
+                      <span className="text-xs text-zinc-500 ml-1">{coach.coachProfile._count.coachMembers} membres</span>
+                    )}
                     {(coach.coachProfile.city || coach.coachProfile.country) && (
                       <span className="flex items-center gap-1 text-xs text-zinc-500 ml-2">
                         <MapPin className="size-3" />
@@ -218,13 +232,17 @@ export default function CoachBookingPage() {
             </div>
 
             {/* Discovery call info */}
-            <div className="rounded-xl border border-[#C8F135]/25 bg-[#C8F135]/5 p-5">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[1px] text-[#C8F135]">Entretien découverte</p>
-              <p className="text-sm font-medium text-white">30 minutes · Visio · Gratuit</p>
-              <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                Le coach analyse ton profil et définit ton plan avec toi.
-              </p>
-            </div>
+            {coach.coachProfile.discoveryCallTitle && coach.coachProfile.discoveryCallDuration && (
+              <div className="rounded-xl border border-[#C8F135]/25 bg-[#C8F135]/5 p-5">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[1px] text-[#C8F135]">
+                  {coach.coachProfile.discoveryCallTitle}
+                </p>
+                <p className="text-sm font-medium text-white">{coach.coachProfile.discoveryCallDuration} minutes · Visio · Gratuit</p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                  Le coach analyse ton profil et définit ton plan avec toi.
+                </p>
+              </div>
+            )}
 
             {/* Shared profile */}
             {profile && (

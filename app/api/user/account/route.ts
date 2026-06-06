@@ -9,7 +9,7 @@ import { z } from 'zod'
 const accountUpdateSchema = z.object({
   name: z.string().min(2).max(80).optional(),
   email: z.string().email().optional(),
-  image: z.string().url().or(z.literal('')).optional(),
+  image: z.string().url().or(z.literal('')).nullable().optional(),
   password: z.string().min(8, 'Mot de passe minimum : 8 caractères').optional(),
 })
 

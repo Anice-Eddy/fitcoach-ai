@@ -8,6 +8,30 @@ import { toast } from 'sonner'
 import { DeleteAccountModal } from '@/components/ui/DeleteAccountModal'
 import { signOutAndClear } from '@/lib/auth/client-session'
 
+// Compact switch used for coach-controlled member visibility settings.
+function VisibilityToggle({ checked, onChange, label, description }: {
+  checked: boolean
+  onChange: (checked: boolean) => void
+  label: string
+  description: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className="flex w-full items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-950/60 px-3 py-3 text-left transition-colors hover:border-zinc-700"
+    >
+      <span>
+        <span className="block text-xs font-medium text-zinc-200">{label}</span>
+        <span className="mt-0.5 block text-[11px] text-zinc-500">{description}</span>
+      </span>
+      <span className={`flex h-6 w-11 shrink-0 items-center rounded-full p-1 transition-colors ${checked ? 'bg-[#C8F135]' : 'bg-zinc-700'}`}>
+        <span className={`size-4 rounded-full bg-black transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+      </span>
+    </button>
+  )
+}
+
 /** Coach profile settings page: edit bio, specialties, certifications, and upload a verification document. */
 export default function CoachSettingsProfilePage() {
   const { data: session, update: updateSession } = useSession()
@@ -18,6 +42,7 @@ export default function CoachSettingsProfilePage() {
 
   // User fields
   const [name, setName]         = useState('')
+  const [accountImage, setAccountImage] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
 
   // Coach profile fields
@@ -29,6 +54,15 @@ export default function CoachSettingsProfilePage() {
   const [country, setCountry]           = useState('')
   const [phone, setPhone]               = useState('')
   const [memberLimit, setMemberLimit]   = useState(10)
+  const [showMemberCount, setShowMemberCount] = useState(true)
+  const [showYearsExperience, setShowYearsExperience] = useState(true)
+  const [publicRating, setPublicRating] = useState('')
+  const [publicRatingCount, setPublicRatingCount] = useState(0)
+  const [showPublicRating, setShowPublicRating] = useState(false)
+  const [discoveryCallEnabled, setDiscoveryCallEnabled] = useState(true)
+  const [discoveryCallTitle, setDiscoveryCallTitle] = useState('Entretien découverte')
+  const [discoveryCallDuration, setDiscoveryCallDuration] = useState(30)
+  const [showDiscoveryCall, setShowDiscoveryCall] = useState(true)
 
   useEffect(() => {
     Promise.all([
@@ -43,12 +77,21 @@ export default function CoachSettingsProfilePage() {
         setCountry(p.country ?? '')
         setPhone(p.phone ?? '')
         setMemberLimit(p.memberLimit ?? 10)
+        setShowMemberCount(p.showMemberCount ?? true)
+        setShowYearsExperience(p.showYearsExperience ?? true)
+        setPublicRating(p.publicRating?.toString() ?? '')
+        setPublicRatingCount(p.publicRatingCount ?? 0)
+        setShowPublicRating(p.showPublicRating ?? false)
+        setDiscoveryCallEnabled(p.discoveryCallEnabled ?? true)
+        setDiscoveryCallTitle(p.discoveryCallTitle ?? 'Entretien découverte')
+        setDiscoveryCallDuration(p.discoveryCallDuration ?? 30)
+        setShowDiscoveryCall(p.showDiscoveryCall ?? true)
         setAvatarUrl(p.avatarUrl ?? '')
       }
       setLoading(false)
     })
     if (session?.user?.name)  setName(session.user.name)
-    if (session?.user?.image) setAvatarUrl(prev => prev || session.user!.image!)
+    setAccountImage(session?.user?.image ?? '')
   }, [session])
 
   const handleDeleteAccount = async (password?: string) => {
@@ -70,18 +113,43 @@ export default function CoachSettingsProfilePage() {
     }
   }
 
+  // Keeps optional numeric settings valid before sending them to the API.
+  const parseOptionalNumber = (value: string) => {
+    const normalized = value.trim().replace(',', '.')
+    if (!normalized) return null
+    const parsed = Number(normalized)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  const readErrorMessage = async (res: Response, fallback: string) => {
+    const data = await res.json().catch(() => null)
+    if (data?.error && typeof data.error === 'string') return data.error
+    const fieldErrors = data?.error?.fieldErrors
+    if (fieldErrors && typeof fieldErrors === 'object') {
+      const first = Object.values(fieldErrors).flat().find((message) => typeof message === 'string')
+      if (typeof first === 'string') return first
+    }
+    return fallback
+  }
+
   const save = async () => {
     setSaving(true)
     try {
+      const safeDiscoveryDuration = Math.min(180, Math.max(5, Number(discoveryCallDuration) || 30))
+
       // 1. Update User.name and User.image (avatarUrl)
-      await fetch('/api/user/account', {
+      const accountRes = await fetch('/api/user/account', {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name: name.trim(), image: avatarUrl.trim() || null }),
+        // Keep the Google account photo intact; coach avatar is stored separately below.
+        body:    JSON.stringify({ name: name.trim(), image: accountImage || null }),
       })
+      if (!accountRes.ok) {
+        throw new Error(await readErrorMessage(accountRes, 'Impossible de mettre à jour le compte'))
+      }
 
       // 2. Update CoachProfile fields
-      await fetch('/api/coach/settings', {
+      const profileRes = await fetch('/api/coach/settings', {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
@@ -94,13 +162,36 @@ export default function CoachSettingsProfilePage() {
           phone:           phone.trim()   || null,
           memberLimit,
           avatarUrl:       avatarUrl.trim() || null,
+          showMemberCount,
+          showYearsExperience,
+          publicRating:    parseOptionalNumber(publicRating),
+          publicRatingCount,
+          showPublicRating,
+          discoveryCallEnabled,
+          discoveryCallTitle: discoveryCallTitle.trim() || 'Entretien découverte',
+          discoveryCallDuration: safeDiscoveryDuration,
+          showDiscoveryCall,
         }),
       })
+      if (!profileRes.ok) {
+        throw new Error(await readErrorMessage(profileRes, 'Impossible de mettre à jour les réglages coach'))
+      }
+
+      const updatedProfile = await profileRes.json()
+      setShowMemberCount(updatedProfile.showMemberCount ?? true)
+      setShowYearsExperience(updatedProfile.showYearsExperience ?? true)
+      setPublicRating(updatedProfile.publicRating?.toString() ?? '')
+      setPublicRatingCount(updatedProfile.publicRatingCount ?? 0)
+      setShowPublicRating(updatedProfile.showPublicRating ?? false)
+      setDiscoveryCallEnabled(updatedProfile.discoveryCallEnabled ?? true)
+      setDiscoveryCallTitle(updatedProfile.discoveryCallTitle ?? 'Entretien découverte')
+      setDiscoveryCallDuration(updatedProfile.discoveryCallDuration ?? 30)
+      setShowDiscoveryCall(updatedProfile.showDiscoveryCall ?? true)
 
       await updateSession()
       toast.success('Profil mis à jour')
-    } catch {
-      toast.error('Erreur lors de la sauvegarde')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de la sauvegarde')
     } finally {
       setSaving(false)
     }
@@ -142,8 +233,8 @@ export default function CoachSettingsProfilePage() {
 
           <div className="flex items-center gap-5 mb-5">
             <div className="relative">
-              {avatarUrl ? (
-                <Image src={avatarUrl} alt={name} width={72} height={72}
+              {avatarUrl || accountImage ? (
+                <Image src={avatarUrl || accountImage} alt={name} width={72} height={72}
                   className="rounded-full ring-2 ring-zinc-700 object-cover" />
               ) : (
                 <div className="flex size-[72px] items-center justify-center rounded-full bg-zinc-700 ring-2 ring-zinc-600 text-2xl font-bold text-white">
@@ -155,14 +246,17 @@ export default function CoachSettingsProfilePage() {
               </div>
             </div>
             <div className="flex-1">
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">URL de la photo de profil</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">URL de l'avatar coach</label>
               <input
                 type="url"
                 value={avatarUrl}
                 onChange={e => setAvatarUrl(e.target.value)}
-                placeholder="https://exemple.com/photo.jpg"
+                placeholder={accountImage ? 'Laissez vide pour garder la photo Google' : 'https://exemple.com/photo.jpg'}
                 className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
               />
+              {accountImage && !avatarUrl && (
+                <p className="mt-1 text-[10px] text-zinc-500">La photo Google reste utilisée tant qu'aucun avatar coach n'est saisi.</p>
+              )}
             </div>
           </div>
 
@@ -182,7 +276,7 @@ export default function CoachSettingsProfilePage() {
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
           <h2 className="text-sm font-semibold text-white mb-5">Présentation</h2>
           <div className="space-y-4">
-            <div>
+            <div className="min-w-0">
               <label className="block text-xs font-medium text-zinc-400 mb-1.5">Bio / description</label>
               <textarea
                 value={bio}
@@ -200,10 +294,10 @@ export default function CoachSettingsProfilePage() {
                 value={specialties}
                 onChange={e => setSpecialties(e.target.value)}
                 placeholder="Musculation, Perte de poids, Nutrition sportive"
-                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
+                className="w-full min-w-0 px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
               />
             </div>
-            <div>
+            <div className="min-w-0">
               <label className="block text-xs font-medium text-zinc-400 mb-1.5">Certifications <span className="text-zinc-600">(séparées par des virgules)</span></label>
               <input
                 type="text"
@@ -219,14 +313,14 @@ export default function CoachSettingsProfilePage() {
         {/* Infos pratiques */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
           <h2 className="text-sm font-semibold text-white mb-5">Informations pratiques</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-1.5">Années d'expérience</label>
               <input
                 type="number" min={0} max={60}
                 value={yearsExp}
                 onChange={e => setYearsExp(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-[#C8F135]"
+                className="w-full min-w-0 px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-[#C8F135]"
               />
             </div>
             <div>
@@ -275,6 +369,103 @@ export default function CoachSettingsProfilePage() {
                 onChange={e => setPhone(e.target.value)}
                 placeholder="+33 6 00 00 00 00"
                 className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Visibilité membre */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <h2 className="text-sm font-semibold text-white mb-2">Visibilité pour les membres</h2>
+          <p className="mb-5 text-xs text-zinc-500">
+            Vous pouvez choisir quelles informations seront visibles quand un membre consulte votre profil coach.
+          </p>
+          <div className="space-y-3">
+            <VisibilityToggle
+              checked={showMemberCount}
+              onChange={setShowMemberCount}
+              label="Afficher le nombre de membres"
+              description="Le nombre est calculé automatiquement depuis vos membres liés."
+            />
+            <VisibilityToggle
+              checked={showYearsExperience}
+              onChange={setShowYearsExperience}
+              label="Afficher les années d'expérience"
+              description="Masque ou affiche la valeur saisie dans Informations pratiques."
+            />
+            <VisibilityToggle
+              checked={showPublicRating}
+              onChange={setShowPublicRating}
+              label="Afficher les étoiles"
+              description="Affiche la note publique ci-dessous sur votre profil."
+            />
+          </div>
+        </div>
+
+        {/* Note publique */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <h2 className="text-sm font-semibold text-white mb-5">Note affichée</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Étoiles</label>
+              <input
+                type="number" min={0} max={5} step={0.1}
+                value={publicRating}
+                onChange={e => setPublicRating(e.target.value)}
+                placeholder="4.8"
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Nombre d'avis affiché</label>
+              <input
+                type="number" min={0} max={100000}
+                value={publicRatingCount}
+                onChange={e => setPublicRatingCount(parseInt(e.target.value) || 0)}
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-[#C8F135]"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Entretien découverte */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <h2 className="text-sm font-semibold text-white mb-2">Entretien découverte</h2>
+          <p className="mb-5 text-xs text-zinc-500">
+            Cette option indique aux membres qu'ils peuvent réserver un premier échange avec vous.
+          </p>
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <VisibilityToggle
+              checked={discoveryCallEnabled}
+              onChange={setDiscoveryCallEnabled}
+              label="Activer l'entretien"
+              description="Permet aux membres de voir ce type de rendez-vous."
+            />
+            <VisibilityToggle
+              checked={showDiscoveryCall}
+              onChange={setShowDiscoveryCall}
+              label="Afficher sur le profil"
+              description="Masque ou affiche le bloc d'information côté membre."
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_140px]">
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Nom affiché</label>
+              <input
+                type="text"
+                value={discoveryCallTitle}
+                onChange={e => setDiscoveryCallTitle(e.target.value)}
+                placeholder="Entretien découverte"
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Durée</label>
+              <input
+                type="number" min={5} max={180}
+                value={discoveryCallDuration}
+                onChange={e => setDiscoveryCallDuration(parseInt(e.target.value) || 30)}
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:border-[#C8F135]"
               />
             </div>
           </div>

@@ -33,6 +33,10 @@ export async function GET(
       bodyMetrics: { orderBy: { date: 'desc' }, take: 30 },
       workoutSessions: {
         where: { status: { in: ['COMPLETED', 'IN_PROGRESS', 'PLANNED'] } },
+        include: {
+          // Le coach doit voir le détail de la séance pour pouvoir ajuster chaque exercice.
+          exerciseLogs: { include: { exercise: true }, orderBy: { order: 'asc' } },
+        },
         orderBy: { createdAt: 'desc' },
         take: 20,
       },

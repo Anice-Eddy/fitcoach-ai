@@ -14,6 +14,11 @@ const patchSchema = z.object({
   caloriesBurned:  z.number().min(0).max(5000).optional().nullable(),
 })
 
+const deleteSchema = z.object({
+  sessionId:     z.string().min(1),
+  exerciseLogId: z.string().min(1).optional(),
+})
+
 // Authenticates the session as a coach and verifies the member is in their roster; returns coachProfileId or an error response.
 async function authorizeCoach(memberId: string) {
   const session = await auth()
@@ -43,7 +48,7 @@ export async function GET(
 
   const sessions = await prisma.workoutSession.findMany({
     where:   { userId: params.memberId },
-    include: { exerciseLogs: { include: { exercise: true } } },
+    include: { exerciseLogs: { include: { exercise: true }, orderBy: { order: 'asc' } } },
     orderBy: { createdAt: 'desc' },
     take:    30,
   })
@@ -82,4 +87,46 @@ export async function PATCH(
   })
 
   return NextResponse.json(updated)
+}
+
+/** Removes a full session, or one exercise inside it, after verifying coach ownership of the member. */
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { memberId: string } },
+) {
+  const { error } = await authorizeCoach(params.memberId)
+  if (error) return error
+
+  const parsed = deleteSchema.safeParse(await req.json())
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
+
+  const { sessionId, exerciseLogId } = parsed.data
+
+  if (!exerciseLogId) {
+    const session = await prisma.workoutSession.findFirst({
+      where:  { id: sessionId, userId: params.memberId },
+      select: { id: true },
+    })
+    if (!session) return NextResponse.json({ error: 'Séance introuvable' }, { status: 404 })
+
+    // Les ExerciseLog liés sont supprimés automatiquement par la relation onDelete: Cascade.
+    await prisma.workoutSession.delete({ where: { id: sessionId } })
+    return NextResponse.json({ ok: true, deletedSessionId: sessionId })
+  }
+
+  const exerciseLog = await prisma.exerciseLog.findFirst({
+    where: { id: exerciseLogId, session: { id: sessionId, userId: params.memberId } },
+    select: { id: true },
+  })
+  if (!exerciseLog) return NextResponse.json({ error: 'Exercice introuvable' }, { status: 404 })
+
+  await prisma.exerciseLog.delete({ where: { id: exerciseLogId } })
+
+  // Retourne la séance rafraîchie pour que l'interface garde les exercices synchronisés.
+  const updatedSession = await prisma.workoutSession.findFirst({
+    where:   { id: sessionId, userId: params.memberId },
+    include: { exerciseLogs: { include: { exercise: true }, orderBy: { order: 'asc' } } },
+  })
+
+  return NextResponse.json(updatedSession)
 }

@@ -71,4 +71,22 @@ describe('PATCH /api/user/account', () => {
       data: expect.objectContaining({ password: 'hashed-password' }),
     }))
   })
+
+  it('accepts null image to clear the avatar', async () => {
+    ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
+    ;(prisma.user.update as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 'user-1',
+      name: 'Alex',
+      email: 'alex@example.com',
+      image: null,
+      provider: 'EMAIL',
+    })
+
+    const res = await PATCH(makeRequest({ name: 'Alex', image: null }))
+
+    expect(res.status).toBe(200)
+    expect(prisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ image: null }),
+    }))
+  })
 })

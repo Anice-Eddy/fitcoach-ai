@@ -161,6 +161,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         })
         if (!existing) return true
 
+        const googleImage = getProfileImage(profile)
+        const googleName = getProfileName(profile)
+        if (googleImage || googleName) {
+          // Keep Google identity data fresh, especially after a local profile edit clears the image.
+          const updated = await prisma.user.update({
+            where: { id: existing.id },
+            data: {
+              ...(googleName ? { name: googleName } : {}),
+              ...(googleImage ? { image: googleImage } : {}),
+              provider: 'GOOGLE',
+            },
+          })
+          user.name = updated.name
+          user.image = updated.image
+        }
+
         const linked = existing.accounts[0]
         if (linked && linked.userId !== existing.id) {
           // Stale account record pointing to wrong userId — re-link it

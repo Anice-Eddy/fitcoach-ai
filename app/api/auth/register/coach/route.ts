@@ -16,6 +16,15 @@ const schema = z.object({
   city:            z.string().max(100).optional(),
   phone:           z.string().max(20).optional(),
   memberLimit:     z.number().int().min(1).max(100).default(10),
+  showMemberCount: z.boolean().default(true),
+  showYearsExperience: z.boolean().default(true),
+  publicRating:    z.number().min(0).max(5).nullable().optional(),
+  publicRatingCount: z.number().int().min(0).max(100000).default(0),
+  showPublicRating: z.boolean().default(false),
+  discoveryCallEnabled: z.boolean().default(true),
+  discoveryCallTitle: z.string().min(2).max(80).default('Entretien découverte'),
+  discoveryCallDuration: z.number().int().min(5).max(180).default(30),
+  showDiscoveryCall: z.boolean().default(true),
 })
 
 /** Registers a new coach-only account with full profile data (bio, specialties, certifications, etc.); hashes the password and returns 201 on success. */
@@ -26,7 +35,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 422 })
   }
 
-  const { name, email, password, bio, specialties, certifications, yearsExperience, city, phone, memberLimit } = parsed.data
+  const {
+    name,
+    email,
+    password,
+    bio,
+    specialties,
+    certifications,
+    yearsExperience,
+    city,
+    phone,
+    memberLimit,
+    showMemberCount,
+    showYearsExperience,
+    publicRating,
+    publicRatingCount,
+    showPublicRating,
+    discoveryCallEnabled,
+    discoveryCallTitle,
+    discoveryCallDuration,
+    showDiscoveryCall,
+  } = parsed.data
 
   const existing = await prisma.user.findUnique({
     where:  { email },
@@ -57,6 +86,15 @@ export async function POST(req: Request) {
           city:        city ?? null,
           phone:       phone ?? null,
           memberLimit,
+          showMemberCount,
+          showYearsExperience,
+          publicRating: publicRating ?? null,
+          publicRatingCount,
+          showPublicRating,
+          discoveryCallEnabled,
+          discoveryCallTitle: discoveryCallTitle.trim(),
+          discoveryCallDuration,
+          showDiscoveryCall,
           isVerified:  false,
         },
       },

@@ -16,6 +16,17 @@ const MEMBER_LINKS = [
   { href: '/settings/preferences', label: 'Préférences', icon: SlidersHorizontal },
 ]
 
+function initials(name: string, email: string) {
+  const source = name !== 'Utilisateur BodyOps' ? name : email
+  return source
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || '?'
+}
+
 /** Member account dropdown with avatar, name, email, settings links, and a sign-out button; closes on outside pointer events. */
 export function UserDropdown() {
   const { data: session } = useSession()
@@ -51,8 +62,8 @@ export function UserDropdown() {
             className="rounded-full ring-2 ring-zinc-700 transition-all hover:ring-[#C8F135]"
           />
         ) : (
-          <span className="flex size-8 items-center justify-center rounded-full bg-zinc-700 text-xs font-semibold text-white">
-            {name[0]?.toUpperCase() ?? '?'}
+          <span className="flex size-8 items-center justify-center rounded-full bg-[#C8F135]/15 text-xs font-semibold text-[#C8F135] ring-2 ring-zinc-700">
+            {initials(name, email)}
           </span>
         )}
         <ChevronDown className={`hidden size-3.5 transition-transform sm:block ${open ? 'rotate-180' : ''}`} />

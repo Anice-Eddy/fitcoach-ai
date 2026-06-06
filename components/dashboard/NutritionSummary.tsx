@@ -6,12 +6,20 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useNutritionStore } from '@/stores/nutritionStore'
 import { useUserStore } from '@/stores/userStore'
 import Link from 'next/link'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+
+type ActiveNutritionTarget = {
+  targetCalories: number
+  targetProteinG: number
+  targetCarbsG: number
+  targetFatG: number
+}
 
 /** Displays today's macro consumption as a ring chart and three progress bars compared to the user's daily targets. */
 export function NutritionSummary() {
   const { ensureTodayLog, getTodayTotals, setTodayMeals } = useNutritionStore()
   const { profile }        = useUserStore()
+  const [coachTarget, setCoachTarget] = useState<ActiveNutritionTarget | null>(null)
 
   useEffect(() => {
     ensureTodayLog()
@@ -34,21 +42,36 @@ export function NutritionSummary() {
         })))
       })
       .catch(() => {})
+    fetch('/api/user/nutrition/plan')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!data?.targetCalories) return
+        setCoachTarget({
+          targetCalories: data.targetCalories,
+          targetProteinG: data.targetProteinG,
+          targetCarbsG:   data.targetCarbsG,
+          targetFatG:     data.targetFatG,
+        })
+      })
+      .catch(() => {})
   }, [ensureTodayLog, setTodayMeals])
 
   const totals = getTodayTotals()
 
   const target = {
-    calories: profile?.recommendedCalories ?? 2000,
-    proteinG: profile?.recommendedProteinG ?? 150,
-    carbsG:   profile?.recommendedCarbsG ?? 200,
-    fatG:     profile?.recommendedFatG ?? 65,
+    calories: coachTarget?.targetCalories ?? profile?.recommendedCalories ?? 2000,
+    proteinG: coachTarget?.targetProteinG ?? profile?.recommendedProteinG ?? 150,
+    carbsG:   coachTarget?.targetCarbsG ?? profile?.recommendedCarbsG ?? 200,
+    fatG:     coachTarget?.targetFatG ?? profile?.recommendedFatG ?? 65,
   }
 
   return (
     <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-white">Nutrition du jour</h3>
+        <div>
+          <h3 className="text-sm font-semibold text-white">Nutrition du jour</h3>
+          {coachTarget ? <p className="text-[11px] text-zinc-500">Objectif coach actif</p> : null}
+        </div>
         <Link href="/nutrition" className="text-xs text-[#C8F135] hover:underline">Voir tout</Link>
       </div>
 

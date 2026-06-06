@@ -17,11 +17,19 @@ import { Plus, ShoppingCart, Calculator } from 'lucide-react'
 
 const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
 
+type ActiveNutritionTarget = {
+  targetCalories: number
+  targetProteinG: number
+  targetCarbsG: number
+  targetFatG: number
+}
+
 /** Interactive nutrition plan view: fetches or generates a weekly meal plan and allows day/meal navigation with macro summaries. */
 export function NutritionClient() {
   const { profile }  = useUserStore()
   const { ensureTodayLog, logMeal, setTodayMeals } = useNutritionStore()
   const [plan, setPlan]       = useState<NutritionPlan | null>(null)
+  const [coachTarget, setCoachTarget] = useState<ActiveNutritionTarget | null>(null)
   const [loading, setLoading] = useState(true)
   const [addingMeal, setAddingMeal] = useState(false)
   const [quickMeal, setQuickMeal] = useState({ name: '', calories: '', proteinG: '', carbsG: '', fatG: '' })
@@ -51,6 +59,18 @@ export function NutritionClient() {
         })))
       })
       .catch(() => {})
+    fetch('/api/user/nutrition/plan')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!data?.targetCalories) return
+        setCoachTarget({
+          targetCalories: data.targetCalories,
+          targetProteinG: data.targetProteinG,
+          targetCarbsG:   data.targetCarbsG,
+          targetFatG:     data.targetFatG,
+        })
+      })
+      .catch(() => {})
     const d = new Date().getDay()
     const todayIndex = d === 0 ? 6 : d - 1
     setDay(todayIndex)
@@ -58,17 +78,23 @@ export function NutritionClient() {
 
   useEffect(() => {
     if (!profile) { setLoading(false); return }
+    const target = coachTarget ?? {
+      targetCalories: profile.recommendedCalories ?? 2000,
+      targetProteinG: profile.recommendedProteinG ?? 150,
+      targetCarbsG:   profile.recommendedCarbsG ?? 200,
+      targetFatG:     profile.recommendedFatG ?? 65,
+    }
     const generated = generateMealPlan({
-      targetCalories:      profile.recommendedCalories ?? 2000,
-      targetProteinG:      profile.recommendedProteinG ?? 150,
-      targetCarbsG:        profile.recommendedCarbsG ?? 200,
-      targetFatG:          profile.recommendedFatG ?? 65,
+      targetCalories:      target.targetCalories,
+      targetProteinG:      target.targetProteinG,
+      targetCarbsG:        target.targetCarbsG,
+      targetFatG:          target.targetFatG,
       fitnessGoal:         profile.fitnessGoal,
       dietaryRestrictions: profile.dietaryRestrictions,
     })
     setPlan(generated)
     setLoading(false)
-  }, [profile])
+  }, [profile, coachTarget])
 
   // Calcul macros en temps réel pour le calculateur rapide
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -141,7 +167,9 @@ export function NutritionClient() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-base font-bold text-white">Résumé du jour</h2>
-              <p className="text-xs text-zinc-400 mt-0.5">Objectif : {Math.round(plan.targetCalories)} kcal</p>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Objectif : {Math.round(plan.targetCalories)} kcal{coachTarget ? ' · défini par le coach' : ''}
+              </p>
             </div>
             <Link href="/nutrition/shopping-list"
               className="flex items-center gap-1.5 text-xs text-[#C8F135] hover:underline"

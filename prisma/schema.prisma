@@ -808,6 +808,15 @@ model CoachProfile {
   phone           String?
   isVerified      Boolean  @default(false)
   memberLimit     Int      @default(10)
+  showMemberCount Boolean  @default(true)
+  showYearsExperience Boolean @default(true)
+  publicRating    Float?
+  publicRatingCount Int    @default(0)
+  showPublicRating Boolean @default(false)
+  discoveryCallEnabled Boolean @default(true)
+  discoveryCallTitle String @default("Entretien découverte")
+  discoveryCallDuration Int @default(30)
+  showDiscoveryCall Boolean @default(true)
   verificationStatus CoachVerificationStatus @default(NEEDS_CORRECTION)
   verificationIssues Json?
   verificationAnalysis Json?

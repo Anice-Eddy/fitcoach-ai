@@ -19,7 +19,11 @@ interface Coach {
     city:            string | null
     country:         string | null
     yearsExperience: number | null
-    _count: { coachMembers: number }
+    publicRating:    number | null
+    publicRatingCount: number
+    discoveryCallTitle: string | null
+    discoveryCallDuration: number | null
+    _count: { coachMembers: number | null }
   }
 }
 
@@ -117,10 +121,12 @@ function CoachesInner() {
                         <p className="text-xs text-zinc-500 mt-2 line-clamp-2">{coach.coachProfile.bio}</p>
                       )}
                       <div className="flex items-center gap-3 mt-3 flex-wrap">
-                        <div className="flex items-center gap-1 text-xs text-zinc-500">
-                          <Users className="size-3" />
-                          {coach.coachProfile._count.coachMembers} membre{coach.coachProfile._count.coachMembers !== 1 ? 's' : ''}
-                        </div>
+                        {coach.coachProfile._count.coachMembers != null && (
+                          <div className="flex items-center gap-1 text-xs text-zinc-500">
+                            <Users className="size-3" />
+                            {coach.coachProfile._count.coachMembers} membre{coach.coachProfile._count.coachMembers !== 1 ? 's' : ''}
+                          </div>
+                        )}
                         {(coach.coachProfile.city || coach.coachProfile.country) && (
                           <span className="flex items-center gap-1 text-xs text-zinc-500">
                             <MapPin className="size-3" />
@@ -133,17 +139,29 @@ function CoachesInner() {
                             {coach.coachProfile.yearsExperience} ans
                           </span>
                         )}
-                        <div className="flex items-center gap-0.5">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star key={i} className={`size-3 ${i < 4 ? 'fill-[#C8F135] text-[#C8F135]' : 'text-zinc-700'}`} />
-                          ))}
-                        </div>
+                        {coach.coachProfile.publicRating != null && (
+                          <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-0.5">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star key={i} className={`size-3 ${i < Math.round(coach.coachProfile.publicRating ?? 0) ? 'fill-[#C8F135] text-[#C8F135]' : 'text-zinc-700'}`} />
+                              ))}
+                            </div>
+                            <span className="text-xs text-zinc-500">
+                              {coach.coachProfile.publicRating.toFixed(1)}
+                              {coach.coachProfile.publicRatingCount > 0 ? ` (${coach.coachProfile.publicRatingCount})` : ''}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
 
                   <div className="mt-4 flex items-center justify-between">
-                    <span className="text-xs text-zinc-500">Entretien découverte · 30 min · Gratuit</span>
+                    <span className="text-xs text-zinc-500">
+                      {coach.coachProfile.discoveryCallTitle && coach.coachProfile.discoveryCallDuration
+                        ? `${coach.coachProfile.discoveryCallTitle} · ${coach.coachProfile.discoveryCallDuration} min · Gratuit`
+                        : 'Profil coach disponible'}
+                    </span>
                     <span className="text-xs text-[#C8F135] group-hover:underline">Réserver →</span>
                   </div>
                 </Link>

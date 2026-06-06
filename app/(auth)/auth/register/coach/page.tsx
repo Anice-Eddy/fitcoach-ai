@@ -23,6 +23,26 @@ const CERTIFICATIONS = [
 
 type Step = 1 | 2 | 3
 
+// Small registration switch for information the coach can expose to members.
+function VisibilityToggle({ checked, onChange, label }: {
+  checked: boolean
+  onChange: (checked: boolean) => void
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-left"
+    >
+      <span className="text-xs font-medium text-zinc-300">{label}</span>
+      <span className={`flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors ${checked ? 'bg-[#C8F135]' : 'bg-zinc-700'}`}>
+        <span className={`size-4 rounded-full bg-black transition-transform ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
+      </span>
+    </button>
+  )
+}
+
 /** Multi-step coach registration form: collects account credentials, professional profile, and certifications; posts to /api/auth/register/coach. */
 export default function CoachRegisterPage() {
   const router = useRouter()
@@ -42,6 +62,15 @@ export default function CoachRegisterPage() {
     city:            '',
     phone:           '',
     memberLimit:     '10',
+    showMemberCount: true,
+    showYearsExperience: true,
+    publicRating:    '',
+    publicRatingCount: '0',
+    showPublicRating: false,
+    discoveryCallEnabled: true,
+    discoveryCallTitle: 'Entretien découverte',
+    discoveryCallDuration: '30',
+    showDiscoveryCall: true,
   })
 
   const set = (key: string, value: unknown) => {
@@ -92,6 +121,9 @@ export default function CoachRegisterPage() {
         ...form,
         yearsExperience: form.yearsExperience ? Number(form.yearsExperience) : undefined,
         memberLimit:     Number(form.memberLimit) || 10,
+        publicRating:    form.publicRating ? Number(form.publicRating) : null,
+        publicRatingCount: Number(form.publicRatingCount) || 0,
+        discoveryCallDuration: Number(form.discoveryCallDuration) || 30,
       }),
     })
 
@@ -241,6 +273,22 @@ export default function CoachRegisterPage() {
               </div>
             </div>
 
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+              <p className="mb-3 text-xs font-medium text-zinc-300">Visibilité pour les membres</p>
+              <div className="space-y-2">
+                <VisibilityToggle
+                  checked={form.showYearsExperience}
+                  onChange={(checked) => set('showYearsExperience', checked)}
+                  label="Afficher mes années d'expérience"
+                />
+                <VisibilityToggle
+                  checked={form.showMemberCount}
+                  onChange={(checked) => set('showMemberCount', checked)}
+                  label="Afficher mon nombre de membres"
+                />
+              </div>
+            </div>
+
             <div className="flex gap-3">
               <button type="button" onClick={() => setStep(1)}
                 className="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-300 text-sm font-medium hover:bg-zinc-800 transition-colors">
@@ -293,6 +341,59 @@ export default function CoachRegisterPage() {
                 <input type="tel" value={form.phone} onChange={(e) => set('phone', e.target.value)}
                   placeholder="+33 6 00 00 00 00"
                   className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+              <p className="mb-3 text-xs font-medium text-zinc-300">Étoiles affichées</p>
+              <VisibilityToggle
+                checked={form.showPublicRating}
+                onChange={(checked) => set('showPublicRating', checked)}
+                label="Rendre ma note visible aux membres"
+              />
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="min-w-0">
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Note</label>
+                  <input type="number" min="0" max="5" step="0.1" value={form.publicRating}
+                    onChange={(e) => set('publicRating', e.target.value)} placeholder="4.8"
+                    className="w-full min-w-0 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
+                </div>
+                <div className="min-w-0">
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Avis</label>
+                  <input type="number" min="0" value={form.publicRatingCount}
+                    onChange={(e) => set('publicRatingCount', e.target.value)}
+                    className="w-full min-w-0 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+              <p className="mb-3 text-xs font-medium text-zinc-300">Entretien découverte</p>
+              <div className="space-y-2">
+                <VisibilityToggle
+                  checked={form.discoveryCallEnabled}
+                  onChange={(checked) => set('discoveryCallEnabled', checked)}
+                  label="Activer l'entretien découverte"
+                />
+                <VisibilityToggle
+                  checked={form.showDiscoveryCall}
+                  onChange={(checked) => set('showDiscoveryCall', checked)}
+                  label="Afficher l'entretien sur mon profil"
+                />
+              </div>
+              <div className="mt-3 grid grid-cols-[1fr_96px] gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Nom</label>
+                  <input type="text" value={form.discoveryCallTitle}
+                    onChange={(e) => set('discoveryCallTitle', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Min.</label>
+                  <input type="number" min="5" max="180" value={form.discoveryCallDuration}
+                    onChange={(e) => set('discoveryCallDuration', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
+                </div>
               </div>
             </div>
 

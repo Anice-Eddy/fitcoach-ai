@@ -35,10 +35,23 @@ interface Note {
   replies?: NoteReply[]
 }
 
+interface ExerciseLog {
+  id: string; order: number; sets: number | null; reps: number | null
+  weightKg: number | null; restSeconds: number | null; isCompleted: boolean
+  exercise: { id: string; name: string; muscleGroups: string[]; equipment: string[] }
+}
+
 interface Session {
   id: string; name: string; status: string
   completedAt: string | null; durationMinutes: number | null; caloriesBurned: number | null
   scheduledAt: string | null; notes: string | null
+  exerciseLogs?: ExerciseLog[]
+}
+
+interface MemberNutritionPlan {
+  id: string; name: string
+  targetCalories: number; targetProteinG: number; targetCarbsG: number; targetFatG: number
+  isActive: boolean
 }
 
 interface Metric {
@@ -66,6 +79,7 @@ interface MemberDetail {
   } | null
   bodyMetrics: Metric[]
   workoutSessions: Session[]
+  nutritionPlans: MemberNutritionPlan[]
   coachNotes: Note[]
 }
 
@@ -91,6 +105,47 @@ const SESSION_STYLE: Record<string, { dot: string; label: string }> = {
   IN_PROGRESS: { dot: 'bg-[#C8F135]',  label: 'En cours' },
   PLANNED:     { dot: 'bg-zinc-500',    label: 'Planifié' },
   SKIPPED:     { dot: 'bg-red-400',     label: 'Manqué' },
+}
+const ACTIVITY_LABELS: Record<string, string> = {
+  SEDENTARY: 'Sédentaire',
+  LIGHTLY_ACTIVE: 'Légèrement actif',
+  MODERATELY_ACTIVE: 'Modérément actif',
+  VERY_ACTIVE: 'Très actif',
+  EXTREMELY_ACTIVE: 'Extrêmement actif',
+}
+const EQUIPMENT_LABELS: Record<string, string> = {
+  BODYWEIGHT: 'Poids du corps',
+  DUMBBELL: 'Haltères',
+  BARBELL: 'Barre',
+  BENCH: 'Banc',
+  KETTLEBELL: 'Kettlebell',
+  RESISTANCE_BAND: 'Élastiques',
+  PULL_UP_BAR: 'Barre traction',
+  CABLE_MACHINE: 'Poulie',
+  SMITH_MACHINE: 'Smith machine',
+  CARDIO_MACHINE: 'Machine cardio',
+  CHEST_PRESS_MACHINE: 'Chest press',
+  HIP_THRUST_MACHINE: 'Hip thrust',
+}
+
+type CreateMemberForm = {
+  firstName: string; lastName: string; email: string; password: string
+  age: string; gender: 'MALE' | 'FEMALE'
+  weightKg: string; heightCm: string; waistCm: string; hipsCm: string; bodyFatPct: string
+  activityLevel: string; trainingDaysPerWeek: string; availableEquipment: string[]
+  fitnessGoal: string; fitnessLevel: string; targetWeightKg: string; bodyFocus: string
+  dietaryRestrictions: string; foodPreferences: string
+  steps: string; sleepHours: string; waterLiters: string; notes: string
+}
+
+const emptyCreateMemberForm: CreateMemberForm = {
+  firstName: '', lastName: '', email: '', password: '',
+  age: '', gender: 'MALE',
+  weightKg: '', heightCm: '', waistCm: '', hipsCm: '', bodyFatPct: '',
+  activityLevel: 'MODERATELY_ACTIVE', trainingDaysPerWeek: '3', availableEquipment: ['BODYWEIGHT'],
+  fitnessGoal: 'GENERAL_FITNESS', fitnessLevel: 'BEGINNER', targetWeightKg: '', bodyFocus: 'FULL_BODY',
+  dietaryRestrictions: '', foodPreferences: '',
+  steps: '', sleepHours: '', waterLiters: '', notes: '',
 }
 
 // Returns 2-letter uppercase initials from a display name or email fallback.
@@ -126,12 +181,49 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 }
 
 // Displays a summary of the member's profile: physical stats, goals, BMI, latest metrics, and active program.
-function OverviewTab({ detail }: { detail: MemberDetail }) {
+function OverviewTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: () => void }) {
   const p = detail.profile
   const last = detail.bodyMetrics[0]
   const lastWeight = detail.bodyMetrics.find(metric => typeof metric.weightKg === 'number')?.weightKg ?? null
   const doneSessions = detail.workoutSessions.filter(s => s.status === 'COMPLETED').length
   const totalMin = detail.workoutSessions.reduce((a, s) => a + (s.durationMinutes ?? 0), 0)
+  const coachPlan = detail.nutritionPlans[0] ?? null
+  const [nutritionForm, setNutritionForm] = useState({
+    targetCalories: coachPlan?.targetCalories ? String(Math.round(coachPlan.targetCalories)) : '',
+    targetProteinG: coachPlan?.targetProteinG ? String(Math.round(coachPlan.targetProteinG)) : '',
+    targetCarbsG: coachPlan?.targetCarbsG ? String(Math.round(coachPlan.targetCarbsG)) : '',
+    targetFatG: coachPlan?.targetFatG ? String(Math.round(coachPlan.targetFatG)) : '',
+  })
+  const [savingNutrition, setSavingNutrition] = useState(false)
+
+  useEffect(() => {
+    setNutritionForm({
+      targetCalories: coachPlan?.targetCalories ? String(Math.round(coachPlan.targetCalories)) : '',
+      targetProteinG: coachPlan?.targetProteinG ? String(Math.round(coachPlan.targetProteinG)) : '',
+      targetCarbsG: coachPlan?.targetCarbsG ? String(Math.round(coachPlan.targetCarbsG)) : '',
+      targetFatG: coachPlan?.targetFatG ? String(Math.round(coachPlan.targetFatG)) : '',
+    })
+  }, [coachPlan?.targetCalories, coachPlan?.targetProteinG, coachPlan?.targetCarbsG, coachPlan?.targetFatG])
+
+  const fillNutritionFromRecommendation = () => {
+    setNutritionForm({
+      targetCalories: p?.recommendedCalories ? String(Math.round(p.recommendedCalories)) : '',
+      targetProteinG: p?.recommendedProteinG ? String(Math.round(p.recommendedProteinG)) : '',
+      targetCarbsG: p?.recommendedCarbsG ? String(Math.round(p.recommendedCarbsG)) : '',
+      targetFatG: p?.recommendedFatG ? String(Math.round(p.recommendedFatG)) : '',
+    })
+  }
+
+  const saveNutritionTargets = async () => {
+    setSavingNutrition(true)
+    const res = await fetch(`/api/coach/members/${detail.id}/nutrition-targets`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(nutritionForm),
+    })
+    if (res.ok) onRefresh()
+    setSavingNutrition(false)
+  }
 
   return (
     <div className="space-y-5">
@@ -144,7 +236,10 @@ function OverviewTab({ detail }: { detail: MemberDetail }) {
 
       {p && (p.recommendedCalories || p.tdee) && (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Plan nutritionnel recommandé</p>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Plan nutritionnel recommandé</p>
+            <span className="rounded-full border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-500">Calcul BodyOps</span>
+          </div>
           <div className="grid grid-cols-4 gap-3">
             <div className="text-center p-3 rounded-lg bg-zinc-800 border border-zinc-700">
               <p className="text-lg font-bold text-white font-mono">{p.recommendedCalories ? Math.round(p.recommendedCalories).toLocaleString('fr-FR') : '—'}</p>
@@ -163,6 +258,58 @@ function OverviewTab({ detail }: { detail: MemberDetail }) {
           </div>
         </div>
       )}
+
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Objectif nutrition coach</p>
+            <p className="mt-1 text-xs text-zinc-500">Ces valeurs sont visibles côté membre et remplacent les recommandations auto pour les objectifs quotidiens.</p>
+          </div>
+          <button
+            type="button"
+            onClick={fillNutritionFromRecommendation}
+            className="self-start rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:border-[#C8F135]/50 hover:text-[#C8F135] sm:self-auto"
+          >
+            Reprendre la reco
+          </button>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { key: 'targetCalories', label: 'Calories', suffix: 'kcal', min: 800, max: 8000 },
+            { key: 'targetProteinG', label: 'Protéines', suffix: 'g', min: 20, max: 500 },
+            { key: 'targetCarbsG', label: 'Glucides', suffix: 'g', min: 20, max: 1000 },
+            { key: 'targetFatG', label: 'Lipides', suffix: 'g', min: 10, max: 400 },
+          ].map(field => (
+            <label key={field.key} className="block">
+              <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-500">{field.label}</span>
+              <div className="flex rounded-lg border border-zinc-700 bg-zinc-950 focus-within:border-[#C8F135]">
+                <input
+                  type="number"
+                  min={field.min}
+                  max={field.max}
+                  value={nutritionForm[field.key as keyof typeof nutritionForm]}
+                  onChange={e => setNutritionForm(form => ({ ...form, [field.key]: e.target.value }))}
+                  className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-white outline-none"
+                />
+                <span className="border-l border-zinc-800 px-3 py-2 text-xs text-zinc-500">{field.suffix}</span>
+              </div>
+            </label>
+          ))}
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <p className="text-[11px] text-zinc-600">
+            {coachPlan ? 'Un objectif coach est actif pour ce membre.' : 'Aucun objectif coach personnalisé pour le moment.'}
+          </p>
+          <button
+            type="button"
+            onClick={saveNutritionTargets}
+            disabled={savingNutrition || !nutritionForm.targetCalories || !nutritionForm.targetProteinG || !nutritionForm.targetCarbsG || !nutritionForm.targetFatG}
+            className="rounded-lg bg-[#C8F135] px-3 py-2 text-xs font-bold text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50"
+          >
+            {savingNutrition ? 'Enregistrement…' : 'Enregistrer'}
+          </button>
+        </div>
+      </div>
 
       {detail.bodyMetrics.length > 0 && (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
@@ -241,6 +388,209 @@ function CoachMetricInput({
         onChange={e => onChange(e.target.value)}
         className="w-full rounded border border-zinc-600 bg-zinc-700 px-2 py-1.5 text-xs text-white focus:outline-none focus:border-[#C8F135]"
       />
+    </div>
+  )
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  type = 'text',
+  required,
+  placeholder,
+  min,
+  max,
+  step,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  type?: string
+  required?: boolean
+  placeholder?: string
+  min?: number
+  max?: number
+  step?: string
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+        {label}{required ? ' *' : ''}
+      </span>
+      <input
+        type={type}
+        value={value}
+        required={required}
+        placeholder={placeholder}
+        min={min}
+        max={max}
+        step={step}
+        onChange={e => onChange(e.target.value)}
+        className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-[#C8F135]"
+      />
+    </label>
+  )
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  options: Array<{ value: string; label: string }>
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-500">{label}</span>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-[#C8F135]"
+      >
+        {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </select>
+    </label>
+  )
+}
+
+function CreateMemberModal({
+  open,
+  saving,
+  error,
+  form,
+  setForm,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean
+  saving: boolean
+  error: string | null
+  form: CreateMemberForm
+  setForm: (updater: (form: CreateMemberForm) => CreateMemberForm) => void
+  onClose: () => void
+  onSubmit: () => void
+}) {
+  if (!open) return null
+
+  const set = (key: keyof CreateMemberForm, value: string) => setForm(f => ({ ...f, [key]: value }))
+  const toggleEquipment = (value: string) => {
+    setForm(f => ({
+      ...f,
+      availableEquipment: f.availableEquipment.includes(value)
+        ? f.availableEquipment.filter(item => item !== value)
+        : [...f.availableEquipment, value],
+    }))
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 px-3 py-4 sm:px-6">
+      <div className="mx-auto w-full max-w-5xl rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-800 bg-zinc-950/95 px-4 py-3 backdrop-blur sm:px-6">
+          <div>
+            <h3 className="text-base font-bold text-white">Ajouter un client</h3>
+            <p className="text-xs text-zinc-500">Le compte membre, son profil et la relation coach seront créés ensemble.</p>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-900 hover:text-white" aria-label="Fermer">
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div className="space-y-6 p-4 sm:p-6">
+          {error && <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</div>}
+
+          <section className="space-y-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Compte</p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Field label="Prénom" value={form.firstName} onChange={v => set('firstName', v)} required />
+              <Field label="Nom" value={form.lastName} onChange={v => set('lastName', v)} />
+              <Field label="Email" type="email" value={form.email} onChange={v => set('email', v)} required />
+              <Field label="Mot de passe temporaire" type="password" value={form.password} onChange={v => set('password', v)} required placeholder="8 caractères minimum" />
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Profil physique</p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <Field label="Âge" type="number" min={13} max={100} value={form.age} onChange={v => set('age', v)} required />
+              <SelectField label="Genre" value={form.gender} onChange={v => set('gender', v)} options={[{ value: 'MALE', label: 'Homme' }, { value: 'FEMALE', label: 'Femme' }]} />
+              <Field label="Poids kg" type="number" step="0.1" min={30} max={300} value={form.weightKg} onChange={v => set('weightKg', v)} required />
+              <Field label="Taille cm" type="number" step="1" min={100} max={250} value={form.heightCm} onChange={v => set('heightCm', v)} required />
+              <Field label="Objectif kg" type="number" step="0.1" min={30} max={300} value={form.targetWeightKg} onChange={v => set('targetWeightKg', v)} />
+              <Field label="Tour taille cm" type="number" step="0.5" value={form.waistCm} onChange={v => set('waistCm', v)} />
+              <Field label="Hanches cm" type="number" step="0.5" value={form.hipsCm} onChange={v => set('hipsCm', v)} />
+              <Field label="% masse grasse" type="number" step="0.1" value={form.bodyFatPct} onChange={v => set('bodyFatPct', v)} />
+              <Field label="Pas" type="number" value={form.steps} onChange={v => set('steps', v)} />
+              <Field label="Sommeil h" type="number" step="0.25" value={form.sleepHours} onChange={v => set('sleepHours', v)} />
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Objectifs et activité</p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <SelectField label="Objectif" value={form.fitnessGoal} onChange={v => set('fitnessGoal', v)} options={Object.entries(GOAL_LABELS).map(([value, label]) => ({ value, label }))} />
+              <SelectField label="Niveau" value={form.fitnessLevel} onChange={v => set('fitnessLevel', v)} options={Object.entries(LEVEL_LABELS).map(([value, label]) => ({ value, label }))} />
+              <SelectField label="Activité" value={form.activityLevel} onChange={v => set('activityLevel', v)} options={Object.entries(ACTIVITY_LABELS).map(([value, label]) => ({ value, label }))} />
+              <Field label="Jours / semaine" type="number" min={1} max={7} value={form.trainingDaysPerWeek} onChange={v => set('trainingDaysPerWeek', v)} />
+              <SelectField label="Focus" value={form.bodyFocus} onChange={v => set('bodyFocus', v)} options={[
+                { value: 'FULL_BODY', label: 'Corps complet' },
+                { value: 'UPPER_BODY', label: 'Haut du corps' },
+                { value: 'LOWER_BODY', label: 'Bas du corps' },
+              ]} />
+              <Field label="Litres eau" type="number" step="0.1" value={form.waterLiters} onChange={v => set('waterLiters', v)} />
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {Object.entries(EQUIPMENT_LABELS).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => toggleEquipment(value)}
+                  className={cn(
+                    'rounded-lg border px-3 py-2 text-left text-xs transition-colors',
+                    form.availableEquipment.includes(value)
+                      ? 'border-[#C8F135]/50 bg-[#C8F135]/10 text-[#C8F135]'
+                      : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Nutrition et notes</p>
+            <div className="grid gap-3 lg:grid-cols-2">
+              <Field label="Restrictions alimentaires" value={form.dietaryRestrictions} onChange={v => set('dietaryRestrictions', v)} placeholder="VEGETARIAN, GLUTEN_FREE..." />
+              <Field label="Préférences alimentaires" value={form.foodPreferences} onChange={v => set('foodPreferences', v)} placeholder="Riz, poulet, skyr..." />
+            </div>
+            <textarea
+              value={form.notes}
+              onChange={e => set('notes', e.target.value)}
+              placeholder="Notes initiales visibles par le coach"
+              rows={3}
+              className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-[#C8F135]"
+            />
+          </section>
+
+          <div className="flex flex-col-reverse gap-2 border-t border-zinc-800 pt-4 sm:flex-row sm:justify-end">
+            <button onClick={onClose} className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-900">
+              Annuler
+            </button>
+            <button
+              onClick={onSubmit}
+              disabled={saving}
+              className="rounded-lg bg-[#C8F135] px-4 py-2 text-sm font-bold text-zinc-950 hover:bg-[#d4f54d] disabled:opacity-50"
+            >
+              {saving ? 'Création…' : 'Créer le client'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -523,6 +873,8 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
   const [editingSession, setEditingSession] = useState<string | null>(null)
   const [sessionNotes, setSessionNotes]   = useState<Record<string, string>>({})
   const [savingSession, setSavingSession] = useState<string | null>(null)
+  const [deletingExercise, setDeletingExercise] = useState<string | null>(null)
+  const [deletingSession, setDeletingSession] = useState<string | null>(null)
 
   useEffect(() => { setMetrics(detail.bodyMetrics); setSessions(detail.workoutSessions) }, [detail])
 
@@ -609,6 +961,41 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
     setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, notes: note } : s))
     setEditingSession(null)
     setSavingSession(null)
+  }
+
+  const deleteSessionExercise = async (sessionId: string, exerciseLogId: string) => {
+    if (!confirm('Supprimer cet exercice de la séance ?')) return
+    setDeletingExercise(exerciseLogId)
+    const res = await fetch(`/api/coach/members/${memberId}/sessions`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, exerciseLogId }),
+    })
+
+    if (res.ok) {
+      // L'API renvoie la séance à jour pour éviter une désynchronisation avec la base.
+      const updated = await res.json()
+      setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, ...updated } : s))
+      onRefresh()
+    }
+    setDeletingExercise(null)
+  }
+
+  const deleteWorkoutSession = async (sessionId: string) => {
+    if (!confirm('Supprimer cette séance complète ? Les exercices associés seront aussi supprimés.')) return
+    setDeletingSession(sessionId)
+    const res = await fetch(`/api/coach/members/${memberId}/sessions`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId }),
+    })
+
+    if (res.ok) {
+      // La suppression d'une séance retire aussi ses exercices en base via Prisma.
+      setSessions(prev => prev.filter(s => s.id !== sessionId))
+      onRefresh()
+    }
+    setDeletingSession(null)
   }
 
   return (
@@ -735,7 +1122,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
               const isEditing = editingSession === s.id
               return (
                 <div key={s.id} className="rounded-lg border border-zinc-800 bg-zinc-800/40 p-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <div className={cn('size-2 rounded-full shrink-0', st.dot)} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-white font-medium truncate">{s.name}</p>
@@ -769,6 +1156,16 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
                     >
                       <Pencil className="size-3.5" />
                     </button>
+                    <button
+                      type="button"
+                      title="Supprimer la séance"
+                      aria-label={`Supprimer la séance ${s.name}`}
+                      onClick={() => deleteWorkoutSession(s.id)}
+                      disabled={deletingSession === s.id}
+                      className="rounded p-1 text-zinc-600 transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
                   </div>
 
                   {/* Inline note editor */}
@@ -797,6 +1194,37 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
                   {s.notes && !isEditing && (
                     <p className="mt-1.5 text-xs text-zinc-500 italic ml-5">"{s.notes}"</p>
                   )}
+
+                  <div className="mt-3 ml-5 space-y-1.5">
+                    {(s.exerciseLogs?.length ?? 0) === 0 ? (
+                      <p className="text-[11px] text-zinc-600 italic">Aucun exercice dans cette séance.</p>
+                    ) : (
+                      s.exerciseLogs?.map(log => (
+                        <div
+                          key={log.id}
+                          className="flex items-center gap-2 rounded-md border border-zinc-700/70 bg-zinc-900/70 px-2 py-1.5"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-medium text-zinc-200">{log.exercise.name}</p>
+                            <p className="text-[11px] text-zinc-500">
+                              {log.sets ?? '—'} séries · {log.reps ?? '—'} reps
+                              {log.weightKg ? ` · ${log.weightKg} kg` : ''}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            title="Supprimer l'exercice"
+                            aria-label={`Supprimer ${log.exercise.name}`}
+                            onClick={() => deleteSessionExercise(s.id, log.id)}
+                            disabled={deletingExercise === log.id}
+                            className="rounded p-1 text-zinc-600 transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               )
             })}
@@ -893,6 +1321,10 @@ export default function CoachMembers() {
   const [listLoading, setListLoading]       = useState(true)
   const [detailLoading, setDetailLoading]   = useState(false)
   const [removing, setRemoving]             = useState(false)
+  const [createOpen, setCreateOpen]         = useState(false)
+  const [createSaving, setCreateSaving]     = useState(false)
+  const [createError, setCreateError]       = useState<string | null>(null)
+  const [createForm, setCreateForm]         = useState<CreateMemberForm>(emptyCreateMemberForm)
 
   const fetchMembers = useCallback(async () => {
     setListLoading(true)
@@ -936,19 +1368,75 @@ export default function CoachMembers() {
     }
   }
 
+  const createMember = async () => {
+    setCreateSaving(true)
+    setCreateError(null)
+    try {
+      const toList = (value: string) => value.split(',').map(item => item.trim()).filter(Boolean)
+      const res = await fetch('/api/coach/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'CREATE_MEMBER',
+          ...createForm,
+          dietaryRestrictions: toList(createForm.dietaryRestrictions),
+          foodPreferences: toList(createForm.foodPreferences),
+        }),
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        const raw = data?.error
+        const msg = typeof raw === 'string'
+          ? raw
+          : raw && typeof raw === 'object'
+            ? Object.values(raw).flat().join(' · ')
+            : 'Création impossible'
+        setCreateError(msg)
+        return
+      }
+
+      setCreateOpen(false)
+      setCreateForm(emptyCreateMemberForm)
+      await fetchMembers()
+      const newId = data?.member?.id
+      if (newId) selectMember(newId)
+    } finally {
+      setCreateSaving(false)
+    }
+  }
+
   const filtered = members.filter(m =>
     (m.member.name ?? m.member.email).toLowerCase().includes(search.toLowerCase())
   )
 
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+      <CreateMemberModal
+        open={createOpen}
+        saving={createSaving}
+        error={createError}
+        form={createForm}
+        setForm={setCreateForm}
+        onClose={() => { setCreateOpen(false); setCreateError(null) }}
+        onSubmit={createMember}
+      />
 
       {/* ── Left panel ── */}
       <aside className="w-72 shrink-0 flex flex-col border-r border-zinc-800 bg-zinc-950">
         <div className="p-4 border-b border-zinc-800">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-white">Membres</h2>
-            <span className="text-xs text-zinc-500">{members.length}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-zinc-500">{members.length}</span>
+              <button
+                onClick={() => setCreateOpen(true)}
+                className="rounded-lg border border-zinc-700 p-1.5 text-zinc-400 transition-colors hover:border-[#C8F135]/50 hover:text-[#C8F135]"
+                aria-label="Ajouter un client"
+                title="Ajouter un client"
+              >
+                <Plus className="size-3.5" />
+              </button>
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
@@ -1069,7 +1557,7 @@ export default function CoachMembers() {
 
             {/* ── Tab content ── */}
             <div>
-              {tab === 'overview'     && <OverviewTab detail={detail} />}
+              {tab === 'overview'     && <OverviewTab detail={detail} onRefresh={() => fetchDetail(detail.id)} />}
               {tab === 'notes'        && <NotesTab detail={detail} onRefresh={() => fetchDetail(detail.id)} />}
               {tab === 'activity'     && <ActivityTab detail={detail} memberId={detail.id} onRefresh={() => fetchDetail(detail.id)} />}
               {tab === 'appointments' && <AppointmentsTab memberId={detail.id} />}

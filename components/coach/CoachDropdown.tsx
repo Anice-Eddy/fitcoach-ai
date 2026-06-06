@@ -7,6 +7,17 @@ import { useSession } from 'next-auth/react'
 import { ChevronDown, LayoutDashboard, LogOut, UserCircle } from 'lucide-react'
 import { signOutAndClear } from '@/lib/auth/client-session'
 
+function initials(name: string, email: string) {
+  const source = name !== 'Coach' ? name : email
+  return source
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || '?'
+}
+
 /** Coach account dropdown showing name, email, avatar, profile link, and sign-out button; closes on outside pointer events. */
 export function CoachDropdown() {
   const { data: session } = useSession()
@@ -43,8 +54,8 @@ export function CoachDropdown() {
             className="rounded-full ring-2 ring-zinc-700 hover:ring-[#C8F135] transition-all"
           />
         ) : (
-          <span className="flex size-8 items-center justify-center rounded-full bg-zinc-700 text-xs font-semibold text-white ring-2 ring-zinc-700 hover:ring-[#C8F135] transition-all">
-            {name[0]?.toUpperCase() ?? '?'}
+          <span className="flex size-8 items-center justify-center rounded-full bg-[#C8F135]/15 text-xs font-semibold text-[#C8F135] ring-2 ring-zinc-700 hover:ring-[#C8F135] transition-all">
+            {initials(name, email)}
           </span>
         )}
         <ChevronDown className={`hidden size-3.5 transition-transform sm:block ${open ? 'rotate-180' : ''}`} />

@@ -14,6 +14,18 @@ const coachProfileSchema = z.object({
   experience:      z.preprocess((value) => Number(value), z.number().int().min(0).max(60)),
   certifications:  z.string().min(1, 'Ajoutez au moins une certification'),
   description:     z.string().min(30, 'La description professionnelle doit faire au moins 30 caractères'),
+  showYearsExperience: z.preprocess((value) => value === 'true', z.boolean()).default(true),
+  showMemberCount: z.preprocess((value) => value === 'true', z.boolean()).default(true),
+  publicRating: z.preprocess(
+    (value) => value === '' || value === null ? null : Number(value),
+    z.number().min(0).max(5).nullable(),
+  ),
+  publicRatingCount: z.preprocess((value) => Number(value || 0), z.number().int().min(0).max(100000)),
+  showPublicRating: z.preprocess((value) => value === 'true', z.boolean()).default(false),
+  discoveryCallEnabled: z.preprocess((value) => value === 'true', z.boolean()).default(true),
+  discoveryCallTitle: z.string().min(2).max(80).default('Entretien découverte'),
+  discoveryCallDuration: z.preprocess((value) => Number(value || 30), z.number().int().min(5).max(180)),
+  showDiscoveryCall: z.preprocess((value) => value === 'true', z.boolean()).default(true),
 })
 
 // Splits a comma-separated string into a trimmed, non-empty string array.
@@ -85,6 +97,15 @@ export async function PATCH(req: Request) {
     experience:     formData.get('experience'),
     certifications: formData.get('certifications'),
     description:    formData.get('description'),
+    showYearsExperience: formData.get('showYearsExperience') ?? 'true',
+    showMemberCount: formData.get('showMemberCount') ?? 'true',
+    publicRating: formData.get('publicRating') ?? null,
+    publicRatingCount: formData.get('publicRatingCount') ?? '0',
+    showPublicRating: formData.get('showPublicRating') ?? 'false',
+    discoveryCallEnabled: formData.get('discoveryCallEnabled') ?? 'true',
+    discoveryCallTitle: formData.get('discoveryCallTitle') ?? 'Entretien découverte',
+    discoveryCallDuration: formData.get('discoveryCallDuration') ?? '30',
+    showDiscoveryCall: formData.get('showDiscoveryCall') ?? 'true',
   })
 
   if (!parsed.success) {
@@ -117,6 +138,15 @@ export async function PATCH(req: Request) {
       specialties:        [parsed.data.specialty.trim()],
       certifications:     splitList(parsed.data.certifications),
       yearsExperience:    parsed.data.experience,
+      showYearsExperience: parsed.data.showYearsExperience,
+      showMemberCount:    parsed.data.showMemberCount,
+      publicRating:       parsed.data.publicRating,
+      publicRatingCount:  parsed.data.publicRatingCount,
+      showPublicRating:   parsed.data.showPublicRating,
+      discoveryCallEnabled: parsed.data.discoveryCallEnabled,
+      discoveryCallTitle: parsed.data.discoveryCallTitle.trim(),
+      discoveryCallDuration: parsed.data.discoveryCallDuration,
+      showDiscoveryCall:  parsed.data.showDiscoveryCall,
       verificationStatus: verification.status,
       verificationIssues: verification.issues,
       verificationAnalysis: verification.analysis,

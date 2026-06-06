@@ -19,6 +19,15 @@ const registerSchema = z.object({
   ),
   city:              z.string().optional(),
   phone:             z.string().optional(),
+  showMemberCount:   z.boolean().default(true),
+  showYearsExperience: z.boolean().default(true),
+  publicRating:      z.number().min(0).max(5).nullable().optional(),
+  publicRatingCount: z.number().int().min(0).max(100000).default(0),
+  showPublicRating:  z.boolean().default(false),
+  discoveryCallEnabled: z.boolean().default(true),
+  discoveryCallTitle: z.string().min(2).max(80).default('Entretien découverte'),
+  discoveryCallDuration: z.number().int().min(5).max(180).default(30),
+  showDiscoveryCall: z.boolean().default(true),
 })
 
 // Splits a comma-separated string into a trimmed, non-empty string array.
@@ -91,6 +100,15 @@ export async function POST(req: Request) {
                 yearsExperience: parsed.data.yearsExperience ?? null,
                 city:            parsed.data.city?.trim() || null,
                 phone:           parsed.data.phone?.trim() || null,
+                showMemberCount: parsed.data.showMemberCount,
+                showYearsExperience: parsed.data.showYearsExperience,
+                publicRating:    parsed.data.publicRating ?? null,
+                publicRatingCount: parsed.data.publicRatingCount,
+                showPublicRating: parsed.data.showPublicRating,
+                discoveryCallEnabled: parsed.data.discoveryCallEnabled,
+                discoveryCallTitle: parsed.data.discoveryCallTitle.trim(),
+                discoveryCallDuration: parsed.data.discoveryCallDuration,
+                showDiscoveryCall: parsed.data.showDiscoveryCall,
               },
             },
           }

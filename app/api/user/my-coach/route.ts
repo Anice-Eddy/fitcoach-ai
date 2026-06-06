@@ -99,9 +99,12 @@ export async function GET() {
           avatarUrl: (cp as { avatarUrl?: string | null }).avatarUrl ?? null,
           specialties:     cp.specialties,
           certifications:  cp.certifications,
-          yearsExperience: cp.yearsExperience,
+          // Respect the coach's public visibility choices even for assigned members.
+          yearsExperience: cp.showYearsExperience ? cp.yearsExperience : null,
           city:            cp.city,
           memberLimit:     cp.memberLimit,
+          publicRating:    cp.showPublicRating ? cp.publicRating : null,
+          publicRatingCount: cp.showPublicRating ? cp.publicRatingCount : 0,
         },
         nextAppointment,
         totalAppointments,

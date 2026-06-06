@@ -32,6 +32,8 @@ interface CoachRelation {
     avatarUrl:       string | null
     specialties:     string[]
     yearsExperience: number | null
+    publicRating:    number | null
+    publicRatingCount: number
     city:            string | null
   }
   nextAppointment: {
@@ -107,12 +109,18 @@ function CoachCard({ relation }: { relation: CoachRelation }) {
             </p>
           )}
         </div>
-        {coach.yearsExperience != null && (
-          <div className="ml-auto text-right shrink-0">
-            <p className="text-lg font-bold text-[#C8F135]">{coach.yearsExperience}</p>
-            <p className="text-[10px] text-zinc-500">ans exp.</p>
-          </div>
-        )}
+      {coach.yearsExperience != null && (
+        <div className="ml-auto text-right shrink-0">
+          <p className="text-lg font-bold text-[#C8F135]">{coach.yearsExperience}</p>
+          <p className="text-[10px] text-zinc-500">ans exp.</p>
+        </div>
+      )}
+      {coach.yearsExperience == null && coach.publicRating != null && (
+        <div className="ml-auto text-right shrink-0">
+          <p className="text-lg font-bold text-[#C8F135]">{coach.publicRating.toFixed(1)}</p>
+          <p className="text-[10px] text-zinc-500">étoiles</p>
+        </div>
+      )}
       </div>
 
       {/* Specialties */}
