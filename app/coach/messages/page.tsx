@@ -1,0 +1,146 @@
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
+import { ConversationList, type ConversationItemData } from '@/components/messaging/ConversationList'
+import { MessageInput } from '@/components/messaging/MessageInput'
+import { MessageThread } from '@/components/messaging/MessageThread'
+import { useSSE } from '@/hooks/useSSE'
+
+interface MemberItem {
+  member: {
+    id: string
+    name: string | null
+    email: string
+    image: string | null
+    profile?: { fitnessGoal: string; fitnessLevel: string } | null
+  }
+  assignedAt: string
+  chat?: { id: string; unreadCount: number; lastMessageAt: string | null } | null
+}
+
+interface ChatMessage {
+  id: string
+  senderUserId: string
+  content: string
+  readAt: string | null
+  createdAt: string
+  sender: { id: string; name: string | null; image: string | null }
+}
+
+function memberName(item: MemberItem) {
+  return item.member.name || item.member.email
+}
+
+/** Coach messaging page: dedicated inbox separated from member management. */
+export default function CoachMessagesPage() {
+  const [members, setMembers] = useState<MemberItem[]>([])
+  const [selected, setSelected] = useState<MemberItem | null>(null)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [content, setContent] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [threadLoading, setThreadLoading] = useState(false)
+  const [sending, setSending] = useState(false)
+
+  const fetchMembers = useCallback(async () => {
+    const res = await fetch('/api/coach/members').catch(() => null)
+    const data = res ? await res.json().catch(() => []) : []
+    const list: MemberItem[] = Array.isArray(data) ? data : []
+    const chatId = new URLSearchParams(window.location.search).get('chatId')
+    setMembers(list)
+    setSelected(current => current ?? list.find(item => item.chat?.id === chatId) ?? list.find(item => item.chat?.unreadCount) ?? list[0] ?? null)
+    setLoading(false)
+  }, [])
+
+  const fetchThread = useCallback(async (memberId: string) => {
+    setThreadLoading(true)
+    const res = await fetch(`/api/coach/members/${memberId}/chat`).catch(() => null)
+    const data = res ? await res.json().catch(() => null) : null
+    if (Array.isArray(data?.messages)) setMessages(data.messages)
+    setMembers(prev => prev.map(item => item.member.id === memberId && item.chat ? {
+      ...item,
+      chat: { ...item.chat, unreadCount: 0 },
+    } : item))
+    setThreadLoading(false)
+  }, [])
+
+  useEffect(() => { fetchMembers() }, [fetchMembers])
+  useEffect(() => { if (selected) fetchThread(selected.member.id) }, [fetchThread, selected])
+
+  useSSE(useCallback((event) => {
+    if (event.type !== 'message:new') return
+    fetchMembers()
+    if (selected) fetchThread(selected.member.id)
+  }, [fetchMembers, fetchThread, selected]))
+
+  const sendMessage = async () => {
+    const text = content.trim()
+    if (!selected || !text) return
+    setSending(true)
+    const res = await fetch(`/api/coach/members/${selected.member.id}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: text }),
+    })
+    if (res.ok) {
+      const created = await res.json()
+      setMessages(prev => [...prev, created])
+      setContent('')
+    }
+    setSending(false)
+  }
+
+  const conversationItems: ConversationItemData[] = members.map(item => ({
+    id: item.member.id,
+    title: memberName(item),
+    subtitle: item.member.email,
+    initials: memberName(item).slice(0, 2).toUpperCase(),
+    unreadCount: item.chat?.unreadCount ?? 0,
+  }))
+
+  return (
+    <div className="grid min-h-[calc(100vh-8rem)] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 lg:grid-cols-[300px_1fr]">
+      <ConversationList
+        title="Conversations"
+        description="Messages rapides avec vos membres."
+        loading={loading}
+        emptyLabel="Aucun membre suivi."
+        items={conversationItems}
+        activeId={selected?.member.id ?? null}
+        onSelect={(id) => setSelected(members.find(item => item.member.id === id) ?? null)}
+      />
+
+      <section className="flex min-h-[560px] flex-col">
+        <div className="border-b border-zinc-800 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold text-white">{selected ? memberName(selected) : 'Messages'}</p>
+            <span className="rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#C8F135]">
+              Espace coach
+            </span>
+          </div>
+          <p className="mt-0.5 text-xs text-zinc-500">Pour le suivi durable, gardez les décisions importantes dans les notes.</p>
+        </div>
+
+        <div className="flex-1 space-y-3 overflow-y-auto p-4">
+          <MessageThread
+            loading={threadLoading}
+            hasSelection={Boolean(selected)}
+            emptyLabel="Aucun message pour le moment."
+            noSelectionLabel="Sélectionnez un membre pour démarrer."
+            messages={messages}
+            isMine={(message) => Boolean(selected && message.senderUserId !== selected.member.id)}
+            labelFor={(message, mine) => mine ? 'Vous · Coach' : `Membre · ${message.sender.name ?? (selected ? memberName(selected) : 'Membre')}`}
+          />
+        </div>
+
+        <MessageInput
+          value={content}
+          onChange={setContent}
+          onSend={sendMessage}
+          sending={sending}
+          disabled={!selected}
+          placeholder={selected ? 'Écrire au membre…' : 'Sélectionnez un membre…'}
+        />
+      </section>
+    </div>
+  )
+}

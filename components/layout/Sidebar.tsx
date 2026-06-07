@@ -6,11 +6,15 @@ import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Dumbbell, UtensilsCrossed, TrendingUp,
   Download, Settings, ShoppingBag, Plug, X, CalendarDays, NotebookPen, Bot,
+  MessageSquare,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
 import { Logo } from '@/components/ui/Logo'
 import { useLocale } from '@/contexts/LocaleContext'
+import { NavNotificationBadge } from '@/components/navigation/NavNotificationBadge'
+import { unreadCountForRoute } from '@/lib/notifications/unread-communication'
+import { useUnreadCommunicationCounts } from '@/lib/notifications/use-unread-message-count'
 
 const NAV_KEYS = [
   { href: '/dashboard',    key: 'nav.dashboard',    icon: LayoutDashboard },
@@ -19,6 +23,7 @@ const NAV_KEYS = [
   { href: '/progress',     key: 'nav.progress',     icon: TrendingUp },
   { href: '/appointments', key: 'nav.appointments', icon: CalendarDays },
   { href: '/notes',        key: 'nav.notes',        icon: NotebookPen },
+  { href: '/messages',     key: 'nav.messages',     icon: MessageSquare },
   { href: '/ai',           key: 'nav.ai',           icon: Bot },
   { href: '/exports',      key: 'nav.exports',      icon: Download },
   { href: '/shop',         key: 'nav.shop',         icon: ShoppingBag },
@@ -31,6 +36,7 @@ export function Sidebar() {
   const pathname       = usePathname() ?? ''
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const { t } = useLocale()
+  const unreadCounts = useUnreadCommunicationCounts()
 
   return (
     <>
@@ -60,6 +66,7 @@ export function Sidebar() {
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           {NAV_KEYS.map(({ href, key, icon: Icon }) => {
             const active = pathname.startsWith(href)
+            const badgeCount = unreadCountForRoute(href, unreadCounts)
             return (
               <Link
                 key={href}
@@ -68,11 +75,14 @@ export function Sidebar() {
                   'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                   active
                     ? 'bg-[#C8F135]/10 text-[#C8F135]'
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800',
+                    : badgeCount > 0
+                      ? 'bg-[#C8F135]/10 text-[#C8F135] hover:bg-[#C8F135]/15'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800',
                 )}
               >
                 <Icon className="size-4 shrink-0" />
-                {t(key)}
+                <span className="min-w-0 flex-1 truncate">{t(key)}</span>
+                <NavNotificationBadge count={badgeCount} />
               </Link>
             )
           })}

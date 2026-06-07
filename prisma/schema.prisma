@@ -214,6 +214,8 @@ model User {
   appointmentsAsMember    CoachAppointment[]  @relation("AppointmentsAsMember")
   coachNotes              CoachNote[]         @relation("CoachNotes")
   coachNoteReplies        CoachNoteReply[]    @relation("NoteReplies")
+  coachChatMessages        CoachChatMessage[]  @relation("CoachChatMessageSender")
+  coachChatMemberships     CoachChat[]         @relation("CoachChatMember")
   receivedNotifications   Notification[]      @relation("NotificationRecipient")
   userNotes               UserNote[]
   aiUsageDaily            AIUsageDaily[]
@@ -831,6 +833,7 @@ model CoachProfile {
   notifications Notification[]
   notes         CoachNote[]
   availability  CoachAvailability[]
+  chats         CoachChat[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -971,6 +974,45 @@ model CoachNoteReply {
   @@index([noteId])
   @@index([memberId])
   @@map("coach_note_replies")
+}
+
+// Conversation directe Coach ↔ Membre
+model CoachChat {
+  id           String @id @default(cuid())
+  coachId      String
+  coachProfile CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  memberId String
+  member   User   @relation("CoachChatMember", fields: [memberId], references: [id], onDelete: Cascade)
+
+  messages CoachChatMessage[]
+
+  lastMessageAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([coachId, memberId])
+  @@index([coachId, lastMessageAt])
+  @@index([memberId, lastMessageAt])
+  @@map("coach_chats")
+}
+
+model CoachChatMessage {
+  id     String @id @default(cuid())
+  chatId String
+  chat   CoachChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  senderUserId String
+  sender       User   @relation("CoachChatMessageSender", fields: [senderUserId], references: [id], onDelete: Cascade)
+
+  content String @db.Text
+  readAt  DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([chatId, createdAt])
+  @@index([senderUserId])
+  @@map("coach_chat_messages")
 }
 
 model UserNote {

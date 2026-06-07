@@ -15,10 +15,11 @@ interface Notification {
 }
 
 // Resolves the in-app navigation link for a notification based on its type and optional related entity id.
-function resolveLink(type: string | undefined, relatedId: string | null): string {
+function resolveLink(type: string | undefined, relatedId: string | null, title: string): string {
   switch (type) {
     case 'MESSAGE':
-      // A shared note — go to notes page, coach tab
+      if (title.toLowerCase().includes('message')) return relatedId ? `/messages?chatId=${encodeURIComponent(relatedId)}` : '/messages'
+      // Shared notes without a chat id keep the notes destination.
       return relatedId ? `/notes?tab=coach&noteId=${relatedId}` : '/notes?tab=coach'
     case 'APPOINTMENT':
       return relatedId ? `/appointments?id=${relatedId}` : '/appointments'
@@ -76,7 +77,7 @@ export function NotificationPanel() {
       }).catch(() => {})
       setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, isRead: true } : x))
     }
-    const link = resolveLink(n.type, n.relatedId)
+    const link = resolveLink(n.type, n.relatedId, n.title)
     router.push(link)
   }
 

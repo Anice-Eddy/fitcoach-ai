@@ -56,6 +56,19 @@ export async function GET() {
 
   // ── Enrich with upcoming appointment & counts ──────────────────────────────
   const now = new Date()
+  const chatRows = await prisma.coachChat.findMany({
+    where: { memberId: userId, coachId: { in: relations.map(rel => rel.coachId) } },
+    select: {
+      id: true,
+      coachId: true,
+      lastMessageAt: true,
+      messages: {
+        where: { senderUserId: { not: userId }, readAt: null },
+        select: { id: true },
+      },
+    },
+  })
+  const chatByCoachId = new Map(chatRows.map(chat => [chat.coachId, chat]))
 
   const coaches = await Promise.all(
     relations.map(async (rel) => {
@@ -106,6 +119,13 @@ export async function GET() {
           publicRating:    cp.showPublicRating ? cp.publicRating : null,
           publicRatingCount: cp.showPublicRating ? cp.publicRatingCount : 0,
         },
+        chat: chatByCoachId.get(rel.coachId)
+          ? {
+              id: chatByCoachId.get(rel.coachId)!.id,
+              unreadCount: chatByCoachId.get(rel.coachId)!.messages.length,
+              lastMessageAt: chatByCoachId.get(rel.coachId)!.lastMessageAt,
+            }
+          : null,
         nextAppointment,
         totalAppointments,
       }

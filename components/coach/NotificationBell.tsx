@@ -15,10 +15,15 @@ interface Notification {
   createdAt: string
 }
 
-const NOTIFICATION_LINKS: Record<string, string> = {
-  APPOINTMENT: '/coach/appointments',
-  NEW_MEMBER:  '/coach/members',
-  MESSAGE:     '/coach/members',
+function notificationLink(notif: Notification) {
+  if (notif.type === 'MESSAGE') {
+    if (notif.title.toLowerCase().includes('note')) return notif.relatedId ? `/coach/notes?noteId=${encodeURIComponent(notif.relatedId)}` : '/coach/notes'
+    const suffix = notif.relatedId ? `?chatId=${encodeURIComponent(notif.relatedId)}` : ''
+    return `/coach/messages${suffix}`
+  }
+  if (notif.type === 'APPOINTMENT') return '/coach/appointments'
+  if (notif.type === 'NEW_MEMBER') return '/coach/members'
+  return '/coach/dashboard'
 }
 
 /** Bell icon with unread badge that polls /api/coach/notifications every 30 s; clicking a notification marks it read and navigates to the relevant page. */
@@ -65,8 +70,7 @@ export function NotificationBell() {
   const handleNotificationClick = async (notif: Notification) => {
     setIsOpen(false)
     if (!notif.isRead) await markAsRead(notif.id)
-    const link = NOTIFICATION_LINKS[notif.type] ?? '/coach/dashboard'
-    router.push(link)
+    router.push(notificationLink(notif))
   }
 
   const markAllAsRead = async () => {

@@ -160,6 +160,45 @@ export interface ShoppingItem {
   affiliateUrl?: string
 }
 
+// --- Messagerie coach / membre ---
+
+export interface Message {
+  id: string
+  conversationId: string
+  senderId: string
+  sender: {
+    id: string
+    name: string | null
+    image: string | null
+  }
+  content: string
+  type: 'TEXT' | 'FILE' | 'SYSTEM'
+  fileUrl?: string
+  fileName?: string
+  fileSize?: number
+  readAt: Date | null
+  createdAt: Date
+}
+
+export interface Conversation {
+  id: string
+  memberId: string
+  coachId: string
+  member: {
+    id: string
+    name: string | null
+    image: string | null
+  }
+  coach: {
+    id: string
+    name: string | null
+    image: string | null
+  }
+  lastMessage: Message | null
+  unreadCount: number
+  lastMessageAt: Date
+}
+
 // --- Affiliation ---
 
 export interface AffiliateProduct {

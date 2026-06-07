@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
 import {
   Search, User, CalendarPlus, Mail, FileText, Calendar,
@@ -21,6 +21,7 @@ interface MemberItem {
     bodyMetrics: Array<{ date: string; weightKg: number }>
   }
   assignedAt: string
+  chat?: { id: string; unreadCount: number; lastMessageAt: string | null } | null
 }
 
 interface NoteReply {
@@ -52,6 +53,11 @@ interface MemberNutritionPlan {
   id: string; name: string
   targetCalories: number; targetProteinG: number; targetCarbsG: number; targetFatG: number
   isActive: boolean
+}
+
+interface ChatMessage {
+  id: string; senderUserId: string; content: string; readAt: string | null; createdAt: string
+  sender: { id: string; name: string | null; image: string | null }
 }
 
 interface Metric {
@@ -589,6 +595,112 @@ function CreateMemberModal({
               {saving ? 'Création…' : 'Créer le client'}
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Direct coach/member chat for quick exchanges; durable decisions should still go into notes.
+function ChatTab({ memberId }: { memberId: string }) {
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [content, setContent]   = useState('')
+  const [loading, setLoading]   = useState(true)
+  const [sending, setSending]   = useState(false)
+  const endRef = useRef<HTMLDivElement>(null)
+
+  const fetchMessages = useCallback(() => {
+    setLoading(true)
+    fetch(`/api/coach/members/${memberId}/chat`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (Array.isArray(data?.messages)) setMessages(data.messages)
+      })
+      .finally(() => setLoading(false))
+  }, [memberId])
+
+  useEffect(() => { fetchMessages() }, [fetchMessages])
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [messages])
+
+  const sendMessage = async () => {
+    const text = content.trim()
+    if (!text) return
+    setSending(true)
+    const res = await fetch(`/api/coach/members/${memberId}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: text }),
+    })
+    if (res.ok) {
+      const created = await res.json()
+      setMessages(prev => [...prev, created])
+      setContent('')
+    }
+    setSending(false)
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900">
+      <div className="border-b border-zinc-800 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-semibold text-white">Messages</p>
+          <span className="rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#C8F135]">
+            Espace coach
+          </span>
+        </div>
+        <p className="mt-0.5 text-xs text-zinc-500">Échange rapide avec le membre. Les décisions importantes restent dans les notes.</p>
+      </div>
+
+      <div className="max-h-[460px] min-h-[280px] space-y-3 overflow-y-auto p-4">
+        {loading ? (
+          <p className="py-10 text-center text-xs text-zinc-500">Chargement…</p>
+        ) : messages.length === 0 ? (
+          <div className="py-10 text-center">
+            <MessageSquare className="mx-auto mb-3 size-8 text-zinc-700" />
+            <p className="text-sm text-zinc-500">Aucun message pour le moment.</p>
+          </div>
+        ) : messages.map(message => {
+          const mine = message.senderUserId !== memberId
+          return (
+            <div key={message.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
+              <div className={cn(
+                'max-w-[82%] rounded-2xl px-3 py-2 text-sm',
+                mine ? 'bg-[#C8F135] text-zinc-950' : 'bg-zinc-800 text-zinc-100',
+              )}>
+                <p className={cn('mb-1 text-[10px] font-bold uppercase tracking-widest', mine ? 'text-zinc-700' : 'text-[#C8F135]')}>
+                  {mine ? 'Vous · Coach' : `Membre · ${message.sender.name ?? 'Client'}`}
+                </p>
+                <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                <p className={cn('mt-1 text-[10px]', mine ? 'text-zinc-700' : 'text-zinc-500')}>
+                  {format(new Date(message.createdAt), 'd MMM · HH:mm', { locale: fr })}
+                </p>
+              </div>
+            </div>
+          )
+        })}
+        <div ref={endRef} />
+      </div>
+
+      <div className="border-t border-zinc-800 p-3">
+        <div className="flex gap-2">
+          <textarea
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
+            rows={2}
+            maxLength={2000}
+            placeholder="Écrire au membre…"
+            className="min-h-10 flex-1 resize-none rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-[#C8F135]"
+          />
+          <button
+            type="button"
+            onClick={sendMessage}
+            disabled={sending || !content.trim()}
+            className="self-end rounded-xl bg-[#C8F135] p-3 text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50"
+            aria-label="Envoyer le message"
+          >
+            <Send className="size-4" />
+          </button>
         </div>
       </div>
     </div>
@@ -1309,7 +1421,17 @@ function AppointmentsTab({ memberId }: { memberId: string }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-type Tab = 'overview' | 'notes' | 'activity' | 'appointments'
+type Tab = 'overview' | 'notes' | 'messages' | 'activity' | 'appointments'
+
+function defaultCoachMemberTab(): Tab {
+  if (typeof window === 'undefined') return 'overview'
+  return new URLSearchParams(window.location.search).get('tab') === 'messages' ? 'messages' : 'overview'
+}
+
+function requestedChatId() {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('chatId')
+}
 
 /** Coach members management page: sidebar member list with search, and a detail panel with Overview/Notes/Activity/Appointments tabs. */
 export default function CoachMembers() {
@@ -1342,11 +1464,22 @@ export default function CoachMembers() {
     setDetailLoading(false)
   }, [])
 
-  useEffect(() => { fetchMembers() }, [fetchMembers])
+  useEffect(() => { setTab(defaultCoachMemberTab()); fetchMembers() }, [fetchMembers])
+
+  useEffect(() => {
+    if (listLoading || selectedId || members.length === 0) return
+    const chatId = requestedChatId()
+    if (!chatId) return
+    const target = members.find(item => item.chat?.id === chatId)
+    if (!target) return
+    setSelectedId(target.member.id)
+    setTab('messages')
+    fetchDetail(target.member.id)
+  }, [fetchDetail, listLoading, members, selectedId])
 
   const selectMember = (id: string) => {
     setSelectedId(id)
-    setTab('overview')
+    setTab(defaultCoachMemberTab())
     fetchDetail(id)
   }
 
@@ -1484,6 +1617,11 @@ export default function CoachMembers() {
                       : 'Profil non renseigné'}
                   </p>
                 </div>
+                {m.chat?.unreadCount ? (
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#C8F135] text-[10px] font-bold text-zinc-950">
+                    {m.chat.unreadCount > 9 ? '9+' : m.chat.unreadCount}
+                  </span>
+                ) : null}
                 {isSelected && <ChevronRight className="size-3.5 text-[#C8F135] shrink-0" />}
               </button>
             )
@@ -1551,6 +1689,7 @@ export default function CoachMembers() {
             <div className="flex items-center gap-1 overflow-x-auto pb-1">
               <TabBtn active={tab === 'overview'}     onClick={() => setTab('overview')}>Vue d'ensemble</TabBtn>
               <TabBtn active={tab === 'notes'}        onClick={() => setTab('notes')}>Notes</TabBtn>
+              <TabBtn active={tab === 'messages'}     onClick={() => setTab('messages')}>Messages</TabBtn>
               <TabBtn active={tab === 'activity'}     onClick={() => setTab('activity')}>Activité</TabBtn>
               <TabBtn active={tab === 'appointments'} onClick={() => setTab('appointments')}>Rendez-vous</TabBtn>
             </div>
@@ -1559,6 +1698,7 @@ export default function CoachMembers() {
             <div>
               {tab === 'overview'     && <OverviewTab detail={detail} onRefresh={() => fetchDetail(detail.id)} />}
               {tab === 'notes'        && <NotesTab detail={detail} onRefresh={() => fetchDetail(detail.id)} />}
+              {tab === 'messages'     && <ChatTab memberId={detail.id} />}
               {tab === 'activity'     && <ActivityTab detail={detail} memberId={detail.id} onRefresh={() => fetchDetail(detail.id)} />}
               {tab === 'appointments' && <AppointmentsTab memberId={detail.id} />}
             </div>

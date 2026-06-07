@@ -1,21 +1,11 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import { Bot, LayoutDashboard, Users, BarChart2, Calendar, MessageSquare } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { NotificationBell } from '@/components/coach/NotificationBell'
 import { CoachDropdown } from '@/components/coach/CoachDropdown'
 import { isCoachProfileComplete } from '@/lib/coach/verification'
-
-const NAV = [
-  { href: '/coach/dashboard',    label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/coach/members',      label: 'Membres',         icon: Users },
-  { href: '/coach/appointments', label: 'Agenda',          icon: Calendar },
-  { href: '/coach/notes',        label: 'Notes',           icon: MessageSquare },
-  { href: '/coach/ai',           label: 'Assistant IA',    icon: Bot },
-  { href: '/coach/reports',      label: 'Rapports',        icon: BarChart2 },
-]
+import { CoachSidebarNav } from '@/components/coach/CoachSidebarNav'
 
 /** Coach layout: verifies auth, ensures coachProfile exists (redirects to completion if not), then renders the coach shell with sidebar and header. */
 export default async function CoachLayout({ children }: { children: React.ReactNode }) {
@@ -63,15 +53,7 @@ export default async function CoachLayout({ children }: { children: React.ReactN
             <Logo href="/coach/dashboard" size="md" />
           </div>
 
-          {NAV.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
-            >
-              <Icon className="size-4" /> {label}
-            </Link>
-          ))}
+          <CoachSidebarNav />
         </aside>
 
         <main className="flex-1 p-6 text-white">{children}</main>

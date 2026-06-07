@@ -42,6 +42,30 @@ const memberCreateSchema = z.object({
   notes: z.string().max(500).optional().default(''),
 })
 
+async function withChatBadges<T extends { memberId: string }[]>(items: T, coachId: string, coachUserId: string) {
+  const chats = await prisma.coachChat.findMany({
+    where: { coachId, memberId: { in: items.map(item => item.memberId) } },
+    select: {
+      id: true,
+      memberId: true,
+      lastMessageAt: true,
+      messages: {
+        where: { senderUserId: { not: coachUserId }, readAt: null },
+        select: { id: true },
+      },
+    },
+  })
+  const chatByMemberId = new Map(chats.map(chat => [chat.memberId, chat]))
+
+  return items.map(item => {
+    const chat = chatByMemberId.get(item.memberId)
+    return {
+      ...item,
+      chat: chat ? { id: chat.id, unreadCount: chat.messages.length, lastMessageAt: chat.lastMessageAt } : null,
+    }
+  })
+}
+
 /** Returns the coach's member list with latest body metrics; auto-adds any members who have an appointment but are missing a CoachMember record. */
 export async function GET() {
   try {
@@ -122,10 +146,11 @@ export async function GET() {
           },
         },
       })
-      return NextResponse.json(updated?.coachMembers ?? [])
+      const items = updated?.coachMembers ?? []
+      return NextResponse.json(await withChatBadges(items, coach.coachProfile.id, coach.id))
     }
 
-    return NextResponse.json(coach.coachProfile.coachMembers)
+    return NextResponse.json(await withChatBadges(coach.coachProfile.coachMembers, coach.coachProfile.id, coach.id))
   } catch (error) {
     console.error('GET /api/coach/members:', error)
     return NextResponse.json(

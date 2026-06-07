@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AlertCircle, CalendarClock, CheckCircle2, Clock3, Filter, Lock, MessageSquareText, Pencil, Pin, Plus, Search, Share2, Trash2, X } from 'lucide-react'
 import { format, isBefore, isToday } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { markCoachNoteNotificationsRead } from '@/lib/notifications/mark-note-notifications-read'
 
 type NoteStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE'
 type NotePriority = 'LOW' | 'MEDIUM' | 'HIGH'
@@ -65,6 +66,8 @@ const EMPTY_FORM = {
   isSharedWithMember: false,
 }
 
+type CoachNoteFormState = typeof EMPTY_FORM
+
 // Returns a 2-letter uppercase initials string from a display name or email.
 function initials(name?: string | null, email?: string) {
   const source = name?.trim() || email || '?'
@@ -77,6 +80,11 @@ function formatFollowUp(value: string | null) {
   const date = new Date(value)
   if (isToday(date)) return "Aujourd'hui"
   return format(date, 'd MMM yyyy', { locale: fr })
+}
+
+function targetNoteIdFromUrl() {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('noteId')
 }
 
 // Returns true if the followUpAt date is in the past (not today).
@@ -96,26 +104,42 @@ export default function NotesPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | NoteStatus>('ALL')
   const [formData, setFormData] = useState(EMPTY_FORM)
+  const [targetNoteId] = useState(() => targetNoteIdFromUrl())
 
-  useEffect(() => {
-    fetchMembers()
-  }, [])
-
-  useEffect(() => {
-    if (selectedMemberId) fetchNotes(selectedMemberId)
-  }, [selectedMemberId])
-
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     setIsLoading(true)
     try {
       const res = await fetch('/api/coach/members')
       const data = await res.json()
       setMembers(Array.isArray(data) ? data : [])
-      if (Array.isArray(data) && data[0]?.member?.id) setSelectedMemberId((current) => current ?? data[0].member.id)
+      if (Array.isArray(data)) {
+        if (targetNoteId) {
+          for (const item of data) {
+            const memberId = item?.member?.id
+            if (!memberId) continue
+            const notesRes = await fetch(`/api/coach/notes?memberId=${memberId}`)
+            const memberNotes = await notesRes.json().catch(() => [])
+            if (Array.isArray(memberNotes) && memberNotes.some((note) => note.id === targetNoteId)) {
+              setSelectedMemberId(memberId)
+              return
+            }
+          }
+        }
+        if (data[0]?.member?.id) setSelectedMemberId((current) => current ?? data[0].member.id)
+      }
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [targetNoteId])
+
+  useEffect(() => {
+    markCoachNoteNotificationsRead()
+    fetchMembers()
+  }, [fetchMembers])
+
+  useEffect(() => {
+    if (selectedMemberId) fetchNotes(selectedMemberId)
+  }, [selectedMemberId])
 
   const fetchNotes = async (memberId: string) => {
     setNotesLoading(true)
@@ -325,39 +349,14 @@ export default function NotesPage() {
                 </button>
               </div>
 
-              <form onSubmit={saveNote} className="grid gap-4 lg:grid-cols-2">
-                <Field label="Titre">
-                  <input required value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="Ex: Charge deadlift à surveiller" className="input" />
-                </Field>
-                <Field label="Catégorie">
-                  <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="input">
-                    {CATEGORIES.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
-                  </select>
-                </Field>
-                <Field label="Priorité">
-                  <select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value as NotePriority })} className="input">
-                    <option value="LOW">Basse</option>
-                    <option value="MEDIUM">Normale</option>
-                    <option value="HIGH">Haute</option>
-                  </select>
-                </Field>
-                <Field label="Date de suivi">
-                  <input type="date" value={formData.followUpAt} onChange={(e) => setFormData({ ...formData, followUpAt: e.target.value })} className="input" />
-                </Field>
-                <Field label="Tags" className="lg:col-span-2">
-                  <input value={formData.tags} onChange={(e) => setFormData({ ...formData, tags: e.target.value })} placeholder="mobilité, squat, sommeil" className="input" />
-                </Field>
-                <Field label="Contenu" className="lg:col-span-2">
-                  <textarea required value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} placeholder="Observation, décision, prochaine action..." className="input min-h-36 resize-none" />
-                </Field>
-                <div className="flex flex-wrap items-center gap-3 lg:col-span-2">
-                  <Toggle active={formData.isPinned} label="Épingler" icon={<Pin className="size-4" />} onClick={() => setFormData({ ...formData, isPinned: !formData.isPinned })} />
-                  <Toggle active={formData.isSharedWithMember} label="Partager au membre" icon={<Share2 className="size-4" />} onClick={() => setFormData({ ...formData, isSharedWithMember: !formData.isSharedWithMember })} />
-                  <button disabled={isSaving} className="ml-auto rounded-xl bg-[#C8F135] px-5 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50">
-                    {isSaving ? 'Enregistrement...' : 'Ajouter la note'}
-                  </button>
-                </div>
-              </form>
+              <CoachNoteForm
+                form={formData}
+                onChange={setFormData}
+                onSubmit={saveNote}
+                isSaving={isSaving}
+                submitLabel="Ajouter la note"
+                savingLabel="Enregistrement..."
+              />
             </section>
           )}
 
@@ -373,6 +372,7 @@ export default function NotesPage() {
                 <NoteCard
                   key={note.id}
                   note={note}
+                  highlighted={note.id === targetNoteId}
                   onPatch={(patch) => updateNote(note.id, patch)}
                   onDelete={() => deleteNote(note.id)}
                 />
@@ -444,10 +444,66 @@ function EmptyState({ title, description }: { title: string; description: string
   )
 }
 
+function CoachNoteForm({
+  form, onChange, onSubmit, isSaving, submitLabel, savingLabel, error, onCancel,
+}: {
+  form: CoachNoteFormState
+  onChange: (form: CoachNoteFormState) => void
+  onSubmit: (e: React.FormEvent) => void
+  isSaving: boolean
+  submitLabel: string
+  savingLabel: string
+  error?: string | null
+  onCancel?: () => void
+}) {
+  return (
+    <form onSubmit={onSubmit} className="grid gap-4 lg:grid-cols-2">
+      <Field label="Titre">
+        <input required value={form.title} onChange={(e) => onChange({ ...form, title: e.target.value })} placeholder="Ex: Charge deadlift à surveiller" className="input" />
+      </Field>
+      <Field label="Catégorie">
+        <select value={form.category} onChange={(e) => onChange({ ...form, category: e.target.value })} className="input">
+          {CATEGORIES.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
+        </select>
+      </Field>
+      <Field label="Priorité">
+        <select value={form.priority} onChange={(e) => onChange({ ...form, priority: e.target.value as NotePriority })} className="input">
+          <option value="LOW">Basse</option>
+          <option value="MEDIUM">Normale</option>
+          <option value="HIGH">Haute</option>
+        </select>
+      </Field>
+      <Field label="Date de suivi">
+        <input type="date" value={form.followUpAt} onChange={(e) => onChange({ ...form, followUpAt: e.target.value })} className="input" />
+      </Field>
+      <Field label="Tags" className="lg:col-span-2">
+        <input value={form.tags} onChange={(e) => onChange({ ...form, tags: e.target.value })} placeholder="mobilité, squat, sommeil" className="input" />
+      </Field>
+      <Field label="Contenu" className="lg:col-span-2">
+        <textarea required value={form.content} onChange={(e) => onChange({ ...form, content: e.target.value })} placeholder="Observation, décision, prochaine action..." className="input min-h-36 resize-none" />
+      </Field>
+      <div className="flex flex-wrap items-center gap-3 lg:col-span-2">
+        <Toggle active={form.isPinned} label="Épingler" icon={<Pin className="size-4" />} onClick={() => onChange({ ...form, isPinned: !form.isPinned })} />
+        <Toggle active={form.isSharedWithMember} label="Partager au membre" icon={<Share2 className="size-4" />} onClick={() => onChange({ ...form, isSharedWithMember: !form.isSharedWithMember })} />
+        {error && <p className="text-xs text-red-400">{error}</p>}
+        {onCancel && (
+          <button type="button" onClick={onCancel} className="ml-auto rounded-xl border border-zinc-700 px-4 py-3 text-sm text-zinc-400 transition-colors hover:text-white">
+            Annuler
+          </button>
+        )}
+        <button disabled={isSaving} className={onCancel ? 'rounded-xl bg-[#C8F135] px-5 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50' : 'ml-auto rounded-xl bg-[#C8F135] px-5 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50'}>
+          {isSaving ? savingLabel : submitLabel}
+        </button>
+      </div>
+    </form>
+  )
+}
+
 function NoteCard({
-  note, onPatch, onDelete,
+  note, highlighted = false, onPatch, onDelete,
 }: {
   note: CoachNote
+  highlighted?: boolean
   onPatch: (patch: Partial<CoachNote>) => Promise<{ ok: boolean; error?: string }>
   onDelete: () => void
 }) {
@@ -462,20 +518,29 @@ function NoteCard({
     title: note.title,
     content: note.content,
     category: note.category ?? 'FEEDBACK',
+    status: note.status,
     priority: note.priority,
     tags: note.tags.join(', '),
     followUpAt: note.followUpAt ? note.followUpAt.slice(0, 10) : '',
+    isPinned: note.isPinned,
     isSharedWithMember: note.isSharedWithMember,
   })
+
+  useEffect(() => {
+    if (!highlighted) return
+    document.getElementById(`coach-note-${note.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [highlighted, note.id])
 
   const openEdit = () => {
     setEditForm({
       title: note.title,
       content: note.content,
       category: note.category ?? 'FEEDBACK',
+      status: note.status,
       priority: note.priority,
       tags: note.tags.join(', '),
       followUpAt: note.followUpAt ? note.followUpAt.slice(0, 10) : '',
+      isPinned: note.isPinned,
       isSharedWithMember: note.isSharedWithMember,
     })
     setEditError(null)
@@ -484,16 +549,19 @@ function NoteCard({
 
   const cancelEdit = () => { setEditing(false); setEditError(null) }
 
-  const handleSave = async () => {
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
     setIsSaving(true)
     setEditError(null)
     const result = await onPatch({
       title: editForm.title,
       content: editForm.content,
       category: editForm.category,
+      status: editForm.status,
       priority: editForm.priority as NotePriority,
       tags: editForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
       followUpAt: editForm.followUpAt ? new Date(editForm.followUpAt).toISOString() : null,
+      isPinned: editForm.isPinned,
       isSharedWithMember: editForm.isSharedWithMember,
     })
     setIsSaving(false)
@@ -507,55 +575,32 @@ function NoteCard({
   if (editing) {
     return (
       <article className="rounded-2xl border border-[#C8F135]/30 bg-zinc-900 p-5">
-        <div className="mb-4 flex items-center justify-between gap-4">
-          <h3 className="text-sm font-semibold text-white">Modifier la note</h3>
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-white">Modifier la note de suivi</h3>
+            <p className="mt-1 text-sm text-zinc-500">Gardez le même format que la création pour modifier rapidement cette note.</p>
+          </div>
           <button type="button" onClick={cancelEdit} className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800 hover:text-white">
-            <X className="size-4" />
+            <X className="size-5" />
           </button>
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Field label="Titre">
-            <input value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} className="input" />
-          </Field>
-          <Field label="Catégorie">
-            <select value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} className="input">
-              {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
-          </Field>
-          <Field label="Priorité">
-            <select value={editForm.priority} onChange={(e) => setEditForm({ ...editForm, priority: e.target.value as NotePriority })} className="input">
-              <option value="LOW">Basse</option>
-              <option value="MEDIUM">Normale</option>
-              <option value="HIGH">Haute</option>
-            </select>
-          </Field>
-          <Field label="Date de suivi">
-            <input type="date" value={editForm.followUpAt} onChange={(e) => setEditForm({ ...editForm, followUpAt: e.target.value })} className="input" />
-          </Field>
-          <Field label="Tags" className="lg:col-span-2">
-            <input value={editForm.tags} onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })} placeholder="mobilité, squat, sommeil" className="input" />
-          </Field>
-          <Field label="Contenu" className="lg:col-span-2">
-            <textarea value={editForm.content} onChange={(e) => setEditForm({ ...editForm, content: e.target.value })} className="input min-h-36 resize-none" />
-          </Field>
-          <div className="flex flex-wrap items-center gap-3 lg:col-span-2">
-            <Toggle active={editForm.isSharedWithMember} label="Partager au membre" icon={<Share2 className="size-4" />} onClick={() => setEditForm({ ...editForm, isSharedWithMember: !editForm.isSharedWithMember })} />
-            {editError && <p className="text-xs text-red-400">{editError}</p>}
-            <button type="button" onClick={cancelEdit} className="ml-auto rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-400 hover:text-white transition-colors">
-              Annuler
-            </button>
-            <button type="button" onClick={handleSave} disabled={isSaving} className="rounded-xl bg-[#C8F135] px-5 py-2.5 text-sm font-bold text-zinc-950 hover:bg-[#d4f54d] disabled:opacity-50 transition-colors">
-              {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
-            </button>
-          </div>
-        </div>
+        <CoachNoteForm
+          form={editForm}
+          onChange={setEditForm}
+          onSubmit={handleSave}
+          isSaving={isSaving}
+          submitLabel="Sauvegarder"
+          savingLabel="Sauvegarde..."
+          error={editError}
+          onCancel={cancelEdit}
+        />
       </article>
     )
   }
 
   return (
-    <article className={`rounded-2xl border bg-zinc-900 p-5 transition-colors hover:border-zinc-700 ${
-      note.isPinned ? 'border-[#C8F135]/50' : 'border-zinc-800'
+    <article id={`coach-note-${note.id}`} className={`rounded-2xl border bg-zinc-900 p-5 transition-colors hover:border-zinc-700 ${
+      highlighted ? 'border-[#C8F135] shadow-[0_0_0_1px_rgba(200,241,53,0.35),0_0_28px_rgba(200,241,53,0.12)]' : note.isPinned ? 'border-[#C8F135]/50' : 'border-zinc-800'
     }`}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
