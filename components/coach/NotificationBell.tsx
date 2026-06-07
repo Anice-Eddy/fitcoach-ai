@@ -35,21 +35,32 @@ export function NotificationBell() {
   const [isLoading, setIsLoading]         = useState(false)
 
   useEffect(() => {
+    let lastUnreadCount = 0
+
+    const fetchNotifications = async () => {
+      try {
+        const res  = await fetch('/api/coach/notifications')
+        const data = await res.json()
+        const newNotifications = data.notifications || []
+        const newUnreadCount = data.unreadCount || 0
+        
+        // Only dispatch event if unread count changed
+        if (newUnreadCount !== lastUnreadCount) {
+          lastUnreadCount = newUnreadCount
+          window.dispatchEvent(new CustomEvent('bodyops:notifications-read'))
+        }
+        
+        setNotifications(newNotifications)
+        setUnreadCount(newUnreadCount)
+      } catch {
+        // silent
+      }
+    }
+
     fetchNotifications()
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
   }, [])
-
-  const fetchNotifications = async () => {
-    try {
-      const res  = await fetch('/api/coach/notifications')
-      const data = await res.json()
-      setNotifications(data.notifications || [])
-      setUnreadCount(data.unreadCount || 0)
-    } catch {
-      // silent
-    }
-  }
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -61,7 +72,10 @@ export function NotificationBell() {
       setNotifications((prev) =>
         prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
       )
-      setUnreadCount((prev) => Math.max(0, prev - 1))
+      const newCount = Math.max(0, unreadCount - 1)
+      setUnreadCount(newCount)
+      // Dispatch event to update menu badges
+      window.dispatchEvent(new CustomEvent('bodyops:notifications-read'))
     } catch {
       // silent
     }

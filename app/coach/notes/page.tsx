@@ -1,9 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertCircle, CalendarClock, CheckCircle2, Clock3, Filter, Lock, MessageSquareText, Pencil, Pin, Plus, Search, Share2, Trash2, X } from 'lucide-react'
+import { AlertCircle, CalendarClock, CheckCircle2, ChevronDown, Clock3, Filter, Lock, MessageSquareText, Pencil, Pin, Plus, Search, Share2, Trash2, X } from 'lucide-react'
 import { format, isBefore, isToday } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { cn } from '@/lib/utils'
 import { markCoachNoteNotificationsRead } from '@/lib/notifications/mark-note-notifications-read'
 
 type NoteStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE'
@@ -22,6 +23,18 @@ interface CoachNote {
   isSharedWithMember: boolean
   createdAt: string
   updatedAt: string
+}
+
+interface NoteReply {
+  id: string
+  content: string
+  memberId: string
+  member: {
+    id: string
+    name: string | null
+    email: string
+  }
+  createdAt: string
 }
 
 interface CoachMember {
@@ -383,18 +396,18 @@ export default function NotesPage() {
       </div>
 
       <style jsx>{`
-        .input {
-          width: 100%;
-          border-radius: 0.75rem;
-          border: 1px solid rgb(63 63 70);
-          background: rgb(24 24 27);
-          padding: 0.75rem 1rem;
-          color: white;
-          font-size: 0.875rem;
-          outline: none;
+        /* Style for date picker */
+        input[type="date"] {
+          color-scheme: dark;
         }
-        .input:focus {
-          border-color: #C8F135;
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+          filter: invert(0.8);
+          cursor: pointer;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+          filter: invert(1);
         }
       `}</style>
     </div>
@@ -416,21 +429,6 @@ function Field({ label, className, children }: { label: string; className?: stri
       <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{label}</span>
       {children}
     </label>
-  )
-}
-
-function Toggle({ active, label, icon, onClick }: { active: boolean; label: string; icon: React.ReactNode; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${
-        active ? 'border-[#C8F135]/50 bg-[#C8F135]/10 text-[#C8F135]' : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white'
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
   )
 }
 
@@ -458,42 +456,97 @@ function CoachNoteForm({
 }) {
   return (
     <form onSubmit={onSubmit} className="grid gap-4 lg:grid-cols-2">
-      <Field label="Titre">
-        <input required value={form.title} onChange={(e) => onChange({ ...form, title: e.target.value })} placeholder="Ex: Charge deadlift à surveiller" className="input" />
+      <Field label="Titre" className="lg:col-span-2">
+        <input
+          required
+          value={form.title}
+          onChange={(e) => onChange({ ...form, title: e.target.value })}
+          placeholder="Ex: Charge deadlift à surveiller"
+          className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-[#C8F135]"
+        />
       </Field>
       <Field label="Catégorie">
-        <select value={form.category} onChange={(e) => onChange({ ...form, category: e.target.value })} className="input">
+        <select
+          value={form.category}
+          onChange={(e) => onChange({ ...form, category: e.target.value })}
+          className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]"
+        >
           {CATEGORIES.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
         </select>
       </Field>
       <Field label="Priorité">
-        <select value={form.priority} onChange={(e) => onChange({ ...form, priority: e.target.value as NotePriority })} className="input">
+        <select
+          value={form.priority}
+          onChange={(e) => onChange({ ...form, priority: e.target.value as NotePriority })}
+          className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]"
+        >
           <option value="LOW">Basse</option>
           <option value="MEDIUM">Normale</option>
           <option value="HIGH">Haute</option>
         </select>
       </Field>
       <Field label="Date de suivi">
-        <input type="date" value={form.followUpAt} onChange={(e) => onChange({ ...form, followUpAt: e.target.value })} className="input" />
+        <input
+          type="date"
+          value={form.followUpAt}
+          onChange={(e) => onChange({ ...form, followUpAt: e.target.value })}
+          className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]"
+        />
       </Field>
-      <Field label="Tags" className="lg:col-span-2">
-        <input value={form.tags} onChange={(e) => onChange({ ...form, tags: e.target.value })} placeholder="mobilité, squat, sommeil" className="input" />
+      <Field label="Tags (séparés par des virgules)" className="lg:col-span-2">
+        <input
+          value={form.tags}
+          onChange={(e) => onChange({ ...form, tags: e.target.value })}
+          placeholder="mobilité, squat, sommeil"
+          className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-[#C8F135]"
+        />
       </Field>
       <Field label="Contenu" className="lg:col-span-2">
-        <textarea required value={form.content} onChange={(e) => onChange({ ...form, content: e.target.value })} placeholder="Observation, décision, prochaine action..." className="input min-h-36 resize-none" />
+        <textarea
+          required
+          value={form.content}
+          onChange={(e) => onChange({ ...form, content: e.target.value })}
+          placeholder="Observation, décision, prochaine action..."
+          rows={5}
+          className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-[#C8F135]"
+        />
       </Field>
       <div className="flex flex-wrap items-center gap-3 lg:col-span-2">
-        <Toggle active={form.isPinned} label="Épingler" icon={<Pin className="size-4" />} onClick={() => onChange({ ...form, isPinned: !form.isPinned })} />
-        <Toggle active={form.isSharedWithMember} label="Partager au membre" icon={<Share2 className="size-4" />} onClick={() => onChange({ ...form, isSharedWithMember: !form.isSharedWithMember })} />
-        {error && <p className="text-xs text-red-400">{error}</p>}
-        {onCancel && (
-          <button type="button" onClick={onCancel} className="ml-auto rounded-xl border border-zinc-700 px-4 py-3 text-sm text-zinc-400 transition-colors hover:text-white">
-            Annuler
-          </button>
-        )}
-        <button disabled={isSaving} className={onCancel ? 'rounded-xl bg-[#C8F135] px-5 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50' : 'ml-auto rounded-xl bg-[#C8F135] px-5 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50'}>
-          {isSaving ? savingLabel : submitLabel}
+        <button
+          type="button"
+          onClick={() => onChange({ ...form, isPinned: !form.isPinned })}
+          className={cn(
+            'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors',
+            form.isPinned ? 'border-[#C8F135]/50 bg-[#C8F135]/10 text-[#C8F135]' : 'border-zinc-800 text-zinc-400 hover:text-white',
+          )}
+        >
+          <Pin className="size-4" /> Épingler
         </button>
+        <button
+          type="button"
+          onClick={() => onChange({ ...form, isSharedWithMember: !form.isSharedWithMember })}
+          className={cn(
+            'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors',
+            form.isSharedWithMember ? 'border-[#C8F135]/50 bg-[#C8F135]/10 text-[#C8F135]' : 'border-zinc-800 text-zinc-400 hover:text-white',
+          )}
+        >
+          <Share2 className="size-4" /> Partager
+        </button>
+        {error && <p className="text-xs text-red-400">{error}</p>}
+        <div className="flex gap-3 lg:ml-auto">
+          {onCancel && (
+            <button type="button" onClick={onCancel} className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-400 transition-colors hover:text-white">
+              Annuler
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="rounded-xl bg-[#C8F135] px-5 py-2 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] disabled:opacity-50"
+          >
+            {isSaving ? savingLabel : submitLabel}
+          </button>
+        </div>
       </div>
     </form>
   )
@@ -514,6 +567,9 @@ function NoteCard({
   const [editing, setEditing] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [replies, setReplies] = useState<NoteReply[]>([])
+  const [showReplies, setShowReplies] = useState(false)
+  const [loadingReplies, setLoadingReplies] = useState(false)
   const [editForm, setEditForm] = useState({
     title: note.title,
     content: note.content,
@@ -530,6 +586,28 @@ function NoteCard({
     if (!highlighted) return
     document.getElementById(`coach-note-${note.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [highlighted, note.id])
+
+  // Fetch replies when note is shared and showReplies is true
+  useEffect(() => {
+    if (!showReplies || !note.isSharedWithMember) return
+
+    const fetchReplies = async () => {
+      setLoadingReplies(true)
+      try {
+        const res = await fetch(`/api/coach/notes/${note.id}/replies`)
+        if (res.ok) {
+          const data = await res.json()
+          setReplies(Array.isArray(data) ? data : [])
+        }
+      } catch {
+        // silent
+      } finally {
+        setLoadingReplies(false)
+      }
+    }
+
+    fetchReplies()
+  }, [showReplies, note.id, note.isSharedWithMember])
 
   const openEdit = () => {
     setEditForm({
@@ -645,6 +723,41 @@ function NoteCard({
           </span>
         )}
       </div>
+
+      {note.isSharedWithMember && (
+        <div className="mt-4 border-t border-zinc-800 pt-4">
+          <button
+            type="button"
+            onClick={() => setShowReplies(!showReplies)}
+            className="flex items-center gap-2 text-sm font-semibold text-zinc-400 hover:text-white transition-colors"
+          >
+            <ChevronDown className={`size-4 transition-transform ${showReplies ? 'rotate-180' : ''}`} />
+            {replies.length > 0 ? `${replies.length} réponse${replies.length !== 1 ? 's' : ''}` : 'Aucune réponse'}
+          </button>
+
+          {showReplies && (
+            <div className="mt-3 space-y-2">
+              {loadingReplies ? (
+                <div className="px-3 py-2 text-xs text-zinc-500">Chargement…</div>
+              ) : replies.length === 0 ? (
+                <div className="px-3 py-2 text-xs text-zinc-500">Aucune réponse pour le moment</div>
+              ) : (
+                replies.map((reply) => (
+                  <div key={reply.id} className="rounded-lg bg-zinc-800/50 p-3 text-sm">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className="font-semibold text-zinc-200">{reply.member.name ?? reply.member.email}</p>
+                      <p className="text-xs text-zinc-500">
+                        {format(new Date(reply.createdAt), "d MMM 'à' HH:mm", { locale: fr })}
+                      </p>
+                    </div>
+                    <p className="text-zinc-300 whitespace-pre-wrap">{reply.content}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </article>
   )
 }

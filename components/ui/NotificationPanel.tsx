@@ -48,23 +48,43 @@ export function NotificationPanel() {
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [])
 
+  // Fetch notifications on mount and set up polling
   useEffect(() => {
-    if (!open) return
-    setLoading(true)
-    fetch('/api/user/notifications')
-      .then(res => res.json())
-      .then((data: Notification[]) => {
-        if (Array.isArray(data)) setNotifications(data)
+    let lastNotificationCount = 0
+
+    const fetchNotifications = async () => {
+      setLoading(true)
+      try {
+        const res = await fetch('/api/user/notifications')
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          const unreadCount = data.filter((n: Notification) => !n.isRead).length
+          // Only dispatch event if unread count changed
+          if (unreadCount !== lastNotificationCount) {
+            lastNotificationCount = unreadCount
+            window.dispatchEvent(new CustomEvent('bodyops:notifications-read'))
+          }
+          setNotifications(data)
+        }
+      } catch (error) {
+        // silent
+      } finally {
         setLoading(false)
-      })
-      .catch(() => setLoading(false))
-  }, [open])
+      }
+    }
+
+    fetchNotifications()
+    const interval = window.setInterval(fetchNotifications, 30000)
+    return () => window.clearInterval(interval)
+  }, [])
 
   const unread = notifications.filter(n => !n.isRead).length
 
   const markAllRead = async () => {
     await fetch('/api/user/notifications', { method: 'PATCH' })
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+    // Dispatch event to update menu badges
+    window.dispatchEvent(new CustomEvent('bodyops:notifications-read'))
   }
 
   const handleClick = async (n: Notification) => {
@@ -76,6 +96,8 @@ export function NotificationPanel() {
         body:    JSON.stringify({ notificationId: n.id }),
       }).catch(() => {})
       setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, isRead: true } : x))
+      // Dispatch event to update menu badges
+      window.dispatchEvent(new CustomEvent('bodyops:notifications-read'))
     }
     const link = resolveLink(n.type, n.relatedId, n.title)
     router.push(link)
