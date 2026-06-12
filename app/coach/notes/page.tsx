@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertCircle, CalendarClock, CheckCircle2, ChevronDown, Clock3, Filter, Lock, MessageSquareText, Pencil, Pin, Plus, Search, Share2, Trash2, X } from 'lucide-react'
+import { AlertCircle, CalendarClock, CheckCircle2, ChevronDown, Clock3, Filter, Lock, MessageSquareText, Pencil, Pin, Plus, Search, Send, Share2, Trash2, X } from 'lucide-react'
 import { format, isBefore, isToday } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
@@ -28,12 +28,9 @@ interface CoachNote {
 interface NoteReply {
   id: string
   content: string
-  memberId: string
-  member: {
-    id: string
-    name: string | null
-    email: string
-  }
+  memberId: string | null
+  authorRole: 'MEMBER' | 'COACH' | string
+  member?: { name: string | null } | null
   createdAt: string
 }
 
@@ -570,6 +567,8 @@ function NoteCard({
   const [replies, setReplies] = useState<NoteReply[]>([])
   const [showReplies, setShowReplies] = useState(false)
   const [loadingReplies, setLoadingReplies] = useState(false)
+  const [replyText, setReplyText] = useState('')
+  const [sendingReply, setSendingReply] = useState(false)
   const [editForm, setEditForm] = useState({
     title: note.title,
     content: note.content,
@@ -586,28 +585,6 @@ function NoteCard({
     if (!highlighted) return
     document.getElementById(`coach-note-${note.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [highlighted, note.id])
-
-  // Fetch replies when note is shared and showReplies is true
-  useEffect(() => {
-    if (!showReplies || !note.isSharedWithMember) return
-
-    const fetchReplies = async () => {
-      setLoadingReplies(true)
-      try {
-        const res = await fetch(`/api/coach/notes/${note.id}/replies`)
-        if (res.ok) {
-          const data = await res.json()
-          setReplies(Array.isArray(data) ? data : [])
-        }
-      } catch {
-        // silent
-      } finally {
-        setLoadingReplies(false)
-      }
-    }
-
-    fetchReplies()
-  }, [showReplies, note.id, note.isSharedWithMember])
 
   const openEdit = () => {
     setEditForm({
@@ -648,6 +625,45 @@ function NoteCard({
     } else {
       setEditError(result.error ?? 'Erreur lors de la sauvegarde.')
     }
+  }
+
+  const fetchReplies = useCallback(async () => {
+    if (!note.isSharedWithMember) return
+    setLoadingReplies(true)
+    try {
+      const res = await fetch(`/api/coach/notes/${note.id}/replies`)
+      if (res.ok) {
+        const data = await res.json()
+        setReplies(Array.isArray(data) ? data : [])
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoadingReplies(false)
+    }
+  }, [note.id, note.isSharedWithMember])
+
+  useEffect(() => {
+    if (!showReplies) return
+    fetchReplies()
+  }, [fetchReplies, showReplies])
+
+  const submitReply = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!replyText.trim()) return
+    setSendingReply(true)
+    const res = await fetch(`/api/coach/notes/${note.id}/replies`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: replyText }),
+    })
+    if (res.ok) {
+      const newReply = await res.json()
+      setReplies(prev => [...prev, newReply])
+      setReplyText('')
+      setShowReplies(true)
+    }
+    setSendingReply(false)
   }
 
   if (editing) {
@@ -745,7 +761,9 @@ function NoteCard({
                 replies.map((reply) => (
                   <div key={reply.id} className="rounded-lg bg-zinc-800/50 p-3 text-sm">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <p className="font-semibold text-zinc-200">{reply.member.name ?? reply.member.email}</p>
+                      <p className="font-semibold text-zinc-200">
+                        {reply.authorRole === 'COACH' ? 'Coach' : reply.member?.name ?? 'Membre'}
+                      </p>
                       <p className="text-xs text-zinc-500">
                         {format(new Date(reply.createdAt), "d MMM 'à' HH:mm", { locale: fr })}
                       </p>
@@ -754,6 +772,23 @@ function NoteCard({
                   </div>
                 ))
               )}
+              <form onSubmit={submitReply} className="flex items-end gap-2 pt-2">
+                <textarea
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Répondre au membre..."
+                  rows={2}
+                  className="min-h-11 flex-1 resize-none rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-[#C8F135]"
+                />
+                <button
+                  type="submit"
+                  disabled={sendingReply || !replyText.trim()}
+                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#C8F135] text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50"
+                  aria-label="Répondre"
+                >
+                  <Send className="size-4" />
+                </button>
+              </form>
             </div>
           )}
         </div>

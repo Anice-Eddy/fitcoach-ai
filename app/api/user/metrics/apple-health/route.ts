@@ -4,6 +4,7 @@ export const runtime = 'nodejs'
 import { NextResponse }           from 'next/server'
 import { prisma }                 from '@/lib/prisma/client'
 import { verifyAppleHealthToken } from '@/lib/integrations/apple-health-token'
+import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 
 /**
  * Payload envoyé par le Raccourci iOS BodyOps.
@@ -41,6 +42,10 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const token  = searchParams.get('token') ?? ''
   const userId = await verifyAppleHealthToken(token)
+  if (userId) {
+    const limited = await rateLimitByUserId(userId, 'health:apple-verify', RATE_LIMITS.health)
+    if (!limited.ok) return limited.response
+  }
   return NextResponse.json({ valid: !!userId, userId: userId ?? null })
 }
 
@@ -68,6 +73,8 @@ export async function POST(req: Request) {
       },
     }, { status: 401 })
   }
+  const limited = await rateLimitByUserId(userId, 'health:apple-metrics', RATE_LIMITS.health)
+  if (!limited.ok) return limited.response
 
   // ── Parsing du corps ──────────────────────────────────────────────────────
   let body: ShortcutPayload

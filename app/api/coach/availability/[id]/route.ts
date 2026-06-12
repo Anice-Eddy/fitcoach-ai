@@ -2,17 +2,20 @@ export const dynamic = 'force-dynamic'
 
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
+import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
 /** Deletes a specific availability rule, verifying the rule belongs to the authenticated coach. */
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } },
 ) {
   const session = await auth()
   if (!session?.user?.email) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  const limited = await rateLimitByUserId(session.user.id!, 'coach:availability:delete', RATE_LIMITS.coach)
+  if (!limited.ok) return limited.response
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },

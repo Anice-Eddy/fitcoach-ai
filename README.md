@@ -28,7 +28,7 @@ Plateforme de coaching sportif et nutritionnel personnalisée avec monétisation
 - npm 10+
 - Compte [Neon](https://neon.tech) (PostgreSQL gratuit)
 - Compte [Stripe](https://stripe.com) (test mode)
-- App OAuth Google + GitHub
+- Projet Firebase Auth pour les connexions sociales
 
 ## Installation
 
@@ -75,7 +75,7 @@ npm run db:reset     # Reset + re-seed (dev uniquement)
 ```
 /                          → Landing page + pricing
 /onboarding                → Stepper multi-étapes (sans layout app)
-/auth/signin               → Connexion Google / GitHub
+/auth/signin               → Connexion email + Firebase social
 /dashboard                 → Tableau de bord principal
 /training                  → Programme + séance du jour
 /training/[sessionId]      → Détail séance avec chronomètre

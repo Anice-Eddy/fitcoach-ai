@@ -20,6 +20,7 @@ datasource db {
 enum Provider {
   GOOGLE
   GITHUB
+  FACEBOOK
   EMAIL
 }
 
@@ -184,6 +185,11 @@ model User {
   image              String?
   password           String?
   provider           Provider           @default(EMAIL)
+  firebaseUid        String?            @unique @map("firebase_uid")
+  authProvider       String?            @map("auth_provider")
+  firebaseEmailVerified Boolean         @default(false) @map("email_verified")
+  lastLoginAt        DateTime?          @map("last_login_at")
+  authMigratedAt     DateTime?          @map("auth_migrated_at")
   stripeCustomerId   String?            @unique
   subscriptionPlan   SubscriptionPlan   @default(FREE)
   subscriptionStatus SubscriptionStatus @default(INACTIVE)
@@ -192,6 +198,7 @@ model User {
 
   profile             Profile?
   passwordResetTokens PasswordResetToken[]
+  authHandoffTokens   AuthHandoffToken[]
   bodyMetrics         BodyMetric[]
   workoutPrograms     WorkoutProgram[]
   workoutSessions     WorkoutSession[]
@@ -214,6 +221,7 @@ model User {
   appointmentsAsMember    CoachAppointment[]  @relation("AppointmentsAsMember")
   coachNotes              CoachNote[]         @relation("CoachNotes")
   coachNoteReplies        CoachNoteReply[]    @relation("NoteReplies")
+  authoredCoachNoteReplies CoachNoteReply[]   @relation("CoachNoteReplyAuthor")
   coachChatMessages        CoachChatMessage[]  @relation("CoachChatMessageSender")
   coachChatMemberships     CoachChat[]         @relation("CoachChatMember")
   receivedNotifications   Notification[]      @relation("NotificationRecipient")
@@ -221,6 +229,7 @@ model User {
   aiUsageDaily            AIUsageDaily[]
 
   @@index([email])
+  @@index([firebaseUid])
   @@index([stripeCustomerId])
   @@map("users")
 }
@@ -964,8 +973,11 @@ model CoachNoteReply {
   id       String    @id @default(cuid())
   noteId   String
   note     CoachNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  memberId String
-  member   User      @relation("NoteReplies", fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String?
+  member   User?     @relation("NoteReplies", fields: [memberId], references: [id], onDelete: Cascade)
+  authorUserId String?
+  author      User?  @relation("CoachNoteReplyAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+  authorRole  String @default("MEMBER")
   content  String
 
   createdAt DateTime @default(now())
@@ -973,6 +985,7 @@ model CoachNoteReply {
 
   @@index([noteId])
   @@index([memberId])
+  @@index([authorUserId])
   @@map("coach_note_replies")
 }
 
@@ -1143,6 +1156,20 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+model AuthHandoffToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("auth_handoff_tokens")
 }
 
 // ============================================================

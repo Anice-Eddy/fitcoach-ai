@@ -5,8 +5,6 @@ if (process.env.NEXT_PHASE === 'phase-production-build') {
   const REQUIRED = [
     'DATABASE_URL',
     'AUTH_SECRET',
-    'GOOGLE_CLIENT_ID',
-    'GOOGLE_CLIENT_SECRET',
     'NEXT_PUBLIC_APP_URL',
   ]
   const missing = REQUIRED.filter((k) => !process.env[k])
@@ -32,6 +30,7 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'graph.facebook.com' },
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'm.media-amazon.com' },
@@ -42,6 +41,12 @@ const nextConfig = {
   // Headers CORS pour les webhooks Stripe (route /api/stripe/webhook)
   async headers() {
     return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
+        ],
+      },
       {
         source: '/api/stripe/webhook',
         headers: [{ key: 'Content-Type', value: 'text/plain' }],

@@ -8,6 +8,8 @@ import { Eye, EyeOff, ChevronLeft, Check } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { toast } from 'sonner'
 import { PageBackground } from '@/components/landing/PageBackground'
+import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons'
+import { canUseFirebaseAuth, canUseNextAuth, publicAuthProviderMode } from '@/lib/auth/provider-mode'
 
 const SPECIALTIES = [
   'Force & Powerlifting', 'Hypertrophie', 'Perte de poids', 'Cardio & Endurance',
@@ -50,6 +52,9 @@ export default function CoachRegisterPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const authMode = publicAuthProviderMode()
+  const showFirebase = canUseFirebaseAuth(authMode)
+  const showNextAuth = canUseNextAuth(authMode)
 
   const [form, setForm] = useState({
     name:            '',
@@ -182,6 +187,12 @@ export default function CoachRegisterPage() {
           <div className="space-y-4">
             <h2 className="text-base font-semibold text-white">Informations de connexion</h2>
 
+            {showFirebase && (
+              <div className="space-y-2">
+                <SocialAuthButtons callbackUrl="/auth/coach/complete" disabled={loading} />
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-1.5">Prénom / Nom</label>
               <input type="text" value={form.name} onChange={(e) => set('name', e.target.value)}
@@ -212,10 +223,16 @@ export default function CoachRegisterPage() {
               {errors.password && <p className="mt-1 text-xs text-red-400">{errors.password}</p>}
             </div>
 
+            {showNextAuth && (
             <button type="button" onClick={() => { if (validateStep1()) setStep(2) }}
               className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors">
               Étape suivante
             </button>
+            )}
+
+            {showFirebase && (
+              <p className="text-center text-xs text-zinc-500">La connexion sociale créera votre compte et vous demandera de compléter le profil coach.</p>
+            )}
           </div>
         )}
 

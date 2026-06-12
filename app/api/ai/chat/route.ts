@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
-  const { access, error } = await getAIAccess(parsed.data.memberId)
+  const { access, headers, error } = await getAIAccess(parsed.data.memberId)
   if (error) return error
 
   try {
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       parsed.data.conversationId,
       preferred,
     )
-    return NextResponse.json(result)
+    return NextResponse.json(result, { headers })
   } catch (err) {
     return aiError(err)
   }

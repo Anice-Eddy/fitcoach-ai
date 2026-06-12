@@ -4,10 +4,11 @@ import { NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma/client'
+import { RATE_LIMITS, rateLimitByEmail, rateLimitByIp } from '@/lib/security/rate-limit'
 
 const registerSchema = z.object({
   name:              z.string().min(2, 'Le nom doit faire au moins 2 caractères'),
-  email:             z.string().email('Email invalide'),
+  email:             z.string().trim().toLowerCase().email('Email invalide'),
   password:          z.string().min(8, 'Le mot de passe doit faire au moins 8 caractères'),
   accountType:       z.enum(['MEMBER', 'COACH']).default('MEMBER'),
   bio:               z.string().optional(),
@@ -40,11 +41,17 @@ function splitList(value?: string) {
 
 /** Registers a new member or coach account; validates extra coach fields, rejects duplicate emails, hashes the password, and persists the new user with optional coach profile. */
 export async function POST(req: Request) {
+  const limitedIp = await rateLimitByIp(req, 'auth:register:ip', RATE_LIMITS.registerIp)
+  if (!limitedIp.ok) return limitedIp.response
+
   const body   = await req.json()
   const parsed = registerSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 422 })
   }
+
+  const limitedEmail = await rateLimitByEmail(parsed.data.email, 'auth:register:email', RATE_LIMITS.registerEmail)
+  if (!limitedEmail.ok) return limitedEmail.response
 
   const { name, email, password, accountType } = parsed.data
   const isCoach = accountType === 'COACH'
@@ -70,9 +77,10 @@ export async function POST(req: Request) {
     select: { id: true, password: true, provider: true, coachProfile: { select: { id: true } } },
   })
   if (existing) {
-    if (!existing.password && existing.provider === 'GOOGLE') {
+    if (!existing.password && (existing.provider === 'GOOGLE' || existing.provider === 'FACEBOOK')) {
+      const providerLabel = existing.provider === 'GOOGLE' ? 'Google' : 'Facebook'
       return NextResponse.json({
-        error: { email: ['Cet email est déjà associé à un compte Google. Connectez-vous via Google — les deux méthodes de connexion seront liées automatiquement.'] },
+        error: { email: [`Cet email est déjà associé à un compte ${providerLabel}. Connectez-vous via ${providerLabel} — les deux méthodes de connexion seront liées automatiquement.`] },
       }, { status: 409 })
     }
     const msg = existing.coachProfile

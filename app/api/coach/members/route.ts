@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
+import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { calculateFitnessProfile } from '@/utils/fitness-calculations'
 import { hash } from 'bcryptjs'
 import { NextResponse } from 'next/server'
@@ -171,6 +172,8 @@ export async function POST(req: Request) {
         { status: 401 }
       )
     }
+    const limited = await rateLimitByUserId(session.user.id!, 'coach:members:create', RATE_LIMITS.coach)
+    if (!limited.ok) return limited.response
 
     const body = await req.json()
     const createParsed = memberCreateSchema.safeParse(body)

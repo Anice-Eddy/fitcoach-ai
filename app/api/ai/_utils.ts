@@ -3,47 +3,51 @@ import { z } from 'zod'
 import { auth } from '@/lib/auth/auth'
 import { checkDailyRateLimit } from '@/lib/ai/rate-limit'
 import { resolveMemberAccess } from '@/lib/ai/context'
-import { prisma } from '@/lib/prisma/client'
+import { RATE_LIMITS, mergeHeaders, rateLimitByUserId } from '@/lib/security/rate-limit'
 
 export const agentSchema = z.enum(['TRAINING', 'NUTRITION', 'PROGRESSION', 'MOTIVATION', 'COACH_REPORT'])
 
-/** Authenticates the session, checks the daily AI quota (20/day member, 50/day coach), and resolves member access. */
+function aiQuotaHeaders(quota: { used: number; limit: number; warning: boolean }) {
+  const headers = new Headers()
+  headers.set('X-AI-Quota-Used', String(quota.used))
+  headers.set('X-AI-Quota-Limit', String(quota.limit))
+  headers.set('X-AI-Quota-Warning', String(quota.warning))
+  return headers
+}
+
+/** Authenticates the session, enforces the per-minute AI rate limit + daily quota, and resolves member access. */
 export async function getAIAccess(memberId?: string | null) {
   const session = await auth()
   if (!session?.user?.id) {
     return { error: NextResponse.json({ error: 'Non authentifié' }, { status: 401 }) }
   }
 
-  // Determine if the requester is a coach (affects daily quota)
-  const coachProfile = await prisma.coachProfile.findUnique({
-    where:  { userId: session.user.id },
-    select: { id: true },
-  })
-  const isCoach = !!coachProfile
+  const minuteLimit = await rateLimitByUserId(session.user.id, 'ai:minute', RATE_LIMITS.ai)
+  if (!minuteLimit.ok) return { error: minuteLimit.response }
 
-  const limited = await checkDailyRateLimit(session.user.id, isCoach)
+  const limited = await checkDailyRateLimit(session.user.id, session.user.plan)
+  const headers = aiQuotaHeaders(limited)
+  mergeHeaders(headers, minuteLimit.headers)
   if (!limited.ok) {
     const resetDate = new Date(limited.resetAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
     return {
       error: NextResponse.json(
         {
-          error: isCoach
-            ? `Limite journalière atteinte (50 appels IA/jour pour les coachs). Réinitialisation à ${resetDate} UTC.`
-            : `Limite journalière atteinte (20 appels IA/jour). Réinitialisation à ${resetDate} UTC.`,
+          error: `Limite journalière IA atteinte (${limited.limit} appels/jour). Réinitialisation à ${resetDate} UTC.`,
           resetAt: limited.resetAt,
           remaining: 0,
         },
-        { status: 429 },
+        { status: 429, headers },
       ),
     }
   }
 
   const access = await resolveMemberAccess(session.user.id, memberId)
   if (!access) {
-    return { error: NextResponse.json({ error: 'Accès refusé pour ce membre.' }, { status: 403 }) }
+    return { error: NextResponse.json({ error: 'Accès refusé pour ce membre.' }, { status: 403, headers }) }
   }
 
-  return { access }
+  return { access, headers }
 }
 
 /** Maps a caught AI error to a structured NextResponse and logs it. */

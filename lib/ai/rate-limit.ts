@@ -17,16 +17,19 @@ export function checkRateLimit(key: string, limit = 20, windowMs = 60_000) {
   return { ok: true, remaining: limit - current.count, resetAt: current.resetAt }
 }
 
+function dailyLimitForPlan(plan?: string | null) {
+  return plan && plan !== 'FREE' ? 500 : 100
+}
+
 /**
- * DB-backed daily rate limit for AI calls.
- * Limits: 20 calls/day for members, 50 calls/day for coaches.
- * Resets at midnight UTC.
+ * DB-backed daily quota for AI calls.
+ * Free: 100/day, Premium/paid plans: 500/day. Resets at midnight UTC.
  */
 export async function checkDailyRateLimit(
   userId:  string,
-  isCoach: boolean,
-): Promise<{ ok: boolean; remaining: number; resetAt: number }> {
-  const limit = isCoach ? 50 : 20
+  plan?: string | null,
+): Promise<{ ok: boolean; used: number; limit: number; remaining: number; resetAt: number; warning: boolean }> {
+  const limit = dailyLimitForPlan(plan)
   const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD UTC
 
   const tomorrow = new Date()
@@ -44,8 +47,15 @@ export async function checkDailyRateLimit(
       where: { userId_date: { userId, date: today } },
       data:  { count: { decrement: 1 } },
     })
-    return { ok: false, remaining: 0, resetAt: tomorrow.getTime() }
+    return { ok: false, used: limit, limit, remaining: 0, resetAt: tomorrow.getTime(), warning: true }
   }
 
-  return { ok: true, remaining: limit - usage.count, resetAt: tomorrow.getTime() }
+  return {
+    ok: true,
+    used: usage.count,
+    limit,
+    remaining: limit - usage.count,
+    resetAt: tomorrow.getTime(),
+    warning: usage.count >= Math.ceil(limit * 0.8),
+  }
 }

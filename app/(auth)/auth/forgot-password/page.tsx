@@ -2,10 +2,14 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, MailCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { Logo } from '@/components/ui/Logo'
 import { PageBackground } from '@/components/landing/PageBackground'
+import { canUseFirebaseAuth, canUseNextAuth, publicAuthProviderMode } from '@/lib/auth/provider-mode'
+import { firebaseForgotPassword } from '@/lib/firebase/client'
+
+type FirebaseResetError = { code?: string; message?: string }
 
 /** Forgot-password page: collects an email and calls /api/auth/forgot-password to send a reset link. */
 export default function ForgotPasswordPage() {
@@ -13,6 +17,53 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [sent,    setSent]    = useState(false)
   const [error,   setError]   = useState('')
+  const authMode = publicAuthProviderMode()
+  const useFirebaseReset = canUseFirebaseAuth(authMode) && !canUseNextAuth(authMode)
+
+  const sendLegacyReset = async () => {
+    const res = await fetch('/api/auth/forgot-password', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email, intent: 'legacy' }),
+    })
+    const data = await res.json().catch(() => null)
+    if (!res.ok) {
+      setError(data?.message ?? data?.error ?? "Impossible d'envoyer le lien de réinitialisation.")
+      return false
+    }
+    return true
+  }
+
+  const sendFirebaseReset = async () => {
+    const res = await fetch('/api/auth/forgot-password', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email, intent: 'firebase' }),
+    })
+    const data = await res.json().catch(() => null)
+    if (!res.ok) {
+      setError(data?.message ?? data?.error ?? "Impossible d'envoyer le lien de réinitialisation.")
+      return false
+    }
+
+    try {
+      await firebaseForgotPassword(email)
+      return true
+    } catch (err) {
+      const code = (err as FirebaseResetError | null)?.code
+      if (code === 'auth/user-not-found' || code === 'auth/invalid-email') return true
+      if (code === 'auth/too-many-requests') {
+        setError('Trop de demandes Firebase. Réessaie dans quelques minutes.')
+        return false
+      }
+      if (code === 'auth/configuration-not-found' || code === 'auth/operation-not-allowed') {
+        setError('La réinitialisation Firebase email/password n’est pas encore activée dans Firebase Console.')
+        return false
+      }
+      setError("Impossible d'envoyer le lien Firebase pour le moment.")
+      return false
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,19 +71,8 @@ export default function ForgotPasswordPage() {
     setError('')
 
     try {
-      const res = await fetch('/api/auth/forgot-password', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email }),
-      })
-
-      const data = await res.json().catch(() => null)
-      if (!res.ok) {
-        setError(data?.message ?? "Impossible d'envoyer le lien de réinitialisation.")
-        return
-      }
-
-      setSent(true)
+      const ok = useFirebaseReset ? await sendFirebaseReset() : await sendLegacyReset()
+      if (ok) setSent(true)
     } catch {
       toast.error('Erreur réseau, réessaie.')
     } finally {
@@ -56,7 +96,9 @@ export default function ForgotPasswordPage() {
 
         {sent ? (
           <div className="rounded-2xl bg-[#C8F135]/10 border border-[#C8F135]/30 p-6 text-center">
-            <div className="text-4xl mb-3">📬</div>
+            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl border border-[#C8F135]/35 bg-zinc-950/80 text-[#C8F135] shadow-[0_0_28px_rgba(200,241,53,0.22)]">
+              <MailCheck className="size-7" aria-hidden="true" />
+            </div>
             <p className="text-white font-semibold mb-1">Email envoyé !</p>
             <p className="text-zinc-400 text-sm">
               Si un compte existe pour <span className="text-white">{email}</span>,

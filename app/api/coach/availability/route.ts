@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
+import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -34,6 +35,8 @@ export async function GET(_req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.email) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  const limited = await rateLimitByUserId(session.user.id!, 'coach:availability:create', RATE_LIMITS.coach)
+  if (!limited.ok) return limited.response
 
   const coach = await getCoach(session.user.email)
   if (!coach) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })

@@ -98,7 +98,7 @@ export default function CoachMessagesPage() {
   }))
 
   return (
-    <div className="grid min-h-[calc(100vh-8rem)] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 lg:grid-cols-[300px_1fr]">
+    <div className="grid h-[calc(100dvh-8rem)] min-h-[420px] grid-rows-[minmax(160px,32%)_1fr] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 lg:grid-cols-[300px_1fr] lg:grid-rows-none">
       <ConversationList
         title="Conversations"
         description="Messages rapides avec vos membres."
@@ -109,7 +109,7 @@ export default function CoachMessagesPage() {
         onSelect={(id) => setSelected(members.find(item => item.member.id === id) ?? null)}
       />
 
-      <section className="flex min-h-[560px] flex-col">
+      <section className="flex min-h-0 flex-col">
         <div className="border-b border-zinc-800 px-4 py-3">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-semibold text-white">{selected ? memberName(selected) : 'Messages'}</p>
@@ -120,7 +120,7 @@ export default function CoachMessagesPage() {
           <p className="mt-0.5 text-xs text-zinc-500">Pour le suivi durable, gardez les décisions importantes dans les notes.</p>
         </div>
 
-        <div className="flex-1 space-y-3 overflow-y-auto p-4">
+        <div className="min-h-0 flex-1">
           <MessageThread
             loading={threadLoading}
             hasSelection={Boolean(selected)}

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
+import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -32,6 +33,8 @@ const schema = z.object({
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  const limited = await rateLimitByUserId(session.user.id, 'coach:settings', RATE_LIMITS.coach)
+  if (!limited.ok) return limited.response
 
   const parsed = schema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })

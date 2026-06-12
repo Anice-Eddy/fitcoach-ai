@@ -16,21 +16,26 @@ test.describe('Page de connexion', () => {
     await expect(googleBtn.first()).toBeVisible()
   })
 
+  test('affiche le bouton Facebook', async ({ page }) => {
+    await page.waitForLoadState('networkidle')
+    const facebookBtn = page.locator('button:has-text("Facebook"), a:has-text("Facebook")')
+    await expect(facebookBtn.first()).toBeVisible()
+  })
+
   test('affiche la connexion par email', async ({ page }) => {
     await page.waitForLoadState('networkidle')
     await expect(page.getByPlaceholder('jean@example.com')).toBeVisible()
     await expect(page.getByPlaceholder('••••••••')).toBeVisible()
   })
 
-  test('explique quand le compte Google existe déjà en contexte coach', async ({ page }) => {
-    await page.evaluate(() => sessionStorage.setItem('bodyops:last-auth-context', 'coach'))
-    await page.goto('/auth/signin?error=OAuthAccountNotLinked')
+  test('explique quand un compte social existe déjà en contexte coach', async ({ page }) => {
+    await page.goto('/auth/signin?role=coach&error=OAuthAccountNotLinked')
     await expect(page.getByText('Connexion coach')).toBeVisible()
-    await expect(page.getByText("Ce compte Google est déjà lié à un autre utilisateur. Essayez de vous connecter avec votre email et mot de passe, ou contactez le support.")).toBeVisible()
+    await expect(page.getByText("Ce compte social est déjà lié à un autre utilisateur. Essayez de vous connecter avec votre email et mot de passe, ou contactez le support.")).toBeVisible()
   })
 
   test("affiche une erreur email introuvable sans bloquer le bouton", async ({ page }) => {
-    await page.route('**/api/auth/check-provider?email=missing%40example.com', async (route) => {
+    await page.route('**/api/auth/check-provider**', async (route) => {
       await route.fulfill({ json: { provider: null } })
     })
 
@@ -44,7 +49,7 @@ test.describe('Page de connexion', () => {
   })
 
   test('affiche une erreur mot de passe incorrect sans bloquer le bouton', async ({ page }) => {
-    await page.route('**/api/auth/check-provider?email=member%40example.com', async (route) => {
+    await page.route('**/api/auth/check-provider**', async (route) => {
       await route.fulfill({ json: { provider: 'EMAIL' } })
     })
     await page.route('**/api/auth/validate-credentials', async (route) => {

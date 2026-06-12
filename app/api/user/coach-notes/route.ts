@@ -2,6 +2,8 @@ export const dynamic = 'force-dynamic'
 
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
+import { getNormalizedCoachNoteReplies } from '@/lib/notes/replies'
+import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -18,12 +20,19 @@ export async function GET() {
         include: { user: { select: { name: true, image: true } } },
       },
       replies: {
-        include: { member: { select: { name: true, image: true } } },
+        include: {
+          member: { select: { name: true, image: true } },
+        },
         orderBy: { createdAt: 'asc' },
       },
     },
     orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
   })
+
+  const repliesByNoteId = new Map<string, Awaited<ReturnType<typeof getNormalizedCoachNoteReplies>>>()
+  await Promise.all(notes.map(async (note) => {
+    repliesByNoteId.set(note.id, await getNormalizedCoachNoteReplies(note.id))
+  }))
 
   return NextResponse.json(
     notes.map(n => ({
@@ -36,11 +45,12 @@ export async function GET() {
       isImportant: n.isImportant,
       createdAt:   n.createdAt.toISOString(),
       coachName:   n.coachProfile.user.name ?? 'Votre coach',
-      replies:     n.replies.map(r => ({
+      replies:     (repliesByNoteId.get(n.id) ?? []).map(r => ({
         id:        r.id,
         content:   r.content,
         memberId:  r.memberId,
-        memberName: r.member.name ?? 'Membre',
+        authorRole: r.authorRole,
+        authorName: r.authorRole === 'COACH' ? 'Coach' : r.member?.name ?? 'Membre',
         createdAt: r.createdAt.toISOString(),
       })),
     })),
@@ -51,6 +61,8 @@ export async function GET() {
 export async function DELETE(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  const limited = await rateLimitByUserId(session.user.id, 'notes:member-hide-coach-note', RATE_LIMITS.notes)
+  if (!limited.ok) return limited.response
 
   const { noteId } = await req.json()
   if (!noteId) return NextResponse.json({ error: 'noteId manquant' }, { status: 400 })

@@ -26,8 +26,10 @@ interface UserNote {
 interface NoteReply {
   id:         string
   content:    string
-  memberId:   string
-  memberName: string
+  memberId:   string | null
+  memberName?: string
+  authorRole?: string
+  authorName?: string
   createdAt:  string
 }
 
@@ -486,6 +488,8 @@ function CoachNoteCard({
         content:    newReply.content,
         memberId:   newReply.memberId,
         memberName: newReply.member?.name ?? 'Vous',
+        authorRole: newReply.authorRole ?? 'MEMBER',
+        authorName: newReply.authorRole === 'COACH' ? 'Coach' : newReply.member?.name ?? 'Vous',
         createdAt:  newReply.createdAt,
       }])
       setReplyText('')
@@ -582,20 +586,24 @@ function CoachNoteCard({
             {replies.map(r => (
               <div key={r.id} className="flex items-start gap-2 bg-zinc-800/60 rounded-xl px-3 py-2.5">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold text-zinc-400">{r.memberName}</p>
+                  <p className="text-[11px] font-semibold text-zinc-400">
+                    {r.authorRole === 'COACH' ? r.authorName ?? 'Coach' : r.authorName ?? r.memberName ?? 'Vous'}
+                  </p>
                   <p className="text-sm text-zinc-300 mt-0.5">{r.content}</p>
                   <p className="text-[10px] text-zinc-600 mt-1">
                     {format(new Date(r.createdAt), "d MMM 'à' HH:mm", { locale: fr })}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => deleteReply(r.id)}
-                  disabled={deletingReply === r.id}
-                  className="mt-0.5 text-zinc-600 hover:text-red-400 transition-colors disabled:opacity-50 shrink-0"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
+                {r.authorRole !== 'COACH' && (
+                  <button
+                    type="button"
+                    onClick={() => deleteReply(r.id)}
+                    disabled={deletingReply === r.id}
+                    className="mt-0.5 text-zinc-600 hover:text-red-400 transition-colors disabled:opacity-50 shrink-0"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                )}
               </div>
             ))}
 

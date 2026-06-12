@@ -10,7 +10,7 @@ import { WeightChart }      from '@/components/dashboard/WeightChart'
 import { NutritionSummary } from '@/components/dashboard/NutritionSummary'
 import { QuickActions }     from '@/components/dashboard/QuickActions'
 import Link from 'next/link'
-import { Dumbbell, ArrowRight, UserCheck, Calendar, MapPin, Star } from 'lucide-react'
+import { Dumbbell, ArrowRight, UserCheck, Calendar, MapPin, Star, Zap } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -232,7 +232,12 @@ export function DashboardClient() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-white">Bonjour {firstName} 👋</h2>
+        <h2 className="flex items-center gap-2 text-xl font-bold text-white">
+          Bonjour {firstName}
+          <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-xl border border-[#C8F135]/30 bg-[#C8F135]/10 text-[#C8F135] shadow-[0_0_18px_rgba(200,241,53,0.18)]">
+            <Zap className="size-4" aria-hidden="true" />
+          </span>
+        </h2>
         <p className="text-sm text-zinc-400 mt-0.5">
           {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>

@@ -1,4 +1,4 @@
-import { MessageSquare } from 'lucide-react'
+import { ArrowDown, ArrowUp, MessageSquare } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { MessageBubble, type MessageBubbleData } from './MessageBubble'
 
@@ -22,17 +22,27 @@ export function MessageThread<T extends MessageBubbleData>({
   isMine,
   labelFor,
 }: MessageThreadProps<T>) {
+  const scrollRef = useRef<HTMLDivElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages])
 
-  if (loading) return <p className="py-10 text-center text-xs text-zinc-500">Chargement…</p>
+  const scrollToTop = () => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+  const scrollToBottom = () => endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+
+  if (loading) {
+    return (
+      <div className="flex min-h-0 flex-1 items-center justify-center p-4">
+        <p className="text-center text-xs text-zinc-500">Chargement…</p>
+      </div>
+    )
+  }
 
   if (!hasSelection || messages.length === 0) {
     return (
-      <div className="py-16 text-center">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center p-6 text-center">
         <MessageSquare className="mx-auto mb-3 size-9 text-zinc-700" />
         <p className="text-sm text-zinc-500">{hasSelection ? emptyLabel : noSelectionLabel}</p>
       </div>
@@ -40,20 +50,46 @@ export function MessageThread<T extends MessageBubbleData>({
   }
 
   return (
-    <>
-      {messages.map(message => {
-        const mine = isMine(message)
-        return (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            mine={mine}
-            label={labelFor(message, mine)}
-            showReadStatus={mine}
-          />
-        )
-      })}
-      <div ref={endRef} />
-    </>
+    <div className="relative min-h-0 flex-1">
+      <div
+        ref={scrollRef}
+        className="h-full space-y-3 overflow-y-auto scroll-smooth p-4 pr-12"
+      >
+        {messages.map(message => {
+          const mine = isMine(message)
+          return (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              mine={mine}
+              label={labelFor(message, mine)}
+              showReadStatus={mine}
+            />
+          )
+        })}
+        <div ref={endRef} />
+      </div>
+
+      <div className="pointer-events-none absolute right-3 top-3 flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={scrollToTop}
+          className="pointer-events-auto rounded-full border border-zinc-700 bg-zinc-950/90 p-2 text-zinc-300 shadow-lg shadow-black/20 backdrop-blur transition-colors hover:border-[#C8F135]/60 hover:text-[#C8F135]"
+          aria-label="Remonter au début de la conversation"
+          title="Remonter"
+        >
+          <ArrowUp className="size-4" />
+        </button>
+        <button
+          type="button"
+          onClick={scrollToBottom}
+          className="pointer-events-auto rounded-full border border-zinc-700 bg-zinc-950/90 p-2 text-zinc-300 shadow-lg shadow-black/20 backdrop-blur transition-colors hover:border-[#C8F135]/60 hover:text-[#C8F135]"
+          aria-label="Descendre au dernier message"
+          title="Descendre"
+        >
+          <ArrowDown className="size-4" />
+        </button>
+      </div>
+    </div>
   )
 }

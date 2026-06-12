@@ -5,22 +5,31 @@ import { z } from 'zod'
 import { randomBytes } from 'crypto'
 import { prisma } from '@/lib/prisma/client'
 import { sendPasswordResetEmail } from '@/lib/email/send'
+import { RATE_LIMITS, rateLimitByEmail, rateLimitByIp } from '@/lib/security/rate-limit'
 
-const schema = z.object({ email: z.string().email() })
+const schema = z.object({
+  email: z.string().email(),
+  intent: z.enum(['firebase', 'legacy']).optional(),
+})
 
 /** Initiates a password reset for the given email: creates a 1-hour token and sends a reset email; returns errors for unknown email or OAuth-only accounts. */
 export async function POST(req: Request) {
+  const limitedIp = await rateLimitByIp(req, 'auth:forgot-password:ip', RATE_LIMITS.resetIp)
+  if (!limitedIp.ok) return limitedIp.response
+
   const body   = await req.json()
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Email invalide' }, { status: 422 })
   }
 
-  const { email } = parsed.data
+  const { email, intent } = parsed.data
+  const limitedEmail = await rateLimitByEmail(email, 'auth:forgot-password:email', RATE_LIMITS.resetEmail)
+  if (!limitedEmail.ok) return limitedEmail.response
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, password: true, provider: true },
+    select: { id: true, password: true, provider: true, authProvider: true },
   })
 
   if (!user) {
@@ -34,8 +43,36 @@ export async function POST(req: Request) {
     )
   }
 
+  const socialProvider = user.provider === 'GOOGLE'
+    ? 'Google'
+    : user.provider === 'FACEBOOK'
+      ? 'Facebook'
+      : user.authProvider === 'APPLE'
+        ? 'Apple'
+        : null
+
+  if (socialProvider) {
+    return NextResponse.json(
+      {
+        ok: false,
+        reason: 'SOCIAL_PROVIDER',
+        provider: socialProvider,
+        message: `Vous êtes connecté avec ${socialProvider}. Veuillez modifier votre mot de passe depuis votre compte ${socialProvider}.`,
+      },
+      { status: 409 },
+    )
+  }
+
+  if (intent === 'firebase') {
+    return NextResponse.json({ ok: true, method: 'firebase' })
+  }
+
   if (!user.password) {
-    const provider = user.provider === 'GOOGLE' ? 'Google' : 'un fournisseur externe'
+    const provider = user.provider === 'GOOGLE'
+      ? 'Google'
+      : user.provider === 'FACEBOOK'
+        ? 'Facebook'
+        : 'un fournisseur externe'
     return NextResponse.json(
       {
         ok: false,

@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { analyzeCoachDocument } from '@/lib/coach/verification'
+import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 
 const coachProfileSchema = z.object({
   firstName:       z.string().min(1, 'Le prénom est requis'),
@@ -74,9 +75,11 @@ export async function GET() {
 }
 
 /** Creates the authenticated user's coach space without duplicating the account email. */
-export async function POST() {
+export async function POST(_req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  const limited = await rateLimitByUserId(session.user.id, 'coach:profile-create', RATE_LIMITS.coach)
+  if (!limited.ok) return limited.response
 
   // The upsert keeps this action idempotent if the button is clicked twice.
   const profile = await getCoachProfile(session.user.id)
@@ -87,6 +90,8 @@ export async function POST() {
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  const limited = await rateLimitByUserId(session.user.id, 'coach:profile-update', RATE_LIMITS.coach)
+  if (!limited.ok) return limited.response
 
   const formData = await req.formData()
   const parsed = coachProfileSchema.safeParse({

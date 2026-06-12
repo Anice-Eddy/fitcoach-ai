@@ -16,12 +16,12 @@ type ConversationListProps = {
 /** Shared sidebar list for coach/member messaging conversations. */
 export function ConversationList({ title, description, loading, emptyLabel, items, activeId, onSelect }: ConversationListProps) {
   return (
-    <aside className="border-b border-zinc-800 bg-zinc-950/60 lg:border-b-0 lg:border-r">
+    <aside className="flex min-h-0 flex-col border-b border-zinc-800 bg-zinc-950/60 lg:border-b-0 lg:border-r">
       <div className="border-b border-zinc-800 p-4">
         <p className="text-sm font-semibold text-white">{title}</p>
         <p className="mt-0.5 text-xs text-zinc-500">{description}</p>
       </div>
-      <div className="max-h-80 overflow-y-auto p-2 lg:max-h-none">
+      <div className="min-h-0 flex-1 overflow-y-auto p-2">
         {loading ? (
           <p className="p-4 text-xs text-zinc-500">Chargement…</p>
         ) : items.length === 0 ? (

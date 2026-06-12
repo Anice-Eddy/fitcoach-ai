@@ -66,7 +66,7 @@ export function NotificationPanel() {
           }
           setNotifications(data)
         }
-      } catch (error) {
+      } catch {
         // silent
       } finally {
         setLoading(false)

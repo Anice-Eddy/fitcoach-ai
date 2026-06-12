@@ -25,8 +25,8 @@ interface MemberItem {
 }
 
 interface NoteReply {
-  id: string; content: string; memberId: string
-  memberName: string; createdAt: string
+  id: string; content: string; memberId: string | null
+  memberName?: string; authorRole?: string; authorName?: string; createdAt: string
 }
 
 interface Note {
@@ -714,14 +714,16 @@ function NoteRepliesSection({ noteId, replies: initialReplies }: { noteId: strin
   const [expanded, setExpanded]   = useState(false)
   const [replies, setReplies]     = useState<NoteReply[]>(initialReplies)
   const [loading, setLoading]     = useState(false)
+  const [replyText, setReplyText] = useState('')
+  const [sending, setSending]     = useState(false)
 
   const fetchReplies = async () => {
     setLoading(true)
     const res = await fetch(`/api/coach/notes/${noteId}/replies`).catch(() => null)
     const data = res ? await res.json().catch(() => []) : []
-    if (Array.isArray(data)) setReplies(data.map((r: { id: string; content: string; memberId: string; member?: { name?: string }; createdAt: string }) => ({
+    if (Array.isArray(data)) setReplies(data.map((r: { id: string; content: string; memberId: string | null; member?: { name?: string }; authorRole?: string; createdAt: string }) => ({
       id: r.id, content: r.content, memberId: r.memberId,
-      memberName: r.member?.name ?? 'Membre', createdAt: r.createdAt,
+      memberName: r.member?.name ?? 'Membre', authorRole: r.authorRole, authorName: r.authorRole === 'COACH' ? 'Coach' : r.member?.name, createdAt: r.createdAt,
     })))
     setLoading(false)
   }
@@ -741,7 +743,21 @@ function NoteRepliesSection({ noteId, replies: initialReplies }: { noteId: strin
     setExpanded(v => !v)
   }
 
-  if (replies.length === 0 && !expanded) return null
+  const submitReply = async () => {
+    if (!replyText.trim()) return
+    setSending(true)
+    const res = await fetch(`/api/coach/notes/${noteId}/replies`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: replyText }),
+    })
+    if (res.ok) {
+      setReplyText('')
+      await fetchReplies()
+      setExpanded(true)
+    }
+    setSending(false)
+  }
 
   return (
     <div className="mt-3 border-t border-zinc-700/50 pt-3">
@@ -763,7 +779,9 @@ function NoteRepliesSection({ noteId, replies: initialReplies }: { noteId: strin
           ) : replies.map(r => (
             <div key={r.id} className="flex items-start gap-2 bg-zinc-800/50 rounded-lg px-3 py-2">
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-semibold text-zinc-400">{r.memberName}</p>
+                <p className="text-[10px] font-semibold text-zinc-400">
+                  {r.authorRole === 'COACH' ? r.authorName ?? 'Coach' : r.authorName ?? r.memberName ?? 'Membre'}
+                </p>
                 <p className="text-xs text-zinc-300 mt-0.5">{r.content}</p>
                 <p className="text-[10px] text-zinc-600 mt-0.5">
                   {format(new Date(r.createdAt), "d MMM 'à' HH:mm", { locale: fr })}
@@ -777,6 +795,23 @@ function NoteRepliesSection({ noteId, replies: initialReplies }: { noteId: strin
               </button>
             </div>
           ))}
+          <div className="flex gap-2 pt-1">
+            <input
+              value={replyText}
+              onChange={e => setReplyText(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitReply() } }}
+              placeholder="Répondre au membre…"
+              className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-white outline-none placeholder:text-zinc-500 focus:border-[#C8F135]"
+            />
+            <button
+              type="button"
+              onClick={submitReply}
+              disabled={sending || !replyText.trim()}
+              className="rounded-lg bg-[#C8F135] px-3 py-2 text-xs font-bold text-zinc-950 disabled:opacity-50"
+            >
+              {sending ? '…' : 'Envoyer'}
+            </button>
+          </div>
         </div>
       )}
     </div>
