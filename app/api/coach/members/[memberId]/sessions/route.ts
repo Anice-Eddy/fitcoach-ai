@@ -3,7 +3,6 @@ export const runtime = 'nodejs'
 
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
-import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -62,10 +61,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { memberId: string } },
 ) {
-  const { userId, error } = await authorizeCoach(params.memberId)
+  const { error } = await authorizeCoach(params.memberId)
   if (error) return error
-  const limited = await rateLimitByUserId(userId!, 'coach:sessions:update', RATE_LIMITS.coach)
-  if (!limited.ok) return limited.response
 
   const parsed = patchSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
@@ -97,10 +94,8 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { memberId: string } },
 ) {
-  const { userId, error } = await authorizeCoach(params.memberId)
+  const { error } = await authorizeCoach(params.memberId)
   if (error) return error
-  const limited = await rateLimitByUserId(userId!, 'coach:sessions:delete', RATE_LIMITS.coach)
-  if (!limited.ok) return limited.response
 
   const parsed = deleteSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })

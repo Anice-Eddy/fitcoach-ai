@@ -5,7 +5,6 @@ import { AlertCircle, CalendarClock, CheckCircle2, ChevronDown, Clock3, Filter, 
 import { format, isBefore, isToday } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { markCoachNoteNotificationsRead } from '@/lib/notifications/mark-note-notifications-read'
 
 type NoteStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE'
 type NotePriority = 'LOW' | 'MEDIUM' | 'HIGH'
@@ -143,7 +142,6 @@ export default function NotesPage() {
   }, [targetNoteId])
 
   useEffect(() => {
-    markCoachNoteNotificationsRead()
     fetchMembers()
   }, [fetchMembers])
 

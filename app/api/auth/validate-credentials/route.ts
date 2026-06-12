@@ -4,7 +4,6 @@ import { NextResponse } from 'next/server'
 import { compare } from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma/client'
-import { RATE_LIMITS, rateLimitByIp } from '@/lib/security/rate-limit'
 
 const schema = z.object({
   email: z.string().email(),
@@ -13,8 +12,6 @@ const schema = z.object({
 
 /** Checks email/password credentials without creating a session; returns { valid, reason } for use by the NextAuth credentials provider. */
 export async function POST(req: Request) {
-  const limited = await rateLimitByIp(req, 'auth:validate-credentials', RATE_LIMITS.auth)
-  if (!limited.ok) return limited.response
 
   const parsed = schema.safeParse(await req.json())
   if (!parsed.success) {

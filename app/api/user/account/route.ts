@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
-import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { compare, hash } from 'bcryptjs'
 import { z } from 'zod'
 
@@ -18,8 +17,6 @@ const accountUpdateSchema = z.object({
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
-  const limited = await rateLimitByUserId(session.user.id, 'account:update', RATE_LIMITS.coach)
-  if (!limited.ok) return limited.response
 
   const parsed = accountUpdateSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
@@ -43,8 +40,6 @@ export async function PATCH(req: Request) {
 export async function DELETE(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
-  const limited = await rateLimitByUserId(session.user.id, 'account:delete', RATE_LIMITS.resetIp)
-  if (!limited.ok) return limited.response
 
   let password: string | undefined
   try {

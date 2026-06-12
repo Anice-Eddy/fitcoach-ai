@@ -5,7 +5,6 @@ import { z } from 'zod'
 import { randomBytes } from 'crypto'
 import { prisma } from '@/lib/prisma/client'
 import { sendPasswordResetEmail } from '@/lib/email/send'
-import { RATE_LIMITS, rateLimitByEmail, rateLimitByIp } from '@/lib/security/rate-limit'
 
 const schema = z.object({
   email: z.string().email(),
@@ -14,8 +13,6 @@ const schema = z.object({
 
 /** Initiates a password reset for the given email: creates a 1-hour token and sends a reset email; returns errors for unknown email or OAuth-only accounts. */
 export async function POST(req: Request) {
-  const limitedIp = await rateLimitByIp(req, 'auth:forgot-password:ip', RATE_LIMITS.resetIp)
-  if (!limitedIp.ok) return limitedIp.response
 
   const body   = await req.json()
   const parsed = schema.safeParse(body)
@@ -24,8 +21,6 @@ export async function POST(req: Request) {
   }
 
   const { email, intent } = parsed.data
-  const limitedEmail = await rateLimitByEmail(email, 'auth:forgot-password:email', RATE_LIMITS.resetEmail)
-  if (!limitedEmail.ok) return limitedEmail.response
 
   const user = await prisma.user.findUnique({
     where: { email },

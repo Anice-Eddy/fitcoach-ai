@@ -1132,7 +1132,7 @@ model AIReport {
   @@map("ai_reports")
 }
 
-// Suivi quotidien des appels IA — rate limiting par jour (20 membre / 50 coach)
+// Ancien suivi quotidien des appels IA, conservé pour les exports et le nettoyage des données existantes.
 model AIUsageDaily {
   id     String @id @default(cuid())
   userId String

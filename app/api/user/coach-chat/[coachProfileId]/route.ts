@@ -4,7 +4,6 @@ export const runtime = 'nodejs'
 import { auth } from '@/lib/auth/auth'
 import { emitToUser } from '@/lib/messaging/sse-manager'
 import { prisma } from '@/lib/prisma/client'
-import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -75,8 +74,6 @@ export async function POST(
 ) {
   const { memberId, membership, error } = await getMemberAccess(params.coachProfileId)
   if (error) return error
-  const limited = await rateLimitByUserId(memberId!, 'chat:member-to-coach', RATE_LIMITS.chat)
-  if (!limited.ok) return limited.response
 
   const parsed = messageSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })

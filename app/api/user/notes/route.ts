@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
-import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -42,8 +41,6 @@ export async function GET(_req: NextRequest) {
 export async function POST(req: NextRequest) {
   const { userId, error } = await getUser()
   if (error) return error
-  const limited = await rateLimitByUserId(userId!, 'notes:user:create', RATE_LIMITS.notes)
-  if (!limited.ok) return limited.response
 
   const parsed = createSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
@@ -59,8 +56,6 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { userId, error } = await getUser()
   if (error) return error
-  const limited = await rateLimitByUserId(userId!, 'notes:user:update', RATE_LIMITS.notes)
-  if (!limited.ok) return limited.response
 
   const parsed = updateSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
@@ -80,8 +75,6 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const { userId, error } = await getUser()
   if (error) return error
-  const limited = await rateLimitByUserId(userId!, 'notes:user:delete', RATE_LIMITS.notes)
-  if (!limited.ok) return limited.response
 
   const { id } = await req.json()
   if (!id) return NextResponse.json({ error: 'id manquant' }, { status: 400 })

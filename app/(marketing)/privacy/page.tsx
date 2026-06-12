@@ -52,7 +52,6 @@ export default function PrivacyPage() {
                 ['Objectifs', 'Objectif fitness, niveau, focus corporel', 'Génération de programmes IA'],
                 ['Santé', 'Blessures, zones à ménager (optionnel)', 'Sécurité des exercices proposés'],
                 ['Alimentation', 'Préférences, allergies, régime (optionnel)', 'Plans nutritionnels adaptés'],
-                ['Usage IA', 'Nombre de requêtes par jour', 'Gestion des quotas d\'utilisation'],
                 ['Connexion', 'Adresse e-mail, mot de passe haché', 'Authentification sécurisée'],
               ].map(([cat, data, purpose]) => (
                 <tr key={cat} className="border-b border-zinc-800/50">

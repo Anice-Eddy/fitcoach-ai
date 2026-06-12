@@ -1,6 +1,7 @@
 export type CommunicationNotification = {
   type?: string
   title?: string
+  message?: string
   isRead?: boolean
 }
 
@@ -13,9 +14,15 @@ function unreadMessageTitle(notification: CommunicationNotification) {
   return (notification.title ?? '').toLowerCase()
 }
 
+function isAppointmentRelated(notification: CommunicationNotification) {
+  const text = `${notification.title ?? ''} ${notification.message ?? ''}`.toLowerCase()
+  return text.includes('rendez-vous')
+}
+
 export function getUnreadCommunicationCounts(notifications: CommunicationNotification[]): UnreadCommunicationCounts {
   return notifications.reduce<UnreadCommunicationCounts>((counts, notification) => {
     if (notification.type !== 'MESSAGE' || notification.isRead !== false) return counts
+    if (isAppointmentRelated(notification)) return counts
 
     const title = unreadMessageTitle(notification)
     if (title.includes('message')) counts.messages += 1

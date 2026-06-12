@@ -4,12 +4,9 @@ export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireFirebaseUser } from '@/lib/firebase/server-auth'
 import { prisma } from '@/lib/prisma/client'
-import { RATE_LIMITS, rateLimitByIp } from '@/lib/security/rate-limit'
 
 /** Verifies a Firebase ID token and links/creates the matching BodyOps user. */
 export async function POST(req: NextRequest) {
-  const limited = await rateLimitByIp(req, 'auth:firebase-session', RATE_LIMITS.auth)
-  if (!limited.ok) return limited.response
 
   const result = await requireFirebaseUser(req)
   if (result.error) return result.error

@@ -98,6 +98,10 @@ function findAvailabilityRuleForHour(day: Date, hour: number, rules: Availabilit
 function availabilityCellKey(day: Date, hour: number) {
   return `${day.toISOString().slice(0, 10)}-${hour}`
 }
+function targetAppointmentIdFromUrl() {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('id')
+}
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
@@ -532,7 +536,8 @@ export default function AgendaPage() {
   const [loading,      setLoading]      = useState(true)
   const [showNew,      setShowNew]      = useState(false)
   const [prefillDate,  setPrefillDate]  = useState<string | undefined>()
-  const [selectedId,   setSelectedId]   = useState<string | null>(null)
+  const [selectedId,   setSelectedId]   = useState<string | null>(() => targetAppointmentIdFromUrl())
+  const [targetAppointmentId]           = useState(() => targetAppointmentIdFromUrl())
   const [showAvail,    setShowAvail]    = useState(false)
   const [addingAvailability, setAddingAvailability] = useState<string | null>(null)
   const aptRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({})
@@ -560,6 +565,11 @@ export default function AgendaPage() {
   }, [])
 
   useEffect(() => { fetchAll(); fetchRules(); fetchMembers() }, [fetchAll, fetchRules, fetchMembers])
+
+  useEffect(() => {
+    if (!targetAppointmentId || loading || !appointments.some((appt) => appt.id === targetAppointmentId)) return
+    window.setTimeout(() => selectApt(targetAppointmentId), 80)
+  }, [appointments, loading, targetAppointmentId])
 
   const patch = async (id: string, body: object) => {
     await fetch(`/api/coach/appointments/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })

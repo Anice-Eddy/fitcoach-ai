@@ -7,7 +7,6 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
-import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 
 const patchSchema = z.object({
   aiMemoryEnabled:  z.boolean().optional(),
@@ -30,8 +29,6 @@ export async function GET() {
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-  const limited = await rateLimitByUserId(session.user.id, 'ai:settings', RATE_LIMITS.ai)
-  if (!limited.ok) return limited.response
 
   const parsed = patchSchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'Données invalides' }, { status: 422 })

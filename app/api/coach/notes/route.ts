@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
-import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -99,8 +98,6 @@ export async function POST(req: NextRequest) {
   try {
     const { coach, error } = await getCoach()
     if (error) return error
-    const limited = await rateLimitByUserId(coach!.id, 'notes:coach:create', RATE_LIMITS.notes)
-    if (!limited.ok) return limited.response
 
     const parsed = noteSchema.safeParse(await req.json())
     if (!parsed.success) {
@@ -163,8 +160,6 @@ export async function PATCH(req: NextRequest) {
   try {
     const { coach, error } = await getCoach()
     if (error) return error
-    const limited = await rateLimitByUserId(coach!.id, 'notes:coach:update', RATE_LIMITS.notes)
-    if (!limited.ok) return limited.response
 
     const parsed = updateNoteSchema.safeParse(await req.json())
     if (!parsed.success) {
@@ -207,8 +202,6 @@ export async function DELETE(req: NextRequest) {
   try {
     const { coach, error } = await getCoach()
     if (error) return error
-    const limited = await rateLimitByUserId(coach!.id, 'notes:coach:delete', RATE_LIMITS.notes)
-    if (!limited.ok) return limited.response
 
     const { noteId } = await req.json()
     if (!noteId) return NextResponse.json({ error: 'noteId manquant' }, { status: 400 })

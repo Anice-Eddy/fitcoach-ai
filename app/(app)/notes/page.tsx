@@ -67,6 +67,16 @@ function formatDate(v: string) {
   return format(new Date(v), "d MMM yyyy 'à' HH:mm", { locale: fr })
 }
 
+function targetNoteIdFromUrl() {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('noteId')
+}
+
+function initialTabFromUrl(): Tab {
+  if (typeof window === 'undefined') return 'mine'
+  return new URLSearchParams(window.location.search).get('tab') === 'coach' ? 'coach' : 'mine'
+}
+
 // Labeled form field wrapper that renders a small uppercase label above its children.
 function Field({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
@@ -373,7 +383,7 @@ function NoteCard({ note, onPin, onDelete }: { note: UserNote; onPin: () => void
 }
 
 // Tab displaying notes shared by the coach, with inline reply thread and delete (hide) support.
-function CoachNotesTab() {
+function CoachNotesTab({ targetNoteId }: { targetNoteId: string | null }) {
   const [notes, setNotes]         = useState<CoachNote[]>([])
   const [loading, setLoading]     = useState(true)
   const [search, setSearch]       = useState('')
@@ -387,6 +397,12 @@ function CoachNotesTab() {
   }
 
   useEffect(() => { fetchNotes() }, [])
+
+  useEffect(() => {
+    if (!targetNoteId || !notes.some((note) => note.id === targetNoteId)) return
+    setSearch('')
+    setCatFilter('ALL')
+  }, [notes, targetNoteId])
 
   const visible = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -444,12 +460,28 @@ function CoachNotesTab() {
           {pinned.length > 0 && (
             <div className="space-y-3">
               <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Épinglées par le coach</p>
-              {pinned.map(n => <CoachNoteCard key={n.id} note={n} onDelete={() => handleDelete(n)} onReplyAdded={fetchNotes} />)}
+              {pinned.map(n => (
+                <CoachNoteCard
+                  key={n.id}
+                  note={n}
+                  highlighted={n.id === targetNoteId}
+                  onDelete={() => handleDelete(n)}
+                  onReplyAdded={fetchNotes}
+                />
+              ))}
             </div>
           )}
           <div className="space-y-3">
             {pinned.length > 0 && <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Toutes les notes</p>}
-            {unpinned.map(n => <CoachNoteCard key={n.id} note={n} onDelete={() => handleDelete(n)} onReplyAdded={fetchNotes} />)}
+            {unpinned.map(n => (
+              <CoachNoteCard
+                key={n.id}
+                note={n}
+                highlighted={n.id === targetNoteId}
+                onDelete={() => handleDelete(n)}
+                onReplyAdded={fetchNotes}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -459,9 +491,10 @@ function CoachNotesTab() {
 
 // Renders a shared coach note card with expandable reply thread and inline reply submission.
 function CoachNoteCard({
-  note, onDelete, onReplyAdded,
+  note, highlighted = false, onDelete, onReplyAdded,
 }: {
   note: CoachNote
+  highlighted?: boolean
   onDelete: () => void
   onReplyAdded: () => void
 }) {
@@ -472,6 +505,12 @@ function CoachNoteCard({
   const [deletingReply, setDeletingReply] = useState<string | null>(null)
 
   useEffect(() => setReplies(note.replies ?? []), [note.replies])
+
+  useEffect(() => {
+    if (!highlighted) return
+    setShowReplies(true)
+    document.getElementById(`member-coach-note-${note.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [highlighted, note.id])
 
   const submitReply = async () => {
     if (!replyText.trim()) return
@@ -511,9 +550,11 @@ function CoachNoteCard({
   }
 
   return (
-    <article className={cn(
-      'rounded-2xl border bg-zinc-900 p-5',
-      note.isImportant ? 'border-amber-500/40' : note.isPinned ? 'border-[#C8F135]/40' : 'border-zinc-800',
+    <article id={`member-coach-note-${note.id}`} className={cn(
+      'rounded-2xl border bg-zinc-900 p-5 transition-colors',
+      highlighted
+        ? 'border-[#C8F135] shadow-[0_0_0_1px_rgba(200,241,53,0.35),0_0_28px_rgba(200,241,53,0.12)]'
+        : note.isImportant ? 'border-amber-500/40' : note.isPinned ? 'border-[#C8F135]/40' : 'border-zinc-800',
     )}>
       <div className="flex items-start gap-4">
         <div className="min-w-0 flex-1">
@@ -637,7 +678,8 @@ type Tab = 'mine' | 'coach'
 
 /** Notes page with two tabs: the member's own personal notes and notes shared by their coach. */
 export default function NotesPage() {
-  const [tab, setTab] = useState<Tab>('mine')
+  const [tab, setTab] = useState<Tab>(() => initialTabFromUrl())
+  const [targetNoteId] = useState(() => targetNoteIdFromUrl())
 
   return (
     <>
@@ -679,7 +721,7 @@ export default function NotesPage() {
           </div>
 
           {tab === 'mine'  && <MyNotesTab />}
-          {tab === 'coach' && <CoachNotesTab />}
+          {tab === 'coach' && <CoachNotesTab targetNoteId={targetNoteId} />}
         </div>
       </PageWrapper>
     </>

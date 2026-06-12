@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { getNormalizedCoachNoteReplies } from '@/lib/notes/replies'
-import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -61,8 +60,6 @@ export async function GET() {
 export async function DELETE(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-  const limited = await rateLimitByUserId(session.user.id, 'notes:member-hide-coach-note', RATE_LIMITS.notes)
-  if (!limited.ok) return limited.response
 
   const { noteId } = await req.json()
   if (!noteId) return NextResponse.json({ error: 'noteId manquant' }, { status: 400 })

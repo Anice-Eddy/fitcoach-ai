@@ -6,7 +6,6 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma/client'
 import { verifyFirebaseToken } from '@/lib/firebase/verify-token'
 import { findOrCreateUserFromFirebase } from '@/lib/firebase/users'
-import { RATE_LIMITS, rateLimitByIp } from '@/lib/security/rate-limit'
 
 const bodySchema = z.object({
   firebaseToken: z.string().min(20),
@@ -30,8 +29,6 @@ function hasFirebaseAdminConfig() {
 
 /** Verifies a Firebase social token, links the BodyOps user, and returns a short-lived NextAuth handoff token. */
 export async function POST(req: NextRequest) {
-  const limited = await rateLimitByIp(req, 'auth:firebase-signin', RATE_LIMITS.auth)
-  if (!limited.ok) return limited.response
 
   if (!hasFirebaseAdminConfig()) {
     return NextResponse.json({

@@ -3,7 +3,6 @@ export const runtime = 'nodejs'
 
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
-import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -67,10 +66,8 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { memberId: string } },
 ) {
-  const { userId, error } = await authorizeCoach(params.memberId)
+  const { error } = await authorizeCoach(params.memberId)
   if (error) return error
-  const limited = await rateLimitByUserId(userId!, 'coach:metrics:create', RATE_LIMITS.coach)
-  if (!limited.ok) return limited.response
 
   const parsed = metricSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
@@ -104,10 +101,8 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { memberId: string } },
 ) {
-  const { userId, error } = await authorizeCoach(params.memberId)
+  const { error } = await authorizeCoach(params.memberId)
   if (error) return error
-  const limited = await rateLimitByUserId(userId!, 'coach:metrics:delete', RATE_LIMITS.coach)
-  if (!limited.ok) return limited.response
 
   const { metricId } = await req.json()
   if (!metricId) return NextResponse.json({ error: 'metricId manquant' }, { status: 400 })

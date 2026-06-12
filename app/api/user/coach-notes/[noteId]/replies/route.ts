@@ -4,7 +4,6 @@ export const runtime = 'nodejs'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { attachReplyAuthor, getNormalizedCoachNoteReplies } from '@/lib/notes/replies'
-import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -38,8 +37,6 @@ export async function POST(
 ) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-  const limited = await rateLimitByUserId(session.user.id, 'notes:member-reply', RATE_LIMITS.notes)
-  if (!limited.ok) return limited.response
 
   const note = await prisma.coachNote.findFirst({
     where: { id: params.noteId, memberId: session.user.id, isSharedWithMember: true },
@@ -83,8 +80,6 @@ export async function DELETE(
 ) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-  const limited = await rateLimitByUserId(session.user.id, 'notes:member-reply-delete', RATE_LIMITS.notes)
-  if (!limited.ok) return limited.response
 
   const { replyId } = await req.json()
   if (!replyId) return NextResponse.json({ error: 'replyId manquant' }, { status: 400 })

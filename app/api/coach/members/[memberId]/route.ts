@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
-import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -63,8 +62,6 @@ export async function DELETE(
 ) {
   const session = await auth()
   if (!session?.user?.email) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-  const limited = await rateLimitByUserId(session.user.id!, 'coach:member:delete', RATE_LIMITS.coach)
-  if (!limited.ok) return limited.response
 
   const coach = await prisma.user.findUnique({
     where: { email: session.user.email },
@@ -86,8 +83,6 @@ export async function PATCH(
 ) {
   const session = await auth()
   if (!session?.user?.email) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-  const limited = await rateLimitByUserId(session.user.id!, 'coach:member:update', RATE_LIMITS.coach)
-  if (!limited.ok) return limited.response
 
   const coach = await prisma.user.findUnique({
     where: { email: session.user.email },

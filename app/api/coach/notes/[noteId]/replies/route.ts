@@ -4,7 +4,6 @@ export const runtime = 'nodejs'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { attachReplyAuthor, getNormalizedCoachNoteReplies } from '@/lib/notes/replies'
-import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -49,8 +48,6 @@ export async function POST(
 ) {
   const { coachProfile, error } = await getCoachProfile()
   if (error) return error
-  const limited = await rateLimitByUserId(coachProfile!.userId, 'notes:coach-reply', RATE_LIMITS.notes)
-  if (!limited.ok) return limited.response
 
   const note = await prisma.coachNote.findFirst({
     where: { id: params.noteId, coachId: coachProfile!.id },
@@ -96,8 +93,6 @@ export async function DELETE(
 ) {
   const { coachProfile, error } = await getCoachProfile()
   if (error) return error
-  const limited = await rateLimitByUserId(coachProfile!.userId, 'notes:coach-reply-delete', RATE_LIMITS.notes)
-  if (!limited.ok) return limited.response
 
   const { replyId } = await req.json()
   if (!replyId) return NextResponse.json({ error: 'replyId manquant' }, { status: 400 })

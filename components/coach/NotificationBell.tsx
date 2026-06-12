@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { notificationHref } from '@/lib/notifications/notification-links'
 
 interface Notification {
   id:        string
@@ -13,17 +14,6 @@ interface Notification {
   relatedId: string | null
   isRead:    boolean
   createdAt: string
-}
-
-function notificationLink(notif: Notification) {
-  if (notif.type === 'MESSAGE') {
-    if (notif.title.toLowerCase().includes('note')) return notif.relatedId ? `/coach/notes?noteId=${encodeURIComponent(notif.relatedId)}` : '/coach/notes'
-    const suffix = notif.relatedId ? `?chatId=${encodeURIComponent(notif.relatedId)}` : ''
-    return `/coach/messages${suffix}`
-  }
-  if (notif.type === 'APPOINTMENT') return '/coach/appointments'
-  if (notif.type === 'NEW_MEMBER') return '/coach/members'
-  return '/coach/dashboard'
 }
 
 /** Bell icon with unread badge that polls /api/coach/notifications every 30 s; clicking a notification marks it read and navigates to the relevant page. */
@@ -84,7 +74,7 @@ export function NotificationBell() {
   const handleNotificationClick = async (notif: Notification) => {
     setIsOpen(false)
     if (!notif.isRead) await markAsRead(notif.id)
-    router.push(notificationLink(notif))
+    router.push(notificationHref(notif, 'coach'))
   }
 
   const markAllAsRead = async () => {

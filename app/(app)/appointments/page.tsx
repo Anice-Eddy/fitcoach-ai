@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Calendar, Clock, ExternalLink, Plus, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react'
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
@@ -32,11 +32,18 @@ const STATUS_STYLE: Record<string, { label: string; color: string }> = {
   NO_SHOW:   { label: 'Absent',                     color: 'text-red-400     bg-red-400/10' },
 }
 
+function targetAppointmentIdFromUrl() {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('id')
+}
+
 /** Member appointments page: fetches and displays upcoming and past appointments, with inline note editing. */
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading]           = useState(true)
   const [now, setNow]                   = useState<Date | null>(null)
+  const [targetAppointmentId]            = useState(() => targetAppointmentIdFromUrl())
+  const appointmentRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const fetchAppointments = () => {
     setNow(new Date())
@@ -47,6 +54,13 @@ export default function AppointmentsPage() {
   }
 
   useEffect(() => { fetchAppointments() }, [])
+
+  useEffect(() => {
+    if (!targetAppointmentId || loading) return
+    window.setTimeout(() => {
+      appointmentRefs.current[targetAppointmentId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 80)
+  }, [loading, targetAppointmentId, appointments])
 
   const proposed = appointments.filter(a => a.status === 'PROPOSED')
   const upcoming = now ? appointments.filter(a =>
@@ -100,6 +114,8 @@ export default function AppointmentsPage() {
                       key={appt.id}
                       appt={appt}
                       onNoteUpdated={fetchAppointments}
+                      selected={appt.id === targetAppointmentId}
+                      aptRef={(node) => { appointmentRefs.current[appt.id] = node }}
                       highlight
                     />
                   ))}
@@ -118,6 +134,8 @@ export default function AppointmentsPage() {
                       key={appt.id}
                       appt={appt}
                       onNoteUpdated={fetchAppointments}
+                      selected={appt.id === targetAppointmentId}
+                      aptRef={(node) => { appointmentRefs.current[appt.id] = node }}
                     />
                   ))}
                 </div>
@@ -135,6 +153,8 @@ export default function AppointmentsPage() {
                       key={appt.id}
                       appt={appt}
                       onNoteUpdated={fetchAppointments}
+                      selected={appt.id === targetAppointmentId}
+                      aptRef={(node) => { appointmentRefs.current[appt.id] = node }}
                       past
                     />
                   ))}
@@ -179,11 +199,15 @@ function AppointmentCard({
   onNoteUpdated,
   past,
   highlight,
+  selected = false,
+  aptRef,
 }: {
   appt: Appointment
   onNoteUpdated: () => void
   past?: boolean
   highlight?: boolean
+  selected?: boolean
+  aptRef?: (node: HTMLDivElement | null) => void
 }) {
   const st      = STATUS_STYLE[appt.status]
   const date    = new Date(appt.scheduledAt)
@@ -207,9 +231,9 @@ function AppointmentCard({
   }
 
   return (
-    <div className={cn(
-      'rounded-2xl bg-zinc-900 border overflow-hidden',
-      highlight ? 'border-blue-400/30' : 'border-zinc-800',
+    <div ref={aptRef} className={cn(
+      'rounded-2xl bg-zinc-900 border overflow-hidden transition-colors',
+      selected ? 'border-[#C8F135] shadow-[0_0_0_1px_rgba(200,241,53,0.35),0_0_28px_rgba(200,241,53,0.12)]' : highlight ? 'border-blue-400/30' : 'border-zinc-800',
     )}>
       {highlight && (
         <div className="px-4 py-2 bg-blue-500/10 border-b border-blue-400/20 flex items-center gap-2">

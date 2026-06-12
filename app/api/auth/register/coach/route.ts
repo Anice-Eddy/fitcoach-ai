@@ -4,7 +4,6 @@ import { NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma/client'
-import { RATE_LIMITS, rateLimitByEmail, rateLimitByIp } from '@/lib/security/rate-limit'
 
 const schema = z.object({
   name:            z.string().min(2, 'Le nom doit faire au moins 2 caractères'),
@@ -30,8 +29,6 @@ const schema = z.object({
 
 /** Registers a new coach-only account with full profile data (bio, specialties, certifications, etc.); hashes the password and returns 201 on success. */
 export async function POST(req: Request) {
-  const limitedIp = await rateLimitByIp(req, 'auth:register-coach:ip', RATE_LIMITS.registerIp)
-  if (!limitedIp.ok) return limitedIp.response
 
   const body   = await req.json()
   const parsed = schema.safeParse(body)
@@ -39,8 +36,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 422 })
   }
 
-  const limitedEmail = await rateLimitByEmail(parsed.data.email, 'auth:register-coach:email', RATE_LIMITS.registerEmail)
-  if (!limitedEmail.ok) return limitedEmail.response
 
   const {
     name,

@@ -16,12 +16,12 @@ const schema = z.object({
 
 const service = new AIService()
 
-/** Runs an AI chat turn for the given agentType and message, enforcing rate-limit and member access; returns the AI response. */
+/** Runs an AI chat turn for the given agentType and message, enforcing member access; returns the AI response. */
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
-  const { access, headers, error } = await getAIAccess(parsed.data.memberId)
+  const { access, error } = await getAIAccess(parsed.data.memberId)
   if (error) return error
 
   try {
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       parsed.data.conversationId,
       preferred,
     )
-    return NextResponse.json(result, { headers })
+    return NextResponse.json(result)
   } catch (err) {
     return aiError(err)
   }

@@ -6,13 +6,10 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
-import { RATE_LIMITS, rateLimitByUserId } from '@/lib/security/rate-limit'
 
 export async function DELETE(_req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-  const limited = await rateLimitByUserId(session.user.id, 'ai:history-delete', RATE_LIMITS.ai)
-  if (!limited.ok) return limited.response
 
   const userId = session.user.id
 

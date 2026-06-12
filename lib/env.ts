@@ -23,8 +23,6 @@ export const env = {
   NEXT_PUBLIC_APP_URL:    process.env.NEXT_PUBLIC_APP_URL!,
   AUTH_PROVIDER:          process.env.AUTH_PROVIDER ?? 'hybrid',
   NEXT_PUBLIC_AUTH_PROVIDER: process.env.NEXT_PUBLIC_AUTH_PROVIDER ?? process.env.AUTH_PROVIDER ?? 'hybrid',
-  UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
-  UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
   STRIPE_SECRET_KEY:      process.env.STRIPE_SECRET_KEY ?? 'sk_disabled',
   STRIPE_WEBHOOK_SECRET:  process.env.STRIPE_WEBHOOK_SECRET ?? 'whsec_disabled',
   NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,

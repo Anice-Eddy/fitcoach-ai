@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, MailCheck } from 'lucide-react'
 import { toast } from 'sonner'
@@ -17,6 +17,7 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [sent,    setSent]    = useState(false)
   const [error,   setError]   = useState('')
+  const submitLockRef = useRef(false)
   const authMode = publicAuthProviderMode()
   const useFirebaseReset = canUseFirebaseAuth(authMode) && !canUseNextAuth(authMode)
 
@@ -67,13 +68,17 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submitLockRef.current) return
+    submitLockRef.current = true
     setLoading(true)
     setError('')
 
     try {
       const ok = useFirebaseReset ? await sendFirebaseReset() : await sendLegacyReset()
       if (ok) setSent(true)
+      if (!ok) submitLockRef.current = false
     } catch {
+      submitLockRef.current = false
       toast.error('Erreur réseau, réessaie.')
     } finally {
       setLoading(false)

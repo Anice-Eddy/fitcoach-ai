@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => ({})))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
-  const { access, headers, error } = await getAIAccess(parsed.data.memberId)
+  const { access, error } = await getAIAccess(parsed.data.memberId)
   if (error) return error
 
   try {
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
         'Ajouter un disclaimer santé clair.',
       ].join(' '),
     )
-    return NextResponse.json(result, { headers })
+    return NextResponse.json(result)
   } catch (err) {
     return aiError(err)
   }

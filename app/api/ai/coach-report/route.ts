@@ -14,10 +14,10 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
-  const { access, headers, error } = await getAIAccess(parsed.data.memberId)
+  const { access, error } = await getAIAccess(parsed.data.memberId)
   if (error) return error
   if (access!.role !== 'coach') {
-    return NextResponse.json({ error: 'Réservé aux coachs pour un membre assigné.' }, { status: 403, headers })
+    return NextResponse.json({ error: 'Réservé aux coachs pour un membre assigné.' }, { status: 403 })
   }
 
   try {
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
         'Inclure résumé de progression, problèmes, recommandations, priorités et prochaines actions.',
       ].join(' '),
     )
-    return NextResponse.json(result, { headers })
+    return NextResponse.json(result)
   } catch (err) {
     return aiError(err)
   }

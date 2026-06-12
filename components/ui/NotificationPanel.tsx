@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell, X, CheckCheck } from 'lucide-react'
+import { notificationHref } from '@/lib/notifications/notification-links'
 
 interface Notification {
   id:        string
@@ -12,24 +13,6 @@ interface Notification {
   createdAt: string
   type?:     string
   relatedId: string | null
-}
-
-// Resolves the in-app navigation link for a notification based on its type and optional related entity id.
-function resolveLink(type: string | undefined, relatedId: string | null, title: string): string {
-  switch (type) {
-    case 'MESSAGE':
-      if (title.toLowerCase().includes('message')) return relatedId ? `/messages?chatId=${encodeURIComponent(relatedId)}` : '/messages'
-      // Shared notes without a chat id keep the notes destination.
-      return relatedId ? `/notes?tab=coach&noteId=${relatedId}` : '/notes?tab=coach'
-    case 'APPOINTMENT':
-      return relatedId ? `/appointments?id=${relatedId}` : '/appointments'
-    case 'MEMBER_UPDATE':
-      return '/dashboard'
-    case 'SYSTEM':
-      return '/dashboard'
-    default:
-      return '/dashboard'
-  }
 }
 
 /** Member notification bell with dropdown panel; fetches unread count on mount, marks items read on click, and navigates to the relevant page. */
@@ -99,7 +82,7 @@ export function NotificationPanel() {
       // Dispatch event to update menu badges
       window.dispatchEvent(new CustomEvent('bodyops:notifications-read'))
     }
-    const link = resolveLink(n.type, n.relatedId, n.title)
+    const link = notificationHref(n, 'member')
     router.push(link)
   }
 
