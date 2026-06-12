@@ -9,6 +9,8 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { appendAppointmentNote } from '@/lib/appointments/notes'
+import { AppointmentNotesList } from '@/components/appointments/AppointmentNotesList'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -102,6 +104,14 @@ function targetAppointmentIdFromUrl() {
   if (typeof window === 'undefined') return null
   return new URLSearchParams(window.location.search).get('id')
 }
+function targetMemberIdFromUrl() {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('memberId')
+}
+function shouldOpenNewAppointmentFromUrl() {
+  if (typeof window === 'undefined') return false
+  return new URLSearchParams(window.location.search).get('new') === '1'
+}
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
@@ -113,19 +123,55 @@ function DateRow({ scheduledAt, duration }: { scheduledAt: string; duration: num
     </div>
   )
 }
-function MemberNoteBlock({ note }: { note: string }) {
+function AppointmentNoteActions({
+  hasCoachNote,
+  activeMode,
+  onAdd,
+  onEdit,
+}: {
+  hasCoachNote: boolean
+  activeMode: 'edit' | 'append' | null
+  onAdd: () => void
+  onEdit: () => void
+}) {
   return (
-    <div className="rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-0.5">Note du membre</p>
-      <p className="text-xs text-zinc-300">{note}</p>
-    </div>
-  )
-}
-function CoachNoteBlock({ note }: { note: string }) {
-  return (
-    <div className="rounded-lg bg-zinc-800/60 px-3 py-2">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-0.5">Votre note</p>
-      <p className="text-xs text-zinc-300">{note}</p>
+    <div className="mt-2 flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950/70 px-2.5 py-2">
+      <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+        <MessageSquare className="size-3 text-[#C8F135]" />
+        Notes
+      </span>
+      <div className="flex items-center gap-1">
+        {hasCoachNote && (
+          <button
+            type="button"
+            onClick={onEdit}
+            title="Modifier la note"
+            aria-label="Modifier la note"
+            className={cn(
+              'rounded-md p-1.5 transition-colors',
+              activeMode === 'edit'
+                ? 'bg-[#C8F135]/15 text-[#C8F135]'
+                : 'text-zinc-500 hover:bg-zinc-800 hover:text-white',
+            )}
+          >
+            <Edit3 className="size-3.5" />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onAdd}
+          title="Ajouter une note"
+          aria-label="Ajouter une note"
+          className={cn(
+            'rounded-md p-1.5 transition-colors',
+            activeMode === 'append'
+              ? 'bg-[#C8F135]/15 text-[#C8F135]'
+              : 'text-zinc-500 hover:bg-zinc-800 hover:text-white',
+          )}
+        >
+          <Plus className="size-3.5" />
+        </button>
+      </div>
     </div>
   )
 }
@@ -141,8 +187,14 @@ function PendingCard({ appt, onPatch, selected, aptRef }: {
   const [newDur,  setNewDur]  = useState(appt.duration)
   const [newMeet, setNewMeet] = useState(appt.meetLink ?? '')
   const [note,    setNote]    = useState(appt.coachNote ?? '')
+  const [noteMode, setNoteMode] = useState<'edit' | 'append'>('edit')
   const [saving,  setSaving]  = useState(false)
   const save = async (body: object) => { setSaving(true); await onPatch(appt.id, body); setSaving(false); setPanel(null) }
+  const saveNote = () => save({
+    coachNote: noteMode === 'append'
+      ? appendAppointmentNote(appt.coachNote, note, 'Coach')
+      : note,
+  })
 
   return (
     <div ref={aptRef} className={cn('rounded-xl border overflow-hidden transition-colors', selected ? 'border-amber-400/60 bg-amber-500/5' : 'border-amber-400/20 bg-zinc-900')}>
@@ -157,7 +209,26 @@ function PendingCard({ appt, onPatch, selected, aptRef }: {
           <User className="size-3" />{appt.member.name ?? appt.member.email}
         </div>
         <DateRow scheduledAt={appt.scheduledAt} duration={appt.duration} />
-        {appt.memberNote && <div className="mt-2"><MemberNoteBlock note={appt.memberNote} /></div>}
+        {(appt.coachNote || appt.memberNote) && (
+          <div className="mt-2 space-y-1.5">
+            {appt.coachNote && (
+              <AppointmentNotesList
+                note={appt.coachNote}
+                title="Vos notes"
+                accent="lime"
+                canEdit
+                onSave={(coachNote) => save({ coachNote })}
+              />
+            )}
+            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title="Notes du membre" />}
+          </div>
+        )}
+        <AppointmentNoteActions
+          hasCoachNote={Boolean(appt.coachNote)}
+          activeMode={panel === 'note' ? noteMode : null}
+          onEdit={() => { setNote(appt.coachNote ?? ''); setNoteMode('edit'); setPanel('note') }}
+          onAdd={() => { setNote(''); setNoteMode('append'); setPanel('note') }}
+        />
         <div className="flex flex-wrap gap-1.5 mt-3">
           <button onClick={() => save({ status: 'CONFIRMED' })} disabled={saving}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/25 disabled:opacity-50">
@@ -186,7 +257,7 @@ function PendingCard({ appt, onPatch, selected, aptRef }: {
             <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">Lien réunion</label>
               <input type="url" value={newMeet} onChange={e => setNewMeet(e.target.value)} placeholder="https://meet.google.com/…"
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]" /></div>
-            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">Note membre</label>
+            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">Note du coach</label>
               <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-[#C8F135] resize-none" /></div>
           </div>
@@ -195,6 +266,23 @@ function PendingCard({ appt, onPatch, selected, aptRef }: {
             <button disabled={saving || !newDate} onClick={() => save({ status: 'PROPOSED', scheduledAt: newDate, duration: newDur, meetLink: newMeet || null, coachNote: note || null })}
               className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-400 disabled:opacity-50">
               <Send className="size-3" />{saving ? 'Envoi…' : 'Envoyer'}
+            </button>
+          </div>
+        </div>
+      )}
+      {panel === 'note' && (
+        <div className="border-t border-zinc-800 bg-zinc-950 px-3 py-3 space-y-2">
+          <p className="text-xs font-semibold text-white">
+            {noteMode === 'append' && appt.coachNote ? 'Ajouter une note' : 'Note du coach'}
+          </p>
+          <textarea value={note} onChange={e => setNote(e.target.value)} rows={3}
+            placeholder="Consignes, objectif, préparation avant le rendez-vous…"
+            className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-[#C8F135] resize-none" />
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => setPanel(null)} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">Annuler</button>
+            <button disabled={saving || !note.trim()} onClick={saveNote}
+              className="px-3 py-1.5 text-xs rounded-lg bg-[#C8F135] text-zinc-900 font-semibold hover:bg-[#d4f54d] disabled:opacity-50">
+              {saving ? 'Enregistrement…' : 'Enregistrer'}
             </button>
           </div>
         </div>
@@ -227,8 +315,12 @@ function ProposedCard({ appt, onPatch, selected, aptRef }: {
         </div>
         <DateRow scheduledAt={appt.scheduledAt} duration={appt.duration} />
         {appt.meetLink && <a href={appt.meetLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-[#C8F135] hover:underline mt-1"><Link2 className="size-3" />Lien réunion</a>}
-        {appt.coachNote && <div className="mt-2"><CoachNoteBlock note={appt.coachNote} /></div>}
-        {appt.memberNote && <div className="mt-2"><MemberNoteBlock note={appt.memberNote} /></div>}
+        {(appt.coachNote || appt.memberNote) && (
+          <div className="mt-2 space-y-1.5">
+            {appt.coachNote && <AppointmentNotesList note={appt.coachNote} title="Vos notes" accent="lime" />}
+            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title="Notes du membre" />}
+          </div>
+        )}
         <div className="flex flex-wrap gap-1.5 mt-3">
           <button onClick={() => save({ status: 'CONFIRMED' })} disabled={saving}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/25 disabled:opacity-50">
@@ -257,7 +349,7 @@ function ProposedCard({ appt, onPatch, selected, aptRef }: {
             <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">Lien réunion</label>
               <input type="url" value={newMeet} onChange={e => setNewMeet(e.target.value)} placeholder="https://meet.google.com/…"
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]" /></div>
-            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">Note membre</label>
+            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">Note du coach</label>
               <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs resize-none focus:outline-none focus:border-[#C8F135]" /></div>
           </div>
@@ -280,11 +372,17 @@ function ConfirmedCard({ appt, onPatch, selected, aptRef }: {
 }) {
   const [panel, setPanel]     = useState<Panel>(null)
   const [note,    setNote]    = useState(appt.coachNote ?? '')
+  const [noteMode, setNoteMode] = useState<'edit' | 'append'>('edit')
   const [newDate, setNewDate] = useState(appt.scheduledAt.slice(0, 16))
   const [newDur,  setNewDur]  = useState(appt.duration)
   const [newMeet, setNewMeet] = useState(appt.meetLink ?? '')
   const [saving,  setSaving]  = useState(false)
   const save = async (body: object) => { setSaving(true); await onPatch(appt.id, body); setSaving(false); setPanel(null) }
+  const saveNote = () => save({
+    coachNote: noteMode === 'append'
+      ? appendAppointmentNote(appt.coachNote, note, 'Coach')
+      : note,
+  })
 
   return (
     <div ref={aptRef} className={cn('rounded-xl border overflow-hidden transition-colors', selected ? 'border-[#C8F135]/60 bg-[#C8F135]/5' : 'border-zinc-800 bg-zinc-900')}>
@@ -302,18 +400,28 @@ function ConfirmedCard({ appt, onPatch, selected, aptRef }: {
         {appt.meetLink && <a href={appt.meetLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-[#C8F135] hover:underline mt-1"><Link2 className="size-3" />Rejoindre</a>}
         {(appt.coachNote || appt.memberNote) && (
           <div className="mt-2 space-y-1.5">
-            {appt.coachNote  && <CoachNoteBlock note={appt.coachNote} />}
-            {appt.memberNote && <MemberNoteBlock note={appt.memberNote} />}
+            {appt.coachNote && (
+              <AppointmentNotesList
+                note={appt.coachNote}
+                title="Vos notes"
+                accent="lime"
+                canEdit
+                onSave={(coachNote) => save({ coachNote })}
+              />
+            )}
+            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title="Notes du membre" />}
           </div>
         )}
+        <AppointmentNoteActions
+          hasCoachNote={Boolean(appt.coachNote)}
+          activeMode={panel === 'note' ? noteMode : null}
+          onEdit={() => { setNote(appt.coachNote ?? ''); setNoteMode('edit'); setPanel('note') }}
+          onAdd={() => { setNote(''); setNoteMode('append'); setPanel('note') }}
+        />
         <div className="flex flex-wrap gap-1.5 mt-3">
           <button onClick={() => setPanel(p => p === 'edit' ? null : 'edit')}
             className={cn('flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium', panel === 'edit' ? 'bg-[#C8F135]/15 text-[#C8F135]' : 'bg-zinc-800 text-zinc-400 hover:text-white')}>
             <Edit3 className="size-3" /> Modifier
-          </button>
-          <button onClick={() => setPanel(p => p === 'note' ? null : 'note')}
-            className={cn('flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium', panel === 'note' ? 'bg-[#C8F135]/15 text-[#C8F135]' : 'bg-zinc-800 text-zinc-400 hover:text-white')}>
-            <MessageSquare className="size-3" />{appt.coachNote ? 'Modifier note' : 'Note'}
           </button>
           <button onClick={() => save({ status: 'COMPLETED' })} disabled={saving}
             className="ml-auto flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 text-xs font-medium hover:text-white disabled:opacity-50">
@@ -345,12 +453,15 @@ function ConfirmedCard({ appt, onPatch, selected, aptRef }: {
       )}
       {panel === 'note' && (
         <div className="border-t border-zinc-800 bg-zinc-950 px-3 py-3 space-y-2">
+          <p className="text-xs font-semibold text-white">
+            {noteMode === 'append' && appt.coachNote ? 'Ajouter une note' : 'Note du coach'}
+          </p>
           <textarea value={note} onChange={e => setNote(e.target.value)} rows={3}
             placeholder="Consignes, objectifs, préparation…"
             className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-[#C8F135] resize-none" />
           <div className="flex gap-2 justify-end">
             <button onClick={() => setPanel(null)} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">Annuler</button>
-            <button disabled={saving} onClick={() => save({ coachNote: note })}
+            <button disabled={saving || !note.trim()} onClick={saveNote}
               className="px-3 py-1.5 text-xs rounded-lg bg-[#C8F135] text-zinc-900 font-semibold hover:bg-[#d4f54d] disabled:opacity-50">
               {saving ? 'Enregistrement…' : 'Enregistrer'}
             </button>
@@ -388,10 +499,18 @@ function HistoryCard({ appt, selected, aptRef }: {
 
 function NewAptForm({ members, onCreated, onClose, prefill }: {
   members: Member[]; onCreated: () => void; onClose: () => void
-  prefill?: { scheduledAt: string }
+  prefill?: { scheduledAt?: string; memberId?: string }
 }) {
-  const [form, setForm]     = useState({ memberId: '', title: '', description: '', scheduledAt: prefill?.scheduledAt ?? '', duration: 60, meetLink: '' })
+  const [form, setForm]     = useState({ memberId: '', title: '', description: '', scheduledAt: prefill?.scheduledAt ?? '', duration: 60, meetLink: '', coachNote: '' })
   const [creating, setCreating] = useState(false)
+
+  useEffect(() => {
+    setForm(f => ({
+      ...f,
+      memberId:    prefill?.memberId ?? f.memberId,
+      scheduledAt: prefill?.scheduledAt ?? f.scheduledAt,
+    }))
+  }, [prefill?.memberId, prefill?.scheduledAt])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setCreating(true)
@@ -434,6 +553,17 @@ function NewAptForm({ members, onCreated, onClose, prefill }: {
         <div className="col-span-2">
           <label className={lbl}>Lien réunion</label>
           <input type="url" value={form.meetLink} onChange={e => setForm(f => ({ ...f, meetLink: e.target.value }))} placeholder="https://meet.google.com/…" className={inp} />
+        </div>
+        <div className="col-span-2">
+          <label className={lbl}>Note du coach</label>
+          {/* Cette note est rattachée au rendez-vous et reste modifiable après création. */}
+          <textarea
+            value={form.coachNote}
+            onChange={e => setForm(f => ({ ...f, coachNote: e.target.value }))}
+            rows={3}
+            placeholder="Objectif de l'appel, points à vérifier, consignes..."
+            className={`${inp} min-h-[86px] resize-none`}
+          />
         </div>
       </div>
       <div className="flex gap-2 justify-end">
@@ -534,8 +664,9 @@ export default function AgendaPage() {
   const [rules,        setRules]        = useState<AvailabilityRule[]>([])
   const [members,      setMembers]      = useState<Member[]>([])
   const [loading,      setLoading]      = useState(true)
-  const [showNew,      setShowNew]      = useState(false)
+  const [showNew,      setShowNew]      = useState(() => shouldOpenNewAppointmentFromUrl())
   const [prefillDate,  setPrefillDate]  = useState<string | undefined>()
+  const [prefillMemberId]                = useState(() => targetMemberIdFromUrl() ?? undefined)
   const [selectedId,   setSelectedId]   = useState<string | null>(() => targetAppointmentIdFromUrl())
   const [targetAppointmentId]           = useState(() => targetAppointmentIdFromUrl())
   const [showAvail,    setShowAvail]    = useState(false)
@@ -812,7 +943,7 @@ export default function AgendaPage() {
         {showNew && (
           <NewAptForm
             members={members}
-            prefill={prefillDate ? { scheduledAt: prefillDate } : undefined}
+            prefill={{ scheduledAt: prefillDate, memberId: prefillMemberId }}
             onCreated={fetchAll}
             onClose={() => setShowNew(false)}
           />

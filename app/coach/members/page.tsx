@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
 import {
-  Search, User, CalendarPlus, Mail, FileText, Calendar,
+  Search, User, CalendarPlus, FileText, Calendar,
   Send, ChevronRight, Trash2, Plus, X, Pin, Eye, Lock, Unlock,
   MessageSquare, ChevronDown, ChevronUp, Pencil, Check, PlusCircle,
   Footprints, Moon, Droplets, Battery, Brain, Camera,
@@ -1425,12 +1425,18 @@ function AppointmentsTab({ memberId }: { memberId: string }) {
             {a.coachNote  && <p className="mt-2 text-xs text-zinc-300 italic">"{a.coachNote}"</p>}
             {a.memberNote && <p className="mt-1 text-xs text-zinc-500">Note membre : {a.memberNote}</p>}
           </div>
-          {a.meetLink && (
-            <a href={a.meetLink} target="_blank" rel="noreferrer"
-              className="text-xs text-[#C8F135] hover:underline shrink-0">
-              Rejoindre
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            <a href={`/coach/appointments?id=${a.id}`}
+              className="text-xs text-[#C8F135] hover:underline">
+              Voir dans l'agenda
             </a>
-          )}
+            {a.meetLink && (
+              <a href={a.meetLink} target="_blank" rel="noreferrer"
+                className="text-xs text-zinc-400 hover:text-white hover:underline">
+                Rejoindre
+              </a>
+            )}
+          </div>
         </div>
       </div>
     )
@@ -1460,12 +1466,17 @@ type Tab = 'overview' | 'notes' | 'messages' | 'activity' | 'appointments'
 
 function defaultCoachMemberTab(): Tab {
   if (typeof window === 'undefined') return 'overview'
-  return new URLSearchParams(window.location.search).get('tab') === 'messages' ? 'messages' : 'overview'
+  const tab = new URLSearchParams(window.location.search).get('tab')
+  return tab === 'notes' || tab === 'messages' || tab === 'activity' || tab === 'appointments' ? tab : 'overview'
 }
 
 function requestedChatId() {
   if (typeof window === 'undefined') return null
   return new URLSearchParams(window.location.search).get('chatId')
+}
+function requestedMemberId() {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('memberId')
 }
 
 /** Coach members management page: sidebar member list with search, and a detail panel with Overview/Notes/Activity/Appointments tabs. */
@@ -1503,6 +1514,13 @@ export default function CoachMembers() {
 
   useEffect(() => {
     if (listLoading || selectedId || members.length === 0) return
+    const memberId = requestedMemberId()
+    if (memberId && members.some(item => item.member.id === memberId)) {
+      setSelectedId(memberId)
+      setTab(defaultCoachMemberTab())
+      fetchDetail(memberId)
+      return
+    }
     const chatId = requestedChatId()
     if (!chatId) return
     const target = members.find(item => item.chat?.id === chatId)
@@ -1698,17 +1716,18 @@ export default function CoachMembers() {
 
               <div className="flex items-center gap-2 shrink-0">
                 <a
-                  href={`/coach/appointments?memberId=${detail.id}`}
+                  href={`/coach/appointments?memberId=${detail.id}&new=1`}
                   className="flex items-center gap-1.5 text-xs font-medium border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white px-3 py-2 rounded-lg transition-colors"
                 >
                   <CalendarPlus className="size-3.5" /> Planifier RDV
                 </a>
-                <a
-                  href={`mailto:${detail.email}`}
+                <button
+                  type="button"
+                  onClick={() => setTab('messages')}
                   className="flex items-center gap-1.5 text-xs font-medium bg-[#C8F135] text-zinc-900 hover:bg-[#d4f54d] px-3 py-2 rounded-lg transition-colors"
                 >
-                  <Mail className="size-3.5" /> Contacter
-                </a>
+                  <MessageSquare className="size-3.5" /> Contacter
+                </button>
                 <button
                   onClick={removeMember}
                   disabled={removing}

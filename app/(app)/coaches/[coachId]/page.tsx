@@ -135,6 +135,7 @@ export default function CoachBookingPage() {
           coachProfileId: coachData.coachProfile.id,
           title:          coachData.coachProfile.discoveryCallTitle ?? 'Entretien découverte',
           description:    msg || undefined,
+          memberNote:     msg || undefined,
           scheduledAt:    scheduledAt.toISOString(),
           duration:       slotDuration,
         }),

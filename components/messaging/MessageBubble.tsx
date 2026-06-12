@@ -21,13 +21,13 @@ export function MessageBubble({ message, mine, label, showReadStatus }: MessageB
   return (
     <div className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
       <div className={cn(
-        'max-w-[82%] rounded-2xl px-3 py-2 text-sm',
+        'min-w-0 max-w-[88%] rounded-2xl px-3 py-2 text-sm sm:max-w-[82%] lg:max-w-[min(82%,42rem)]',
         mine ? 'bg-[#C8F135] text-zinc-950' : 'bg-zinc-800 text-zinc-100',
       )}>
         <p className={cn('mb-1 text-[10px] font-bold uppercase tracking-widest', mine ? 'text-zinc-700' : 'text-[#C8F135]')}>
           {label}
         </p>
-        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{message.content}</p>
         <p className={cn('mt-1 text-[10px]', mine ? 'text-zinc-700' : 'text-zinc-500')}>
           {format(new Date(message.createdAt), 'd MMM · HH:mm', { locale: fr })}
           {showReadStatus && message.readAt ? ' · Lu' : ''}

@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
-  const { coachProfileId, title, description, scheduledAt, duration, meetLink } = await req.json()
+  const { coachProfileId, title, description, scheduledAt, duration, meetLink, memberNote } = await req.json()
 
   if (!coachProfileId || !title || !scheduledAt) {
     return NextResponse.json({ error: 'coachProfileId, title et scheduledAt sont requis' }, { status: 400 })
@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       scheduledAt: new Date(scheduledAt),
       duration:    duration ?? 60,
       meetLink,
+      memberNote:  memberNote?.trim() ? memberNote.trim() : null,
       status:      'PENDING',
     },
     include: {

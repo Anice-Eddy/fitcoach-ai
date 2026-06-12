@@ -13,7 +13,7 @@ type MessageInputProps = {
 export function MessageInput({ value, onChange, onSend, placeholder, disabled, sending }: MessageInputProps) {
   return (
     <div className="border-t border-zinc-800 p-3">
-      <div className="flex gap-2">
+      <div className="flex min-w-0 gap-2">
         <textarea
           value={value}
           onChange={e => onChange(e.target.value)}
@@ -22,13 +22,13 @@ export function MessageInput({ value, onChange, onSend, placeholder, disabled, s
           maxLength={2000}
           disabled={disabled}
           placeholder={placeholder}
-          className="min-h-10 flex-1 resize-none rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-[#C8F135] disabled:opacity-50"
+          className="min-h-10 min-w-0 flex-1 resize-none rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-[#C8F135] disabled:opacity-50"
         />
         <button
           type="button"
           onClick={onSend}
           disabled={sending || disabled || !value.trim()}
-          className="self-end rounded-xl bg-[#C8F135] p-3 text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50"
+          className="shrink-0 self-end rounded-xl bg-[#C8F135] p-3 text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50"
           aria-label="Envoyer le message"
         >
           <Send className="size-4" />

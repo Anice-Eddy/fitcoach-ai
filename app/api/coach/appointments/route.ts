@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { memberId, title, description, scheduledAt, duration, meetLink } =
+    const { memberId, title, description, scheduledAt, duration, meetLink, coachNote } =
       await req.json()
 
     const coach = await prisma.user.findUnique({
@@ -89,6 +89,7 @@ export async function POST(req: NextRequest) {
         scheduledAt: new Date(scheduledAt),
         duration: duration || 60,
         meetLink,
+        coachNote: coachNote?.trim() ? coachNote.trim() : null,
       },
       include: { member: { include: { profile: true } } },
     })

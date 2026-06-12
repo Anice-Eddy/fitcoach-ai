@@ -7,6 +7,8 @@ import { Header } from '@/components/layout/Header'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { ListSkeleton } from '@/components/ui/LoadingSkeleton'
 import { cn } from '@/lib/utils'
+import { appendAppointmentNote } from '@/lib/appointments/notes'
+import { AppointmentNotesList } from '@/components/appointments/AppointmentNotesList'
 
 interface Appointment {
   id:          string
@@ -216,14 +218,18 @@ function AppointmentCard({
 
   const [showNote, setShowNote] = useState(false)
   const [note, setNote]         = useState(appt.memberNote ?? '')
+  const [noteMode, setNoteMode] = useState<'edit' | 'append'>('edit')
   const [saving, setSaving]     = useState(false)
 
   const saveNote = async () => {
+    const memberNote = noteMode === 'append'
+      ? appendAppointmentNote(appt.memberNote, note, 'Membre')
+      : note
     setSaving(true)
     await fetch(`/api/user/appointments/${appt.id}`, {
       method:  'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ memberNote: note }),
+      body:    JSON.stringify({ memberNote }),
     })
     setSaving(false)
     setShowNote(false)
@@ -278,21 +284,19 @@ function AppointmentCard({
         )}
       </div>
 
-      {/* Coach note */}
       {appt.coachNote && (
-        <div className={cn(
-          'mx-4 mb-3 rounded-xl px-3 py-2.5 border',
-          highlight
-            ? 'bg-blue-500/10 border-blue-400/25'
-            : 'bg-[#C8F135]/8 border-[#C8F135]/20',
-        )}>
-          <p className={cn(
-            'text-[10px] font-semibold uppercase tracking-widest mb-1',
-            highlight ? 'text-blue-400/80' : 'text-[#C8F135]/70',
-          )}>
-            Note de votre coach
-          </p>
-          <p className="text-sm text-zinc-200">{appt.coachNote}</p>
+        <div className="mx-4 mb-3">
+          <AppointmentNotesList
+            note={appt.coachNote}
+            title="Notes de votre coach"
+            accent={highlight ? 'blue' : 'lime'}
+          />
+        </div>
+      )}
+
+      {past && appt.memberNote && (
+        <div className="mx-4 mb-3">
+          <AppointmentNotesList note={appt.memberNote} title="Vos notes" />
         </div>
       )}
 
@@ -300,18 +304,29 @@ function AppointmentCard({
       {!past && (
         <div className="border-t border-zinc-800/60 px-4 py-3">
           {appt.memberNote && !showNote ? (
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600 mb-0.5">Votre note</p>
-                <p className="text-xs text-zinc-400">{appt.memberNote}</p>
-              </div>
-              <button onClick={() => { setNote(appt.memberNote ?? ''); setShowNote(true) }}
-                className="text-[10px] text-zinc-500 hover:text-[#C8F135] transition-colors shrink-0">
-                Modifier
+            <div className="space-y-2">
+              <AppointmentNotesList
+                note={appt.memberNote}
+                title="Vos notes"
+                canEdit
+                onSave={async (memberNote) => {
+                  await fetch(`/api/user/appointments/${appt.id}`, {
+                    method:  'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ memberNote }),
+                  })
+                  onNoteUpdated()
+                }}
+              />
+              <button onClick={() => { setNote(''); setNoteMode('append'); setShowNote(true) }}
+                className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-[#C8F135] transition-colors">
+                <MessageSquare className="size-3.5" />
+                Ajouter une note
+                <ChevronDown className="size-3" />
               </button>
             </div>
           ) : !showNote ? (
-            <button onClick={() => setShowNote(true)}
+            <button onClick={() => { setNote(''); setNoteMode('append'); setShowNote(true) }}
               className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-[#C8F135] transition-colors">
               <MessageSquare className="size-3.5" />
               Ajouter une note pour le coach
@@ -320,7 +335,9 @@ function AppointmentCard({
           ) : (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-zinc-400">Votre note</p>
+                <p className="text-xs font-medium text-zinc-400">
+                  {noteMode === 'append' && appt.memberNote ? 'Ajouter une note' : 'Votre note'}
+                </p>
                 <button onClick={() => setShowNote(false)} className="text-zinc-600 hover:text-zinc-400">
                   <ChevronUp className="size-3.5" />
                 </button>

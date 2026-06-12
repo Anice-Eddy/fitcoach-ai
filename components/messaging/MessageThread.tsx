@@ -50,10 +50,10 @@ export function MessageThread<T extends MessageBubbleData>({
   }
 
   return (
-    <div className="relative min-h-0 flex-1">
+    <div className="relative h-full min-h-0 overflow-hidden">
       <div
         ref={scrollRef}
-        className="h-full space-y-3 overflow-y-auto scroll-smooth p-4 pr-12"
+        className="h-full min-h-0 space-y-3 overflow-y-auto scroll-smooth p-4 pb-20 pr-4 sm:pr-14"
       >
         {messages.map(message => {
           const mine = isMine(message)
@@ -70,7 +70,7 @@ export function MessageThread<T extends MessageBubbleData>({
         <div ref={endRef} />
       </div>
 
-      <div className="pointer-events-none absolute right-3 top-3 flex flex-col gap-2">
+      <div className="pointer-events-none absolute bottom-4 right-3 flex flex-col gap-2 sm:right-4">
         <button
           type="button"
           onClick={scrollToTop}
