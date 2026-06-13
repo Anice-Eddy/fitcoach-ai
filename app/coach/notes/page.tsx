@@ -5,6 +5,7 @@ import { AlertCircle, CalendarClock, CheckCircle2, ChevronDown, Clock3, Filter, 
 import { format, isBefore, isToday } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { CoachPageHeader } from '@/components/coach/CoachPageHeader'
 
 type NoteStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE'
 type NotePriority = 'LOW' | 'MEDIUM' | 'HIGH'
@@ -230,18 +231,11 @@ export default function NotesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-3 py-1 text-xs font-semibold text-[#C8F135]">
-            <MessageSquareText className="size-3.5" />
-            Notes de suivi
-          </div>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">Journal coach</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
-            Centralisez les observations, actions à faire et points sensibles pour chaque membre suivi.
-          </p>
-        </div>
+    <div className="space-y-8">
+      <CoachPageHeader
+        title="Journal coach"
+        description="Centralisez les observations, actions à faire et points sensibles pour chaque membre suivi."
+        actions={
         <button
           type="button"
           onClick={() => setShowForm(true)}
@@ -251,10 +245,11 @@ export default function NotesPage() {
           <Plus className="size-4" />
           Nouvelle note
         </button>
-      </header>
+        }
+      />
 
-      <div className="grid gap-5 lg:grid-cols-[300px_1fr]">
-        <aside className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+      <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className="self-start rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white">Membres suivis</h2>
             <span className="rounded-full bg-zinc-800 px-2 py-1 text-xs text-zinc-400">{members.length}</span>

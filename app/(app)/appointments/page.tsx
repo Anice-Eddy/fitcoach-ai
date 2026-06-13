@@ -290,13 +290,14 @@ function AppointmentCard({
             note={appt.coachNote}
             title="Notes de votre coach"
             accent={highlight ? 'blue' : 'lime'}
+            compact
           />
         </div>
       )}
 
       {past && appt.memberNote && (
         <div className="mx-4 mb-3">
-          <AppointmentNotesList note={appt.memberNote} title="Vos notes" />
+          <AppointmentNotesList note={appt.memberNote} title="Vos notes" compact />
         </div>
       )}
 
@@ -309,6 +310,7 @@ function AppointmentCard({
                 note={appt.memberNote}
                 title="Vos notes"
                 canEdit
+                compact
                 onSave={async (memberNote) => {
                   await fetch(`/api/user/appointments/${appt.id}`, {
                     method:  'PATCH',

@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { appendAppointmentNote } from '@/lib/appointments/notes'
 import { AppointmentNotesList } from '@/components/appointments/AppointmentNotesList'
+import { CoachPageHeader } from '@/components/coach/CoachPageHeader'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -217,10 +218,11 @@ function PendingCard({ appt, onPatch, selected, aptRef }: {
                 title="Vos notes"
                 accent="lime"
                 canEdit
+                compact
                 onSave={(coachNote) => save({ coachNote })}
               />
             )}
-            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title="Notes du membre" />}
+            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title="Notes du membre" compact />}
           </div>
         )}
         <AppointmentNoteActions
@@ -317,8 +319,8 @@ function ProposedCard({ appt, onPatch, selected, aptRef }: {
         {appt.meetLink && <a href={appt.meetLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-[#C8F135] hover:underline mt-1"><Link2 className="size-3" />Lien réunion</a>}
         {(appt.coachNote || appt.memberNote) && (
           <div className="mt-2 space-y-1.5">
-            {appt.coachNote && <AppointmentNotesList note={appt.coachNote} title="Vos notes" accent="lime" />}
-            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title="Notes du membre" />}
+            {appt.coachNote && <AppointmentNotesList note={appt.coachNote} title="Vos notes" accent="lime" compact />}
+            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title="Notes du membre" compact />}
           </div>
         )}
         <div className="flex flex-wrap gap-1.5 mt-3">
@@ -406,10 +408,11 @@ function ConfirmedCard({ appt, onPatch, selected, aptRef }: {
                 title="Vos notes"
                 accent="lime"
                 canEdit
+                compact
                 onSave={(coachNote) => save({ coachNote })}
               />
             )}
-            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title="Notes du membre" />}
+            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title="Notes du membre" compact />}
           </div>
         )}
         <AppointmentNoteActions
@@ -819,10 +822,16 @@ export default function AgendaPage() {
   const weekLabel = `${fmtShortDate(days[0])} – ${fmtShortDate(days[6])} ${days[6].getFullYear()}`
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden -m-6">
+    <div className="space-y-8">
+      <CoachPageHeader
+        title="Agenda"
+        description="Gérez vos disponibilités, vos rendez-vous et les notes rattachées à chaque suivi."
+      />
+
+      <div className="grid h-[calc(100vh-15rem)] min-h-[620px] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 xl:grid-cols-[minmax(0,1fr)_420px]">
 
       {/* ── LEFT: Calendar ───────────────────────────────────────── */}
-      <div className="flex flex-col border-r border-zinc-800 overflow-hidden" style={{ width: '62%' }}>
+      <div className="flex min-w-0 flex-col overflow-hidden border-r border-zinc-800">
 
         {/* Week nav */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800 shrink-0">
@@ -926,7 +935,7 @@ export default function AgendaPage() {
       </div>
 
       {/* ── RIGHT: Appointments list ──────────────────────────────── */}
-      <div className="flex flex-col overflow-hidden" style={{ width: '38%' }}>
+      <div className="flex min-w-0 flex-col overflow-hidden">
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 shrink-0">
@@ -1003,6 +1012,7 @@ export default function AgendaPage() {
             </>
           )}
         </div>
+      </div>
       </div>
     </div>
   )

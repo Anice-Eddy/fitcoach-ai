@@ -112,7 +112,13 @@ export default function MessagesPage() {
     <>
       <Header title="Messages" />
       <PageWrapper>
-        <div className="grid h-[calc(100dvh-8rem)] min-h-[420px] grid-rows-[minmax(160px,32%)_1fr] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 lg:grid-cols-[280px_1fr] lg:grid-rows-none">
+        <div className="space-y-6">
+          <div>
+            <p className="text-lg font-bold text-white">Messages</p>
+            <p className="mt-0.5 text-xs text-zinc-400">Échangez avec votre coach et retrouvez vos conversations en cours.</p>
+          </div>
+
+        <div className="grid h-[calc(100dvh-12rem)] min-h-[420px] grid-rows-[minmax(160px,32%)_1fr] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 lg:grid-cols-[280px_1fr] lg:grid-rows-none">
           <ConversationList
             title="Mes coachs"
             description="Questions rapides et suivi quotidien."
@@ -155,6 +161,7 @@ export default function MessagesPage() {
               placeholder={selected ? 'Écrire au coach…' : 'Sélectionne un coach…'}
             />
           </section>
+        </div>
         </div>
       </PageWrapper>
     </>

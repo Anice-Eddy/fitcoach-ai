@@ -11,6 +11,7 @@ import {
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { CoachPageHeader } from '@/components/coach/CoachPageHeader'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -1596,7 +1597,13 @@ export default function CoachMembers() {
   )
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="space-y-8">
+      <CoachPageHeader
+        title="Membres"
+        description="Consultez les profils, notes, messages, activités et rendez-vous de chaque membre suivi."
+      />
+
+      <div className="flex h-[calc(100vh-15rem)] min-h-[620px] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
       <CreateMemberModal
         open={createOpen}
         saving={createSaving}
@@ -1763,6 +1770,7 @@ export default function CoachMembers() {
           </div>
         )}
       </main>
+      </div>
     </div>
   )
 }

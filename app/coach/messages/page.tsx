@@ -5,6 +5,7 @@ import { ConversationList, type ConversationItemData } from '@/components/messag
 import { MessageInput } from '@/components/messaging/MessageInput'
 import { MessageThread } from '@/components/messaging/MessageThread'
 import { useSSE } from '@/hooks/useSSE'
+import { CoachPageHeader } from '@/components/coach/CoachPageHeader'
 
 interface MemberItem {
   member: {
@@ -98,49 +99,56 @@ export default function CoachMessagesPage() {
   }))
 
   return (
-    <div className="grid h-[calc(100dvh-8rem)] min-h-[420px] grid-rows-[minmax(160px,32%)_1fr] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 lg:grid-cols-[300px_1fr] lg:grid-rows-none">
-      <ConversationList
-        title="Conversations"
-        description="Messages rapides avec vos membres."
-        loading={loading}
-        emptyLabel="Aucun membre suivi."
-        items={conversationItems}
-        activeId={selected?.member.id ?? null}
-        onSelect={(id) => setSelected(members.find(item => item.member.id === id) ?? null)}
+    <div className="space-y-8">
+      <CoachPageHeader
+        title="Messages"
+        description="Échangez avec vos membres et retrouvez rapidement les conversations en cours."
       />
 
-      <section className="flex min-h-0 flex-col">
-        <div className="border-b border-zinc-800 px-4 py-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-white">{selected ? memberName(selected) : 'Messages'}</p>
-            <span className="rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#C8F135]">
-              Espace coach
-            </span>
-          </div>
-          <p className="mt-0.5 text-xs text-zinc-500">Pour le suivi durable, gardez les décisions importantes dans les notes.</p>
-        </div>
-
-        <div className="min-h-0 flex-1">
-          <MessageThread
-            loading={threadLoading}
-            hasSelection={Boolean(selected)}
-            emptyLabel="Aucun message pour le moment."
-            noSelectionLabel="Sélectionnez un membre pour démarrer."
-            messages={messages}
-            isMine={(message) => Boolean(selected && message.senderUserId !== selected.member.id)}
-            labelFor={(message, mine) => mine ? 'Vous · Coach' : `Membre · ${message.sender.name ?? (selected ? memberName(selected) : 'Membre')}`}
-          />
-        </div>
-
-        <MessageInput
-          value={content}
-          onChange={setContent}
-          onSend={sendMessage}
-          sending={sending}
-          disabled={!selected}
-          placeholder={selected ? 'Écrire au membre…' : 'Sélectionnez un membre…'}
+      <div className="grid h-[calc(100dvh-15rem)] min-h-[420px] grid-rows-[minmax(160px,32%)_1fr] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 lg:grid-cols-[320px_1fr] lg:grid-rows-none">
+        <ConversationList
+          title="Conversations"
+          description="Messages rapides avec vos membres."
+          loading={loading}
+          emptyLabel="Aucun membre suivi."
+          items={conversationItems}
+          activeId={selected?.member.id ?? null}
+          onSelect={(id) => setSelected(members.find(item => item.member.id === id) ?? null)}
         />
-      </section>
+
+        <section className="flex min-h-0 flex-col">
+          <div className="border-b border-zinc-800 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-semibold text-white">{selected ? memberName(selected) : 'Messages'}</p>
+              <span className="rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#C8F135]">
+                Espace coach
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-zinc-500">Pour le suivi durable, gardez les décisions importantes dans les notes.</p>
+          </div>
+
+          <div className="min-h-0 flex-1">
+            <MessageThread
+              loading={threadLoading}
+              hasSelection={Boolean(selected)}
+              emptyLabel="Aucun message pour le moment."
+              noSelectionLabel="Sélectionnez un membre pour démarrer."
+              messages={messages}
+              isMine={(message) => Boolean(selected && message.senderUserId !== selected.member.id)}
+              labelFor={(message, mine) => mine ? 'Vous · Coach' : `Membre · ${message.sender.name ?? (selected ? memberName(selected) : 'Membre')}`}
+            />
+          </div>
+
+          <MessageInput
+            value={content}
+            onChange={setContent}
+            onSend={sendMessage}
+            sending={sending}
+            disabled={!selected}
+            placeholder={selected ? 'Écrire au membre…' : 'Sélectionnez un membre…'}
+          />
+        </section>
+      </div>
     </div>
   )
 }

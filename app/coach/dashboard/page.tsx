@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { Users, Calendar, TrendingUp, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
+import { CoachPageHeader } from '@/components/coach/CoachPageHeader'
 
 /** Coach dashboard server component: fetches report stats and renders KPI cards, top performers, and recent activity tables. */
 export default async function CoachDashboard() {
@@ -74,12 +75,10 @@ export default async function CoachDashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">Tableau de bord coach</h1>
-        <p className="text-zinc-400 text-sm mt-1">
-          Bonjour {coach.name?.split(' ')[0] ?? 'Coach'} — vue d&apos;ensemble de vos membres.
-        </p>
-      </div>
+      <CoachPageHeader
+        title="Tableau de bord coach"
+        description={<>Bonjour {coach.name?.split(' ')[0] ?? 'Coach'} — vue d&apos;ensemble de vos membres.</>}
+      />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (

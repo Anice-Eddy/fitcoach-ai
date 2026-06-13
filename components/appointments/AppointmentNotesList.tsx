@@ -10,6 +10,7 @@ type AppointmentNotesListProps = {
   title: string
   accent?: 'lime' | 'blue' | 'zinc'
   canEdit?: boolean
+  compact?: boolean
   onSave?: (nextNote: string) => Promise<void> | void
 }
 
@@ -20,7 +21,7 @@ const ACCENT_CLASS = {
 }
 
 /** Displays appointment notes as individual scrollable items so long histories do not stretch the appointment card. */
-export function AppointmentNotesList({ note, title, accent = 'zinc', canEdit = false, onSave }: AppointmentNotesListProps) {
+export function AppointmentNotesList({ note, title, accent = 'zinc', canEdit = false, compact = false, onSave }: AppointmentNotesListProps) {
   const entries = parseAppointmentNotes(note)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [draft, setDraft] = useState('')
@@ -42,19 +43,19 @@ export function AppointmentNotesList({ note, title, accent = 'zinc', canEdit = f
   }
 
   return (
-    <section className={cn('rounded-xl border px-3 py-2.5', ACCENT_CLASS[accent])}>
-      <div className="mb-2 flex items-center justify-between gap-2">
+    <section className={cn('rounded-xl border', compact ? 'px-2.5 py-2' : 'px-3 py-2.5', ACCENT_CLASS[accent])}>
+      <div className={cn('flex items-center justify-between gap-2', compact ? 'mb-1.5' : 'mb-2')}>
         <p className="text-[10px] font-semibold uppercase tracking-widest">{title}</p>
         <span className="rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-semibold text-zinc-400">
           {entries.length}
         </span>
       </div>
 
-      <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
+      <div className={cn('space-y-2 overflow-y-auto pr-1', compact ? 'max-h-32' : 'max-h-44')}>
         {entries.map((entry, index) => {
           const isEditing = editingIndex === index
           return (
-            <article key={`${entry.header ?? 'note'}-${index}`} className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-2.5 text-zinc-300">
+            <article key={`${entry.header ?? 'note'}-${index}`} className={cn('rounded-lg border border-zinc-800 bg-zinc-950/70 text-zinc-300', compact ? 'p-2' : 'p-2.5')}>
               <div className="mb-1.5 flex items-center justify-between gap-2">
                 <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
                   {entry.header ?? `Note ${index + 1}`}
@@ -101,7 +102,7 @@ export function AppointmentNotesList({ note, title, accent = 'zinc', canEdit = f
                   </div>
                 </div>
               ) : (
-                <p className="whitespace-pre-wrap break-words text-xs leading-5 text-zinc-300">{entry.content}</p>
+                <p className={cn('whitespace-pre-wrap break-words text-xs text-zinc-300', compact ? 'leading-4' : 'leading-5')}>{entry.content}</p>
               )}
             </article>
           )
