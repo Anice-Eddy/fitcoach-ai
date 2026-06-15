@@ -41,7 +41,15 @@ interface DBSession {
   durationMinutes: number | null
   exerciseLogs?: DBExerciseLog[]
 }
-interface DBProgram { id: string; name: string; currentWeek: number; weeksTotal: number; sessions: DBSession[] }
+interface DBProgram {
+  id: string
+  name: string
+  description: string | null
+  currentWeek: number
+  weeksTotal: number
+  sessions: DBSession[]
+  ai?: { generated: boolean; provider: string }
+}
 
 function mapPersistedExercises(session: DBSession): WorkoutSession['exercises'] {
   return (session.exerciseLogs ?? []).map((log) => ({
@@ -74,6 +82,8 @@ export function TrainingClient() {
 
   const [sessions,     setSessions]     = useState<WorkoutSession[]>(programCache?.sessions ?? [])
   const [programName,  setProgramName]  = useState(programCache?.programName ?? '')
+  const [programDescription, setProgramDescription] = useState<string | null>(programCache?.programDescription ?? null)
+  const [aiMeta, setAiMeta] = useState<DBProgram['ai'] | null>(programCache?.ai ?? null)
   const [programWeek,  setProgramWeek]  = useState(programCache?.programWeek ?? { current: 1, total: 8 })
   const [loading,      setLoading]      = useState(!isProgramCacheFresh())
   const [error,        setError]        = useState<string | null>(null)
@@ -132,12 +142,16 @@ export function TrainingClient() {
         const cache = {
           sessions:    combined,
           programName: program.name,
+          programDescription: program.description ?? null,
+          ai:          program.ai ?? null,
           programWeek: { current: program.currentWeek, total: program.weeksTotal },
           cachedAt:    Date.now(),
         }
         setProgramCache(cache)
         setSessions(combined)
         setProgramName(program.name)
+        setProgramDescription(program.description ?? null)
+        setAiMeta(program.ai ?? null)
         setProgramWeek({ current: program.currentWeek, total: program.weeksTotal })
         setLoading(false)
       })
@@ -154,8 +168,49 @@ export function TrainingClient() {
   const regenerate = async () => {
     clearProgramCache()
     setLoading(true)
-    await fetch('/api/user/training', { method: 'DELETE' })
-    fetchAndCache(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/user/training', { method: 'POST' })
+      if (!res.ok) throw new Error('Failed')
+      const program = await res.json() as DBProgram
+      const generated = generateProgram({
+        fitnessGoal:         profile!.fitnessGoal!,
+        fitnessLevel:        profile!.fitnessLevel!,
+        trainingDaysPerWeek: profile!.trainingDaysPerWeek ?? 3,
+        availableEquipment:  profile!.availableEquipment ?? [],
+      })
+      const combined: WorkoutSession[] = program.sessions.map(dbSess => {
+        const gen = generated.sessions.find(s => s.name === dbSess.name)
+          ?? generated.sessions[dbSess.dayOfWeek ?? 0]
+          ?? generated.sessions[0]
+        const persistedExercises = mapPersistedExercises(dbSess)
+        return {
+          ...gen,
+          id:              dbSess.id,
+          status:          dbSess.status as WorkoutSession['status'],
+          durationMinutes: dbSess.durationMinutes ?? gen.durationMinutes,
+          exercises:       persistedExercises.length > 0 ? persistedExercises : gen.exercises,
+        }
+      })
+      const cache = {
+        sessions:    combined,
+        programName: program.name,
+        programDescription: program.description ?? null,
+        ai:          program.ai ?? null,
+        programWeek: { current: program.currentWeek, total: program.weeksTotal },
+        cachedAt:    Date.now(),
+      }
+      setProgramCache(cache)
+      setSessions(combined)
+      setProgramName(program.name)
+      setProgramDescription(program.description ?? null)
+      setAiMeta(program.ai ?? null)
+      setProgramWeek({ current: program.currentWeek, total: program.weeksTotal })
+      setLoading(false)
+    } catch {
+      setError('Impossible de régénérer le programme.')
+      setLoading(false)
+    }
   }
 
   // Mise à jour de l'état local si le cache change (ex: autre onglet)
@@ -163,6 +218,8 @@ export function TrainingClient() {
     if (programCache && isProgramCacheFresh()) {
       setSessions(programCache.sessions)
       setProgramName(programCache.programName)
+      setProgramDescription(programCache.programDescription ?? null)
+      setAiMeta(programCache.ai ?? null)
       setProgramWeek(programCache.programWeek)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -199,6 +256,14 @@ export function TrainingClient() {
           <div>
             <h2 className="text-base font-bold text-white">{programName}</h2>
             <p className="text-sm text-zinc-400 mt-0.5">Semaine {programWeek.current} / {programWeek.total}</p>
+            {programDescription && (
+              <p className="mt-2 max-w-3xl text-xs leading-5 text-zinc-500">{programDescription}</p>
+            )}
+            {aiMeta && (
+              <span className="mt-3 inline-flex rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#C8F135]">
+                {aiMeta.generated ? `Assisté IA · ${aiMeta.provider}` : 'Génération BodyOps locale'}
+              </span>
+            )}
           </div>
           <button
             type="button"

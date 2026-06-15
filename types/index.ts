@@ -78,6 +78,7 @@ export interface SessionExercise extends Exercise {
   weightKg:         number | null
   restSeconds:      number
   tempo?:           string
+  rpe?:             number
   isCompleted:      boolean
   // Champs spécifiques aux exercices cardio
   durationMinutes?: number

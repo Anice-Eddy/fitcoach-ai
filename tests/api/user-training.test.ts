@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/auth/auth', () => ({ auth: vi.fn() }))
 vi.mock('@/lib/prisma/client', () => ({
@@ -16,14 +16,23 @@ vi.mock('@/lib/prisma/client', () => ({
 
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
-import { DELETE, GET } from '@/app/api/user/training/route'
+import { DELETE, GET, POST } from '@/app/api/user/training/route'
 
 const session = { user: { id: 'user-1' } }
 const profile = {
+  firstName:           'Alex',
+  age:                 28,
+  gender:              'MALE',
+  weightKg:            78,
+  heightCm:            178,
+  activityLevel:       'MODERATELY_ACTIVE',
   fitnessGoal:         'MUSCLE_GAIN',
   fitnessLevel:        'INTERMEDIATE',
+  bodyFocus:           'FULL_BODY',
+  targetWeightKg:      82,
   trainingDaysPerWeek: 3,
   availableEquipment:  ['BARBELL', 'DUMBBELL', 'BENCH'],
+  injuries:            null,
 }
 
 describe('/api/user/training', () => {
@@ -32,6 +41,12 @@ describe('/api/user/training', () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(session)
     ;(prisma.workoutProgram.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     ;(prisma.profile.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(profile)
+    vi.stubEnv('GEMINI_API_KEY', '')
+    vi.stubEnv('GROQ_API_KEY', '')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('retourne 401 si non connecté', async () => {
@@ -61,5 +76,19 @@ describe('/api/user/training', () => {
     expect(res.status).toBe(200)
     expect((prisma.workoutProgram.updateMany as ReturnType<typeof vi.fn>).mock.calls[0][0].where)
       .toEqual({ userId: 'user-1', isActive: true })
+  })
+
+  it('régénère un programme sur POST avec fallback local', async () => {
+    ;(prisma.workoutProgram.updateMany as ReturnType<typeof vi.fn>).mockResolvedValue({ count: 1 })
+    ;(prisma.workoutProgram.create as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 'program-2',
+      sessions: [],
+    })
+
+    const res = await POST()
+
+    expect(res.status).toBe(200)
+    expect(prisma.workoutProgram.updateMany).toHaveBeenCalled()
+    expect(prisma.workoutProgram.create).toHaveBeenCalled()
   })
 })

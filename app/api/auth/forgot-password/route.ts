@@ -92,7 +92,19 @@ export async function POST(req: Request) {
   const appUrl   = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   const resetUrl = `${appUrl}/auth/reset-password?token=${token}`
 
-  await sendPasswordResetEmail(email, resetUrl)
+  try {
+    await sendPasswordResetEmail(email, resetUrl)
+  } catch (error) {
+    console.error('[forgot-password] email delivery failed:', error)
+    return NextResponse.json(
+      {
+        ok: false,
+        reason: 'EMAIL_DELIVERY_FAILED',
+        message: "L'email n'a pas pu être envoyé. Vérifie la configuration Resend ou utilise Firebase reset password.",
+      },
+      { status: 503 },
+    )
+  }
 
   return NextResponse.json({ ok: true })
 }

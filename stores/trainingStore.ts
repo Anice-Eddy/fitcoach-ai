@@ -18,6 +18,8 @@ export interface ActiveSession {
 export interface ProgramCache {
   sessions:      WorkoutSession[]
   programName:   string
+  programDescription?: string | null
+  ai?:            { generated: boolean; provider: string } | null
   programWeek:   { current: number; total: number }
   cachedAt:      number // timestamp ms
 }

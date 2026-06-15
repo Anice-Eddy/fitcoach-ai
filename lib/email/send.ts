@@ -4,16 +4,25 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null
 
+const FROM_EMAIL = process.env.EMAIL_FROM ?? 'BodyOps <noreply@bodyops.app>'
+
+export function isEmailDeliveryConfigured() {
+  return Boolean(resend)
+}
+
 /** Sends a password reset email via Resend; logs the link to the console in development when Resend is not configured. */
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   if (!resend) {
-    // Dev: affiche le lien dans la console
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('RESEND_NOT_CONFIGURED')
+    }
+    // En développement local, on affiche le lien pour tester le flux sans envoyer un vrai email.
     console.log(`\n[DEV] Lien de réinitialisation pour ${to}:\n${resetUrl}\n`)
     return
   }
 
-  await resend.emails.send({
-    from:    'BodyOps <noreply@bodyops.app>',
+  const { error } = await resend.emails.send({
+    from:    FROM_EMAIL,
     to,
     subject: 'Réinitialisation de ton mot de passe — BodyOps',
     html: `
@@ -38,6 +47,11 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
       </div>
     `,
   })
+
+  if (error) {
+    console.error('[email] password reset send failed:', error)
+    throw new Error('EMAIL_SEND_FAILED')
+  }
 }
 
 /** Sends an appointment confirmation email with date, time, and optional meet link; logs details to console in development. */
@@ -52,12 +66,15 @@ export async function sendAppointmentEmail(
   const timeStr = scheduledAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
   if (!resend) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('RESEND_NOT_CONFIGURED')
+    }
     console.log(`\n[DEV] Rendez-vous pour ${to}: ${title} le ${dateStr} à ${timeStr}\n`)
     return
   }
 
-  await resend.emails.send({
-    from:    'BodyOps <noreply@bodyops.app>',
+  const { error } = await resend.emails.send({
+    from:    FROM_EMAIL,
     to,
     subject: `Rendez-vous confirmé avec ${coachName} — BodyOps`,
     html: `
@@ -84,4 +101,9 @@ export async function sendAppointmentEmail(
       </div>
     `,
   })
+
+  if (error) {
+    console.error('[email] appointment send failed:', error)
+    throw new Error('EMAIL_SEND_FAILED')
+  }
 }

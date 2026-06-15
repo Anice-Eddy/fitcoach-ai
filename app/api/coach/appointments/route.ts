@@ -114,13 +114,15 @@ export async function POST(req: NextRequest) {
 
     // Email au membre
     if (appointment.member.email) {
-      sendAppointmentEmail(
+      await sendAppointmentEmail(
         appointment.member.email,
         coach.name ?? 'Votre coach',
         title,
         new Date(scheduledAt),
         meetLink ?? null,
-      ).catch(() => {})
+      ).catch((error) => {
+        console.error('[coach appointments] email delivery failed:', error)
+      })
     }
 
     return NextResponse.json(appointment, { status: 201 })
