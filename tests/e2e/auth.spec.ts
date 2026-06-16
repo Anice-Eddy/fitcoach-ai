@@ -1,4 +1,23 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
+
+async function mockFirebasePasswordSignInError(page: Page, message = 'INVALID_LOGIN_CREDENTIALS') {
+  await page.route('https://identitytoolkit.googleapis.com/**', async (route) => {
+    const request = route.request()
+    if (!request.url().includes('accounts:signInWithPassword')) return route.continue()
+
+    await route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: {
+          code: 400,
+          message,
+          errors: [{ message, domain: 'global', reason: 'invalid' }],
+        },
+      }),
+    })
+  })
+}
 
 test.describe('Page de connexion', () => {
   test.beforeEach(async ({ page }) => {
@@ -34,34 +53,25 @@ test.describe('Page de connexion', () => {
     await expect(page.getByText("Ce compte social est déjà lié à un autre utilisateur. Essayez de vous connecter avec votre email et mot de passe, ou contactez le support.")).toBeVisible()
   })
 
-  test("affiche une erreur email introuvable sans bloquer le bouton", async ({ page }) => {
-    await page.route('**/api/auth/check-provider**', async (route) => {
-      await route.fulfill({ json: { provider: null } })
-    })
-
+  test("affiche une erreur Firebase si l'email est introuvable sans bloquer le bouton", async ({ page }) => {
+    await mockFirebasePasswordSignInError(page, 'EMAIL_NOT_FOUND')
     await page.getByPlaceholder('jean@example.com').fill('missing@example.com')
     await page.getByPlaceholder('••••••••').fill('password123')
     const submit = page.getByRole('button', { name: /se connecter/i })
     await submit.click()
 
-    await expect(page.getByText("Aucun compte n'existe avec cette adresse email.")).toBeVisible()
+    await expect(page.getByText('Email ou mot de passe Firebase incorrect.')).toBeVisible()
     await expect(submit).toBeEnabled()
   })
 
-  test('affiche une erreur mot de passe incorrect sans bloquer le bouton', async ({ page }) => {
-    await page.route('**/api/auth/check-provider**', async (route) => {
-      await route.fulfill({ json: { provider: 'EMAIL' } })
-    })
-    await page.route('**/api/auth/validate-credentials', async (route) => {
-      await route.fulfill({ status: 401, json: { valid: false, reason: 'BAD_PASSWORD' } })
-    })
-
+  test('affiche une erreur Firebase si le mot de passe est incorrect sans bloquer le bouton', async ({ page }) => {
+    await mockFirebasePasswordSignInError(page, 'INVALID_PASSWORD')
     await page.getByPlaceholder('jean@example.com').fill('member@example.com')
     await page.getByPlaceholder('••••••••').fill('wrong-password')
     const submit = page.getByRole('button', { name: /se connecter/i })
     await submit.click()
 
-    await expect(page.getByText('Mot de passe incorrect.')).toBeVisible()
+    await expect(page.getByText('Email ou mot de passe Firebase incorrect.')).toBeVisible()
     await expect(submit).toBeEnabled()
   })
 
