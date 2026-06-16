@@ -2,7 +2,7 @@ export type AuthProviderMode = 'firebase' | 'nextauth' | 'hybrid'
 
 export function normalizeAuthProviderMode(value?: string | null): AuthProviderMode {
   if (value === 'firebase' || value === 'nextauth' || value === 'hybrid') return value
-  return 'hybrid'
+  return 'firebase'
 }
 
 export function authProviderMode(): AuthProviderMode {

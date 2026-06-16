@@ -11,6 +11,19 @@ import { PageBackground } from '@/components/landing/PageBackground'
 import { clearClientAccountState } from '@/lib/auth/client-session'
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons'
 import { canUseFirebaseAuth, canUseNextAuth, publicAuthProviderMode } from '@/lib/auth/provider-mode'
+import { firebaseEmailRegister } from '@/lib/firebase/client'
+import { signInBodyOpsWithFirebaseCredential } from '@/lib/firebase/bodyops-auth'
+
+type FirebaseAuthError = { code?: string; message?: string }
+
+function firebaseRegisterErrorMessage(error: unknown) {
+  const code = (error as FirebaseAuthError | null)?.code
+  if (code === 'auth/email-already-in-use') return 'Cet email existe déjà côté Firebase. Connecte-toi avec ce compte.'
+  if (code === 'auth/weak-password') return 'Le mot de passe Firebase doit faire au moins 6 caractères.'
+  if (code === 'auth/invalid-email') return 'Email invalide.'
+  if (code === 'auth/operation-not-allowed') return 'L’inscription email/password Firebase n’est pas encore activée.'
+  return 'Impossible de créer le compte Firebase pour le moment.'
+}
 
 /** Member registration form: collects name, email, and password; posts to /api/auth/register and redirects on success. */
 export default function MemberRegisterPage() {
@@ -23,6 +36,7 @@ export default function MemberRegisterPage() {
   const authMode = publicAuthProviderMode()
   const showFirebase = canUseFirebaseAuth(authMode)
   const showNextAuth = canUseNextAuth(authMode)
+  const useFirebaseEmail = authMode === 'firebase'
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
@@ -33,6 +47,27 @@ export default function MemberRegisterPage() {
     e.preventDefault()
     setLoading(true)
     setErrors({})
+
+    if (useFirebaseEmail) {
+      try {
+        if (status === 'authenticated') {
+          clearClientAccountState()
+          await signOut({ redirect: false })
+        }
+
+        const credential = await firebaseEmailRegister(
+          form.email.trim().toLowerCase(),
+          form.password,
+          form.name,
+        )
+        toast.success('Compte Firebase créé ! Bienvenue sur BodyOps')
+        await signInBodyOpsWithFirebaseCredential(credential, '/onboarding')
+      } catch (err) {
+        setErrors({ email: firebaseRegisterErrorMessage(err) })
+        setLoading(false)
+      }
+      return
+    }
 
     const res = await fetch('/api/auth/register', {
       method:  'POST',
@@ -136,7 +171,7 @@ export default function MemberRegisterPage() {
             {errors.password && <p className="mt-1 text-xs text-red-400">{errors.password}</p>}
           </div>
 
-          {showNextAuth && (
+          {(showFirebase || showNextAuth) && (
           <button type="submit" disabled={loading}
             className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
             {loading ? <span className="size-5 rounded-full border-2 border-zinc-600 border-t-zinc-900 animate-spin" /> : 'Créer mon compte athlète'}

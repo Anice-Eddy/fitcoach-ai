@@ -109,9 +109,47 @@ export function NutritionClient() {
   const todayTotals = sumMacros(todayMeals)
   const availableDays = 7
 
+  // Ajoute un repas au plan affiché et le journalise si le jour sélectionné est aujourd'hui.
+  const addMealToSelectedDay = (
+    meal: NonNullable<NutritionPlan>['meals'][number],
+    options: { clientKeyPrefix: string; source: string; items?: unknown[] },
+  ) => {
+    if (!plan) return
+    const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
+    setPlan({ ...plan, meals: [...plan.meals, meal] })
+
+    if (selectedDay !== todayIndex) return
+
+    logMeal({
+      mealId:   meal.id,
+      name:     meal.name,
+      type:     meal.type,
+      calories: Math.round(meal.totalCalories),
+      proteinG: Math.round(meal.totalProteinG),
+      carbsG:   Math.round(meal.totalCarbsG),
+      fatG:     Math.round(meal.totalFatG),
+      loggedAt: new Date().toISOString(),
+    })
+
+    fetch('/api/user/nutrition/logs', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        clientKey: `${options.clientKeyPrefix}:${meal.id}`,
+        source:    options.source,
+        mealType:  meal.type,
+        name:      meal.name,
+        calories:  Math.round(meal.totalCalories),
+        proteinG:  Math.round(meal.totalProteinG),
+        carbsG:    Math.round(meal.totalCarbsG),
+        fatG:      Math.round(meal.totalFatG),
+        items:     options.items ?? [],
+      }),
+    }).catch(() => {})
+  }
+
   const addQuickMeal = () => {
     if (!plan || !quickMeal.name || !quickMeal.calories) return
-    const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
     const meal = {
       id: `custom-${Date.now()}`,
       dayOfWeek: selectedDay,
@@ -125,38 +163,41 @@ export function NutritionClient() {
       isLogged: false,
       foodItems: [],
     }
-    setPlan({ ...plan, meals: [...plan.meals, meal] })
-    // Si l'utilisateur ajoute un repas sur aujourd'hui, il compte tout de suite dans le dashboard.
-    if (selectedDay === todayIndex) {
-      logMeal({
-        mealId:   meal.id,
-        name:     meal.name,
-        type:     meal.type,
-        calories: Math.round(meal.totalCalories),
-        proteinG: Math.round(meal.totalProteinG),
-        carbsG:   Math.round(meal.totalCarbsG),
-        fatG:     Math.round(meal.totalFatG),
-        loggedAt: new Date().toISOString(),
-      })
-      // Les repas ajoutés manuellement sont aussi persistés pour rester visibles coach/IA.
-      fetch('/api/user/nutrition/logs', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          clientKey: `manual:${meal.id}`,
-          source:    'MANUAL',
-          mealType:  meal.type,
-          name:      meal.name,
-          calories:  Math.round(meal.totalCalories),
-          proteinG:  Math.round(meal.totalProteinG),
-          carbsG:    Math.round(meal.totalCarbsG),
-          fatG:      Math.round(meal.totalFatG),
-          items:     [],
-        }),
-      }).catch(() => {})
-    }
+    addMealToSelectedDay(meal, { clientKeyPrefix: 'manual', source: 'MANUAL' })
     setQuickMeal({ name: '', calories: '', proteinG: '', carbsG: '', fatG: '' })
     setAddingMeal(false)
+  }
+
+  const addCalculatedFood = () => {
+    if (!plan || !calcResult || !calcFoodId) return
+    const id = `food-${calcFoodId}-${Date.now()}`
+    const meal = {
+      id,
+      dayOfWeek: selectedDay,
+      type: 'LUNCH' as const,
+      name: calcResult.name,
+      scheduledTime: 'Libre',
+      totalCalories: calcResult.calories,
+      totalProteinG: calcResult.proteinG,
+      totalCarbsG: calcResult.carbsG,
+      totalFatG: calcResult.fatG,
+      isLogged: false,
+      foodItems: [{
+        id: calcFoodId,
+        name: calcResult.name,
+        gramsAmount: calcResult.grams,
+        calories: calcResult.calories,
+        proteinG: calcResult.proteinG,
+        carbsG: calcResult.carbsG,
+        fatG: calcResult.fatG,
+        fiberG: calcResult.fiberG,
+      }],
+    }
+    addMealToSelectedDay(meal, {
+      clientKeyPrefix: 'food',
+      source: 'CALCULATED_FOOD',
+      items: meal.foodItems,
+    })
   }
 
   return (
@@ -216,10 +257,12 @@ export function NutritionClient() {
 
         {addingMeal && (
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-            <div className="grid gap-3 sm:grid-cols-5">
+            <div className="grid gap-3 sm:grid-cols-7">
               <input value={quickMeal.name} onChange={(e) => setQuickMeal({ ...quickMeal, name: e.target.value })} placeholder="Nom" className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white outline-none focus:border-[#C8F135] sm:col-span-2" />
               <input value={quickMeal.calories} onChange={(e) => setQuickMeal({ ...quickMeal, calories: e.target.value })} type="number" placeholder="kcal" className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white outline-none focus:border-[#C8F135]" />
               <input value={quickMeal.proteinG} onChange={(e) => setQuickMeal({ ...quickMeal, proteinG: e.target.value })} type="number" placeholder="Prot. g" className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white outline-none focus:border-[#C8F135]" />
+              <input value={quickMeal.carbsG} onChange={(e) => setQuickMeal({ ...quickMeal, carbsG: e.target.value })} type="number" placeholder="Gluc. g" className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white outline-none focus:border-[#C8F135]" />
+              <input value={quickMeal.fatG} onChange={(e) => setQuickMeal({ ...quickMeal, fatG: e.target.value })} type="number" placeholder="Lip. g" className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white outline-none focus:border-[#C8F135]" />
               <button type="button" onClick={addQuickMeal} disabled={!quickMeal.name || !quickMeal.calories} aria-label="Enregistrer le repas rapide" className="rounded-xl bg-[#C8F135] px-4 py-2 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] disabled:opacity-50">Ajouter</button>
             </div>
           </div>
@@ -234,10 +277,12 @@ export function NutritionClient() {
 
       {/* Calculateur rapide aliment → macros */}
       <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Calculator className="size-4 text-[#C8F135]" />
-          <h3 className="text-sm font-semibold text-white">Calculateur de macros</h3>
-          <span className="text-xs text-zinc-500 ml-1">— Saisie rapide quantité → résultat instantané</span>
+        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <Calculator className="size-4 text-[#C8F135]" />
+            <h3 className="text-sm font-semibold text-white">Ajouter un aliment calculé</h3>
+          </div>
+          <span className="text-xs text-zinc-500">Calcule les macros puis ajoute l’aliment au jour sélectionné.</span>
         </div>
         <div className="flex gap-3 flex-wrap">
           <div className="flex-1 min-w-[180px]">
@@ -291,9 +336,19 @@ export function NutritionClient() {
           </div>
         )}
         {calcResult && (
-          <p className="text-xs text-zinc-600 mt-2">
-            Pour {calcGrams}g de {calcResult.name} · Fibres : {calcResult.fiberG}g
-          </p>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-zinc-600">
+              Pour {calcGrams}g de {calcResult.name} · Fibres : {calcResult.fiberG}g
+            </p>
+            <button
+              type="button"
+              onClick={addCalculatedFood}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 py-2 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d]"
+            >
+              <Plus className="size-4" />
+              Ajouter cet aliment
+            </button>
+          </div>
         )}
       </div>
     </div>

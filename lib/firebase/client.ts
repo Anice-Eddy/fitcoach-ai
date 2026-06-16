@@ -8,6 +8,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  updateProfile,
 } from 'firebase/auth'
 import { facebookProvider, googleProvider } from './providers'
 
@@ -50,8 +51,11 @@ export async function firebaseEmailSignIn(email: string, password: string) {
   return signInWithEmailAndPassword(firebaseAuth(), email, password)
 }
 
-export async function firebaseEmailRegister(email: string, password: string) {
+export async function firebaseEmailRegister(email: string, password: string, displayName?: string) {
   const credential = await createUserWithEmailAndPassword(firebaseAuth(), email, password)
+  if (displayName?.trim()) {
+    await updateProfile(credential.user, { displayName: displayName.trim() })
+  }
   await sendEmailVerification(credential.user)
   return credential
 }

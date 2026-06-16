@@ -10,6 +10,8 @@ import { toast } from 'sonner'
 import { PageBackground } from '@/components/landing/PageBackground'
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons'
 import { canUseFirebaseAuth, canUseNextAuth, publicAuthProviderMode } from '@/lib/auth/provider-mode'
+import { firebaseEmailRegister } from '@/lib/firebase/client'
+import { signInBodyOpsWithFirebaseCredential } from '@/lib/firebase/bodyops-auth'
 
 const SPECIALTIES = [
   'Force & Powerlifting', 'Hypertrophie', 'Perte de poids', 'Cardio & Endurance',
@@ -24,6 +26,16 @@ const CERTIFICATIONS = [
 ]
 
 type Step = 1 | 2 | 3
+type FirebaseAuthError = { code?: string; message?: string }
+
+function firebaseCoachRegisterErrorMessage(error: unknown) {
+  const code = (error as FirebaseAuthError | null)?.code
+  if (code === 'auth/email-already-in-use') return 'Cet email existe déjà côté Firebase. Connectez-vous avec ce compte.'
+  if (code === 'auth/weak-password') return 'Le mot de passe Firebase doit faire au moins 6 caractères.'
+  if (code === 'auth/invalid-email') return 'Email invalide.'
+  if (code === 'auth/operation-not-allowed') return 'L’inscription email/password Firebase n’est pas encore activée.'
+  return 'Impossible de créer le compte coach Firebase pour le moment.'
+}
 
 // Small registration switch for information the coach can expose to members.
 function VisibilityToggle({ checked, onChange, label }: {
@@ -55,6 +67,7 @@ export default function CoachRegisterPage() {
   const authMode = publicAuthProviderMode()
   const showFirebase = canUseFirebaseAuth(authMode)
   const showNextAuth = canUseNextAuth(authMode)
+  const useFirebaseEmail = showFirebase && !showNextAuth
 
   const [form, setForm] = useState({
     name:            '',
@@ -112,6 +125,23 @@ export default function CoachRegisterPage() {
     if (form.specialties.length === 0) errs.specialties = 'Sélectionnez au moins une spécialité'
     setErrors(errs)
     return Object.keys(errs).length === 0
+  }
+
+  const handleFirebaseCoachRegister = async () => {
+    if (!validateStep1()) return
+    setLoading(true)
+    try {
+      const credential = await firebaseEmailRegister(
+        form.email.trim().toLowerCase(),
+        form.password,
+        form.name,
+      )
+      toast.success('Compte Firebase créé. Complétez votre profil coach.')
+      await signInBodyOpsWithFirebaseCredential(credential, '/auth/coach/complete')
+    } catch (err) {
+      setErrors({ email: firebaseCoachRegisterErrorMessage(err) })
+      setLoading(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -230,8 +260,17 @@ export default function CoachRegisterPage() {
             </button>
             )}
 
+            {useFirebaseEmail && (
+              <button type="button" onClick={handleFirebaseCoachRegister} disabled={loading}
+                className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                {loading
+                  ? <span className="size-5 rounded-full border-2 border-zinc-600 border-t-zinc-900 animate-spin" />
+                  : 'Créer mon compte coach avec Firebase'}
+              </button>
+            )}
+
             {showFirebase && (
-              <p className="text-center text-xs text-zinc-500">La connexion sociale créera votre compte et vous demandera de compléter le profil coach.</p>
+              <p className="text-center text-xs text-zinc-500">Firebase créera votre compte et vous demandera de compléter le profil coach.</p>
             )}
           </div>
         )}

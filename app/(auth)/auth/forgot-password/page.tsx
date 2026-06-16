@@ -6,7 +6,7 @@ import { ArrowLeft, MailCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { Logo } from '@/components/ui/Logo'
 import { PageBackground } from '@/components/landing/PageBackground'
-import { canUseFirebaseAuth, canUseNextAuth, publicAuthProviderMode } from '@/lib/auth/provider-mode'
+import { publicAuthProviderMode } from '@/lib/auth/provider-mode'
 import { firebaseForgotPassword } from '@/lib/firebase/client'
 
 type FirebaseResetError = { code?: string; message?: string }
@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
   const [error,   setError]   = useState('')
   const submitLockRef = useRef(false)
   const authMode = publicAuthProviderMode()
-  const useFirebaseReset = canUseFirebaseAuth(authMode) && !canUseNextAuth(authMode)
+  const useFirebaseReset = authMode === 'firebase'
 
   const sendLegacyReset = async () => {
     const res = await fetch('/api/auth/forgot-password', {

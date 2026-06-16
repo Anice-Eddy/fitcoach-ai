@@ -5,15 +5,20 @@ import { signIn } from 'next-auth/react'
 
 /** Exchanges a Firebase user credential for a BodyOps DB user via the backend token verifier. */
 export async function syncBodyOpsWithFirebaseCredential(credential: UserCredential) {
-  const idToken = await credential.user.getIdToken()
+  const idToken = await credential.user.getIdToken(true)
   return syncBodyOpsUserWithFirebaseIdToken(idToken)
 }
 
 /** Verifies Firebase, links the DB user, then creates the temporary NextAuth session used by current routes. */
 export async function signInBodyOpsWithFirebaseCredential(credential: UserCredential, callbackUrl = '/dashboard') {
   const session = await syncBodyOpsWithFirebaseCredential(credential)
+  return createBodyOpsNextAuthSession(session.firebaseSessionToken, callbackUrl)
+}
+
+/** Creates the current BodyOps browser session after the backend has verified Firebase. */
+export async function createBodyOpsNextAuthSession(firebaseSessionToken: string, callbackUrl = '/dashboard') {
   return signIn('firebase-handoff', {
-    token: session.firebaseSessionToken,
+    token: firebaseSessionToken,
     callbackUrl,
     redirect: true,
   })

@@ -10,6 +10,20 @@ import { PageBackground } from '@/components/landing/PageBackground'
 import { clearClientAccountState } from '@/lib/auth/client-session'
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons'
 import { canUseFirebaseAuth, canUseNextAuth, publicAuthProviderMode } from '@/lib/auth/provider-mode'
+import { firebaseEmailSignIn } from '@/lib/firebase/client'
+import { createBodyOpsNextAuthSession, syncBodyOpsWithFirebaseCredential } from '@/lib/firebase/bodyops-auth'
+
+type FirebaseAuthError = { code?: string; message?: string }
+
+function firebaseSignInErrorMessage(error: unknown) {
+  const code = (error as FirebaseAuthError | null)?.code
+  if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+    return 'Email ou mot de passe Firebase incorrect.'
+  }
+  if (code === 'auth/too-many-requests') return 'Trop de tentatives Firebase. Réessaie dans quelques minutes.'
+  if (code === 'auth/operation-not-allowed') return 'La connexion email/password Firebase n’est pas encore activée.'
+  return 'Connexion Firebase impossible pour le moment.'
+}
 
 /** Sign-in page shell wrapping the SignInForm in a Suspense boundary for searchParams access. */
 export default function SignInPage() {
@@ -40,6 +54,7 @@ function SignInForm() {
   const authMode = publicAuthProviderMode()
   const showFirebase = canUseFirebaseAuth(authMode)
   const showNextAuth = canUseNextAuth(authMode)
+  const useFirebaseEmail = authMode === 'firebase'
 
   useEffect(() => {
     if (authError === 'OAuthAccountNotLinked' && sessionStorage.getItem('bodyops:last-auth-context') === 'coach') {
@@ -65,6 +80,33 @@ function SignInForm() {
     setError('')
 
     try {
+      if (useFirebaseEmail) {
+        if (status === 'authenticated') {
+          clearClientAccountState()
+          await signOut({ redirect: false })
+        }
+
+        const credential = await firebaseEmailSignIn(form.email.trim().toLowerCase(), form.password)
+        const bodyOpsSession = await syncBodyOpsWithFirebaseCredential(credential)
+        const user = bodyOpsSession.user
+
+        if (mode === 'member' && user?.isCoach && !user?.hasMemberProfile) {
+          setError("Ce compte est un compte coach. Basculez sur l'onglet « Coach » pour vous connecter.")
+          return
+        }
+        if (mode === 'coach' && !user?.isCoach) {
+          setError("Ce compte est un compte membre. Basculez sur l'onglet « Membre » pour vous connecter.")
+          return
+        }
+
+        sessionStorage.removeItem('bodyops:last-auth-context')
+        await createBodyOpsNextAuthSession(
+          bodyOpsSession.firebaseSessionToken,
+          mode === 'coach' ? '/coach/dashboard' : '/dashboard',
+        )
+        return
+      }
+
       const provider = await fetch(`/api/auth/check-provider?email=${encodeURIComponent(form.email)}`)
         .then((r) => r.json())
         .catch(() => ({ provider: null }))
@@ -121,8 +163,8 @@ function SignInForm() {
       } else {
         setError('Mot de passe incorrect.')
       }
-    } catch {
-      setError('Une erreur est survenue. Veuillez réessayer.')
+    } catch (err) {
+      setError(useFirebaseEmail ? firebaseSignInErrorMessage(err) : 'Une erreur est survenue. Veuillez réessayer.')
     } finally {
       setLoading(false)
     }
@@ -207,7 +249,7 @@ function SignInForm() {
             </div>
           </div>
 
-          {showNextAuth && (
+          {(showFirebase || showNextAuth) && (
           <button type="submit" disabled={loading}
             className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50 flex items-center justify-center">
             {loading
