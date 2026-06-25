@@ -18,11 +18,11 @@ type FirebaseAuthError = { code?: string; message?: string }
 function firebaseSignInErrorMessage(error: unknown) {
   const code = (error as FirebaseAuthError | null)?.code
   if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
-    return 'Email ou mot de passe Firebase incorrect.'
+    return 'Email ou mot de passe incorrect.'
   }
-  if (code === 'auth/too-many-requests') return 'Trop de tentatives Firebase. Réessaie dans quelques minutes.'
-  if (code === 'auth/operation-not-allowed') return 'La connexion email/password Firebase n’est pas encore activée.'
-  return 'Connexion Firebase impossible pour le moment.'
+  if (code === 'auth/too-many-requests') return 'Trop de tentatives. Réessaie dans quelques minutes.'
+  if (code === 'auth/operation-not-allowed') return 'La connexion par email n’est pas encore activée.'
+  return 'Connexion impossible pour le moment.'
 }
 
 /** Sign-in page shell wrapping the SignInForm in a Suspense boundary for searchParams access. */

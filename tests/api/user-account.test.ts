@@ -8,6 +8,7 @@ vi.mock('@/lib/prisma/client', () => ({
   prisma: {
     user: {
       update: vi.fn(),
+      findUnique: vi.fn(),
       delete: vi.fn(),
     },
   },
@@ -15,11 +16,18 @@ vi.mock('@/lib/prisma/client', () => ({
 
 vi.mock('bcryptjs', () => ({
   hash: vi.fn(async () => 'hashed-password'),
+  compare: vi.fn(async () => true),
+}))
+
+vi.mock('@/lib/firebase/delete-user', () => ({
+  deleteExternalAuthUser: vi.fn(),
 }))
 
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
-import { PATCH } from '@/app/api/user/account/route'
+import { compare } from 'bcryptjs'
+import { deleteExternalAuthUser } from '@/lib/firebase/delete-user'
+import { DELETE, PATCH } from '@/app/api/user/account/route'
 
 function makeRequest(body: unknown) {
   return new Request('http://localhost/api/user/account', {
@@ -88,5 +96,71 @@ describe('PATCH /api/user/account', () => {
     expect(prisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ image: null }),
     }))
+  })
+})
+
+describe('DELETE /api/user/account', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  function deleteRequest(body?: unknown) {
+    return new Request('http://localhost/api/user/account', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    })
+  }
+
+  it('returns 401 when the user is not signed in', async () => {
+    ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(null)
+
+    const res = await DELETE(deleteRequest())
+
+    expect(res.status).toBe(401)
+  })
+
+  it('deletes the external auth identity before deleting the BodyOps user', async () => {
+    ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
+    ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
+      password: null,
+      firebaseUid: 'firebase-uid-1',
+    })
+    ;(deleteExternalAuthUser as ReturnType<typeof vi.fn>).mockResolvedValue({ deleted: true })
+    ;(prisma.user.delete as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'user-1' })
+
+    const res = await DELETE(deleteRequest())
+
+    expect(res.status).toBe(200)
+    expect(deleteExternalAuthUser).toHaveBeenCalledWith('firebase-uid-1')
+    expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: 'user-1' } })
+  })
+
+  it('does not delete the BodyOps user if external auth deletion fails', async () => {
+    ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
+    ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
+      password: null,
+      firebaseUid: 'firebase-uid-1',
+    })
+    ;(deleteExternalAuthUser as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('auth unavailable'))
+
+    const res = await DELETE(deleteRequest())
+
+    expect(res.status).toBe(503)
+    expect(prisma.user.delete).not.toHaveBeenCalled()
+  })
+
+  it('requires and validates the password for legacy password accounts', async () => {
+    ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
+    ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
+      password: 'hashed-password',
+      firebaseUid: null,
+    })
+    ;(compare as ReturnType<typeof vi.fn>).mockResolvedValue(false)
+
+    const res = await DELETE(deleteRequest({ password: 'wrong-password' }))
+
+    expect(res.status).toBe(403)
+    expect(prisma.user.delete).not.toHaveBeenCalled()
   })
 })

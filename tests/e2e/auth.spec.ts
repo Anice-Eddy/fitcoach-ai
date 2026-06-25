@@ -53,25 +53,25 @@ test.describe('Page de connexion', () => {
     await expect(page.getByText("Ce compte social est déjà lié à un autre utilisateur. Essayez de vous connecter avec votre email et mot de passe, ou contactez le support.")).toBeVisible()
   })
 
-  test("affiche une erreur Firebase si l'email est introuvable sans bloquer le bouton", async ({ page }) => {
+  test("affiche une erreur si l'email est introuvable sans bloquer le bouton", async ({ page }) => {
     await mockFirebasePasswordSignInError(page, 'EMAIL_NOT_FOUND')
     await page.getByPlaceholder('jean@example.com').fill('missing@example.com')
     await page.getByPlaceholder('••••••••').fill('password123')
     const submit = page.getByRole('button', { name: /se connecter/i })
     await submit.click()
 
-    await expect(page.getByText('Email ou mot de passe Firebase incorrect.')).toBeVisible()
+    await expect(page.getByText('Email ou mot de passe incorrect.')).toBeVisible()
     await expect(submit).toBeEnabled()
   })
 
-  test('affiche une erreur Firebase si le mot de passe est incorrect sans bloquer le bouton', async ({ page }) => {
+  test('affiche une erreur si le mot de passe est incorrect sans bloquer le bouton', async ({ page }) => {
     await mockFirebasePasswordSignInError(page, 'INVALID_PASSWORD')
     await page.getByPlaceholder('jean@example.com').fill('member@example.com')
     await page.getByPlaceholder('••••••••').fill('wrong-password')
     const submit = page.getByRole('button', { name: /se connecter/i })
     await submit.click()
 
-    await expect(page.getByText('Email ou mot de passe Firebase incorrect.')).toBeVisible()
+    await expect(page.getByText('Email ou mot de passe incorrect.')).toBeVisible()
     await expect(submit).toBeEnabled()
   })
 

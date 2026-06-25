@@ -30,11 +30,11 @@ type FirebaseAuthError = { code?: string; message?: string }
 
 function firebaseCoachRegisterErrorMessage(error: unknown) {
   const code = (error as FirebaseAuthError | null)?.code
-  if (code === 'auth/email-already-in-use') return 'Cet email existe déjà côté Firebase. Connectez-vous avec ce compte.'
-  if (code === 'auth/weak-password') return 'Le mot de passe Firebase doit faire au moins 6 caractères.'
+  if (code === 'auth/email-already-in-use') return 'Cet email existe déjà. Connectez-vous avec ce compte.'
+  if (code === 'auth/weak-password') return 'Le mot de passe doit faire au moins 6 caractères.'
   if (code === 'auth/invalid-email') return 'Email invalide.'
-  if (code === 'auth/operation-not-allowed') return 'L’inscription email/password Firebase n’est pas encore activée.'
-  return 'Impossible de créer le compte coach Firebase pour le moment.'
+  if (code === 'auth/operation-not-allowed') return 'L’inscription par email n’est pas encore activée.'
+  return 'Impossible de créer le compte coach pour le moment.'
 }
 
 // Small registration switch for information the coach can expose to members.
@@ -136,7 +136,7 @@ export default function CoachRegisterPage() {
         form.password,
         form.name,
       )
-      toast.success('Compte Firebase créé. Complétez votre profil coach.')
+      toast.success('Compte créé. Complétez votre profil coach.')
       await signInBodyOpsWithFirebaseCredential(credential, '/auth/coach/complete')
     } catch (err) {
       setErrors({ email: firebaseCoachRegisterErrorMessage(err) })
@@ -265,12 +265,12 @@ export default function CoachRegisterPage() {
                 className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                 {loading
                   ? <span className="size-5 rounded-full border-2 border-zinc-600 border-t-zinc-900 animate-spin" />
-                  : 'Créer mon compte coach avec Firebase'}
+                  : 'Créer mon compte coach'}
               </button>
             )}
 
             {showFirebase && (
-              <p className="text-center text-xs text-zinc-500">Firebase créera votre compte et vous demandera de compléter le profil coach.</p>
+              <p className="text-center text-xs text-zinc-500">Votre compte sera créé, puis vous pourrez compléter votre profil coach.</p>
             )}
           </div>
         )}

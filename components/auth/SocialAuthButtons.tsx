@@ -43,17 +43,17 @@ function providerErrorMessage(error: unknown) {
   const message = (error as SocialAuthError | null)?.message
   if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return null
   if (code === 'auth/configuration-not-found') {
-    return 'Firebase Authentication n’est pas configuré pour ce projet. Active Google/Facebook dans Firebase Console > Authentication > Sign-in method.'
+    return 'La connexion sociale n’est pas encore configurée.'
   }
   if (code === 'auth/operation-not-allowed') {
-    return 'Ce fournisseur n’est pas activé dans Firebase Console.'
+    return 'Ce mode de connexion n’est pas encore activé.'
   }
   if (code === 'auth/unauthorized-domain') {
-    return 'Ce domaine n’est pas autorisé dans Firebase Authentication.'
+    return 'Ce domaine n’est pas encore autorisé pour la connexion.'
   }
-  if (code === 'auth/invalid-api-key') return 'La clé API Firebase client est invalide.'
+  if (code === 'auth/invalid-api-key') return 'La configuration de connexion est invalide.'
   if (code === 'auth/app-not-authorized') {
-    return 'Cette app Firebase n’est pas autorisée pour ce domaine.'
+    return 'Cette application n’est pas encore autorisée pour ce domaine.'
   }
   if (code === 'auth/popup-blocked') return 'Le navigateur a bloqué la fenêtre de connexion.'
   if (code === 'auth/account-exists-with-different-credential') {
@@ -103,7 +103,7 @@ export function SocialAuthButtons({ callbackUrl = '/dashboard', disabled }: Soci
     })
     if (!res.ok) {
       const payload = await res.json().catch(() => null)
-      throw new Error(payload?.error ?? 'Connexion Firebase impossible côté serveur.')
+      throw new Error(payload?.error ?? 'Connexion impossible côté serveur.')
     }
     const data = await res.json()
     await signIn('firebase-handoff', {

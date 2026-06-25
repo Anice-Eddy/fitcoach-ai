@@ -11,6 +11,19 @@ import { firebaseForgotPassword } from '@/lib/firebase/client'
 
 type FirebaseResetError = { code?: string; message?: string }
 
+function isTemporaryResetServiceError(err: unknown) {
+  const error = err as FirebaseResetError | null
+  const code = error?.code ?? ''
+  const message = error?.message ?? ''
+
+  return (
+    code === 'auth/network-request-failed' ||
+    code === 'auth/internal-error' ||
+    message.includes('503') ||
+    message.toLowerCase().includes('service unavailable')
+  )
+}
+
 /** Forgot-password page: collects an email and calls /api/auth/forgot-password to send a reset link. */
 export default function ForgotPasswordPage() {
   const [email,   setEmail]   = useState('')
@@ -54,14 +67,18 @@ export default function ForgotPasswordPage() {
       const code = (err as FirebaseResetError | null)?.code
       if (code === 'auth/user-not-found' || code === 'auth/invalid-email') return true
       if (code === 'auth/too-many-requests') {
-        setError('Trop de demandes Firebase. Réessaie dans quelques minutes.')
+        setError('Trop de demandes. Réessaie dans quelques minutes.')
         return false
       }
       if (code === 'auth/configuration-not-found' || code === 'auth/operation-not-allowed') {
-        setError('La réinitialisation Firebase email/password n’est pas encore activée dans Firebase Console.')
+        setError('La réinitialisation par email n’est pas encore activée.')
         return false
       }
-      setError("Impossible d'envoyer le lien Firebase pour le moment.")
+      if (isTemporaryResetServiceError(err)) {
+        setError('Le service de réinitialisation est temporairement indisponible. Réessaie dans quelques minutes.')
+        return false
+      }
+      setError("Impossible d'envoyer le lien pour le moment.")
       return false
     }
   }

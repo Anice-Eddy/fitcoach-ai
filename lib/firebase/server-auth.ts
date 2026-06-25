@@ -12,7 +12,7 @@ function bearerToken(req: NextRequest) {
 export async function requireFirebaseUser(req: NextRequest) {
   const token = bearerToken(req)
   if (!token) {
-    return { error: NextResponse.json({ error: 'Token Firebase manquant' }, { status: 401 }) }
+    return { error: NextResponse.json({ error: 'Session manquante' }, { status: 401 }) }
   }
 
   try {
@@ -21,6 +21,6 @@ export async function requireFirebaseUser(req: NextRequest) {
     return { decoded, user }
   } catch (error) {
     console.error('[firebase-auth] token verification failed:', error)
-    return { error: NextResponse.json({ error: 'Token Firebase invalide ou expiré' }, { status: 401 }) }
+    return { error: NextResponse.json({ error: 'Session invalide ou expirée' }, { status: 401 }) }
   }
 }

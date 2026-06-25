@@ -18,11 +18,11 @@ type FirebaseAuthError = { code?: string; message?: string }
 
 function firebaseRegisterErrorMessage(error: unknown) {
   const code = (error as FirebaseAuthError | null)?.code
-  if (code === 'auth/email-already-in-use') return 'Cet email existe déjà côté Firebase. Connecte-toi avec ce compte.'
-  if (code === 'auth/weak-password') return 'Le mot de passe Firebase doit faire au moins 6 caractères.'
+  if (code === 'auth/email-already-in-use') return 'Cet email existe déjà. Connecte-toi avec ce compte.'
+  if (code === 'auth/weak-password') return 'Le mot de passe doit faire au moins 6 caractères.'
   if (code === 'auth/invalid-email') return 'Email invalide.'
-  if (code === 'auth/operation-not-allowed') return 'L’inscription email/password Firebase n’est pas encore activée.'
-  return 'Impossible de créer le compte Firebase pour le moment.'
+  if (code === 'auth/operation-not-allowed') return 'L’inscription par email n’est pas encore activée.'
+  return 'Impossible de créer le compte pour le moment.'
 }
 
 /** Member registration form: collects name, email, and password; posts to /api/auth/register and redirects on success. */
@@ -60,7 +60,7 @@ export default function MemberRegisterPage() {
           form.password,
           form.name,
         )
-        toast.success('Compte Firebase créé ! Bienvenue sur BodyOps')
+        toast.success('Compte créé ! Bienvenue sur BodyOps')
         await signInBodyOpsWithFirebaseCredential(credential, '/onboarding')
       } catch (err) {
         setErrors({ email: firebaseRegisterErrorMessage(err) })

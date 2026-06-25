@@ -100,7 +100,7 @@ export async function POST(req: Request) {
       {
         ok: false,
         reason: 'EMAIL_DELIVERY_FAILED',
-        message: "L'email n'a pas pu être envoyé. Vérifie la configuration Resend ou utilise Firebase reset password.",
+        message: "L'email n'a pas pu être envoyé. Vérifie la configuration du service d'email.",
       },
       { status: 503 },
     )

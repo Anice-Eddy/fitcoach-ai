@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   if (!hasFirebaseAdminConfig()) {
     return NextResponse.json({
-      error: 'Firebase Admin n’est pas configuré côté serveur. Ajoute la clé privée du service account Firebase dans le fichier .env.',
+      error: 'Le service de connexion n’est pas configuré côté serveur.',
     }, { status: 503 })
   }
 
@@ -73,6 +73,6 @@ export async function POST(req: NextRequest) {
     })
   } catch (error) {
     console.error('[firebase-signin] unexpected error:', error)
-    return NextResponse.json({ error: 'Connexion Firebase impossible côté serveur.' }, { status: 500 })
+    return NextResponse.json({ error: 'Connexion impossible côté serveur.' }, { status: 500 })
   }
 }

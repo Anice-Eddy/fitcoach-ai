@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { compare, hash } from 'bcryptjs'
 import { z } from 'zod'
+import { deleteExternalAuthUser } from '@/lib/firebase/delete-user'
 
 const accountUpdateSchema = z.object({
   name: z.string().min(2).max(80).optional(),
@@ -49,7 +50,7 @@ export async function DELETE(req: Request) {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { password: true },
+    select: { password: true, firebaseUid: true },
   })
   if (!user) return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 })
 
@@ -60,6 +61,17 @@ export async function DELETE(req: Request) {
     const valid = await compare(password, user.password)
     if (!valid) {
       return NextResponse.json({ error: 'Mot de passe incorrect.' }, { status: 403 })
+    }
+  }
+
+  if (user.firebaseUid) {
+    try {
+      await deleteExternalAuthUser(user.firebaseUid)
+    } catch (error) {
+      console.error('[account-delete] external auth deletion failed:', error)
+      return NextResponse.json({
+        error: "La suppression du compte n'a pas pu être finalisée. Réessaie dans quelques instants.",
+      }, { status: 503 })
     }
   }
 

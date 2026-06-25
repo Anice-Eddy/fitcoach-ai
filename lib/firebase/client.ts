@@ -32,7 +32,8 @@ function assertFirebaseClientConfig() {
     .map(([key]) => key)
 
   if (missing.length > 0) {
-    throw new Error(`Configuration Firebase client manquante: ${missing.join(', ')}`)
+    console.error('[auth-client] Missing client auth config:', missing.join(', '))
+    throw new Error('Configuration de connexion manquante.')
   }
 }
 

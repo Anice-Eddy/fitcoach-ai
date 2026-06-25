@@ -5,7 +5,6 @@ import { Header }        from '@/components/layout/Header'
 import { PageWrapper }   from '@/components/layout/PageWrapper'
 import { useUserStore }  from '@/stores/userStore'
 import { exportProfilePDF } from '@/lib/exports/pdf-generator'
-import { buildJsonExport, downloadJson } from '@/lib/exports/json-exporter'
 import { validateImport, readJsonFile }  from '@/lib/exports/json-importer'
 import { LocalStorageAdapter } from '@/lib/storage/LocalStorageAdapter'
 import { toast } from 'sonner'
@@ -28,12 +27,28 @@ export default function ExportsPage() {
 
   const handleExportJSON = async () => {
     setLoading('json')
-    const storage = new LocalStorageAdapter()
-    const metrics = await storage.getBodyMetrics(365)
-    const payload = buildJsonExport(profile, metrics)
-    downloadJson(payload)
-    toast.success('Export JSON téléchargé !')
-    setLoading(null)
+    try {
+      const res = await fetch('/api/user/export')
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null)
+        throw new Error(payload?.error ?? 'Export impossible.')
+      }
+
+      const blob = await res.blob()
+      const disposition = res.headers.get('Content-Disposition')
+      const filename = disposition?.match(/filename="([^"]+)"/)?.[1] ?? 'bodyops-export.json'
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = filename
+      anchor.click()
+      URL.revokeObjectURL(url)
+      toast.success('Export JSON téléchargé !')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de l’export JSON')
+    } finally {
+      setLoading(null)
+    }
   }
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,7 +104,7 @@ export default function ExportsPage() {
             />
             <ExportCard
               icon={FileJson} id="json" title="Export JSON — Toutes données"
-              desc="Profil + historique métriques (version 1.0)"
+              desc="Profil, progression, entraînement, nutrition, notes, messages et IA"
               action={handleExportJSON}
             />
           </div>
