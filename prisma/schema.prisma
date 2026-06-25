@@ -204,6 +204,7 @@ model User {
   workoutSessions     WorkoutSession[]
   nutritionPlans      NutritionPlan[]
   nutritionLogs       NutritionLog[]
+  createdFoodItems    FoodLibraryItem[]
   dailyHabitLogs      DailyHabitLog[]
   dailyMissions       DailyMission[]
   bodyOpsScores       BodyOpsScore[]
@@ -554,6 +555,35 @@ model NutritionLog {
   @@index([userId, date])
   @@index([userId, loggedAt])
   @@map("nutrition_logs")
+}
+
+// Bibliothèque alimentaire partagée : les aliments BodyOps restent statiques,
+// ceux-ci sont créés par les utilisateurs et peuvent être visibles par tous.
+model FoodLibraryItem {
+  id              String  @id @default(cuid())
+  createdByUserId String? @map("created_by_user_id")
+  createdByUser   User?   @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  name       String
+  brand      String?
+  category   String
+  visibility String  @default("PUBLIC")
+  source     String  @default("USER")
+
+  caloriesPer100g Float @map("calories_per_100g")
+  proteinPer100g  Float @map("protein_per_100g")
+  carbsPer100g    Float @map("carbs_per_100g")
+  fatPer100g      Float @map("fat_per_100g")
+  fiberPer100g    Float? @map("fiber_per_100g")
+  sugarPer100g    Float? @map("sugar_per_100g")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([visibility, deletedAt])
+  @@index([createdByUserId, deletedAt])
+  @@map("food_library_items")
 }
 
 // Suivi quotidien des habitudes clés BodyOps
