@@ -136,7 +136,7 @@ export default function CoachRegisterPage() {
         form.password,
         form.name,
       )
-      toast.success('Compte créé. Complétez votre profil coach.')
+      toast.success('Compte créé. Vérifiez votre email puis complétez votre profil coach.')
       await signInBodyOpsWithFirebaseCredential(credential, '/auth/coach/complete')
     } catch (err) {
       setErrors({ email: firebaseCoachRegisterErrorMessage(err) })

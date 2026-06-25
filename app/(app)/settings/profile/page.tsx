@@ -7,7 +7,11 @@ import { Header } from '@/components/layout/Header'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { useUserStore } from '@/stores/userStore'
 import { toast } from 'sonner'
-import { AlertTriangle, BriefcaseBusiness, Save } from 'lucide-react'
+import { AlertTriangle, BriefcaseBusiness, MailCheck, Save, Send } from 'lucide-react'
+import {
+  firebaseRequestEmailChange,
+  firebaseSendCurrentUserEmailVerification,
+} from '@/lib/firebase/client'
 
 type CoachVerificationIssue = { field: string; message: string }
 
@@ -36,6 +40,8 @@ export default function ProfileSettingsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>((profile?.language as 'fr' | 'en') ?? 'fr')
   const [tz, setTz] = useState(timezone)
   const [saving, setSaving] = useState(false)
+  const [resendingVerification, setResendingVerification] = useState(false)
+  const [initialEmail, setInitialEmail] = useState(session?.user?.email ?? '')
   const [creatingCoach, setCreatingCoach] = useState(false)
   const [coachProfile, setCoachProfile] = useState<CoachProfileVerification | null>(null)
 
@@ -49,6 +55,15 @@ export default function ProfileSettingsPage() {
       .catch(() => undefined)
     return () => { mounted = false }
   }, [])
+
+  useEffect(() => {
+    if (session?.user?.email) {
+      setEmail(session.user.email)
+      setInitialEmail(session.user.email)
+    }
+    if (session?.user?.name) setFirstName(session.user.name)
+    if (session?.user?.image) setImage(session.user.image)
+  }, [session?.user?.email, session?.user?.image, session?.user?.name])
 
   const coachIssues = coachProfile?.verificationIssues ?? []
   const missingCoachFields = coachProfile ? [
@@ -69,10 +84,16 @@ export default function ProfileSettingsPage() {
   const save = async () => {
     setSaving(true)
     try {
+      const normalizedEmail = email.trim().toLowerCase()
+      const emailChanged = normalizedEmail && normalizedEmail !== initialEmail.toLowerCase()
+      if (emailChanged) {
+        await firebaseRequestEmailChange(normalizedEmail, '/settings/profile')
+      }
+
       const accountRes = await fetch('/api/user/account', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: firstName, email, image, ...(password ? { password } : {}) }),
+        body: JSON.stringify({ name: firstName, image, ...(password ? { password } : {}) }),
       })
       if (!accountRes.ok) throw new Error('account')
 
@@ -86,11 +107,25 @@ export default function ProfileSettingsPage() {
       setTimezone(tz)
       setPassword('')
       await update()
-      toast.success('Profil mis à jour')
+      toast.success(emailChanged
+        ? 'Profil mis à jour. Vérifie ta nouvelle adresse email pour confirmer le changement.'
+        : 'Profil mis à jour')
     } catch {
       toast.error('Impossible de sauvegarder le profil')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const resendVerificationEmail = async () => {
+    setResendingVerification(true)
+    try {
+      await firebaseSendCurrentUserEmailVerification('/settings/profile')
+      toast.success('Email de vérification envoyé.')
+    } catch {
+      toast.error('Impossible d’envoyer l’email de vérification. Reconnecte-toi puis réessaie.')
+    } finally {
+      setResendingVerification(false)
     }
   }
 
@@ -171,6 +206,28 @@ export default function ProfileSettingsPage() {
                 <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Email</span>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#C8F135]" />
               </label>
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex gap-3">
+                    <MailCheck className="mt-0.5 size-5 shrink-0 text-[#C8F135]" />
+                    <div>
+                      <p className="text-sm font-semibold text-white">Vérification email</p>
+                      <p className="mt-1 text-xs leading-5 text-zinc-400">
+                        Pour changer d’adresse, BodyOps envoie un lien à la nouvelle adresse. Le changement sera appliqué après validation.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={resendVerificationEmail}
+                    disabled={resendingVerification}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-[#C8F135] hover:text-[#C8F135] disabled:opacity-50"
+                  >
+                    <Send className="size-3.5" />
+                    {resendingVerification ? 'Envoi...' : 'Renvoyer'}
+                  </button>
+                </div>
+              </div>
               <label className="grid gap-1.5">
                 <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Photo de profil</span>
                 <input value={image} onChange={(e) => setImage(e.target.value)} placeholder="https://..." className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#C8F135]" />

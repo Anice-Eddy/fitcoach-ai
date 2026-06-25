@@ -19,30 +19,63 @@ async function mockFirebasePasswordSignInError(page: Page, message = 'INVALID_LO
   })
 }
 
+async function mockFirebaseEmailActionSuccess(page: Page) {
+  await page.route('https://identitytoolkit.googleapis.com/**', async (route) => {
+    const request = route.request()
+    const url = request.url()
+    let body: Record<string, unknown> | null = null
+    try {
+      body = request.postDataJSON() as Record<string, unknown>
+    } catch {
+      body = null
+    }
+
+    if (url.includes('accounts:resetPassword')) {
+      await route.fulfill({
+        status:      200,
+        contentType: 'application/json',
+        body:        JSON.stringify({ email: 'member@example.com', requestType: 'PASSWORD_RESET' }),
+      })
+      return
+    }
+
+    if (url.includes('accounts:update')) {
+      await route.fulfill({
+        status:      200,
+        contentType: 'application/json',
+        body:        JSON.stringify({ email: 'member@example.com', emailVerified: true }),
+      })
+      return
+    }
+
+    await route.fulfill({
+      status:      200,
+      contentType: 'application/json',
+      body:        JSON.stringify({}),
+    })
+  })
+}
+
 test.describe('Page de connexion', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/auth/signin')
   })
 
   test('affiche la page de connexion', async ({ page }) => {
-    await page.waitForLoadState('networkidle')
-    await expect(page.locator('h1, h2').first()).toBeVisible()
+    await expect(page.getByRole('heading', { name: /connexion/i })).toBeVisible()
   })
 
   test('affiche le bouton Google', async ({ page }) => {
-    await page.waitForLoadState('networkidle')
     const googleBtn = page.locator('button:has-text("Google"), a:has-text("Google")')
     await expect(googleBtn.first()).toBeVisible()
   })
 
   test('affiche le bouton Facebook', async ({ page }) => {
-    await page.waitForLoadState('networkidle')
     const facebookBtn = page.locator('button:has-text("Facebook"), a:has-text("Facebook")')
     await expect(facebookBtn.first()).toBeVisible()
   })
 
   test('affiche la connexion par email', async ({ page }) => {
-    await page.waitForLoadState('networkidle')
     await expect(page.getByPlaceholder('jean@example.com')).toBeVisible()
     await expect(page.getByPlaceholder('••••••••')).toBeVisible()
   })
@@ -76,12 +109,8 @@ test.describe('Page de connexion', () => {
   })
 
   test('redirige vers la landing si on clique sur retour', async ({ page }) => {
-    await page.waitForLoadState('networkidle')
-    const backLink = page.locator('a[href="/"], a:has-text("Retour"), a:has-text("Accueil")')
-    if (await backLink.count() > 0) {
-      await backLink.first().click()
-      await page.waitForURL('/', { timeout: 15000 })
-    }
+    const homeLink = page.getByRole('link', { name: /bodyops/i }).first()
+    await expect(homeLink).toHaveAttribute('href', '/')
   })
 })
 
@@ -106,5 +135,29 @@ test.describe('Protection des routes authentifiées', () => {
     await page.waitForLoadState('networkidle')
     const url = page.url()
     expect(url).toMatch(/signin|auth|login/)
+  })
+})
+
+test.describe('Actions email Firebase', () => {
+  test('valide un lien de vérification email', async ({ page }) => {
+    await mockFirebaseEmailActionSuccess(page)
+
+    await page.goto('/auth/action?mode=verifyEmail&oobCode=test-code&continueUrl=%2Fauth%2Fsignin')
+
+    await expect(page.getByText('Adresse email vérifiée. Tu peux continuer sur BodyOps.')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Continuer' })).toBeVisible()
+  })
+
+  test('affiche puis confirme la réinitialisation du mot de passe', async ({ page }) => {
+    await mockFirebaseEmailActionSuccess(page)
+
+    await page.goto('/auth/action?mode=resetPassword&oobCode=reset-code&continueUrl=%2Fauth%2Fsignin')
+
+    await expect(page.getByText('Réinitialisation pour member@example.com')).toBeVisible()
+    await page.getByLabel('Nouveau mot de passe').fill('password123')
+    await page.getByLabel('Confirmer').fill('password123')
+    await page.getByRole('button', { name: 'Mettre à jour' }).click()
+
+    await expect(page.getByText('Mot de passe mis à jour. Tu peux te connecter avec ton nouveau mot de passe.')).toBeVisible()
   })
 })

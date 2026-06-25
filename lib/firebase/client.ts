@@ -2,13 +2,19 @@
 
 import { getApp, getApps, initializeApp } from 'firebase/app'
 import {
+  applyActionCode,
+  checkActionCode,
+  confirmPasswordReset,
   getAuth,
+  reload,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
   updateProfile,
+  verifyBeforeUpdateEmail,
+  verifyPasswordResetCode,
 } from 'firebase/auth'
 import { facebookProvider, googleProvider } from './providers'
 
@@ -46,6 +52,14 @@ function firebaseAuth() {
   return getAuth(firebaseApp())
 }
 
+function actionCodeSettings(continuePath = '/dashboard') {
+  if (typeof window === 'undefined') return undefined
+  return {
+    url: `${window.location.origin}${continuePath}`,
+    handleCodeInApp: false,
+  }
+}
+
 export const auth = firebaseAuth
 
 export async function firebaseEmailSignIn(email: string, password: string) {
@@ -57,8 +71,20 @@ export async function firebaseEmailRegister(email: string, password: string, dis
   if (displayName?.trim()) {
     await updateProfile(credential.user, { displayName: displayName.trim() })
   }
-  await sendEmailVerification(credential.user)
+  await sendEmailVerification(credential.user, actionCodeSettings('/dashboard'))
   return credential
+}
+
+export async function firebaseSendCurrentUserEmailVerification(continuePath = '/dashboard') {
+  const user = firebaseAuth().currentUser
+  if (!user) throw new Error('Connecte-toi pour vérifier ton email.')
+  await sendEmailVerification(user, actionCodeSettings(continuePath))
+}
+
+export async function firebaseRequestEmailChange(newEmail: string, continuePath = '/settings/profile') {
+  const user = firebaseAuth().currentUser
+  if (!user) throw new Error('Connecte-toi de nouveau pour modifier ton email.')
+  await verifyBeforeUpdateEmail(user, newEmail, actionCodeSettings(continuePath))
 }
 
 export function firebaseGoogleSignIn() {
@@ -70,5 +96,28 @@ export function firebaseFacebookSignIn() {
 }
 
 export function firebaseForgotPassword(email: string) {
-  return sendPasswordResetEmail(firebaseAuth(), email)
+  return sendPasswordResetEmail(firebaseAuth(), email, actionCodeSettings('/auth/signin'))
+}
+
+export function firebaseCheckActionCode(code: string) {
+  return checkActionCode(firebaseAuth(), code)
+}
+
+export function firebaseApplyActionCode(code: string) {
+  return applyActionCode(firebaseAuth(), code)
+}
+
+export function firebaseVerifyPasswordResetCode(code: string) {
+  return verifyPasswordResetCode(firebaseAuth(), code)
+}
+
+export function firebaseConfirmPasswordReset(code: string, newPassword: string) {
+  return confirmPasswordReset(firebaseAuth(), code, newPassword)
+}
+
+export async function firebaseCurrentUserIdToken(forceRefresh = true) {
+  const user = firebaseAuth().currentUser
+  if (!user) return null
+  await reload(user)
+  return user.getIdToken(forceRefresh)
 }

@@ -60,7 +60,7 @@ export default function MemberRegisterPage() {
           form.password,
           form.name,
         )
-        toast.success('Compte créé ! Bienvenue sur BodyOps')
+        toast.success('Compte créé. Vérifie ton email pour sécuriser ton compte.')
         await signInBodyOpsWithFirebaseCredential(credential, '/onboarding')
       } catch (err) {
         setErrors({ email: firebaseRegisterErrorMessage(err) })
