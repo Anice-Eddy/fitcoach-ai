@@ -40,7 +40,7 @@ export default function ProfileSettingsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>((profile?.language as 'fr' | 'en') ?? 'fr')
   const [tz, setTz] = useState(timezone)
   const [saving, setSaving] = useState(false)
-  const [resendingVerification, setResendingVerification] = useState(false)
+  const [sendingVerification, setSendingVerification] = useState(false)
   const [initialEmail, setInitialEmail] = useState(session?.user?.email ?? '')
   const [creatingCoach, setCreatingCoach] = useState(false)
   const [coachProfile, setCoachProfile] = useState<CoachProfileVerification | null>(null)
@@ -117,15 +117,15 @@ export default function ProfileSettingsPage() {
     }
   }
 
-  const resendVerificationEmail = async () => {
-    setResendingVerification(true)
+  const sendVerificationEmail = async () => {
+    setSendingVerification(true)
     try {
       await firebaseSendCurrentUserEmailVerification('/settings/profile')
       toast.success('Email de vérification envoyé.')
     } catch {
       toast.error('Impossible d’envoyer l’email de vérification. Reconnecte-toi puis réessaie.')
     } finally {
-      setResendingVerification(false)
+      setSendingVerification(false)
     }
   }
 
@@ -219,12 +219,12 @@ export default function ProfileSettingsPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={resendVerificationEmail}
-                    disabled={resendingVerification}
+                    onClick={sendVerificationEmail}
+                    disabled={sendingVerification}
                     className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-[#C8F135] hover:text-[#C8F135] disabled:opacity-50"
                   >
                     <Send className="size-3.5" />
-                    {resendingVerification ? 'Envoi...' : 'Renvoyer'}
+                    {sendingVerification ? 'Envoi...' : 'Renvoyer'}
                   </button>
                 </div>
               </div>

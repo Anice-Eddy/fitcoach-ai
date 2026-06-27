@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
-import { sendAppointmentEmail } from '@/lib/email/send'
 
 export const runtime = 'nodejs'
 
@@ -53,7 +52,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/** Creates an appointment for a member, upserts the CoachMember relation, creates a member notification, and sends a confirmation email. */
+/** Creates an appointment for a member, upserts the CoachMember relation, and creates a member notification. */
 export async function POST(req: NextRequest) {
   try {
     const session = await auth()
@@ -111,19 +110,6 @@ export async function POST(req: NextRequest) {
         relatedId:       appointment.id,
       },
     })
-
-    // Email au membre
-    if (appointment.member.email) {
-      await sendAppointmentEmail(
-        appointment.member.email,
-        coach.name ?? 'Votre coach',
-        title,
-        new Date(scheduledAt),
-        meetLink ?? null,
-      ).catch((error) => {
-        console.error('[coach appointments] email delivery failed:', error)
-      })
-    }
 
     return NextResponse.json(appointment, { status: 201 })
   } catch (error) {
