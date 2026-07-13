@@ -1,5 +1,5 @@
-// Utilitaire cn — fusion de classes Tailwind avec clsx + tailwind-merge
-// Utilisé par tous les composants shadcn/ui
+// cn utility: merges Tailwind classes with clsx and tailwind-merge.
+// Used by all shadcn/ui components.
 
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'

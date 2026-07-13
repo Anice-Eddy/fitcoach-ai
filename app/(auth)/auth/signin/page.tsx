@@ -12,17 +12,18 @@ import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons'
 import { canUseFirebaseAuth, canUseNextAuth, publicAuthProviderMode } from '@/lib/auth/provider-mode'
 import { firebaseEmailSignIn } from '@/lib/firebase/client'
 import { createBodyOpsNextAuthSession, syncBodyOpsWithFirebaseCredential } from '@/lib/firebase/bodyops-auth'
+import { useLocale } from '@/contexts/LocaleContext'
 
 type FirebaseAuthError = { code?: string; message?: string }
 
-function firebaseSignInErrorMessage(error: unknown) {
+function firebaseSignInErrorMessage(error: unknown, t: (key: string) => string) {
   const code = (error as FirebaseAuthError | null)?.code
   if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
-    return 'Email ou mot de passe incorrect.'
+    return t('auth.errors.invalidCredentials')
   }
-  if (code === 'auth/too-many-requests') return 'Trop de tentatives. Réessaie dans quelques minutes.'
-  if (code === 'auth/operation-not-allowed') return 'La connexion par email n’est pas encore activée.'
-  return 'Connexion impossible pour le moment.'
+  if (code === 'auth/too-many-requests') return t('auth.errors.tooManyRequests')
+  if (code === 'auth/operation-not-allowed') return t('auth.errors.emailSignInDisabled')
+  return t('auth.errors.signInUnavailable')
 }
 
 /** Sign-in page shell wrapping the SignInForm in a Suspense boundary for searchParams access. */
@@ -38,6 +39,7 @@ export default function SignInPage() {
 }
 
 function SignInForm() {
+  const { t } = useLocale()
   const router       = useRouter()
   const searchParams = useSearchParams()
   const { status } = useSession()
@@ -63,9 +65,9 @@ function SignInForm() {
   }, [authError])
 
   const urlError = authError === 'OAuthAccountNotLinked'
-    ? "Ce compte social est déjà lié à un autre utilisateur. Essayez de vous connecter avec votre email et mot de passe, ou contactez le support."
+    ? t('auth.errors.oauthAccountNotLinked')
     : authError === 'CredentialsSignin'
-      ? 'Email ou mot de passe incorrect.'
+      ? t('auth.errors.invalidCredentials')
       : ''
   const displayedError = error || urlError
 
@@ -91,11 +93,11 @@ function SignInForm() {
         const user = bodyOpsSession.user
 
         if (mode === 'member' && user?.isCoach && !user?.hasMemberProfile) {
-          setError("Ce compte est un compte coach. Basculez sur l'onglet « Coach » pour vous connecter.")
+          setError(t('auth.errors.coachAccountUseCoachTab'))
           return
         }
         if (mode === 'coach' && !user?.isCoach) {
-          setError("Ce compte est un compte membre. Basculez sur l'onglet « Membre » pour vous connecter.")
+          setError(t('auth.errors.memberAccountUseMemberTab'))
           return
         }
 
@@ -112,12 +114,12 @@ function SignInForm() {
         .catch(() => ({ provider: null }))
 
       if (!provider.provider) {
-        setError("Aucun compte n'existe avec cette adresse email.")
+        setError(t('auth.errors.emailNotFound'))
         return
       }
 
       if (provider.provider === 'GOOGLE' || provider.provider === 'FACEBOOK') {
-        setError('Ce compte utilise une connexion sociale. Utilisez le bouton social correspondant.')
+        setError(t('auth.errors.socialProviderRequired'))
         return
       }
 
@@ -131,18 +133,18 @@ function SignInForm() {
 
       if (!validation.valid) {
         setError(validation.reason === 'EMAIL_NOT_FOUND'
-          ? "Aucun compte n'existe avec cette adresse email."
-          : 'Mot de passe incorrect.')
+          ? t('auth.errors.emailNotFound')
+          : t('auth.errors.wrongPassword'))
         return
       }
 
-      // Role mismatch check — prevent a coach from logging in as member and vice versa
+      // Role mismatch check: prevent a coach from logging in as member and vice versa.
       if (mode === 'member' && validation.isCoach && !validation.isMember) {
-        setError("Ce compte est un compte coach. Basculez sur l'onglet « Coach » pour vous connecter.")
+        setError(t('auth.errors.coachAccountUseCoachTab'))
         return
       }
       if (mode === 'coach' && !validation.isCoach) {
-        setError("Ce compte est un compte membre. Basculez sur l'onglet « Membre » pour vous connecter.")
+        setError(t('auth.errors.memberAccountUseMemberTab'))
         return
       }
 
@@ -161,10 +163,10 @@ function SignInForm() {
         sessionStorage.removeItem('bodyops:last-auth-context')
         router.push(mode === 'coach' ? '/coach/dashboard' : '/dashboard')
       } else {
-        setError('Mot de passe incorrect.')
+        setError(t('auth.errors.wrongPassword'))
       }
     } catch (err) {
-      setError(useFirebaseEmail ? firebaseSignInErrorMessage(err) : 'Une erreur est survenue. Veuillez réessayer.')
+      setError(useFirebaseEmail ? firebaseSignInErrorMessage(err, t) : t('auth.errors.genericRetry'))
     } finally {
       setLoading(false)
     }
@@ -179,26 +181,26 @@ function SignInForm() {
             <Logo href="/" size="lg" />
           </div>
           <h1 className="text-2xl font-bold text-white">
-            {mode === 'coach' ? 'Connexion coach' : 'Connexion'}
+            {mode === 'coach' ? t('auth.coachSignIn') : t('auth.signIn')}
           </h1>
           <p className="text-sm text-zinc-400 mt-1">
-            {mode === 'coach' ? 'Accédez à votre espace coach' : 'Accédez à votre espace BodyOps'}
+            {mode === 'coach' ? t('auth.coachAccess') : t('auth.memberAccess')}
           </p>
         </div>
 
-        {/* Mode toggle — membre vs coach */}
+        {/* Member/coach mode toggle */}
         <div className="flex rounded-xl border border-zinc-800 bg-zinc-900 p-1 mb-6">
           <button type="button" onClick={() => setMode('member')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors ${
               mode === 'member' ? 'bg-[#C8F135] text-zinc-900' : 'text-zinc-400 hover:text-white'
             }`}>
-            <Dumbbell className="size-4" /> Membre
+            <Dumbbell className="size-4" /> {t('auth.member')}
           </button>
           <button type="button" onClick={() => setMode('coach')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors ${
               mode === 'coach' ? 'bg-[#C8F135] text-zinc-900' : 'text-zinc-400 hover:text-white'
             }`}>
-            <Users className="size-4" /> Coach
+            <Users className="size-4" /> {t('auth.coach')}
           </button>
         </div>
 
@@ -213,7 +215,7 @@ function SignInForm() {
             <div className="w-full border-t border-zinc-800" />
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="bg-zinc-950 px-3 text-zinc-500">ou avec votre email</span>
+            <span className="bg-zinc-950 px-3 text-zinc-500">{t('auth.orWithEmail')}</span>
           </div>
         </div>
 
@@ -225,17 +227,17 @@ function SignInForm() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Adresse email</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('auth.email')}</label>
             <input name="email" type="email" autoComplete="email" value={form.email} onChange={handleChange}
-              placeholder="jean@example.com"
+              placeholder={t('auth.emailPlaceholder')}
               className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-medium text-zinc-300">Mot de passe</label>
+              <label className="text-sm font-medium text-zinc-300">{t('auth.password')}</label>
               <Link href="/auth/forgot-password" className="text-xs text-zinc-500 hover:text-[#C8F135] transition-colors">
-                Mot de passe oublié ?
+                {t('auth.forgotPassword')}
               </Link>
             </div>
             <div className="relative">
@@ -243,6 +245,7 @@ function SignInForm() {
                 value={form.password} onChange={handleChange} placeholder="••••••••"
                 className="w-full px-4 py-3 pr-11 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
               <button type="button" onClick={() => setShowPassword((s) => !s)}
+                aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
                 {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
@@ -254,16 +257,16 @@ function SignInForm() {
             className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50 flex items-center justify-center">
             {loading
               ? <span className="size-5 rounded-full border-2 border-zinc-600 border-t-zinc-900 animate-spin" />
-              : `Se connecter — ${mode === 'coach' ? 'Espace Coach' : 'Espace Membre'}`}
+              : `${t('auth.submitForRole')} ${mode === 'coach' ? t('auth.coachSpace') : t('auth.memberSpace')}`}
           </button>
           )}
         </form>
 
         <p className="text-center text-sm text-zinc-400 mt-5">
-          Pas encore de compte ?{' '}
+          {t('auth.noAccount')}{' '}
           <Link href={mode === 'coach' ? '/auth/register/coach' : '/auth/register/member'}
             className="text-[#C8F135] hover:underline font-medium">
-            Créer un compte {mode === 'coach' ? 'coach' : 'membre'}
+            {t('auth.createAccountForRole')} {mode === 'coach' ? t('auth.coach').toLowerCase() : t('auth.member').toLowerCase()}
           </Link>
         </p>
       </div>

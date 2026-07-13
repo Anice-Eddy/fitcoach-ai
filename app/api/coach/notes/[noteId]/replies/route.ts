@@ -14,12 +14,12 @@ const replySchema = z.object({
 // Authenticates the session and returns the coachProfile record, or an error response.
 async function getCoachProfile() {
   const session = await auth()
-  if (!session?.user?.email) return { error: NextResponse.json({ error: 'Non authentifié' }, { status: 401 }) }
+  if (!session?.user?.email) return { error: NextResponse.json({ error: 'Unauthenticated' }, { status: 401 }) }
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: { coachProfile: true },
   })
-  if (!user?.coachProfile) return { error: NextResponse.json({ error: 'Non autorisé' }, { status: 403 }) }
+  if (!user?.coachProfile) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 403 }) }
   return { coachProfile: user.coachProfile }
 }
 
@@ -34,7 +34,7 @@ export async function GET(
   const note = await prisma.coachNote.findFirst({
     where: { id: params.noteId, coachId: coachProfile!.id },
   })
-  if (!note) return NextResponse.json({ error: 'Note introuvable' }, { status: 404 })
+  if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
   const replies = await getNormalizedCoachNoteReplies(params.noteId)
 
@@ -52,7 +52,7 @@ export async function POST(
   const note = await prisma.coachNote.findFirst({
     where: { id: params.noteId, coachId: coachProfile!.id },
   })
-  if (!note) return NextResponse.json({ error: 'Note introuvable' }, { status: 404 })
+  if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
   const parsed = replySchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
@@ -76,8 +76,8 @@ export async function POST(
         coachId:         note.coachId,
         recipientUserId: note.memberId,
         type:            'MESSAGE',
-        title:           'Réponse de votre coach sur une note',
-        message:         `Votre coach a répondu à la note "${note.title}"`,
+        title:           'Coach reply on a note',
+        message:         `Your coach replied to the note "${note.title}"`,
         relatedId:       note.id,
       },
     }).catch(() => {})
@@ -95,12 +95,12 @@ export async function DELETE(
   if (error) return error
 
   const { replyId } = await req.json()
-  if (!replyId) return NextResponse.json({ error: 'replyId manquant' }, { status: 400 })
+  if (!replyId) return NextResponse.json({ error: 'Missing replyId' }, { status: 400 })
 
   const note = await prisma.coachNote.findFirst({
     where: { id: params.noteId, coachId: coachProfile!.id },
   })
-  if (!note) return NextResponse.json({ error: 'Note introuvable' }, { status: 404 })
+  if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
   await prisma.coachNoteReply.deleteMany({
     where: { id: replyId, noteId: params.noteId },

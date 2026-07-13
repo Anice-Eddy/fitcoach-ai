@@ -41,12 +41,12 @@ describe('GET /api/user/metrics', () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(null)
   })
 
-  it('retourne 401 si non connecté', async () => {
+  it('returns 401 when unauthenticated', async () => {
     const res = await GET(makeGetRequest())
     expect(res.status).toBe(401)
   })
 
-  it('retourne la liste des métriques', async () => {
+  it('returns the metrics list', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
     ;(prisma.bodyMetric.findMany as ReturnType<typeof vi.fn>).mockResolvedValue(mockMetrics)
     const res  = await GET(makeGetRequest())
@@ -55,7 +55,7 @@ describe('GET /api/user/metrics', () => {
     expect(json).toHaveLength(2)
   })
 
-  it('respecte le paramètre limit', async () => {
+  it('respects the limit parameter', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
     ;(prisma.bodyMetric.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([mockMetrics[0]])
     await GET(makeGetRequest('?limit=1'))
@@ -63,7 +63,7 @@ describe('GET /api/user/metrics', () => {
     expect(findCall.take).toBe(1)
   })
 
-  it('plafonne le limit à 365', async () => {
+  it('caps the limit at 365', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
     ;(prisma.bodyMetric.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([])
     await GET(makeGetRequest('?limit=9999'))
@@ -78,18 +78,18 @@ describe('POST /api/user/metrics', () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(null)
   })
 
-  it('retourne 401 si non connecté', async () => {
+  it('returns 401 when unauthenticated', async () => {
     const res = await POST(makePostRequest({ weightKg: 80, date: '2025-01-01' }))
     expect(res.status).toBe(401)
   })
 
-  it('retourne 422 si données invalides (poids négatif)', async () => {
+  it('returns 422 for invalid data with negative weight', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
     const res = await POST(makePostRequest({ weightKg: -5 }))
     expect(res.status).toBe(422)
   })
 
-  it('crée une métrique et retourne 201', async () => {
+  it('creates a metric and returns 201', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
     ;(prisma.bodyMetric.create as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 'm-new', userId: 'user-1', date: '2025-02-01T00:00:00.000Z', weightKg: 78,
@@ -100,7 +100,7 @@ describe('POST /api/user/metrics', () => {
     expect(json.weightKg).toBe(78)
   })
 
-  it('associe la métrique à l\'utilisateur connecté', async () => {
+  it('associates the metric with the signed-in user', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-42' } })
     ;(prisma.bodyMetric.create as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 'm-x', userId: 'user-42', date: '2025-03-01T00:00:00.000Z', weightKg: 75,

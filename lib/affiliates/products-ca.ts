@@ -2,7 +2,7 @@ import type { AffiliateProduct } from '@/types'
 
 export const CANADA_AFFILIATE_PRODUCTS: AffiliateProduct[] = [
 
-  // ── SUPPLÉMENTS ─────────────────────────────────────────────────────────────
+  // --- SUPPLEMENTS ----------------------------------------------------------
 
   {
     id: 'ca-s1',
@@ -329,7 +329,7 @@ export const CANADA_AFFILIATE_PRODUCTS: AffiliateProduct[] = [
     tags: ['oméga-3', 'poisson', 'capsules', 'canada'],
   },
 
-  // ── ÉQUIPEMENT ───────────────────────────────────────────────────────────────
+  // --- EQUIPMENT ------------------------------------------------------------
 
   {
     id: 'ca-s25',
@@ -512,7 +512,7 @@ export const CANADA_AFFILIATE_PRODUCTS: AffiliateProduct[] = [
     tags: ['ceinture lestée', 'dips', 'pull-up', 'canada'],
   },
 
-  // ── VÊTEMENTS & ACCESSOIRES ──────────────────────────────────────────────────
+  // --- CLOTHING & ACCESSORIES ----------------------------------------------
 
   {
     id: 'ca-e17',

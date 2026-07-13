@@ -1,9 +1,9 @@
-// Générateur de plan nutritionnel hebdomadaire
-// Rotation sur 3 templates par repas × 7 jours — chaque jour a des repas différents.
-// Respecte les restrictions alimentaires (végétarien, vegan, sans gluten, etc.)
+// Weekly nutrition plan generator.
+// Rotates 3 templates per meal across 7 days so each day has different meals.
+// Respects dietary restrictions such as vegetarian, vegan, gluten-free, etc.
 
 import type { NutritionPlan, Meal, FoodItem } from '@/types'
-import { filterFoodsByRestrictions } from './food-database'
+import { filterFoodsByRestrictions, foodDisplayName } from './food-database'
 import { FOOD_DATABASE } from './food-database'
 
 interface PlanParams {
@@ -13,18 +13,46 @@ interface PlanParams {
   targetFatG:           number
   fitnessGoal:          string
   dietaryRestrictions:  string[]
+  locale?:              'fr' | 'en'
 }
 
-const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+const DAY_NAMES: Record<NonNullable<PlanParams['locale']>, string[]> = {
+  fr: ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'],
+  en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+}
 
-// Construit un FoodItem à partir d'un id et d'une quantité en grammes.
-function makeFoodItem(foodId: string, grams: number): FoodItem | null {
+const TEMPLATE_NAME_FR: Record<string, string> = {
+  'Oats & yogurt': 'Flocons d\'avoine et yaourt',
+  'Eggs & whole-grain bread': 'Œufs et pain complet',
+  'Skyr & berries': 'Skyr et fruits rouges',
+  'Almonds & apple': 'Amandes et pomme',
+  'Yogurt & banana': 'Yaourt et banane',
+  'Walnuts & pear': 'Noix et poire',
+  'Chicken rice broccoli': 'Poulet, riz et brocoli',
+  'Salmon quinoa spinach': 'Saumon, quinoa et épinards',
+  'Turkey sweet potato': 'Dinde et patate douce',
+  'Lentils rice vegetables': 'Lentilles, riz et légumes',
+  'Tofu stir-fried rice': 'Tofu sauté et riz',
+  'Chickpeas quinoa': 'Pois chiches et quinoa',
+  'Banana & yogurt': 'Banane et yaourt',
+  'Bread & peanut butter': 'Pain et beurre de cacahuète',
+  'Oats & skyr': 'Flocons d\'avoine et skyr',
+  'Salmon sweet potato spinach': 'Saumon, patate douce et épinards',
+  'Cod rice vegetables': 'Cabillaud, riz et légumes',
+  'Mackerel potato salad': 'Maquereau, pomme de terre et salade',
+  'Tempeh sweet potato': 'Tempeh et patate douce',
+  'Tofu beans rice': 'Tofu, haricots verts et riz',
+  'Eggs zucchini cheese': 'Œufs, courgette et fromage',
+}
+
+// Builds a FoodItem from an id and a quantity in grams.
+function makeFoodItem(foodId: string, grams: number, locale: NonNullable<PlanParams['locale']>): FoodItem | null {
   const food = FOOD_DATABASE.find((f) => f.id === foodId)
   if (!food) return null
   const factor = grams / 100
   return {
     id:          `${foodId}-${Math.random().toString(36).slice(2)}`,
-    name:        food.name,
+    name:        foodDisplayName(food, locale),
     gramsAmount: grams,
     calories:    Math.round(food.calories * factor),
     proteinG:    Math.round(food.proteinG * factor * 10) / 10,
@@ -39,9 +67,10 @@ function buildMeal(
   name: string,
   time: string,
   items: { foodId: string; grams: number }[],
+  locale: NonNullable<PlanParams['locale']>,
 ): Meal {
   const foodItems = items
-    .map(({ foodId, grams }) => makeFoodItem(foodId, grams))
+    .map(({ foodId, grams }) => makeFoodItem(foodId, grams, locale))
     .filter((f): f is FoodItem => f !== null)
   return {
     id:            `meal-${dayOfWeek}-${type}-${Date.now()}-${Math.random()}`,
@@ -58,57 +87,61 @@ function buildMeal(
   }
 }
 
-// ── Templates par type de repas ────────────────────────────────────────────
-// 3 variantes par repas pour la rotation. Chaque jour utilise template[day % 3].
+function templateName(name: string, locale: NonNullable<PlanParams['locale']>) {
+  return locale === 'fr' ? (TEMPLATE_NAME_FR[name] ?? name) : name
+}
+
+// Meal-type templates.
+// Three variants per meal rotate with template[day % 3].
 
 const BREAKFAST_TEMPLATES: { name: string; items: { foodId: string; grams: number }[] }[] = [
-  { name: 'Avoine & yaourt',    items: [{ foodId: 'oats', grams: 80 }, { foodId: 'greek-yogurt', grams: 150 }, { foodId: 'banana', grams: 100 }] },
-  { name: 'Œufs & pain complet',items: [{ foodId: 'eggs', grams: 150 }, { foodId: 'bread-whole', grams: 60 }, { foodId: 'tomato', grams: 100 }] },
-  { name: 'Skyr & fruits rouges',items: [{ foodId: 'skyr', grams: 200 }, { foodId: 'blueberry', grams: 80 }, { foodId: 'oats', grams: 40 }] },
+  { name: 'Oats & yogurt',    items: [{ foodId: 'oats', grams: 80 }, { foodId: 'greek-yogurt', grams: 150 }, { foodId: 'banana', grams: 100 }] },
+  { name: 'Eggs & whole-grain bread',items: [{ foodId: 'eggs', grams: 150 }, { foodId: 'bread-whole', grams: 60 }, { foodId: 'tomato', grams: 100 }] },
+  { name: 'Skyr & berries',items: [{ foodId: 'skyr', grams: 200 }, { foodId: 'blueberry', grams: 80 }, { foodId: 'oats', grams: 40 }] },
 ]
 
 const MORNING_SNACK_TEMPLATES: { name: string; items: { foodId: string; grams: number }[] }[] = [
-  { name: 'Amandes & pomme',    items: [{ foodId: 'almonds', grams: 30 }, { foodId: 'apple', grams: 150 }] },
-  { name: 'Yaourt & banane',    items: [{ foodId: 'greek-yogurt', grams: 150 }, { foodId: 'banana', grams: 100 }] },
-  { name: 'Noix & poire',       items: [{ foodId: 'walnuts', grams: 30 }, { foodId: 'pear', grams: 150 }] },
+  { name: 'Almonds & apple',    items: [{ foodId: 'almonds', grams: 30 }, { foodId: 'apple', grams: 150 }] },
+  { name: 'Yogurt & banana',    items: [{ foodId: 'greek-yogurt', grams: 150 }, { foodId: 'banana', grams: 100 }] },
+  { name: 'Walnuts & pear',       items: [{ foodId: 'walnuts', grams: 30 }, { foodId: 'pear', grams: 150 }] },
 ]
 
 const LUNCH_TEMPLATES: { name: string; items: { foodId: string; grams: number }[] }[] = [
-  { name: 'Poulet riz brocoli',   items: [{ foodId: 'chicken-breast', grams: 150 }, { foodId: 'rice-white', grams: 150 }, { foodId: 'broccoli', grams: 200 }, { foodId: 'olive-oil', grams: 10 }] },
-  { name: 'Saumon quinoa épinards',items: [{ foodId: 'salmon', grams: 140 }, { foodId: 'quinoa', grams: 150 }, { foodId: 'spinach', grams: 100 }, { foodId: 'olive-oil', grams: 10 }] },
-  { name: 'Dinde patate douce',   items: [{ foodId: 'turkey-breast', grams: 150 }, { foodId: 'sweet-potato', grams: 200 }, { foodId: 'green-beans', grams: 150 }, { foodId: 'olive-oil', grams: 10 }] },
+  { name: 'Chicken rice broccoli',   items: [{ foodId: 'chicken-breast', grams: 150 }, { foodId: 'rice-white', grams: 150 }, { foodId: 'broccoli', grams: 200 }, { foodId: 'olive-oil', grams: 10 }] },
+  { name: 'Salmon quinoa spinach',items: [{ foodId: 'salmon', grams: 140 }, { foodId: 'quinoa', grams: 150 }, { foodId: 'spinach', grams: 100 }, { foodId: 'olive-oil', grams: 10 }] },
+  { name: 'Turkey sweet potato',   items: [{ foodId: 'turkey-breast', grams: 150 }, { foodId: 'sweet-potato', grams: 200 }, { foodId: 'green-beans', grams: 150 }, { foodId: 'olive-oil', grams: 10 }] },
 ]
 
 const LUNCH_VEGETARIAN_TEMPLATES: { name: string; items: { foodId: string; grams: number }[] }[] = [
-  { name: 'Lentilles riz légumes', items: [{ foodId: 'lentils-cooked', grams: 150 }, { foodId: 'rice-brown', grams: 120 }, { foodId: 'carrot', grams: 100 }, { foodId: 'olive-oil', grams: 10 }] },
-  { name: 'Tofu riz sauté',       items: [{ foodId: 'tofu-firm', grams: 150 }, { foodId: 'rice-white', grams: 150 }, { foodId: 'broccoli', grams: 150 }, { foodId: 'olive-oil', grams: 10 }] },
-  { name: 'Pois chiches quinoa',   items: [{ foodId: 'chickpeas-cooked', grams: 150 }, { foodId: 'quinoa', grams: 150 }, { foodId: 'spinach', grams: 100 }, { foodId: 'olive-oil', grams: 10 }] },
+  { name: 'Lentils rice vegetables', items: [{ foodId: 'lentils-cooked', grams: 150 }, { foodId: 'rice-brown', grams: 120 }, { foodId: 'carrot', grams: 100 }, { foodId: 'olive-oil', grams: 10 }] },
+  { name: 'Tofu stir-fried rice',       items: [{ foodId: 'tofu-firm', grams: 150 }, { foodId: 'rice-white', grams: 150 }, { foodId: 'broccoli', grams: 150 }, { foodId: 'olive-oil', grams: 10 }] },
+  { name: 'Chickpeas quinoa',   items: [{ foodId: 'chickpeas-cooked', grams: 150 }, { foodId: 'quinoa', grams: 150 }, { foodId: 'spinach', grams: 100 }, { foodId: 'olive-oil', grams: 10 }] },
 ]
 
 const PRE_WORKOUT_TEMPLATES: { name: string; items: { foodId: string; grams: number }[] }[] = [
-  { name: 'Banane & yaourt',     items: [{ foodId: 'banana', grams: 100 }, { foodId: 'greek-yogurt', grams: 100 }] },
-  { name: 'Pain & beurre de cacahuète', items: [{ foodId: 'bread-whole', grams: 50 }, { foodId: 'peanut-butter', grams: 20 }] },
-  { name: 'Avoine & skyr',       items: [{ foodId: 'oats', grams: 60 }, { foodId: 'skyr', grams: 100 }, { foodId: 'strawberry', grams: 80 }] },
+  { name: 'Banana & yogurt',     items: [{ foodId: 'banana', grams: 100 }, { foodId: 'greek-yogurt', grams: 100 }] },
+  { name: 'Bread & peanut butter', items: [{ foodId: 'bread-whole', grams: 50 }, { foodId: 'peanut-butter', grams: 20 }] },
+  { name: 'Oats & skyr',       items: [{ foodId: 'oats', grams: 60 }, { foodId: 'skyr', grams: 100 }, { foodId: 'strawberry', grams: 80 }] },
 ]
 
 const DINNER_TEMPLATES: { name: string; items: { foodId: string; grams: number }[] }[] = [
-  { name: 'Saumon patate douce épinards',  items: [{ foodId: 'salmon', grams: 150 }, { foodId: 'sweet-potato', grams: 200 }, { foodId: 'spinach', grams: 100 }, { foodId: 'olive-oil', grams: 10 }] },
-  { name: 'Cabillaud riz légumes',          items: [{ foodId: 'cod', grams: 180 }, { foodId: 'rice-brown', grams: 150 }, { foodId: 'zucchini', grams: 150 }, { foodId: 'olive-oil', grams: 10 }] },
-  { name: 'Maquereau pomme de terre salade',items: [{ foodId: 'mackerel', grams: 140 }, { foodId: 'potato', grams: 200 }, { foodId: 'lettuce', grams: 80 }, { foodId: 'olive-oil', grams: 10 }] },
+  { name: 'Salmon sweet potato spinach',  items: [{ foodId: 'salmon', grams: 150 }, { foodId: 'sweet-potato', grams: 200 }, { foodId: 'spinach', grams: 100 }, { foodId: 'olive-oil', grams: 10 }] },
+  { name: 'Cod rice vegetables',          items: [{ foodId: 'cod', grams: 180 }, { foodId: 'rice-brown', grams: 150 }, { foodId: 'zucchini', grams: 150 }, { foodId: 'olive-oil', grams: 10 }] },
+  { name: 'Mackerel potato salad',items: [{ foodId: 'mackerel', grams: 140 }, { foodId: 'potato', grams: 200 }, { foodId: 'lettuce', grams: 80 }, { foodId: 'olive-oil', grams: 10 }] },
 ]
 
 const DINNER_VEGETARIAN_TEMPLATES: { name: string; items: { foodId: string; grams: number }[] }[] = [
-  { name: 'Tempeh patate douce',   items: [{ foodId: 'tempeh', grams: 150 }, { foodId: 'sweet-potato', grams: 200 }, { foodId: 'spinach', grams: 100 }, { foodId: 'olive-oil', grams: 10 }] },
-  { name: 'Tofu haricots riz',     items: [{ foodId: 'tofu-firm', grams: 150 }, { foodId: 'green-beans', grams: 150 }, { foodId: 'rice-white', grams: 120 }, { foodId: 'olive-oil', grams: 10 }] },
-  { name: 'Œufs courgette fromage',items: [{ foodId: 'eggs', grams: 150 }, { foodId: 'zucchini', grams: 200 }, { foodId: 'mozzarella', grams: 60 }, { foodId: 'olive-oil', grams: 10 }] },
+  { name: 'Tempeh sweet potato',   items: [{ foodId: 'tempeh', grams: 150 }, { foodId: 'sweet-potato', grams: 200 }, { foodId: 'spinach', grams: 100 }, { foodId: 'olive-oil', grams: 10 }] },
+  { name: 'Tofu beans rice',     items: [{ foodId: 'tofu-firm', grams: 150 }, { foodId: 'green-beans', grams: 150 }, { foodId: 'rice-white', grams: 120 }, { foodId: 'olive-oil', grams: 10 }] },
+  { name: 'Eggs zucchini cheese',items: [{ foodId: 'eggs', grams: 150 }, { foodId: 'zucchini', grams: 200 }, { foodId: 'mozzarella', grams: 60 }, { foodId: 'olive-oil', grams: 10 }] },
 ]
 
-/** Retourne le template pour un jour donné en utilisant la rotation (day % nb_templates). */
+/** Returns the template for a given day using rotation (day % template count). */
 function pickTemplate<T>(templates: T[], day: number): T {
   return templates[day % templates.length]
 }
 
-/** Vérifie si tous les aliments d'un template sont compatibles avec les restrictions. */
+/** Checks whether all foods in a template are compatible with restrictions. */
 function templateIsCompatible(
   items: { foodId: string }[],
   allowedIds: Set<string>,
@@ -116,11 +149,11 @@ function templateIsCompatible(
   return items.every(({ foodId }) => allowedIds.has(foodId))
 }
 
-/** Génère un plan nutritionnel hebdomadaire (7 jours × 5 repas) avec rotation et respect des restrictions. */
+/** Generates a weekly nutrition plan (7 days x 5 meals) with rotation and restriction support. */
 export function generateMealPlan(params: PlanParams): NutritionPlan {
-  const { dietaryRestrictions = [], fitnessGoal } = params
+  const { dietaryRestrictions = [], fitnessGoal, locale = 'fr' } = params
 
-  // Construire l'ensemble des aliments autorisés selon les restrictions
+  // Build the set of allowed foods based on restrictions.
   const allowedFoods  = filterFoodsByRestrictions(dietaryRestrictions)
   const allowedIds    = new Set(allowedFoods.map(f => f.id))
 
@@ -131,52 +164,55 @@ export function generateMealPlan(params: PlanParams): NutritionPlan {
   const meals: Meal[] = []
 
   for (let day = 0; day < 7; day++) {
-    // ── Petit-déjeuner ────────────────────────────────────────────────────
+    // --- Breakfast -----------------------------------------------------------
     const bk = pickTemplate(BREAKFAST_TEMPLATES, day)
     if (templateIsCompatible(bk.items, allowedIds)) {
-      meals.push(buildMeal(day, 'BREAKFAST', `${bk.name} — ${DAY_NAMES[day]}`, '07:30', bk.items))
+      meals.push(buildMeal(day, 'BREAKFAST', `${templateName(bk.name, locale)} - ${DAY_NAMES[locale][day]}`, '07:30', bk.items, locale))
     } else {
-      // Fallback : flocons d'avoine + fruit (compatible avec tout)
-      meals.push(buildMeal(day, 'BREAKFAST', `Petit-déjeuner — ${DAY_NAMES[day]}`, '07:30', [
+      // Fallback: oats + fruit, compatible with every restriction set.
+      meals.push(buildMeal(day, 'BREAKFAST', `${locale === 'fr' ? 'Petit-déjeuner' : 'Breakfast'} - ${DAY_NAMES[locale][day]}`, '07:30', [
         { foodId: 'oats', grams: 80 }, { foodId: 'banana', grams: 100 },
-      ]))
+      ], locale))
     }
 
-    // ── Collation matin (uniquement si objectif muscu ou calories élevées) ──
+    // --- Morning snack, only for muscle gain or high-calorie targets ---------
     if (!isWeightLoss) {
       const sn = pickTemplate(MORNING_SNACK_TEMPLATES, day)
       const snCompatible = templateIsCompatible(sn.items, allowedIds)
-      meals.push(buildMeal(day, 'MORNING_SNACK', `Collation — ${DAY_NAMES[day]}`, '10:00',
+      meals.push(buildMeal(day, 'MORNING_SNACK', `${locale === 'fr' ? 'Collation' : 'Snack'} - ${DAY_NAMES[locale][day]}`, '10:00',
         snCompatible ? sn.items : [{ foodId: 'apple', grams: 150 }],
+        locale,
       ))
     }
 
-    // ── Déjeuner ──────────────────────────────────────────────────────────
+    // --- Lunch ---------------------------------------------------------------
     const lunchTemplates = isVegetarian ? LUNCH_VEGETARIAN_TEMPLATES : LUNCH_TEMPLATES
     const ln = pickTemplate(lunchTemplates, day)
     const lnCompatible = templateIsCompatible(ln.items, allowedIds)
-    meals.push(buildMeal(day, 'LUNCH', `${ln.name} — ${DAY_NAMES[day]}`, '12:30',
+    meals.push(buildMeal(day, 'LUNCH', `${templateName(ln.name, locale)} - ${DAY_NAMES[locale][day]}`, '12:30',
       lnCompatible ? ln.items : [
         { foodId: isVegetarian ? 'lentils-cooked' : 'chicken-breast', grams: 150 },
         { foodId: 'rice-white', grams: 150 },
         { foodId: 'broccoli', grams: 200 },
       ],
+      locale,
     ))
 
-    // ── Pré-workout ───────────────────────────────────────────────────────
+    // --- Pre-workout ---------------------------------------------------------
     const pw = pickTemplate(PRE_WORKOUT_TEMPLATES, day)
     const pwCompatible = templateIsCompatible(pw.items, allowedIds)
-    meals.push(buildMeal(day, 'PRE_WORKOUT', `Pré-workout — ${DAY_NAMES[day]}`, '16:00',
+    meals.push(buildMeal(day, 'PRE_WORKOUT', `${locale === 'fr' ? 'Pré-entraînement' : 'Pre-workout'} - ${DAY_NAMES[locale][day]}`, '16:00',
       pwCompatible ? pw.items : [{ foodId: 'banana', grams: 120 }],
+      locale,
     ))
 
-    // ── Dîner ─────────────────────────────────────────────────────────────
+    // --- Dinner --------------------------------------------------------------
     const dinnerTemplates = isVegetarian ? DINNER_VEGETARIAN_TEMPLATES : DINNER_TEMPLATES
     const dn = pickTemplate(dinnerTemplates, day)
     const dnCompatible = templateIsCompatible(dn.items, allowedIds)
-    // Le samedi et dimanche : repas un peu plus riche (muscle gain) ou allégé (weight loss)
+    // Saturday and Sunday: slightly richer meals for muscle gain or lighter meals for weight loss.
     const dinnerProtein = isMuscleGain ? (day >= 5 ? 180 : 150) : isWeightLoss ? 130 : 150
-    meals.push(buildMeal(day, 'DINNER', `${dn.name} — ${DAY_NAMES[day]}`, '19:30',
+    meals.push(buildMeal(day, 'DINNER', `${templateName(dn.name, locale)} - ${DAY_NAMES[locale][day]}`, '19:30',
       dnCompatible
         ? dn.items.map(item => item.foodId === dn.items[0].foodId ? { ...item, grams: dinnerProtein } : item)
         : [
@@ -184,6 +220,7 @@ export function generateMealPlan(params: PlanParams): NutritionPlan {
           { foodId: 'sweet-potato', grams: 200 },
           { foodId: 'spinach', grams: 100 },
         ],
+      locale,
     ))
   }
 
@@ -192,7 +229,7 @@ export function generateMealPlan(params: PlanParams): NutritionPlan {
 
   return {
     id:             `plan-${Date.now()}`,
-    name:           'Mon plan nutritionnel',
+    name:           locale === 'en' ? 'My nutrition plan' : 'Mon plan nutritionnel',
     targetCalories: params.targetCalories,
     targetProteinG: params.targetProteinG,
     targetCarbsG:   params.targetCarbsG,

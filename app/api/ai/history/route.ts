@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
-// DELETE /api/ai/history — supprime tout l'historique IA de l'utilisateur connecté
-// (conversations, messages, mémoire, rapports, usage quotidien)
+// DELETE /api/ai/history - deletes the authenticated user's AI history.
+// (conversations, messages, memory, reports, daily usage)
 
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth/auth'
@@ -9,7 +9,7 @@ import { prisma } from '@/lib/prisma/client'
 
 export async function DELETE(_req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
   const userId = session.user.id
 

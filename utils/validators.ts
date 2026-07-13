@@ -1,12 +1,12 @@
 // ============================================================
-// Schémas Zod pour l'onboarding et les API routes
-// Chaque étape du stepper a son propre schéma partiel
+// Zod schemas for onboarding and API routes.
+// Each stepper step has its own partial schema.
 // deps: npm install zod
 // ============================================================
 
 import { z } from 'zod'
 
-// --- Étape 1 : Identité ---
+// --- Step 1: Identity ---
 
 export const identitySchema = z.object({
   firstName: z
@@ -24,7 +24,7 @@ export const identitySchema = z.object({
   }),
 })
 
-// --- Étape 2 : Mensurations ---
+// --- Step 2: Measurements ---
 
 export const measurementsSchema = z.object({
   weightKg: z
@@ -47,7 +47,7 @@ export const measurementsSchema = z.object({
   heightUnit: z.enum(['CM', 'FT_IN']),
 })
 
-// --- Étape 3 : Activité ---
+// --- Step 3: Activity ---
 
 export const equipmentEnum = z.enum([
   'BARBELL', 'DUMBBELL', 'KETTLEBELL', 'RESISTANCE_BAND',
@@ -70,7 +70,7 @@ export const activitySchema = z.object({
     .max(7, 'Maximum 7 jours par semaine'),
 })
 
-// --- Étape 4 : Objectifs ---
+// --- Step 4: Goals ---
 
 export const goalsSchema = z.object({
   fitnessGoal: z.enum(
@@ -87,7 +87,7 @@ export const goalsSchema = z.object({
   bodyFocus: z.enum(['UPPER_BODY', 'LOWER_BODY', 'FULL_BODY']).optional(),
 })
 
-// --- Blessures (partagé entre onboarding + API) ---
+// --- Injuries shared between onboarding and API ---
 
 export const injuryEntrySchema = z.object({
   bodyPart:    z.string().min(1),
@@ -96,21 +96,21 @@ export const injuryEntrySchema = z.object({
 })
 export type InjuryEntry = z.infer<typeof injuryEntrySchema>
 
-// --- Étape 5 : Santé & Blessures ---
+// --- Step 5: Health and injuries ---
 
 export const healthSchema = z.object({
   injuries: z.array(injuryEntrySchema).default([]),
 })
 export type HealthData = z.infer<typeof healthSchema>
 
-// --- Étape 6 : Alimentation ---
+// --- Step 6: Diet ---
 
 export const dietSchema = z.object({
   dietaryRestrictions: z.array(z.string()).default([]),
   foodPreferences: z.array(z.string()).default([]),
 })
 
-// --- Schéma complet onboarding ---
+// --- Complete onboarding schema ---
 
 export const onboardingSchema = identitySchema
   .merge(measurementsSchema)
@@ -119,7 +119,7 @@ export const onboardingSchema = identitySchema
   .merge(healthSchema)
   .merge(dietSchema)
 
-// --- Schéma API : mise à jour du profil ---
+// --- API schema: profile update ---
 
 export const updateProfileSchema = onboardingSchema.partial().extend({
   language:            z.enum(['fr', 'en']).optional(),
@@ -128,7 +128,7 @@ export const updateProfileSchema = onboardingSchema.partial().extend({
   injuries:            z.array(injuryEntrySchema).optional(),
 })
 
-// --- Schéma API : ajout d'une métrique corporelle ---
+// --- API schema: body metric creation ---
 
 export const bodyMetricSchema = z.object({
   date:         z.coerce.date().optional(),
@@ -137,7 +137,7 @@ export const bodyMetricSchema = z.object({
   muscleMassKg: z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(10).max(150).optional()),
   waistCm:      z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(40).max(200).optional()),
   hipsCm:       z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(40).max(200).optional()),
-  // Ces champs donnent du contexte à l'IA: sommeil, activité, hydratation et ressenti du jour.
+  // These fields give the AI daily context: sleep, activity, hydration, and perceived state.
   steps:            z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().int().min(0).max(100000).optional()),
   sleepHours:       z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(0).max(24).optional()),
   waterLiters:      z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(0).max(15).optional()),
@@ -145,7 +145,7 @@ export const bodyMetricSchema = z.object({
   stressLevel:      z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().int().min(1).max(5).optional()),
   progressPhotoUrl: z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().url().max(1000).optional()),
   notes:            z.string().max(500).optional(),
-  // Données Apple Health — cardiovasculaire et récupération
+  // Apple Health data: cardiovascular and recovery metrics.
   heartRateAvg:     z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().int().min(30).max(250).optional()),
   caloriesActive:   z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().int().min(0).max(10000).optional()),
   restingHeartRate: z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().int().min(20).max(200).optional()),
@@ -153,7 +153,7 @@ export const bodyMetricSchema = z.object({
   hrv:              z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(0).max(300).optional()),
   spo2:             z.preprocess((v) => (v === '' || v == null || (typeof v === 'number' && isNaN(v)) ? undefined : Number(v)), z.number().min(70).max(100).optional()),
 }).refine((metric) => {
-  // Une mesure peut être seulement hydratation/sommeil/etc., mais elle ne doit jamais être vide.
+  // A metric can contain only hydration, sleep, etc., but it must never be empty.
   return [
     metric.weightKg, metric.bodyFatPct, metric.muscleMassKg, metric.waistCm, metric.hipsCm,
     metric.steps, metric.sleepHours, metric.waterLiters, metric.energyLevel, metric.stressLevel,
@@ -165,14 +165,14 @@ export const bodyMetricSchema = z.object({
   message: 'Renseignez au moins une donnée à enregistrer',
 })
 
-// --- Schéma API : tracking clic affilié ---
+// --- API schema: affiliate click tracking ---
 
 export const affiliateClickSchema = z.object({
   productId: z.string().min(1, 'ID produit requis'),
   source:    z.string().max(100).optional(),
 })
 
-// --- Types inférés ---
+// --- Inferred types ---
 
 export type OnboardingData    = z.infer<typeof onboardingSchema>
 export type IdentityData      = z.infer<typeof identitySchema>

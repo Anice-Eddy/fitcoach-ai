@@ -53,19 +53,19 @@ describe('POST /api/affiliates/track', () => {
     ;(prisma.affiliateClick.create as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'click-1' })
   })
 
-  it('retourne 422 si le productId est vide', async () => {
+  it('returns 422 when productId is empty', async () => {
     const req = makeRequest({ productId: '' })
     const res = await POST(req)
     expect(res.status).toBe(422)
   })
 
-  it('retourne 404 si le produit est introuvable', async () => {
+  it('returns 404 when the product is not found', async () => {
     const req = makeRequest({ productId: 'prod-inexistant', source: 'shop' })
     const res = await POST(req)
     expect(res.status).toBe(404)
   })
 
-  it('retourne { tracked: true } pour un clic valide (anonyme)', async () => {
+  it('returns { tracked: true } for a valid anonymous click', async () => {
     const req = makeRequest({ productId: 'prod-supplement-whey', source: 'shop' })
     const res = await POST(req)
     const json = await res.json()
@@ -73,7 +73,7 @@ describe('POST /api/affiliates/track', () => {
     expect(json.tracked).toBe(true)
   })
 
-  it('retourne { tracked: true } pour un utilisateur connecté', async () => {
+  it('returns { tracked: true } for a signed-in user', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
     const req = makeRequest({ productId: 'prod-supplement-whey', source: 'recommendation' })
     const res = await POST(req)
@@ -83,7 +83,7 @@ describe('POST /api/affiliates/track', () => {
     expect(createCall.data.userId).toBe('user-1')
   })
 
-  it('stocke un hash IP, pas l\'IP en clair', async () => {
+  it('stores an IP hash instead of the raw IP', async () => {
     const req = makeRequest(
       { productId: 'prod-supplement-whey', source: 'shop' },
       { 'x-forwarded-for': '192.168.1.1' },
@@ -94,7 +94,7 @@ describe('POST /api/affiliates/track', () => {
     expect(createCall.data.ipHash).toHaveLength(64) // sha256 hex
   })
 
-  it('fonctionne sans champ source', async () => {
+  it('works without a source field', async () => {
     const req = makeRequest({ productId: 'prod-supplement-whey' })
     const res = await POST(req)
     expect(res.status).toBe(200)

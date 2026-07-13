@@ -1,4 +1,4 @@
-// Singleton Prisma — évite les connexions multiples en développement (hot reload Next.js)
+// Prisma singleton: avoids multiple connections during Next.js hot reload in development.
 // deps: npm install @prisma/client
 
 import { PrismaClient } from '@prisma/client'

@@ -1,4 +1,4 @@
-// Export JSON de toutes les données utilisateur — versionnées et typées
+// Versioned and typed JSON export of all user data.
 
 import type { UserProfile } from '@/lib/storage/StorageAdapter'
 

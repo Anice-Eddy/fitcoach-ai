@@ -10,6 +10,14 @@ describe('notificationHref', () => {
     }, 'member')).toBe('/notes?tab=coach&noteId=note_123')
   })
 
+  it('opens English shared note notifications for members', () => {
+    expect(notificationHref({
+      type: 'MESSAGE',
+      title: 'Shared note: nutrition',
+      relatedId: 'note_456',
+    }, 'member')).toBe('/notes?tab=coach&noteId=note_456')
+  })
+
   it('opens the exact note for coaches', () => {
     expect(notificationHref({
       type: 'MESSAGE',
@@ -41,6 +49,15 @@ describe('notificationHref', () => {
       message: 'Un membre a ajouté une note à votre rendez-vous "Bilan".',
       relatedId: 'appointment_123',
     }, 'coach')).toBe('/coach/appointments?id=appointment_123')
+  })
+
+  it('opens English appointment-note messages on the related appointment for coaches', () => {
+    expect(notificationHref({
+      type: 'MESSAGE',
+      title: 'Appointment note from member',
+      message: 'A member added a note to your appointment "Bilan".',
+      relatedId: 'appointment_456',
+    }, 'coach')).toBe('/coach/appointments?id=appointment_456')
   })
 
   it('opens appointment notes on the related appointment for members', () => {

@@ -35,7 +35,7 @@ describe('nutrition plan targets', () => {
     vi.resetAllMocks()
   })
 
-  it('retourne le plan nutrition actif du membre connecté', async () => {
+  it('returns the active nutrition plan for the signed-in member', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'member-1' } })
     ;(prisma.nutritionPlan.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 'plan-1',
@@ -55,7 +55,7 @@ describe('nutrition plan targets', () => {
     }))
   })
 
-  it('met à jour le plan actif du membre suivi par le coach', async () => {
+  it('updates the active plan for the member followed by the coach', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { email: 'coach@test.com' } })
     ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ coachProfile: { id: 'coach-profile' } })
     ;(prisma.coachMember.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ coachId: 'coach-profile', memberId: 'member-1' })
@@ -73,14 +73,14 @@ describe('nutrition plan targets', () => {
     expect(prisma.nutritionPlan.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'plan-1' },
       data: expect.objectContaining({
-        name: 'Objectif nutrition coach',
+        name: 'Coach nutrition target',
         targetCalories: 2600,
         targetProteinG: 180,
       }),
     }))
   })
 
-  it('crée un plan actif si le membre suivi n’en a pas encore', async () => {
+  it('creates an active plan if the followed member does not have one yet', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { email: 'coach@test.com' } })
     ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ coachProfile: { id: 'coach-profile' } })
     ;(prisma.coachMember.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ coachId: 'coach-profile', memberId: 'member-1' })
@@ -98,7 +98,7 @@ describe('nutrition plan targets', () => {
     expect(prisma.nutritionPlan.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
         userId: 'member-1',
-        name: 'Objectif nutrition coach',
+        name: 'Coach nutrition target',
         targetCalories: 2300,
       }),
     }))

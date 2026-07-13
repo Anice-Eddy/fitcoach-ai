@@ -7,6 +7,7 @@ import { ConversationList, type ConversationItemData } from '@/components/messag
 import { MessageInput } from '@/components/messaging/MessageInput'
 import { MessageThread } from '@/components/messaging/MessageThread'
 import { useSSE } from '@/hooks/useSSE'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface CoachRelation {
   coachProfileId: string
@@ -37,6 +38,7 @@ function coachName(relation: CoachRelation) {
 
 /** Member messaging page: lets a member chat with assigned coaches while keeping notes for durable follow-up. */
 export default function MessagesPage() {
+  const { t } = useLocale()
   const [coaches, setCoaches]       = useState<CoachRelation[]>([])
   const [selected, setSelected]     = useState<CoachRelation | null>(null)
   const [messages, setMessages]     = useState<ChatMessage[]>([])
@@ -110,20 +112,20 @@ export default function MessagesPage() {
 
   return (
     <>
-      <Header title="Messages" />
+      <Header titleKey="nav.messages" />
       <PageWrapper>
         <div className="space-y-6">
           <div>
-            <p className="text-lg font-bold text-white">Messages</p>
-            <p className="mt-0.5 text-xs text-zinc-400">Échangez avec votre coach et retrouvez vos conversations en cours.</p>
+            <p className="text-lg font-bold text-white">{t('messagesPage.title')}</p>
+            <p className="mt-0.5 text-xs text-zinc-400">{t('messagesPage.memberSubtitle')}</p>
           </div>
 
         <div className="grid h-[calc(100dvh-12rem)] min-h-[420px] grid-rows-[minmax(160px,32%)_1fr] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 lg:grid-cols-[280px_1fr] lg:grid-rows-none">
           <ConversationList
-            title="Mes coachs"
-            description="Questions rapides et suivi quotidien."
+            title={t('messagesPage.myCoaches')}
+            description={t('messagesPage.memberListDescription')}
             loading={loading}
-            emptyLabel="Aucun coach assigné."
+            emptyLabel={t('messagesPage.noAssignedCoach')}
             items={conversationItems}
             activeId={selected?.coachProfileId ?? null}
             onSelect={(id) => setSelected(coaches.find(coach => coach.coachProfileId === id) ?? null)}
@@ -132,23 +134,23 @@ export default function MessagesPage() {
           <section className="flex min-h-0 flex-col">
             <div className="border-b border-zinc-800 px-4 py-3">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-semibold text-white">{selected ? coachName(selected) : 'Messages'}</p>
+                <p className="text-sm font-semibold text-white">{selected ? coachName(selected) : t('messagesPage.title')}</p>
                 <span className="rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#C8F135]">
-                  Espace membre
+                  {t('messagesPage.memberSpace')}
                 </span>
               </div>
-              <p className="mt-0.5 text-xs text-zinc-500">Pour les consignes importantes, ton coach peut les garder en notes.</p>
+              <p className="mt-0.5 text-xs text-zinc-500">{t('messagesPage.memberThreadDescription')}</p>
             </div>
 
             <div className="min-h-0 flex-1">
               <MessageThread
                 loading={threadLoading}
                 hasSelection={Boolean(selected)}
-                emptyLabel="Aucun message pour le moment."
-                noSelectionLabel="Sélectionne un coach pour démarrer."
+                emptyLabel={t('messagesPage.noMessage')}
+                noSelectionLabel={t('messagesPage.selectCoach')}
                 messages={messages}
                 isMine={(message) => Boolean(selected && message.senderUserId !== selected.coach.id)}
-                labelFor={(message, mine) => mine ? 'Vous · Membre' : `Coach · ${message.sender.name ?? (selected ? coachName(selected) : 'Coach')}`}
+                labelFor={(message, mine) => mine ? `${t('messagesPage.you')} · ${t('messagesPage.member')}` : `${t('messagesPage.coach')} · ${message.sender.name ?? (selected ? coachName(selected) : t('messagesPage.coach'))}`}
               />
             </div>
 
@@ -158,7 +160,7 @@ export default function MessagesPage() {
               onSend={sendMessage}
               sending={sending}
               disabled={!selected}
-              placeholder={selected ? 'Écrire au coach…' : 'Sélectionne un coach…'}
+              placeholder={selected ? t('messagesPage.writeCoach') : t('messagesPage.selectCoachPlaceholder')}
             />
           </section>
         </div>

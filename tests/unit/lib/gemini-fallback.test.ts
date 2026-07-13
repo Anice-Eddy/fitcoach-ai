@@ -33,57 +33,57 @@ describe('AIProviderService — fallback chain Gemini', () => {
     vi.restoreAllMocks()
   })
 
-  it('utilise gemini-2.5-pro en premier', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(geminiOk('Réponse pro')))
+  it('uses gemini-2.5-pro first', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(geminiOk('Pro response')))
     const result = await service.generate([{ role: 'user', content: 'test' }])
     expect(result.provider).toBe('GEMINI')
-    expect(result.text).toBe('Réponse pro')
+    expect(result.text).toBe('Pro response')
     expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain('gemini-2.5-pro')
   })
 
-  it('bascule sur gemini-2.5-flash si pro échoue (429)', async () => {
+  it('falls back to gemini-2.5-flash when pro fails with 429', async () => {
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(geminiErr(429))            // pro → quota
-      .mockResolvedValueOnce(geminiOk('Réponse flash')),
+      .mockResolvedValueOnce(geminiOk('Flash response')),
     )
     const result = await service.generate([{ role: 'user', content: 'test' }])
-    expect(result.text).toBe('Réponse flash')
+    expect(result.text).toBe('Flash response')
     expect((fetch as ReturnType<typeof vi.fn>).mock.calls[1][0]).toContain('gemini-2.5-flash')
   })
 
-  it('bascule sur flash-lite si pro et flash échouent', async () => {
+  it('falls back to flash-lite when pro and flash fail', async () => {
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(geminiErr(429))            // pro → quota
       .mockResolvedValueOnce(geminiErr(503))            // flash → unavailable
-      .mockResolvedValueOnce(geminiOk('Réponse lite')),
+      .mockResolvedValueOnce(geminiOk('Lite response')),
     )
     const result = await service.generate([{ role: 'user', content: 'test' }])
-    expect(result.text).toBe('Réponse lite')
+    expect(result.text).toBe('Lite response')
     expect((fetch as ReturnType<typeof vi.fn>).mock.calls[2][0]).toContain('gemini-2.5-flash-lite')
   })
 
-  it('bascule sur Groq si tous les modèles Gemini échouent', async () => {
+  it('falls back to Groq when all Gemini models fail', async () => {
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(geminiErr(429))            // pro
       .mockResolvedValueOnce(geminiErr(503))            // flash
       .mockResolvedValueOnce(geminiErr(500))            // lite
-      .mockResolvedValueOnce(groqOk('Réponse Groq')),
+      .mockResolvedValueOnce(groqOk('Groq response')),
     )
     const result = await service.generate([{ role: 'user', content: 'test' }])
     expect(result.provider).toBe('GROQ')
-    expect(result.text).toBe('Réponse Groq')
+    expect(result.text).toBe('Groq response')
   })
 
-  it('lève une erreur si tous les providers échouent', async () => {
+  it('throws when all providers fail', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(geminiErr(500)))
     await expect(service.generate([{ role: 'user', content: 'test' }])).rejects.toThrow()
   })
 
-  it('force Groq si preferredProvider=GROQ (sans essayer Gemini)', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(groqOk('Réponse Groq directe')))
+  it('forces Groq when preferredProvider=GROQ without trying Gemini', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(groqOk('Direct Groq response')))
     const result = await service.generate([{ role: 'user', content: 'test' }], 'GROQ')
     expect(result.provider).toBe('GROQ')
-    expect(result.text).toBe('Réponse Groq directe')
+    expect(result.text).toBe('Direct Groq response')
     expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain('groq.com')
     expect(fetch).toHaveBeenCalledTimes(1)
   })

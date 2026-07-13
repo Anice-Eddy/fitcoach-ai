@@ -4,82 +4,85 @@ import { PageWrapper }            from '@/components/layout/PageWrapper'
 import { Header }                 from '@/components/layout/Header'
 import { IntegrationCard }        from '@/components/integrations/IntegrationCard'
 import { AppleHealthShortcut }    from '@/components/integrations/AppleHealthShortcut'
+import { useLocale }              from '@/contexts/LocaleContext'
 import { Clock }                  from 'lucide-react'
 import type { IntegrationStatus } from '@/types'
 
-const INTEGRATIONS: IntegrationStatus[] = [
-  {
-    id:          'google-fit',
-    label:       'Google Fit',
-    description: 'Synchronisez vos activités, pas et fréquence cardiaque.',
-    logoSrc:     '/icons/google-fit.svg',
-    isConnected: false,
-    isMocked:    true,
-    service:     'GOOGLE_FIT',
-  },
-  {
-    id:          'strava',
-    label:       'Strava',
-    description: 'Importez vos courses, vélos et nagez depuis Strava.',
-    logoSrc:     '/icons/strava.svg',
-    isConnected: false,
-    isMocked:    true,
-    service:     'STRAVA',
-  },
-  {
-    id:          'fitbit',
-    label:       'Fitbit',
-    description: 'Synchronisez sommeil, pas et données de santé.',
-    logoSrc:     '/icons/fitbit.svg',
-    isConnected: false,
-    isMocked:    true,
-    service:     'FITBIT',
-  },
-  {
-    id:          'garmin',
-    label:       'Garmin',
-    description: 'Importez vos performances sportives depuis Garmin Connect.',
-    logoSrc:     '/icons/garmin.svg',
-    isConnected: false,
-    isMocked:    true,
-    service:     'GARMIN',
-  },
-  {
-    id:          'myfitnesspal',
-    label:       'MyFitnessPal',
-    description: 'Préparez la synchro calories, macros et litres d\'eau depuis MyFitnessPal.',
-    logoSrc:     '/icons/myfitnesspal.svg',
-    isConnected: false,
-    isMocked:    true,
-    service:     'MYFITNESSPAL',
-  },
-]
-
 export default function IntegrationsPage() {
+  const { t } = useLocale()
+
+  const integrations: IntegrationStatus[] = [
+    {
+      id:          'google-fit',
+      label:       'Google Fit',
+      description: t('integrations.googleFitDescription'),
+      logoSrc:     '/icons/google-fit.svg',
+      isConnected: false,
+      isMocked:    true,
+      service:     'GOOGLE_FIT',
+    },
+    {
+      id:          'strava',
+      label:       'Strava',
+      description: t('integrations.stravaDescription'),
+      logoSrc:     '/icons/strava.svg',
+      isConnected: false,
+      isMocked:    true,
+      service:     'STRAVA',
+    },
+    {
+      id:          'fitbit',
+      label:       'Fitbit',
+      description: t('integrations.fitbitDescription'),
+      logoSrc:     '/icons/fitbit.svg',
+      isConnected: false,
+      isMocked:    true,
+      service:     'FITBIT',
+    },
+    {
+      id:          'garmin',
+      label:       'Garmin',
+      description: t('integrations.garminDescription'),
+      logoSrc:     '/icons/garmin.svg',
+      isConnected: false,
+      isMocked:    true,
+      service:     'GARMIN',
+    },
+    {
+      id:          'myfitnesspal',
+      label:       'MyFitnessPal',
+      description: t('integrations.myFitnessPalDescription'),
+      logoSrc:     '/icons/myfitnesspal.svg',
+      isConnected: false,
+      isMocked:    true,
+      service:     'MYFITNESSPAL',
+    },
+  ]
+
   return (
     <>
-      <Header title="Intégrations" />
+      <Header titleKey="nav.integrations" />
       <PageWrapper>
         <div className="space-y-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">Intégrations</h1>
+            <h1 className="text-2xl font-bold text-white">{t('integrations.title')}</h1>
             <p className="text-sm text-zinc-400 mt-1">
-              Connectez vos applications fitness pour synchroniser vos données automatiquement.
+              {t('integrations.subtitle')}
             </p>
           </div>
 
-          {/* Apple Health — fonctionnel */}
+          {/* Apple Health integration */}
           <AppleHealthShortcut />
 
-          {/* Autres intégrations OAuth — prochainement */}
+          {/* Other OAuth integrations: coming soon */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">Prochainement</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">{t('integrations.comingSoon')}</p>
             <div className="flex items-center gap-2 rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 text-sm text-amber-300 mb-4">
               <Clock className="size-4 shrink-0" />
-              Les intégrations OAuth (Google Fit, Strava, Fitbit, Garmin, MyFitnessPal) arrivent prochainement.
+              {t('integrations.oauthComingSoon')}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {INTEGRATIONS.map((integration) => (
+              {integrations.map((integration) => (
                 <IntegrationCard key={integration.id} integration={integration} />
               ))}
             </div>

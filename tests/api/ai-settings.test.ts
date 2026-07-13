@@ -32,13 +32,13 @@ describe('GET /api/ai/settings', () => {
     ;(prisma.profile.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockProfile)
   })
 
-  it('retourne 401 si non authentifié', async () => {
+  it('returns 401 when unauthenticated', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const res = await GET()
     expect(res.status).toBe(401)
   })
 
-  it('retourne les settings IA du profil', async () => {
+  it('returns the profile AI settings', async () => {
     const res  = await GET()
     const json = await res.json()
     expect(res.status).toBe(200)
@@ -46,7 +46,7 @@ describe('GET /api/ai/settings', () => {
     expect(json.aiHistoryEnabled).toBe(true)
   })
 
-  it('retourne 404 si pas de profil', async () => {
+  it('returns 404 when no profile exists', async () => {
     ;(prisma.profile.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const res = await GET()
     expect(res.status).toBe(404)
@@ -60,13 +60,13 @@ describe('PATCH /api/ai/settings', () => {
     ;(prisma.profile.update as ReturnType<typeof vi.fn>).mockResolvedValue({ aiMemoryEnabled: false, aiHistoryEnabled: true })
   })
 
-  it('retourne 401 si non authentifié', async () => {
+  it('returns 401 when unauthenticated', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const res = await PATCH(makeRequest({ aiMemoryEnabled: false }))
     expect(res.status).toBe(401)
   })
 
-  it('met à jour aiMemoryEnabled', async () => {
+  it('updates aiMemoryEnabled', async () => {
     const res  = await PATCH(makeRequest({ aiMemoryEnabled: false }))
     const json = await res.json()
     expect(res.status).toBe(200)
@@ -75,7 +75,7 @@ describe('PATCH /api/ai/settings', () => {
     expect(updateCall.data.aiMemoryEnabled).toBe(false)
   })
 
-  it('retourne 422 si le body est invalide', async () => {
+  it('returns 422 when the body is invalid', async () => {
     const res = await PATCH(makeRequest({ aiMemoryEnabled: 'oui' }))
     expect(res.status).toBe(422)
   })

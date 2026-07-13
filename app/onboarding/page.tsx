@@ -3,8 +3,13 @@ import type { Metadata } from 'next'
 import { OnboardingStepper } from '@/components/onboarding/OnboardingStepper'
 import { Logo } from '@/components/ui/Logo'
 import { PageBackground } from '@/components/landing/PageBackground'
+import { getServerTranslations } from '@/lib/i18n/server'
 
-export const metadata: Metadata = { title: 'Onboarding — BodyOps' }
+export function generateMetadata(): Metadata {
+  const { t } = getServerTranslations()
+
+  return { title: `${t('onboarding.title')} — BodyOps` }
+}
 
 export default function OnboardingPage() {
   return (

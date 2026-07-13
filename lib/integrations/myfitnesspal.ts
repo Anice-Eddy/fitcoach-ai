@@ -1,4 +1,4 @@
-// Connecteur MyFitnessPal — mocké MVP, prêt pour un import/export nutritionnel.
+// MyFitnessPal connector: mocked MVP, ready for nutrition import/export.
 import type { IntegrationConnector, NormalizedActivity, NormalizedNutritionDay } from './types'
 
 export const myFitnessPalConnector: IntegrationConnector = {
@@ -8,12 +8,12 @@ export const myFitnessPalConnector: IntegrationConnector = {
   isMocked: true,
 
   connect: async () => {
-    // MyFitnessPal ne propose pas d'OAuth public simple pour tous les projets; on garde le flux prêt côté UI.
-    throw new Error('Connexion MyFitnessPal disponible prochainement.')
+    // MyFitnessPal does not provide simple public OAuth for every project; keep the UI flow ready.
+    throw new Error('MyFitnessPal connection is coming soon.')
   },
 
   disconnect: async () => {
-    throw new Error('Non connecté.')
+    throw new Error('Not connected.')
   },
 
   sync: async (): Promise<NormalizedActivity[]> => {
@@ -21,7 +21,7 @@ export const myFitnessPalConnector: IntegrationConnector = {
   },
 }
 
-/** Normalise une journée nutrition MyFitnessPal exportée ou importée manuellement. */
+/** Normalizes a MyFitnessPal nutrition day exported or imported manually. */
 export function normalizeMyFitnessPalDay(input: Partial<NormalizedNutritionDay>): NormalizedNutritionDay {
   return {
     date:        input.date ?? new Date().toISOString(),

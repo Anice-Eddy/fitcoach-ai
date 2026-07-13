@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { analyzeCoachDocument, isCoachProfileComplete } from '@/lib/coach/verification'
 
 describe('coach verification helpers', () => {
-  it('passe en attente admin quand les donnees du document correspondent au profil', () => {
+  it('moves to admin review when document data matches the profile', () => {
     const result = analyzeCoachDocument({
       firstName:        'Alex',
       lastName:         'Martin',
@@ -15,7 +15,7 @@ describe('coach verification helpers', () => {
     expect(result.issues).toHaveLength(0)
   })
 
-  it('retourne des corrections precises quand les donnees sont manquantes', () => {
+  it('returns precise correction issues when document data is missing', () => {
     const result = analyzeCoachDocument({
       firstName: 'Alex',
       lastName:  'Martin',
@@ -23,11 +23,11 @@ describe('coach verification helpers', () => {
     })
 
     expect(result.status).toBe('NEEDS_CORRECTION')
-    expect(result.issues.map((issue) => issue.message)).toContain('Un diplôme, une certification ou un document officiel doit être envoyé.')
-    expect(result.issues.map((issue) => issue.message)).toContain('La date de naissance est manquante sur le document.')
+    expect(result.issues.map((issue) => issue.message)).toContain('A diploma, certification, or official document must be uploaded.')
+    expect(result.issues.map((issue) => issue.message)).toContain('The birth date is missing from the document.')
   })
 
-  it('detecte un profil coach complet', () => {
+  it('detects a complete coach profile', () => {
     expect(isCoachProfileComplete({
       firstName:       'Alex',
       lastName:        'Martin',

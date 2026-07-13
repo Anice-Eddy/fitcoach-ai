@@ -9,11 +9,14 @@ import {
   Footprints, Moon, Droplets, Battery, Brain, Camera,
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { enUS, fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { CoachPageHeader } from '@/components/coach/CoachPageHeader'
+import { useLocale } from '@/contexts/LocaleContext'
+import { ACTIVITY_LABEL_KEYS, EQUIPMENT_LABEL_KEYS, GOAL_LABEL_KEYS, LEVEL_LABEL_KEYS } from '@/lib/i18n/profile-label-keys'
+import { exerciseDisplayName } from '@/lib/training/exercise-database'
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// Types
 
 interface MemberItem {
   member: {
@@ -90,49 +93,32 @@ interface MemberDetail {
   coachNotes: Note[]
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
-const GOAL_LABELS: Record<string, string> = {
-  WEIGHT_LOSS: 'Perte de poids', MUSCLE_GAIN: 'Prise de masse',
-  MAINTENANCE: 'Maintien', ENDURANCE: 'Endurance',
-  FLEXIBILITY: 'Flexibilité', GENERAL_FITNESS: 'Forme générale',
+const STATUS_STYLE: Record<string, { dot: string; text: string; labelKey: string }> = {
+  CONFIRMED: { dot: 'bg-[#C8F135]',  text: 'text-[#C8F135]',  labelKey: 'coachMembers.appointmentStatus.confirmed' },
+  PENDING:   { dot: 'bg-yellow-400', text: 'text-yellow-400', labelKey: 'coachMembers.appointmentStatus.pending' },
+  PROPOSED:  { dot: 'bg-blue-400',   text: 'text-blue-400',   labelKey: 'coachMembers.appointmentStatus.proposed' },
+  CANCELLED: { dot: 'bg-red-400',    text: 'text-red-400',    labelKey: 'coachMembers.appointmentStatus.cancelled' },
+  COMPLETED: { dot: 'bg-zinc-500',   text: 'text-zinc-500',   labelKey: 'coachMembers.appointmentStatus.completed' },
 }
-const LEVEL_LABELS: Record<string, string> = {
-  BEGINNER: 'Débutant', INTERMEDIATE: 'Intermédiaire', ADVANCED: 'Avancé',
+const SESSION_STYLE: Record<string, { dot: string; labelKey: string }> = {
+  COMPLETED:   { dot: 'bg-emerald-400', labelKey: 'coachMembers.sessionStatus.completed' },
+  IN_PROGRESS: { dot: 'bg-[#C8F135]',  labelKey: 'coachMembers.sessionStatus.inProgress' },
+  PLANNED:     { dot: 'bg-zinc-500',    labelKey: 'coachMembers.sessionStatus.planned' },
+  SKIPPED:     { dot: 'bg-red-400',     labelKey: 'coachMembers.sessionStatus.skipped' },
 }
-const STATUS_STYLE: Record<string, { dot: string; text: string; label: string }> = {
-  CONFIRMED: { dot: 'bg-[#C8F135]',  text: 'text-[#C8F135]',  label: 'Confirmé' },
-  PENDING:   { dot: 'bg-yellow-400', text: 'text-yellow-400', label: 'En attente' },
-  PROPOSED:  { dot: 'bg-blue-400',   text: 'text-blue-400',   label: 'Proposé' },
-  CANCELLED: { dot: 'bg-red-400',    text: 'text-red-400',    label: 'Annulé' },
-  COMPLETED: { dot: 'bg-zinc-500',   text: 'text-zinc-500',   label: 'Terminé' },
+const NOTE_PRIORITY_LABEL_KEYS: Record<string, string> = {
+  LOW: 'coachNotes.priorities.low',
+  MEDIUM: 'coachNotes.priorities.medium',
+  HIGH: 'coachNotes.priorities.high',
 }
-const SESSION_STYLE: Record<string, { dot: string; label: string }> = {
-  COMPLETED:   { dot: 'bg-emerald-400', label: 'Complété' },
-  IN_PROGRESS: { dot: 'bg-[#C8F135]',  label: 'En cours' },
-  PLANNED:     { dot: 'bg-zinc-500',    label: 'Planifié' },
-  SKIPPED:     { dot: 'bg-red-400',     label: 'Manqué' },
-}
-const ACTIVITY_LABELS: Record<string, string> = {
-  SEDENTARY: 'Sédentaire',
-  LIGHTLY_ACTIVE: 'Légèrement actif',
-  MODERATELY_ACTIVE: 'Modérément actif',
-  VERY_ACTIVE: 'Très actif',
-  EXTREMELY_ACTIVE: 'Extrêmement actif',
-}
-const EQUIPMENT_LABELS: Record<string, string> = {
-  BODYWEIGHT: 'Poids du corps',
-  DUMBBELL: 'Haltères',
-  BARBELL: 'Barre',
-  BENCH: 'Banc',
-  KETTLEBELL: 'Kettlebell',
-  RESISTANCE_BAND: 'Élastiques',
-  PULL_UP_BAR: 'Barre traction',
-  CABLE_MACHINE: 'Poulie',
-  SMITH_MACHINE: 'Smith machine',
-  CARDIO_MACHINE: 'Machine cardio',
-  CHEST_PRESS_MACHINE: 'Chest press',
-  HIP_THRUST_MACHINE: 'Hip thrust',
+const NOTE_CATEGORY_LABEL_KEYS: Record<string, string> = {
+  FEEDBACK: 'coachNotes.categories.feedback',
+  WORKOUT: 'coachNotes.categories.workout',
+  NUTRITION: 'coachNotes.categories.nutrition',
+  PROGRESS: 'coachNotes.categories.progress',
+  OTHER: 'coachNotes.categories.other',
 }
 
 type CreateMemberForm = {
@@ -159,6 +145,22 @@ const emptyCreateMemberForm: CreateMemberForm = {
 function initials(name: string | null, email: string) {
   if (name) return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
   return email.slice(0, 2).toUpperCase()
+}
+
+function dateLocale(locale: string) {
+  return locale === 'fr' ? fr : enUS
+}
+
+function shortDate(value: string, locale: string) {
+  return format(new Date(value), locale === 'fr' ? 'd MMM yyyy' : 'MMM d, yyyy', { locale: dateLocale(locale) })
+}
+
+function dateTime(value: string, locale: string) {
+  return format(new Date(value), locale === 'fr' ? "d MMM yyyy 'à' HH:mm" : 'MMM d, yyyy h:mm a', { locale: dateLocale(locale) })
+}
+
+function translatedLabel(t: (key: string) => string, map: Record<string, string>, value: string) {
+  return map[value] ? t(map[value]) : value
 }
 
 // Tab toggle button with active highlight style.
@@ -189,6 +191,7 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 
 // Displays a summary of the member's profile: physical stats, goals, BMI, latest metrics, and active program.
 function OverviewTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: () => void }) {
+  const { locale, t } = useLocale()
   const p = detail.profile
   const last = detail.bodyMetrics[0]
   const lastWeight = detail.bodyMetrics.find(metric => typeof metric.weightKg === 'number')?.weightKg ?? null
@@ -235,27 +238,27 @@ function OverviewTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: (
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Poids actuel" value={lastWeight ? `${lastWeight} kg` : '—'} sub={p?.targetWeightKg ? `Objectif : ${p.targetWeightKg} kg` : undefined} />
-        <StatCard label="IMC" value={p?.bmi ? p.bmi.toFixed(1) : '—'} sub={p ? `${p.heightCm} cm` : undefined} />
-        <StatCard label="Séances complétées" value={String(doneSessions)} sub={totalMin ? `${totalMin} min total` : undefined} />
-        <StatCard label="Objectif" value={p ? (GOAL_LABELS[p.fitnessGoal] ?? p.fitnessGoal) : '—'} sub={p ? (LEVEL_LABELS[p.fitnessLevel] ?? p.fitnessLevel) : undefined} />
+        <StatCard label={t('coachMembers.overview.currentWeight')} value={lastWeight ? `${lastWeight} kg` : '—'} sub={p?.targetWeightKg ? `${t('coachMembers.overview.goal')}: ${p.targetWeightKg} kg` : undefined} />
+        <StatCard label={t('coachMembers.overview.bmi')} value={p?.bmi ? p.bmi.toFixed(1) : '—'} sub={p ? `${p.heightCm} cm` : undefined} />
+        <StatCard label={t('coachMembers.overview.completedSessions')} value={String(doneSessions)} sub={totalMin ? `${totalMin} ${t('coachMembers.overview.totalMinutes')}` : undefined} />
+        <StatCard label={t('coachMembers.overview.goal')} value={p ? translatedLabel(t, GOAL_LABEL_KEYS, p.fitnessGoal) : '—'} sub={p ? translatedLabel(t, LEVEL_LABEL_KEYS, p.fitnessLevel) : undefined} />
       </div>
 
       {p && (p.recommendedCalories || p.tdee) && (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Plan nutritionnel recommandé</p>
-            <span className="rounded-full border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-500">Calcul BodyOps</span>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('coachMembers.overview.recommendedNutrition')}</p>
+            <span className="rounded-full border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-500">{t('coachMembers.overview.bodyOpsCalc')}</span>
           </div>
           <div className="grid grid-cols-4 gap-3">
             <div className="text-center p-3 rounded-lg bg-zinc-800 border border-zinc-700">
-              <p className="text-lg font-bold text-white font-mono">{p.recommendedCalories ? Math.round(p.recommendedCalories).toLocaleString('fr-FR') : '—'}</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">kcal / jour</p>
+              <p className="text-lg font-bold text-white font-mono">{p.recommendedCalories ? Math.round(p.recommendedCalories).toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-US') : '—'}</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">{t('coachMembers.overview.kcalPerDay')}</p>
             </div>
             {[
-              { label: 'Protéines', v: p.recommendedProteinG, color: 'text-[#C8F135]' },
-              { label: 'Glucides',  v: p.recommendedCarbsG,   color: 'text-blue-400' },
-              { label: 'Lipides',   v: p.recommendedFatG,     color: 'text-pink-400' },
+              { label: t('coachMembers.nutrition.protein'), v: p.recommendedProteinG, color: 'text-[#C8F135]' },
+              { label: t('coachMembers.nutrition.carbs'),  v: p.recommendedCarbsG,   color: 'text-blue-400' },
+              { label: t('coachMembers.nutrition.fat'),   v: p.recommendedFatG,     color: 'text-pink-400' },
             ].map(m => (
               <div key={m.label} className="text-center p-3 rounded-lg bg-zinc-800 border border-zinc-700">
                 <p className={`text-lg font-bold font-mono ${m.color}`}>{m.v ? `${Math.round(m.v)}g` : '—'}</p>
@@ -269,23 +272,23 @@ function OverviewTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: (
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Objectif nutrition coach</p>
-            <p className="mt-1 text-xs text-zinc-500">Ces valeurs sont visibles côté membre et remplacent les recommandations auto pour les objectifs quotidiens.</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('coachMembers.overview.coachNutritionGoal')}</p>
+            <p className="mt-1 text-xs text-zinc-500">{t('coachMembers.overview.coachNutritionDescription')}</p>
           </div>
           <button
             type="button"
             onClick={fillNutritionFromRecommendation}
             className="self-start rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:border-[#C8F135]/50 hover:text-[#C8F135] sm:self-auto"
           >
-            Reprendre la reco
+            {t('coachMembers.overview.resumeRecommendation')}
           </button>
         </div>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { key: 'targetCalories', label: 'Calories', suffix: 'kcal', min: 800, max: 8000 },
-            { key: 'targetProteinG', label: 'Protéines', suffix: 'g', min: 20, max: 500 },
-            { key: 'targetCarbsG', label: 'Glucides', suffix: 'g', min: 20, max: 1000 },
-            { key: 'targetFatG', label: 'Lipides', suffix: 'g', min: 10, max: 400 },
+            { key: 'targetCalories', label: t('coachMembers.nutrition.calories'), suffix: 'kcal', min: 800, max: 8000 },
+            { key: 'targetProteinG', label: t('coachMembers.nutrition.protein'), suffix: 'g', min: 20, max: 500 },
+            { key: 'targetCarbsG', label: t('coachMembers.nutrition.carbs'), suffix: 'g', min: 20, max: 1000 },
+            { key: 'targetFatG', label: t('coachMembers.nutrition.fat'), suffix: 'g', min: 10, max: 400 },
           ].map(field => (
             <label key={field.key} className="block">
               <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-500">{field.label}</span>
@@ -305,7 +308,7 @@ function OverviewTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: (
         </div>
         <div className="mt-3 flex items-center justify-between gap-3">
           <p className="text-[11px] text-zinc-600">
-            {coachPlan ? 'Un objectif coach est actif pour ce membre.' : 'Aucun objectif coach personnalisé pour le moment.'}
+            {coachPlan ? t('coachMembers.overview.activeCoachGoal') : t('coachMembers.overview.noCoachGoal')}
           </p>
           <button
             type="button"
@@ -313,18 +316,18 @@ function OverviewTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: (
             disabled={savingNutrition || !nutritionForm.targetCalories || !nutritionForm.targetProteinG || !nutritionForm.targetCarbsG || !nutritionForm.targetFatG}
             className="rounded-lg bg-[#C8F135] px-3 py-2 text-xs font-bold text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50"
           >
-            {savingNutrition ? 'Enregistrement…' : 'Enregistrer'}
+            {savingNutrition ? t('coachMembers.saving') : t('common.save')}
           </button>
         </div>
       </div>
 
       {detail.bodyMetrics.length > 0 && (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Historique de poids (récent)</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">{t('coachMembers.overview.recentWeightHistory')}</p>
           <div className="space-y-1.5">
             {detail.bodyMetrics.slice(0, 5).map(m => (
               <div key={m.id} className="flex justify-between items-center text-sm border-b border-zinc-800/60 pb-1.5 last:border-0">
-                <span className="text-zinc-400">{format(new Date(m.date), 'd MMM yyyy', { locale: fr })}</span>
+                <span className="text-zinc-400">{shortDate(m.date, locale)}</span>
                 <span className="font-mono text-white font-medium">{m.weightKg ? `${m.weightKg} kg` : '—'}</span>
               </div>
             ))}
@@ -334,17 +337,17 @@ function OverviewTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: (
 
       {last && (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Derniers signaux de récupération</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">{t('coachMembers.overview.recoverySignals')}</p>
           <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
-            <CoachSignal icon={<Footprints className="size-3.5" />} label="Pas" value={last.steps ? last.steps.toLocaleString('fr-FR') : '—'} />
-            <CoachSignal icon={<Moon className="size-3.5" />} label="Sommeil" value={last.sleepHours ? `${last.sleepHours} h` : '—'} />
-            <CoachSignal icon={<Droplets className="size-3.5" />} label="Litres d'eau" value={last.waterLiters ? `${last.waterLiters} L` : '—'} />
-            <CoachSignal icon={<Battery className="size-3.5" />} label="Énergie" value={last.energyLevel ? `${last.energyLevel}/5` : '—'} />
-            <CoachSignal icon={<Brain className="size-3.5" />} label="Stress" value={last.stressLevel ? `${last.stressLevel}/5` : '—'} />
+            <CoachSignal icon={<Footprints className="size-3.5" />} label={t('coachMembers.metrics.steps')} value={last.steps ? last.steps.toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-US') : '—'} />
+            <CoachSignal icon={<Moon className="size-3.5" />} label={t('coachMembers.metrics.sleep')} value={last.sleepHours ? `${last.sleepHours} h` : '—'} />
+            <CoachSignal icon={<Droplets className="size-3.5" />} label={t('coachMembers.metrics.water')} value={last.waterLiters ? `${last.waterLiters} L` : '—'} />
+            <CoachSignal icon={<Battery className="size-3.5" />} label={t('coachMembers.metrics.energy')} value={last.energyLevel ? `${last.energyLevel}/5` : '—'} />
+            <CoachSignal icon={<Brain className="size-3.5" />} label={t('coachMembers.metrics.stress')} value={last.stressLevel ? `${last.stressLevel}/5` : '—'} />
           </div>
           {last.progressPhotoUrl && (
             <a href={last.progressPhotoUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-[#C8F135] hover:text-[#d4f54d]">
-              <Camera className="size-3.5" /> Voir la photo de progression
+              <Camera className="size-3.5" /> {t('coachMembers.overview.viewProgressPhoto')}
             </a>
           )}
         </div>
@@ -482,6 +485,7 @@ function CreateMemberModal({
   onClose: () => void
   onSubmit: () => void
 }) {
+  const { t } = useLocale()
   if (!open) return null
 
   const set = (key: keyof CreateMemberForm, value: string) => setForm(f => ({ ...f, [key]: value }))
@@ -499,10 +503,10 @@ function CreateMemberModal({
       <div className="mx-auto w-full max-w-5xl rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-800 bg-zinc-950/95 px-4 py-3 backdrop-blur sm:px-6">
           <div>
-            <h3 className="text-base font-bold text-white">Ajouter un client</h3>
-            <p className="text-xs text-zinc-500">Le compte membre, son profil et la relation coach seront créés ensemble.</p>
+            <h3 className="text-base font-bold text-white">{t('coachMembers.create.title')}</h3>
+            <p className="text-xs text-zinc-500">{t('coachMembers.create.description')}</p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-900 hover:text-white" aria-label="Fermer">
+          <button onClick={onClose} className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-900 hover:text-white" aria-label={t('common.close')}>
             <X className="size-4" />
           </button>
         </div>
@@ -511,47 +515,47 @@ function CreateMemberModal({
           {error && <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</div>}
 
           <section className="space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Compte</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('coachMembers.create.account')}</p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Field label="Prénom" value={form.firstName} onChange={v => set('firstName', v)} required />
-              <Field label="Nom" value={form.lastName} onChange={v => set('lastName', v)} />
+              <Field label={t('coachMembers.create.firstName')} value={form.firstName} onChange={v => set('firstName', v)} required />
+              <Field label={t('coachMembers.create.lastName')} value={form.lastName} onChange={v => set('lastName', v)} />
               <Field label="Email" type="email" value={form.email} onChange={v => set('email', v)} required />
-              <Field label="Mot de passe temporaire" type="password" value={form.password} onChange={v => set('password', v)} required placeholder="8 caractères minimum" />
+              <Field label={t('coachMembers.create.temporaryPassword')} type="password" value={form.password} onChange={v => set('password', v)} required placeholder={t('coachMembers.create.passwordPlaceholder')} />
             </div>
           </section>
 
           <section className="space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Profil physique</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('coachMembers.create.physicalProfile')}</p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              <Field label="Âge" type="number" min={13} max={100} value={form.age} onChange={v => set('age', v)} required />
-              <SelectField label="Genre" value={form.gender} onChange={v => set('gender', v)} options={[{ value: 'MALE', label: 'Homme' }, { value: 'FEMALE', label: 'Femme' }]} />
-              <Field label="Poids kg" type="number" step="0.1" min={30} max={300} value={form.weightKg} onChange={v => set('weightKg', v)} required />
-              <Field label="Taille cm" type="number" step="1" min={100} max={250} value={form.heightCm} onChange={v => set('heightCm', v)} required />
-              <Field label="Objectif kg" type="number" step="0.1" min={30} max={300} value={form.targetWeightKg} onChange={v => set('targetWeightKg', v)} />
-              <Field label="Tour taille cm" type="number" step="0.5" value={form.waistCm} onChange={v => set('waistCm', v)} />
-              <Field label="Hanches cm" type="number" step="0.5" value={form.hipsCm} onChange={v => set('hipsCm', v)} />
-              <Field label="% masse grasse" type="number" step="0.1" value={form.bodyFatPct} onChange={v => set('bodyFatPct', v)} />
-              <Field label="Pas" type="number" value={form.steps} onChange={v => set('steps', v)} />
-              <Field label="Sommeil h" type="number" step="0.25" value={form.sleepHours} onChange={v => set('sleepHours', v)} />
+              <Field label={t('coachMembers.create.age')} type="number" min={13} max={100} value={form.age} onChange={v => set('age', v)} required />
+              <SelectField label={t('coachMembers.create.gender')} value={form.gender} onChange={v => set('gender', v)} options={[{ value: 'MALE', label: t('coachMembers.gender.male') }, { value: 'FEMALE', label: t('coachMembers.gender.female') }]} />
+              <Field label={t('coachMembers.create.weightKg')} type="number" step="0.1" min={30} max={300} value={form.weightKg} onChange={v => set('weightKg', v)} required />
+              <Field label={t('coachMembers.create.heightCm')} type="number" step="1" min={100} max={250} value={form.heightCm} onChange={v => set('heightCm', v)} required />
+              <Field label={t('coachMembers.create.targetWeightKg')} type="number" step="0.1" min={30} max={300} value={form.targetWeightKg} onChange={v => set('targetWeightKg', v)} />
+              <Field label={t('coachMembers.create.waistCm')} type="number" step="0.5" value={form.waistCm} onChange={v => set('waistCm', v)} />
+              <Field label={t('coachMembers.create.hipsCm')} type="number" step="0.5" value={form.hipsCm} onChange={v => set('hipsCm', v)} />
+              <Field label={t('coachMembers.create.bodyFatPct')} type="number" step="0.1" value={form.bodyFatPct} onChange={v => set('bodyFatPct', v)} />
+              <Field label={t('coachMembers.metrics.steps')} type="number" value={form.steps} onChange={v => set('steps', v)} />
+              <Field label={t('coachMembers.create.sleepHours')} type="number" step="0.25" value={form.sleepHours} onChange={v => set('sleepHours', v)} />
             </div>
           </section>
 
           <section className="space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Objectifs et activité</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('coachMembers.create.goalsAndActivity')}</p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <SelectField label="Objectif" value={form.fitnessGoal} onChange={v => set('fitnessGoal', v)} options={Object.entries(GOAL_LABELS).map(([value, label]) => ({ value, label }))} />
-              <SelectField label="Niveau" value={form.fitnessLevel} onChange={v => set('fitnessLevel', v)} options={Object.entries(LEVEL_LABELS).map(([value, label]) => ({ value, label }))} />
-              <SelectField label="Activité" value={form.activityLevel} onChange={v => set('activityLevel', v)} options={Object.entries(ACTIVITY_LABELS).map(([value, label]) => ({ value, label }))} />
-              <Field label="Jours / semaine" type="number" min={1} max={7} value={form.trainingDaysPerWeek} onChange={v => set('trainingDaysPerWeek', v)} />
-              <SelectField label="Focus" value={form.bodyFocus} onChange={v => set('bodyFocus', v)} options={[
-                { value: 'FULL_BODY', label: 'Corps complet' },
-                { value: 'UPPER_BODY', label: 'Haut du corps' },
-                { value: 'LOWER_BODY', label: 'Bas du corps' },
+              <SelectField label={t('coachMembers.overview.goal')} value={form.fitnessGoal} onChange={v => set('fitnessGoal', v)} options={Object.entries(GOAL_LABEL_KEYS).map(([value, labelKey]) => ({ value, label: t(labelKey) }))} />
+              <SelectField label={t('coachMembers.create.level')} value={form.fitnessLevel} onChange={v => set('fitnessLevel', v)} options={Object.entries(LEVEL_LABEL_KEYS).map(([value, labelKey]) => ({ value, label: t(labelKey) }))} />
+              <SelectField label={t('coachMembers.create.activity')} value={form.activityLevel} onChange={v => set('activityLevel', v)} options={Object.entries(ACTIVITY_LABEL_KEYS).map(([value, labelKey]) => ({ value, label: t(labelKey) }))} />
+              <Field label={t('coachMembers.create.daysPerWeek')} type="number" min={1} max={7} value={form.trainingDaysPerWeek} onChange={v => set('trainingDaysPerWeek', v)} />
+              <SelectField label={t('coachMembers.create.focus')} value={form.bodyFocus} onChange={v => set('bodyFocus', v)} options={[
+                { value: 'FULL_BODY', label: t('coachMembers.focus.fullBody') },
+                { value: 'UPPER_BODY', label: t('coachMembers.focus.upperBody') },
+                { value: 'LOWER_BODY', label: t('coachMembers.focus.lowerBody') },
               ]} />
-              <Field label="Litres eau" type="number" step="0.1" value={form.waterLiters} onChange={v => set('waterLiters', v)} />
+              <Field label={t('coachMembers.create.waterLiters')} type="number" step="0.1" value={form.waterLiters} onChange={v => set('waterLiters', v)} />
             </div>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              {Object.entries(EQUIPMENT_LABELS).map(([value, label]) => (
+              {Object.entries(EQUIPMENT_LABEL_KEYS).map(([value, labelKey]) => (
                 <button
                   key={value}
                   type="button"
@@ -563,22 +567,22 @@ function CreateMemberModal({
                       : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white',
                   )}
                 >
-                  {label}
+                  {t(labelKey)}
                 </button>
               ))}
             </div>
           </section>
 
           <section className="space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Nutrition et notes</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('coachMembers.create.nutritionAndNotes')}</p>
             <div className="grid gap-3 lg:grid-cols-2">
-              <Field label="Restrictions alimentaires" value={form.dietaryRestrictions} onChange={v => set('dietaryRestrictions', v)} placeholder="VEGETARIAN, GLUTEN_FREE..." />
-              <Field label="Préférences alimentaires" value={form.foodPreferences} onChange={v => set('foodPreferences', v)} placeholder="Riz, poulet, skyr..." />
+              <Field label={t('coachMembers.create.dietaryRestrictions')} value={form.dietaryRestrictions} onChange={v => set('dietaryRestrictions', v)} placeholder={t('coachMembers.create.dietaryRestrictionsPlaceholder')} />
+              <Field label={t('coachMembers.create.foodPreferences')} value={form.foodPreferences} onChange={v => set('foodPreferences', v)} placeholder={t('coachMembers.create.foodPreferencesPlaceholder')} />
             </div>
             <textarea
               value={form.notes}
               onChange={e => set('notes', e.target.value)}
-              placeholder="Notes initiales visibles par le coach"
+              placeholder={t('coachMembers.create.initialNotesPlaceholder')}
               rows={3}
               className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-[#C8F135]"
             />
@@ -586,14 +590,14 @@ function CreateMemberModal({
 
           <div className="flex flex-col-reverse gap-2 border-t border-zinc-800 pt-4 sm:flex-row sm:justify-end">
             <button onClick={onClose} className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-900">
-              Annuler
+              {t('common.cancel')}
             </button>
             <button
               onClick={onSubmit}
               disabled={saving}
               className="rounded-lg bg-[#C8F135] px-4 py-2 text-sm font-bold text-zinc-950 hover:bg-[#d4f54d] disabled:opacity-50"
             >
-              {saving ? 'Création…' : 'Créer le client'}
+              {saving ? t('coachMembers.create.creating') : t('coachMembers.create.createClient')}
             </button>
           </div>
         </div>
@@ -604,6 +608,7 @@ function CreateMemberModal({
 
 // Direct coach/member chat for quick exchanges; durable decisions should still go into notes.
 function ChatTab({ memberId }: { memberId: string }) {
+  const { locale, t } = useLocale()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [content, setContent]   = useState('')
   const [loading, setLoading]   = useState(true)
@@ -644,21 +649,21 @@ function ChatTab({ memberId }: { memberId: string }) {
     <div className="rounded-xl border border-zinc-800 bg-zinc-900">
       <div className="border-b border-zinc-800 px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-semibold text-white">Messages</p>
+          <p className="text-sm font-semibold text-white">{t('coachMembers.tabs.messages')}</p>
           <span className="rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#C8F135]">
-            Espace coach
+            {t('coachMembers.coachSpace')}
           </span>
         </div>
-        <p className="mt-0.5 text-xs text-zinc-500">Échange rapide avec le membre. Les décisions importantes restent dans les notes.</p>
+        <p className="mt-0.5 text-xs text-zinc-500">{t('coachMembers.chat.description')}</p>
       </div>
 
       <div className="max-h-[460px] min-h-[280px] space-y-3 overflow-y-auto p-4">
         {loading ? (
-          <p className="py-10 text-center text-xs text-zinc-500">Chargement…</p>
+          <p className="py-10 text-center text-xs text-zinc-500">{t('common.loading')}</p>
         ) : messages.length === 0 ? (
           <div className="py-10 text-center">
             <MessageSquare className="mx-auto mb-3 size-8 text-zinc-700" />
-            <p className="text-sm text-zinc-500">Aucun message pour le moment.</p>
+            <p className="text-sm text-zinc-500">{t('coachMembers.chat.noMessages')}</p>
           </div>
         ) : messages.map(message => {
           const mine = message.senderUserId !== memberId
@@ -669,11 +674,11 @@ function ChatTab({ memberId }: { memberId: string }) {
                 mine ? 'bg-[#C8F135] text-zinc-950' : 'bg-zinc-800 text-zinc-100',
               )}>
                 <p className={cn('mb-1 text-[10px] font-bold uppercase tracking-widest', mine ? 'text-zinc-700' : 'text-[#C8F135]')}>
-                  {mine ? 'Vous · Coach' : `Membre · ${message.sender.name ?? 'Client'}`}
+                  {mine ? `${t('messagesPage.you')} · ${t('messagesPage.coach')}` : `${t('messagesPage.member')} · ${message.sender.name ?? t('coachMembers.client')}`}
                 </p>
                 <p className="whitespace-pre-wrap break-words">{message.content}</p>
                 <p className={cn('mt-1 text-[10px]', mine ? 'text-zinc-700' : 'text-zinc-500')}>
-                  {format(new Date(message.createdAt), 'd MMM · HH:mm', { locale: fr })}
+                  {format(new Date(message.createdAt), locale === 'fr' ? 'd MMM · HH:mm' : 'MMM d · h:mm a', { locale: dateLocale(locale) })}
                 </p>
               </div>
             </div>
@@ -690,7 +695,7 @@ function ChatTab({ memberId }: { memberId: string }) {
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
             rows={2}
             maxLength={2000}
-            placeholder="Écrire au membre…"
+            placeholder={t('coachMembers.chat.placeholder')}
             className="min-h-10 flex-1 resize-none rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-[#C8F135]"
           />
           <button
@@ -698,7 +703,7 @@ function ChatTab({ memberId }: { memberId: string }) {
             onClick={sendMessage}
             disabled={sending || !content.trim()}
             className="self-end rounded-xl bg-[#C8F135] p-3 text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50"
-            aria-label="Envoyer le message"
+            aria-label={t('coachMembers.chat.sendAria')}
           >
             <Send className="size-4" />
           </button>
@@ -708,10 +713,11 @@ function ChatTab({ memberId }: { memberId: string }) {
   )
 }
 
-// ─── Notes Tab ────────────────────────────────────────────────────────────────
+// Notes tab
 
 // Expandable section showing existing replies on a coach note and allowing the coach to fetch the latest replies.
 function NoteRepliesSection({ noteId, replies: initialReplies }: { noteId: string; replies: NoteReply[] }) {
+  const { locale, t } = useLocale()
   const [expanded, setExpanded]   = useState(false)
   const [replies, setReplies]     = useState<NoteReply[]>(initialReplies)
   const [loading, setLoading]     = useState(false)
@@ -724,13 +730,13 @@ function NoteRepliesSection({ noteId, replies: initialReplies }: { noteId: strin
     const data = res ? await res.json().catch(() => []) : []
     if (Array.isArray(data)) setReplies(data.map((r: { id: string; content: string; memberId: string | null; member?: { name?: string }; authorRole?: string; createdAt: string }) => ({
       id: r.id, content: r.content, memberId: r.memberId,
-      memberName: r.member?.name ?? 'Membre', authorRole: r.authorRole, authorName: r.authorRole === 'COACH' ? 'Coach' : r.member?.name, createdAt: r.createdAt,
+      memberName: r.member?.name ?? t('messagesPage.member'), authorRole: r.authorRole, authorName: r.authorRole === 'COACH' ? t('messagesPage.coach') : r.member?.name, createdAt: r.createdAt,
     })))
     setLoading(false)
   }
 
   const deleteReply = async (replyId: string) => {
-    if (!confirm('Supprimer cette réponse ?')) return
+    if (!confirm(t('coachMembers.notes.deleteReplyConfirm'))) return
     await fetch(`/api/coach/notes/${noteId}/replies`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -767,25 +773,25 @@ function NoteRepliesSection({ noteId, replies: initialReplies }: { noteId: strin
         className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
       >
         <MessageSquare className="size-3.5" />
-        {replies.length} réponse{replies.length !== 1 ? 's' : ''}
+        {replies.length} {replies.length !== 1 ? t('coachNotes.replies') : t('coachNotes.reply')}
         {expanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
       </button>
 
       {expanded && (
         <div className="mt-2 space-y-2">
           {loading ? (
-            <p className="text-xs text-zinc-600 italic">Chargement…</p>
+            <p className="text-xs text-zinc-600 italic">{t('common.loading')}</p>
           ) : replies.length === 0 ? (
-            <p className="text-xs text-zinc-600 italic">Aucune réponse</p>
+            <p className="text-xs text-zinc-600 italic">{t('coachNotes.noReply')}</p>
           ) : replies.map(r => (
             <div key={r.id} className="flex items-start gap-2 bg-zinc-800/50 rounded-lg px-3 py-2">
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-semibold text-zinc-400">
-                  {r.authorRole === 'COACH' ? r.authorName ?? 'Coach' : r.authorName ?? r.memberName ?? 'Membre'}
+                  {r.authorRole === 'COACH' ? r.authorName ?? t('messagesPage.coach') : r.authorName ?? r.memberName ?? t('messagesPage.member')}
                 </p>
                 <p className="text-xs text-zinc-300 mt-0.5">{r.content}</p>
                 <p className="text-[10px] text-zinc-600 mt-0.5">
-                  {format(new Date(r.createdAt), "d MMM 'à' HH:mm", { locale: fr })}
+                  {format(new Date(r.createdAt), locale === 'fr' ? "d MMM 'à' HH:mm" : 'MMM d, h:mm a', { locale: dateLocale(locale) })}
                 </p>
               </div>
               <button
@@ -801,7 +807,7 @@ function NoteRepliesSection({ noteId, replies: initialReplies }: { noteId: strin
               value={replyText}
               onChange={e => setReplyText(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitReply() } }}
-              placeholder="Répondre au membre…"
+              placeholder={t('coachNotes.replyPlaceholder')}
               className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-white outline-none placeholder:text-zinc-500 focus:border-[#C8F135]"
             />
             <button
@@ -810,7 +816,7 @@ function NoteRepliesSection({ noteId, replies: initialReplies }: { noteId: strin
               disabled={sending || !replyText.trim()}
               className="rounded-lg bg-[#C8F135] px-3 py-2 text-xs font-bold text-zinc-950 disabled:opacity-50"
             >
-              {sending ? '…' : 'Envoyer'}
+              {sending ? '…' : t('common.send')}
             </button>
           </div>
         </div>
@@ -821,6 +827,7 @@ function NoteRepliesSection({ noteId, replies: initialReplies }: { noteId: strin
 
 // Notes management tab: create, share, pin, and delete coach notes for this member.
 function NotesTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: () => void }) {
+  const { locale, t } = useLocale()
   const [notes, setNotes]       = useState<Note[]>(detail.coachNotes)
   const [form, setForm]         = useState({ title: '', content: '', shared: false, important: false })
   const [saving, setSaving]     = useState(false)
@@ -866,7 +873,7 @@ function NotesTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: () =
   }
 
   const deleteNote = async (noteId: string) => {
-    if (!confirm('Supprimer cette note définitivement ?')) return
+    if (!confirm(t('coachMembers.notes.deleteNoteConfirm'))) return
     setDeleting(noteId)
     await fetch('/api/coach/notes', {
       method: 'DELETE',
@@ -882,26 +889,26 @@ function NotesTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: () =
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-zinc-400">{notes.length} note{notes.length !== 1 ? 's' : ''}</p>
+        <p className="text-sm text-zinc-400">{notes.length} {notes.length !== 1 ? t('coachMembers.notes.notes') : t('coachMembers.notes.note')}</p>
         <button
           onClick={() => setShowForm(v => !v)}
           className="flex items-center gap-1.5 text-xs font-medium text-zinc-900 bg-[#C8F135] hover:bg-[#d4f54d] px-3 py-1.5 rounded-lg transition-colors"
         >
           {showForm ? <X className="size-3.5" /> : <Plus className="size-3.5" />}
-          {showForm ? 'Annuler' : 'Nouvelle note'}
+          {showForm ? t('common.cancel') : t('coachNotes.newNote')}
         </button>
       </div>
 
       {showForm && (
         <div className="rounded-xl border border-zinc-700 bg-zinc-900 p-4 space-y-3">
           <input
-            placeholder="Titre de la note"
+            placeholder={t('coachMembers.notes.titlePlaceholder')}
             value={form.title}
             onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
             className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135]"
           />
           <textarea
-            placeholder="Contenu de la note…"
+            placeholder={t('coachMembers.notes.contentPlaceholder')}
             value={form.content}
             onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
             rows={4}
@@ -910,11 +917,11 @@ function NotesTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: () =
           <div className="flex flex-wrap items-center gap-4">
             <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
               <input type="checkbox" checked={form.shared} onChange={e => setForm(f => ({ ...f, shared: e.target.checked }))} className="accent-[#C8F135]" />
-              Partager avec le membre
+              {t('coachMembers.notes.shareWithMember')}
             </label>
             <label className="flex items-center gap-2 text-xs text-amber-400 cursor-pointer">
               <input type="checkbox" checked={form.important} onChange={e => setForm(f => ({ ...f, important: e.target.checked }))} className="accent-amber-400" />
-              Marquer comme importante
+              {t('coachMembers.notes.markImportant')}
             </label>
           </div>
           <div className="flex justify-end">
@@ -924,7 +931,7 @@ function NotesTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: () =
               className="flex items-center gap-1.5 text-xs font-medium text-zinc-900 bg-[#C8F135] hover:bg-[#d4f54d] px-3 py-1.5 rounded-lg disabled:opacity-50 transition-colors"
             >
               <Send className="size-3.5" />
-              {saving ? 'Enregistrement…' : 'Enregistrer'}
+              {saving ? t('coachMembers.saving') : t('common.save')}
             </button>
           </div>
         </div>
@@ -933,7 +940,7 @@ function NotesTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: () =
       {notes.length === 0 && !showForm ? (
         <div className="py-10 text-center">
           <FileText className="size-8 text-zinc-700 mx-auto mb-2" />
-          <p className="text-sm text-zinc-500">Aucune note pour ce membre</p>
+          <p className="text-sm text-zinc-500">{t('coachMembers.notes.noNoteForMember')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -947,22 +954,22 @@ function NotesTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: () =
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     {n.isImportant && (
                       <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full">
-                        <Lock className="size-2.5" /> Importante
+                        <Lock className="size-2.5" /> {t('coachMembers.notes.important')}
                       </span>
                     )}
                     {n.isPinned && <Pin className="size-3 text-[#C8F135] shrink-0" />}
                     <p className="text-sm font-medium text-white truncate">{n.title}</p>
-                    <span className={cn('text-[10px] font-semibold shrink-0', PRIORITY_COLOR[n.priority])}>{n.priority}</span>
+                    <span className={cn('text-[10px] font-semibold shrink-0', PRIORITY_COLOR[n.priority])}>{translatedLabel(t, NOTE_PRIORITY_LABEL_KEYS, n.priority)}</span>
                   </div>
                   <p className="text-xs text-zinc-400 line-clamp-3">{n.content}</p>
                   <div className="flex items-center gap-3 mt-2 flex-wrap">
-                    <span className="text-[10px] text-zinc-600">{format(new Date(n.createdAt), 'd MMM yyyy', { locale: fr })}</span>
+                    <span className="text-[10px] text-zinc-600">{shortDate(n.createdAt, locale)}</span>
                     {n.isSharedWithMember && (
                       <span className="flex items-center gap-1 text-[10px] text-[#C8F135]">
-                        <Eye className="size-3" /> Partagée
+                        <Eye className="size-3" /> {t('coachMembers.notes.shared')}
                       </span>
                     )}
-                    {n.category && <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">{n.category}</span>}
+                    {n.category && <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">{translatedLabel(t, NOTE_CATEGORY_LABEL_KEYS, n.category)}</span>}
                   </div>
                 </div>
 
@@ -971,7 +978,7 @@ function NotesTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: () =
                   <button
                     onClick={() => toggleImportant(n)}
                     disabled={toggling === n.id}
-                    title={n.isImportant ? 'Retirer l\'importance' : 'Marquer comme importante'}
+                    title={n.isImportant ? t('coachMembers.notes.removeImportance') : t('coachMembers.notes.markImportant')}
                     className={cn(
                       'p-1.5 rounded-lg transition-colors disabled:opacity-50',
                       n.isImportant ? 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20' : 'text-zinc-500 hover:text-amber-400 hover:bg-zinc-800',
@@ -1001,6 +1008,7 @@ function NotesTab({ detail, onRefresh }: { detail: MemberDetail; onRefresh: () =
 
 // Activity tab: displays and manages body metrics and workout sessions for the member, with add/delete and session status editing.
 function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; memberId: string; onRefresh: () => void }) {
+  const { locale, t } = useLocale()
   const [metrics, setMetrics]             = useState<Metric[]>(detail.bodyMetrics)
   const [sessions, setSessions]           = useState<Session[]>(detail.workoutSessions)
   const [showMetricForm, setShowMetricForm] = useState(false)
@@ -1051,7 +1059,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
         weightKg:   Number(metricForm.weightKg),
         bodyFatPct: nullableNumber(metricForm.bodyFatPct),
         waistCm:    nullableNumber(metricForm.waistCm),
-        // Le coach peut compléter ces valeurs, mais elles restent stockées dans la même table que côté membre.
+        // The coach can complete these values, but they remain stored in the same table as the member side.
         steps:            nullableNumber(metricForm.steps),
         sleepHours:       nullableNumber(metricForm.sleepHours),
         waterLiters:      nullableNumber(metricForm.waterLiters),
@@ -1072,7 +1080,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
   }
 
   const deleteMetric = async (metricId: string) => {
-    if (!confirm('Supprimer cette mesure ?')) return
+    if (!confirm(t('coachMembers.activityTab.deleteMetricConfirm'))) return
     setDeletingMetric(metricId)
     await fetch(`/api/coach/members/${memberId}/metrics`, {
       method: 'DELETE',
@@ -1112,7 +1120,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
   }
 
   const deleteSessionExercise = async (sessionId: string, exerciseLogId: string) => {
-    if (!confirm('Supprimer cet exercice de la séance ?')) return
+    if (!confirm(t('coachMembers.activityTab.deleteExerciseConfirm'))) return
     setDeletingExercise(exerciseLogId)
     const res = await fetch(`/api/coach/members/${memberId}/sessions`, {
       method: 'DELETE',
@@ -1121,7 +1129,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
     })
 
     if (res.ok) {
-      // L'API renvoie la séance à jour pour éviter une désynchronisation avec la base.
+      // The API returns the updated session to avoid database desynchronization.
       const updated = await res.json()
       setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, ...updated } : s))
       onRefresh()
@@ -1130,7 +1138,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
   }
 
   const deleteWorkoutSession = async (sessionId: string) => {
-    if (!confirm('Supprimer cette séance complète ? Les exercices associés seront aussi supprimés.')) return
+    if (!confirm(t('coachMembers.activityTab.deleteSessionConfirm'))) return
     setDeletingSession(sessionId)
     const res = await fetch(`/api/coach/members/${memberId}/sessions`, {
       method: 'DELETE',
@@ -1139,7 +1147,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
     })
 
     if (res.ok) {
-      // La suppression d'une séance retire aussi ses exercices en base via Prisma.
+      // Deleting a session also removes its exercises in the database via Prisma.
       setSessions(prev => prev.filter(s => s.id !== sessionId))
       onRefresh()
     }
@@ -1151,12 +1159,12 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
       {/* Body Metrics */}
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Mensurations</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('coachMembers.activityTab.metrics')}</p>
           <button
             onClick={() => setShowMetricForm(v => !v)}
             className="flex items-center gap-1 text-xs text-zinc-400 hover:text-[#C8F135] transition-colors"
           >
-            <PlusCircle className="size-3.5" /> Ajouter
+            <PlusCircle className="size-3.5" /> {t('common.add')}
           </button>
         </div>
 
@@ -1164,7 +1172,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
           <div className="mb-4 p-3 rounded-lg bg-zinc-800 border border-zinc-700 space-y-2">
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <div>
-                <label className="text-[10px] text-zinc-500 block mb-1">Poids (kg) *</label>
+                <label className="text-[10px] text-zinc-500 block mb-1">{t('coachMembers.activityTab.weightKgRequired')}</label>
                 <input
                   type="number" step="0.1" placeholder="70.5"
                   value={metricForm.weightKg}
@@ -1173,7 +1181,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
                 />
               </div>
               <div>
-                <label className="text-[10px] text-zinc-500 block mb-1">% Masse grasse</label>
+                <label className="text-[10px] text-zinc-500 block mb-1">{t('coachMembers.activityTab.bodyFatPct')}</label>
                 <input
                   type="number" step="0.1" placeholder="20.0"
                   value={metricForm.bodyFatPct}
@@ -1182,7 +1190,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
                 />
               </div>
               <div>
-                <label className="text-[10px] text-zinc-500 block mb-1">Tour de taille (cm)</label>
+                <label className="text-[10px] text-zinc-500 block mb-1">{t('coachMembers.activityTab.waistCm')}</label>
                 <input
                   type="number" step="0.5" placeholder="80"
                   value={metricForm.waistCm}
@@ -1190,58 +1198,58 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
                   className="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-[#C8F135]"
                 />
               </div>
-              <CoachMetricInput label="Pas" value={metricForm.steps} onChange={value => setMetricForm(f => ({ ...f, steps: value }))} min={0} max={100000} step="1" placeholder="8000" />
-              <CoachMetricInput label="Sommeil (h)" value={metricForm.sleepHours} onChange={value => setMetricForm(f => ({ ...f, sleepHours: value }))} min={0} max={24} step="0.25" placeholder="7.5" />
-              <CoachMetricInput label="Litres d'eau" value={metricForm.waterLiters} onChange={value => setMetricForm(f => ({ ...f, waterLiters: value }))} min={0} max={15} step="0.1" placeholder="2.0" />
-              <CoachMetricInput label="Énergie 1-5" value={metricForm.energyLevel} onChange={value => setMetricForm(f => ({ ...f, energyLevel: value }))} min={1} max={5} step="1" placeholder="4" />
-              <CoachMetricInput label="Stress 1-5" value={metricForm.stressLevel} onChange={value => setMetricForm(f => ({ ...f, stressLevel: value }))} min={1} max={5} step="1" placeholder="2" />
+              <CoachMetricInput label={t('coachMembers.metrics.steps')} value={metricForm.steps} onChange={value => setMetricForm(f => ({ ...f, steps: value }))} min={0} max={100000} step="1" placeholder="8000" />
+              <CoachMetricInput label={t('coachMembers.activityTab.sleepHours')} value={metricForm.sleepHours} onChange={value => setMetricForm(f => ({ ...f, sleepHours: value }))} min={0} max={24} step="0.25" placeholder="7.5" />
+              <CoachMetricInput label={t('coachMembers.activityTab.waterLiters')} value={metricForm.waterLiters} onChange={value => setMetricForm(f => ({ ...f, waterLiters: value }))} min={0} max={15} step="0.1" placeholder="2.0" />
+              <CoachMetricInput label={t('coachMembers.activityTab.energyLevel')} value={metricForm.energyLevel} onChange={value => setMetricForm(f => ({ ...f, energyLevel: value }))} min={1} max={5} step="1" placeholder="4" />
+              <CoachMetricInput label={t('coachMembers.activityTab.stressLevel')} value={metricForm.stressLevel} onChange={value => setMetricForm(f => ({ ...f, stressLevel: value }))} min={1} max={5} step="1" placeholder="2" />
             </div>
             <input
               type="url"
-              placeholder="URL photo de progression"
+              placeholder={t('coachMembers.activityTab.progressPhotoUrl')}
               value={metricForm.progressPhotoUrl}
               onChange={e => setMetricForm(f => ({ ...f, progressPhotoUrl: e.target.value }))}
               className="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-[#C8F135]"
             />
             <input
-              placeholder="Note optionnelle"
+              placeholder={t('coachMembers.activityTab.optionalNote')}
               value={metricForm.notes}
               onChange={e => setMetricForm(f => ({ ...f, notes: e.target.value }))}
               className="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-[#C8F135]"
             />
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowMetricForm(false)} className="text-xs text-zinc-400 hover:text-white px-3 py-1.5">Annuler</button>
+              <button onClick={() => setShowMetricForm(false)} className="text-xs text-zinc-400 hover:text-white px-3 py-1.5">{t('common.cancel')}</button>
               <button
                 onClick={addMetric}
                 disabled={savingMetric || !metricForm.weightKg}
                 className="flex items-center gap-1 text-xs font-medium text-zinc-900 bg-[#C8F135] hover:bg-[#d4f54d] px-3 py-1.5 rounded disabled:opacity-50 transition-colors"
               >
-                {savingMetric ? 'Enregistrement…' : 'Ajouter'}
+                {savingMetric ? t('coachMembers.saving') : t('common.add')}
               </button>
             </div>
           </div>
         )}
 
         {metrics.length === 0 ? (
-          <p className="text-xs text-zinc-600 italic">Aucune mensuration enregistrée.</p>
+          <p className="text-xs text-zinc-600 italic">{t('coachMembers.activityTab.noMetric')}</p>
         ) : (
           <div className="space-y-1">
             {metrics.slice(0, 15).map(m => (
               <div key={m.id} className="grid gap-2 border-b border-zinc-800/60 py-2 text-xs last:border-0 sm:grid-cols-[1fr_auto] sm:items-start">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span className="text-zinc-400">{format(new Date(m.date), 'd MMM yyyy', { locale: fr })}</span>
+                    <span className="text-zinc-400">{shortDate(m.date, locale)}</span>
                     <span className="font-mono font-semibold text-white">{m.weightKg ? `${m.weightKg} kg` : '— kg'}</span>
                     <span className="text-zinc-500">{m.bodyFatPct ? `${m.bodyFatPct}% MG` : '— MG'}</span>
                     <span className="text-zinc-500">{m.waistCm ? `${m.waistCm} cm taille` : '— taille'}</span>
                   </div>
                   <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500">
-                    <span>{m.steps ? `${m.steps.toLocaleString('fr-FR')} pas` : '— pas'}</span>
-                    <span>{m.sleepHours ? `${m.sleepHours} h sommeil` : '— sommeil'}</span>
-                    <span>{m.waterLiters ? `${m.waterLiters} L eau` : '— eau'}</span>
-                    <span>{m.energyLevel ? `énergie ${m.energyLevel}/5` : '— énergie'}</span>
-                    <span>{m.stressLevel ? `stress ${m.stressLevel}/5` : '— stress'}</span>
-                    {m.progressPhotoUrl ? <a href={m.progressPhotoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#C8F135]"><Camera className="size-3" /> photo</a> : null}
+                    <span>{m.steps ? `${m.steps.toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-US')} ${t('coachMembers.metrics.steps').toLowerCase()}` : `— ${t('coachMembers.metrics.steps').toLowerCase()}`}</span>
+                    <span>{m.sleepHours ? `${m.sleepHours} h ${t('coachMembers.metrics.sleep').toLowerCase()}` : `— ${t('coachMembers.metrics.sleep').toLowerCase()}`}</span>
+                    <span>{m.waterLiters ? `${m.waterLiters} L ${t('coachMembers.metrics.water').toLowerCase()}` : `— ${t('coachMembers.metrics.water').toLowerCase()}`}</span>
+                    <span>{m.energyLevel ? `${t('coachMembers.metrics.energy').toLowerCase()} ${m.energyLevel}/5` : `— ${t('coachMembers.metrics.energy').toLowerCase()}`}</span>
+                    <span>{m.stressLevel ? `${t('coachMembers.metrics.stress').toLowerCase()} ${m.stressLevel}/5` : `— ${t('coachMembers.metrics.stress').toLowerCase()}`}</span>
+                    {m.progressPhotoUrl ? <a href={m.progressPhotoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#C8F135]"><Camera className="size-3" /> {t('coachMembers.activityTab.photo')}</a> : null}
                   </div>
                   {m.notes ? <p className="mt-1 truncate text-[11px] text-zinc-600">{m.notes}</p> : null}
                 </div>
@@ -1260,9 +1268,9 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
 
       {/* Workout Sessions */}
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Séances d'entraînement</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">{t('coachMembers.activityTab.trainingSessions')}</p>
         {sessions.length === 0 ? (
-          <p className="text-xs text-zinc-600 italic">Aucune séance enregistrée.</p>
+          <p className="text-xs text-zinc-600 italic">{t('coachMembers.activityTab.noSession')}</p>
         ) : (
           <div className="space-y-3">
             {sessions.slice(0, 15).map(s => {
@@ -1276,7 +1284,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
                       <p className="text-sm text-white font-medium truncate">{s.name}</p>
                       {s.completedAt && (
                         <p className="text-xs text-zinc-500">
-                          {format(new Date(s.completedAt), 'd MMM', { locale: fr })}
+                          {format(new Date(s.completedAt), locale === 'fr' ? 'd MMM' : 'MMM d', { locale: dateLocale(locale) })}
                           {s.durationMinutes && ` · ${s.durationMinutes} min`}
                           {s.caloriesBurned && ` · ${s.caloriesBurned} kcal`}
                         </p>
@@ -1291,7 +1299,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
                       className="text-xs bg-zinc-700 border border-zinc-600 text-zinc-300 rounded px-2 py-1 focus:outline-none focus:border-[#C8F135] disabled:opacity-50"
                     >
                       {Object.entries(SESSION_STYLE).map(([k, v]) => (
-                        <option key={k} value={k}>{v.label}</option>
+                        <option key={k} value={k}>{t(v.labelKey)}</option>
                       ))}
                     </select>
 
@@ -1306,8 +1314,8 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
                     </button>
                     <button
                       type="button"
-                      title="Supprimer la séance"
-                      aria-label={`Supprimer la séance ${s.name}`}
+                      title={t('coachMembers.activityTab.deleteSession')}
+                      aria-label={`${t('coachMembers.activityTab.deleteSession')} ${s.name}`}
                       onClick={() => deleteWorkoutSession(s.id)}
                       disabled={deletingSession === s.id}
                       className="rounded p-1 text-zinc-600 transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
@@ -1322,18 +1330,18 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
                       <textarea
                         value={sessionNotes[s.id] ?? ''}
                         onChange={e => setSessionNotes(prev => ({ ...prev, [s.id]: e.target.value }))}
-                        placeholder="Note sur la séance…"
+                        placeholder={t('coachMembers.activityTab.sessionNotePlaceholder')}
                         rows={2}
                         className="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] resize-none"
                       />
                       <div className="flex justify-end gap-2">
-                        <button onClick={() => setEditingSession(null)} className="text-xs text-zinc-400 hover:text-white">Annuler</button>
+                        <button onClick={() => setEditingSession(null)} className="text-xs text-zinc-400 hover:text-white">{t('common.cancel')}</button>
                         <button
                           onClick={() => saveSessionNote(s.id)}
                           disabled={savingSession === s.id}
                           className="flex items-center gap-1 text-xs font-medium text-zinc-900 bg-[#C8F135] hover:bg-[#d4f54d] px-2 py-1 rounded disabled:opacity-50 transition-colors"
                         >
-                          <Check className="size-3" /> Sauvegarder
+                          <Check className="size-3" /> {t('common.save')}
                         </button>
                       </div>
                     </div>
@@ -1345,24 +1353,26 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
 
                   <div className="mt-3 ml-5 space-y-1.5">
                     {(s.exerciseLogs?.length ?? 0) === 0 ? (
-                      <p className="text-[11px] text-zinc-600 italic">Aucun exercice dans cette séance.</p>
+                      <p className="text-[11px] text-zinc-600 italic">{t('coachMembers.activityTab.noExercise')}</p>
                     ) : (
-                      s.exerciseLogs?.map(log => (
+                      s.exerciseLogs?.map(log => {
+                        const exerciseLabel = exerciseDisplayName(log.exercise.id || log.exercise.name, locale)
+                        return (
                         <div
                           key={log.id}
                           className="flex items-center gap-2 rounded-md border border-zinc-700/70 bg-zinc-900/70 px-2 py-1.5"
                         >
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-xs font-medium text-zinc-200">{log.exercise.name}</p>
+                            <p className="truncate text-xs font-medium text-zinc-200">{exerciseLabel}</p>
                             <p className="text-[11px] text-zinc-500">
-                              {log.sets ?? '—'} séries · {log.reps ?? '—'} reps
+                              {log.sets ?? '—'} {t('coachMembers.activityTab.sets')} · {log.reps ?? '—'} {t('coachMembers.activityTab.reps')}
                               {log.weightKg ? ` · ${log.weightKg} kg` : ''}
                             </p>
                           </div>
                           <button
                             type="button"
-                            title="Supprimer l'exercice"
-                            aria-label={`Supprimer ${log.exercise.name}`}
+                            title={t('coachMembers.activityTab.deleteExercise')}
+                            aria-label={`${t('coachMembers.activityTab.deleteExercise')} ${exerciseLabel}`}
                             onClick={() => deleteSessionExercise(s.id, log.id)}
                             disabled={deletingExercise === log.id}
                             className="rounded p-1 text-zinc-600 transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
@@ -1370,7 +1380,8 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
                             <Trash2 className="size-3.5" />
                           </button>
                         </div>
-                      ))
+                        )
+                      })
                     )}
                   </div>
                 </div>
@@ -1385,6 +1396,7 @@ function ActivityTab({ detail, memberId, onRefresh }: { detail: MemberDetail; me
 
 // Appointments tab: lists all appointments for this member with status badges, date, and a link to the appointments page.
 function AppointmentsTab({ memberId }: { memberId: string }) {
+  const { locale, t } = useLocale()
   const [appts, setAppts]     = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [now, setNow]         = useState<Date | null>(null)
@@ -1400,12 +1412,12 @@ function AppointmentsTab({ memberId }: { memberId: string }) {
   const upcoming = now ? appts.filter(a => new Date(a.scheduledAt) >= now && a.status !== 'CANCELLED') : []
   const past     = now ? appts.filter(a => new Date(a.scheduledAt) < now || a.status === 'CANCELLED' || a.status === 'COMPLETED') : []
 
-  if (loading) return <div className="py-10 text-center text-sm text-zinc-500">Chargement…</div>
+  if (loading) return <div className="py-10 text-center text-sm text-zinc-500">{t('common.loading')}</div>
 
   if (appts.length === 0) return (
     <div className="py-10 text-center">
       <Calendar className="size-8 text-zinc-700 mx-auto mb-2" />
-      <p className="text-sm text-zinc-500">Aucun rendez-vous avec ce membre</p>
+      <p className="text-sm text-zinc-500">{t('coachMembers.appointments.noAppointment')}</p>
     </div>
   )
 
@@ -1418,23 +1430,23 @@ function AppointmentsTab({ memberId }: { memberId: string }) {
             <div className="flex items-center gap-2 mb-1">
               <div className={cn('size-2 rounded-full shrink-0', st.dot)} />
               <p className="text-sm font-medium text-white">{a.title}</p>
-              <span className={cn('text-[10px] font-semibold', st.text)}>{st.label}</span>
+              <span className={cn('text-[10px] font-semibold', st.text)}>{t(st.labelKey)}</span>
             </div>
             <p className="text-xs text-zinc-400">
-              {format(new Date(a.scheduledAt), "d MMM yyyy 'à' HH:mm", { locale: fr })} · {a.duration} min
+              {dateTime(a.scheduledAt, locale)} · {a.duration} min
             </p>
             {a.coachNote  && <p className="mt-2 text-xs text-zinc-300 italic">"{a.coachNote}"</p>}
-            {a.memberNote && <p className="mt-1 text-xs text-zinc-500">Note membre : {a.memberNote}</p>}
+            {a.memberNote && <p className="mt-1 text-xs text-zinc-500">{t('coachMembers.appointments.memberNote')}: {a.memberNote}</p>}
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
             <a href={`/coach/appointments?id=${a.id}`}
               className="text-xs text-[#C8F135] hover:underline">
-              Voir dans l'agenda
+              {t('coachMembers.appointments.viewInAgenda')}
             </a>
             {a.meetLink && (
               <a href={a.meetLink} target="_blank" rel="noreferrer"
                 className="text-xs text-zinc-400 hover:text-white hover:underline">
-                Rejoindre
+                {t('coachMembers.appointments.join')}
               </a>
             )}
           </div>
@@ -1447,13 +1459,13 @@ function AppointmentsTab({ memberId }: { memberId: string }) {
     <div className="space-y-5">
       {upcoming.length > 0 && (
         <div className="space-y-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">À venir</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('coachMembers.appointments.upcoming')}</p>
           {upcoming.map(a => <ApptCard key={a.id} a={a} />)}
         </div>
       )}
       {past.length > 0 && (
         <div className="space-y-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Historique</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t('coachMembers.appointments.history')}</p>
           {past.map(a => <ApptCard key={a.id} a={a} />)}
         </div>
       )}
@@ -1461,7 +1473,7 @@ function AppointmentsTab({ memberId }: { memberId: string }) {
   )
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// Main component
 
 type Tab = 'overview' | 'notes' | 'messages' | 'activity' | 'appointments'
 
@@ -1482,6 +1494,7 @@ function requestedMemberId() {
 
 /** Coach members management page: sidebar member list with search, and a detail panel with Overview/Notes/Activity/Appointments tabs. */
 export default function CoachMembers() {
+  const { locale, t } = useLocale()
   const [members, setMembers]               = useState<MemberItem[]>([])
   const [search, setSearch]                 = useState('')
   const [selectedId, setSelectedId]         = useState<string | null>(null)
@@ -1538,13 +1551,13 @@ export default function CoachMembers() {
   }
 
   const removeMember = async () => {
-    if (!selectedId || !confirm('Retirer ce membre de votre liste ?')) return
+    if (!selectedId || !confirm(t('coachMembers.removeConfirm'))) return
     setRemoving(true)
     try {
       const res = await fetch(`/api/coach/members/${selectedId}`, { method: 'DELETE' })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        alert(data?.error ?? 'Erreur lors de la suppression')
+        alert(data?.error ?? t('coachMembers.removeError'))
         return
       }
       setSelectedId(null)
@@ -1577,7 +1590,7 @@ export default function CoachMembers() {
           ? raw
           : raw && typeof raw === 'object'
             ? Object.values(raw).flat().join(' · ')
-            : 'Création impossible'
+            : t('coachMembers.create.createError')
         setCreateError(msg)
         return
       }
@@ -1599,8 +1612,8 @@ export default function CoachMembers() {
   return (
     <div className="space-y-8">
       <CoachPageHeader
-        title="Membres"
-        description="Consultez les profils, notes, messages, activités et rendez-vous de chaque membre suivi."
+        title={t('coachMembers.title')}
+        description={t('coachMembers.description')}
       />
 
       <div className="flex h-[calc(100vh-15rem)] min-h-[620px] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
@@ -1614,18 +1627,18 @@ export default function CoachMembers() {
         onSubmit={createMember}
       />
 
-      {/* ── Left panel ── */}
+      {/* Left panel */}
       <aside className="w-72 shrink-0 flex flex-col border-r border-zinc-800 bg-zinc-950">
         <div className="p-4 border-b border-zinc-800">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-white">Membres</h2>
+            <h2 className="text-sm font-semibold text-white">{t('coachMembers.title')}</h2>
             <div className="flex items-center gap-2">
               <span className="text-xs text-zinc-500">{members.length}</span>
               <button
                 onClick={() => setCreateOpen(true)}
                 className="rounded-lg border border-zinc-700 p-1.5 text-zinc-400 transition-colors hover:border-[#C8F135]/50 hover:text-[#C8F135]"
-                aria-label="Ajouter un client"
-                title="Ajouter un client"
+                aria-label={t('coachMembers.create.title')}
+                title={t('coachMembers.create.title')}
               >
                 <Plus className="size-3.5" />
               </button>
@@ -1636,7 +1649,7 @@ export default function CoachMembers() {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Rechercher…"
+              placeholder={t('coachMembers.searchPlaceholder')}
               className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-8 pr-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135]"
             />
           </div>
@@ -1644,12 +1657,12 @@ export default function CoachMembers() {
 
         <div className="flex-1 overflow-y-auto p-2">
           {listLoading ? (
-            <div className="py-8 text-center text-xs text-zinc-500">Chargement…</div>
+            <div className="py-8 text-center text-xs text-zinc-500">{t('common.loading')}</div>
           ) : filtered.length === 0 ? (
             <div className="py-8 text-center">
               <User className="size-8 text-zinc-700 mx-auto mb-2" />
               <p className="text-xs text-zinc-500">
-                {search ? 'Aucun résultat' : 'Aucun membre suivi'}
+                {search ? t('coachMembers.noResult') : t('coachNotes.noTrackedMembers')}
               </p>
             </div>
           ) : filtered.map(m => {
@@ -1673,8 +1686,8 @@ export default function CoachMembers() {
                   <p className="text-sm font-medium text-white truncate">{m.member.name ?? m.member.email}</p>
                   <p className="text-[10px] text-zinc-500 truncate">
                     {m.member.profile
-                      ? `${GOAL_LABELS[m.member.profile.fitnessGoal] ?? m.member.profile.fitnessGoal}`
-                      : 'Profil non renseigné'}
+                      ? translatedLabel(t, GOAL_LABEL_KEYS, m.member.profile.fitnessGoal)
+                      : t('coachMembers.profileMissing')}
                   </p>
                 </div>
                 {m.chat?.unreadCount ? (
@@ -1689,13 +1702,13 @@ export default function CoachMembers() {
         </div>
       </aside>
 
-      {/* ── Right panel ── */}
+      {/* Right panel */}
       <main className="flex-1 overflow-y-auto bg-zinc-950">
         {!selectedId ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
               <User className="size-12 text-zinc-700 mx-auto mb-3" />
-              <p className="text-sm text-zinc-500">Sélectionnez un membre pour voir son espace de coaching</p>
+              <p className="text-sm text-zinc-500">{t('coachMembers.selectMemberEmpty')}</p>
             </div>
           </div>
         ) : detailLoading ? (
@@ -1705,7 +1718,7 @@ export default function CoachMembers() {
         ) : detail ? (
           <div className="p-6 space-y-6">
 
-            {/* ── Member header ── */}
+            {/* Member header */}
             <div className="flex items-start justify-between gap-4 pb-5 border-b border-zinc-800">
               <div className="flex items-center gap-4">
                 <div className="size-14 rounded-full bg-[#C8F135]/10 flex items-center justify-center text-lg font-bold text-[#C8F135]">
@@ -1715,7 +1728,7 @@ export default function CoachMembers() {
                   <h1 className="text-xl font-bold text-white">{detail.name ?? detail.email}</h1>
                   <p className="text-sm text-zinc-400">{detail.email}</p>
                   <p className="text-xs text-zinc-600 mt-0.5">
-                    Suivi depuis le {format(new Date(detail.assignedAt), 'd MMMM yyyy', { locale: fr })}
+                    {t('coachMembers.followingSince')} {format(new Date(detail.assignedAt), locale === 'fr' ? 'd MMMM yyyy' : 'MMMM d, yyyy', { locale: dateLocale(locale) })}
                     {detail.profile && ` · ${detail.profile.weightKg} kg · ${detail.profile.heightCm} cm`}
                   </p>
                 </div>
@@ -1726,14 +1739,14 @@ export default function CoachMembers() {
                   href={`/coach/appointments?memberId=${detail.id}&new=1`}
                   className="flex items-center gap-1.5 text-xs font-medium border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:text-white px-3 py-2 rounded-lg transition-colors"
                 >
-                  <CalendarPlus className="size-3.5" /> Planifier RDV
+                  <CalendarPlus className="size-3.5" /> {t('coachMembers.planAppointment')}
                 </a>
                 <button
                   type="button"
                   onClick={() => setTab('messages')}
                   className="flex items-center gap-1.5 text-xs font-medium bg-[#C8F135] text-zinc-900 hover:bg-[#d4f54d] px-3 py-2 rounded-lg transition-colors"
                 >
-                  <MessageSquare className="size-3.5" /> Contacter
+                  <MessageSquare className="size-3.5" /> {t('coachMembers.contact')}
                 </button>
                 <button
                   onClick={removeMember}
@@ -1741,21 +1754,21 @@ export default function CoachMembers() {
                   className="flex items-center gap-1.5 text-xs font-medium border border-red-800 text-red-400 hover:bg-red-500/10 px-3 py-2 rounded-lg transition-colors disabled:opacity-50"
                 >
                   <Trash2 className="size-3.5" />
-                  {removing ? '…' : 'Retirer'}
+                  {removing ? '…' : t('coachMembers.remove')}
                 </button>
               </div>
             </div>
 
-            {/* ── Tabs ── */}
+            {/* Tabs */}
             <div className="flex items-center gap-1 overflow-x-auto pb-1">
-              <TabBtn active={tab === 'overview'}     onClick={() => setTab('overview')}>Vue d'ensemble</TabBtn>
-              <TabBtn active={tab === 'notes'}        onClick={() => setTab('notes')}>Notes</TabBtn>
-              <TabBtn active={tab === 'messages'}     onClick={() => setTab('messages')}>Messages</TabBtn>
-              <TabBtn active={tab === 'activity'}     onClick={() => setTab('activity')}>Activité</TabBtn>
-              <TabBtn active={tab === 'appointments'} onClick={() => setTab('appointments')}>Rendez-vous</TabBtn>
+              <TabBtn active={tab === 'overview'}     onClick={() => setTab('overview')}>{t('coachMembers.tabs.overview')}</TabBtn>
+              <TabBtn active={tab === 'notes'}        onClick={() => setTab('notes')}>{t('coachMembers.tabs.notes')}</TabBtn>
+              <TabBtn active={tab === 'messages'}     onClick={() => setTab('messages')}>{t('coachMembers.tabs.messages')}</TabBtn>
+              <TabBtn active={tab === 'activity'}     onClick={() => setTab('activity')}>{t('coachMembers.tabs.activity')}</TabBtn>
+              <TabBtn active={tab === 'appointments'} onClick={() => setTab('appointments')}>{t('coachMembers.tabs.appointments')}</TabBtn>
             </div>
 
-            {/* ── Tab content ── */}
+            {/* Tab content */}
             <div>
               {tab === 'overview'     && <OverviewTab detail={detail} onRefresh={() => fetchDetail(detail.id)} />}
               {tab === 'notes'        && <NotesTab detail={detail} onRefresh={() => fetchDetail(detail.id)} />}
@@ -1766,7 +1779,7 @@ export default function CoachMembers() {
           </div>
         ) : (
           <div className="h-full flex items-center justify-center">
-            <p className="text-sm text-zinc-500">Membre introuvable</p>
+            <p className="text-sm text-zinc-500">{t('coachMembers.memberNotFound')}</p>
           </div>
         )}
       </main>

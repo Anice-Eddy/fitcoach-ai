@@ -1,5 +1,5 @@
-// Connecteur Evolt Active — Phase 1 : saisie manuelle
-// Phase 2 : import PDF rapport Evolt | Phase 3 : API officielle
+// Evolt Active connector - Phase 1: manual entry.
+// Phase 2: Evolt report PDF import | Phase 3: official API.
 
 import type { NormalizedBodyComposition } from './types'
 

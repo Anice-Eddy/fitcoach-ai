@@ -7,6 +7,7 @@ import { signInWithPopup, type AuthError, type UserCredential } from 'firebase/a
 import { toast } from 'sonner'
 import { auth } from '@/lib/firebase/client'
 import { facebookProvider, googleProvider } from '@/lib/firebase/providers'
+import { useLocale } from '@/contexts/LocaleContext'
 
 type SocialProvider = 'google' | 'facebook'
 
@@ -38,30 +39,30 @@ function FacebookIcon() {
   )
 }
 
-function providerErrorMessage(error: unknown) {
+function providerErrorMessage(error: unknown, t: (key: string) => string) {
   const code = (error as SocialAuthError | null)?.code
   const message = (error as SocialAuthError | null)?.message
   if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return null
   if (code === 'auth/configuration-not-found') {
-    return 'La connexion sociale n’est pas encore configurée.'
+    return t('auth.socialErrors.notConfigured')
   }
   if (code === 'auth/operation-not-allowed') {
-    return 'Ce mode de connexion n’est pas encore activé.'
+    return t('auth.socialErrors.notEnabled')
   }
   if (code === 'auth/unauthorized-domain') {
-    return 'Ce domaine n’est pas encore autorisé pour la connexion.'
+    return t('auth.socialErrors.unauthorizedDomain')
   }
-  if (code === 'auth/invalid-api-key') return 'La configuration de connexion est invalide.'
+  if (code === 'auth/invalid-api-key') return t('auth.socialErrors.invalidConfig')
   if (code === 'auth/app-not-authorized') {
-    return 'Cette application n’est pas encore autorisée pour ce domaine.'
+    return t('auth.socialErrors.appNotAuthorized')
   }
-  if (code === 'auth/popup-blocked') return 'Le navigateur a bloqué la fenêtre de connexion.'
+  if (code === 'auth/popup-blocked') return t('auth.socialErrors.popupBlocked')
   if (code === 'auth/account-exists-with-different-credential') {
-    return 'Un compte existe déjà avec cet email. Essaie de te connecter autrement.'
+    return t('auth.socialErrors.accountExists')
   }
-  if (code === 'auth/network-request-failed') return 'Problème de connexion. Réessaie.'
+  if (code === 'auth/network-request-failed') return t('auth.socialErrors.network')
   if (message) return message
-  return 'Connexion impossible. Réessaie plus tard.'
+  return t('auth.socialErrors.generic')
 }
 
 function SocialButton({
@@ -92,6 +93,7 @@ function SocialButton({
 
 /** Google/Facebook sign-in through Firebase, then BodyOps/NextAuth session handoff. */
 export function SocialAuthButtons({ callbackUrl = '/dashboard', disabled }: SocialAuthButtonsProps) {
+  const { t } = useLocale()
   const [loading, setLoading] = useState<SocialProvider | null>(null)
 
   const exchangeCredential = async (credential: UserCredential, provider: SocialProvider) => {
@@ -103,7 +105,7 @@ export function SocialAuthButtons({ callbackUrl = '/dashboard', disabled }: Soci
     })
     if (!res.ok) {
       const payload = await res.json().catch(() => null)
-      throw new Error(payload?.error ?? 'Connexion impossible côté serveur.')
+      throw new Error(payload?.error ?? t('auth.socialErrors.server'))
     }
     const data = await res.json()
     await signIn('firebase-handoff', {
@@ -120,7 +122,7 @@ export function SocialAuthButtons({ callbackUrl = '/dashboard', disabled }: Soci
       await exchangeCredential(credential, provider)
     } catch (error) {
       console.error('[social-auth] sign-in failed:', error)
-      const message = providerErrorMessage(error)
+      const message = providerErrorMessage(error, t)
       if (message) toast.error(message)
     } finally {
       setLoading(null)
@@ -130,14 +132,14 @@ export function SocialAuthButtons({ callbackUrl = '/dashboard', disabled }: Soci
   return (
     <div className="space-y-3">
       <SocialButton
-        label="Continuer avec Google"
+        label={t('auth.continueWithGoogle')}
         icon={<GoogleIcon />}
         loading={loading === 'google'}
         disabled={disabled || loading === 'facebook'}
         onClick={() => run('google')}
       />
       <SocialButton
-        label="Continuer avec Facebook"
+        label={t('auth.continueWithFacebook')}
         icon={<FacebookIcon />}
         loading={loading === 'facebook'}
         disabled={disabled || loading === 'google'}

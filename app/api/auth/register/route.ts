@@ -6,9 +6,9 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma/client'
 
 const registerSchema = z.object({
-  name:              z.string().min(2, 'Le nom doit faire au moins 2 caractères'),
-  email:             z.string().trim().toLowerCase().email('Email invalide'),
-  password:          z.string().min(8, 'Le mot de passe doit faire au moins 8 caractères'),
+  name:              z.string().min(2, 'Name must be at least 2 characters'),
+  email:             z.string().trim().toLowerCase().email('Invalid email'),
+  password:          z.string().min(8, 'Password must be at least 8 characters'),
   accountType:       z.enum(['MEMBER', 'COACH']).default('MEMBER'),
   bio:               z.string().optional(),
   specialties:       z.string().optional(),
@@ -25,7 +25,7 @@ const registerSchema = z.object({
   publicRatingCount: z.number().int().min(0).max(100000).default(0),
   showPublicRating:  z.boolean().default(false),
   discoveryCallEnabled: z.boolean().default(true),
-  discoveryCallTitle: z.string().min(2).max(80).default('Entretien découverte'),
+  discoveryCallTitle: z.string().min(2).max(80).default('Discovery call'),
   discoveryCallDuration: z.number().int().min(5).max(180).default(30),
   showDiscoveryCall: z.boolean().default(true),
 })
@@ -54,13 +54,13 @@ export async function POST(req: Request) {
   if (isCoach) {
     const coachErrors: Record<string, string[]> = {}
     if (!parsed.data.bio || parsed.data.bio.trim().length < 30) {
-      coachErrors.bio = ['Présentez votre approche coach en au moins 30 caractères']
+      coachErrors.bio = ['Describe your coaching approach in at least 30 characters']
     }
     if (splitList(parsed.data.specialties).length === 0) {
-      coachErrors.specialties = ['Ajoutez au moins une spécialité']
+      coachErrors.specialties = ['Add at least one specialty']
     }
     if (splitList(parsed.data.certifications).length === 0) {
-      coachErrors.certifications = ['Ajoutez au moins une certification']
+      coachErrors.certifications = ['Add at least one certification']
     }
     if (Object.keys(coachErrors).length > 0) {
       return NextResponse.json({ error: coachErrors }, { status: 422 })
@@ -75,12 +75,12 @@ export async function POST(req: Request) {
     if (!existing.password && (existing.provider === 'GOOGLE' || existing.provider === 'FACEBOOK')) {
       const providerLabel = existing.provider === 'GOOGLE' ? 'Google' : 'Facebook'
       return NextResponse.json({
-        error: { email: [`Cet email est déjà associé à un compte ${providerLabel}. Connectez-vous via ${providerLabel} — les deux méthodes de connexion seront liées automatiquement.`] },
+        error: { email: [`This email is already linked to a ${providerLabel}. Sign in with ${providerLabel} - both sign-in methods will be linked automatically.`] },
       }, { status: 409 })
     }
     const msg = existing.coachProfile
-      ? 'Un compte avec cet email existe déjà. Connectez-vous pour accéder à votre espace coach ou membre.'
-      : 'Cet email est déjà utilisé. Connectez-vous pour accéder à votre compte.'
+      ? 'An account with this email already exists. Sign in to access your coach or member space.'
+      : 'This email is already in use. Sign in to access your account.'
     return NextResponse.json({ error: { email: [msg] } }, { status: 409 })
   }
 

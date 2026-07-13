@@ -9,7 +9,7 @@ export function googleProvider() {
 }
 
 export function facebookProvider() {
-  // Facebook fournit public_profile par défaut. Ne pas demander email ici:
-  // certaines apps Meta le refusent tant que la permission n'est pas configurée.
+  // Facebook provides public_profile by default. Do not request email here:
+  // some Meta apps reject it until the permission is configured.
   return new FacebookAuthProvider()
 }

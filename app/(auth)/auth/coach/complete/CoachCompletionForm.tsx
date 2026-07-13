@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { AlertTriangle, FileUp, Save } from 'lucide-react'
 import { toast } from 'sonner'
+import { useLocale } from '@/contexts/LocaleContext'
 
 type Issue = { field: string; message: string }
 
@@ -57,6 +58,7 @@ function VisibilityToggle({ checked, onChange, label, description }: {
 
 /** Form for completing a coach's professional profile (bio, specialties, certifications, document); submits via multipart PATCH to /api/coach/profile. */
 export function CoachCompletionForm({ initialProfile }: CoachProfileFormProps) {
+  const { t } = useLocale()
   const router = useRouter()
   const { update: updateSession } = useSession()
   const [form, setForm] = useState(initialProfile)
@@ -97,12 +99,12 @@ export function CoachCompletionForm({ initialProfile }: CoachProfileFormProps) {
     setSaving(false)
 
     if (!res.ok) {
-      toast.error('Impossible de sauvegarder le profil coach')
+      toast.error(t('coachCompletion.saveError'))
       return
     }
 
     setIssues(Array.isArray(data.verificationIssues) ? data.verificationIssues : [])
-    toast.success('Profil coach envoyé en vérification')
+    toast.success(t('coachCompletion.sent'))
     await updateSession()
     router.refresh()
     router.replace('/coach/dashboard')
@@ -112,56 +114,56 @@ export function CoachCompletionForm({ initialProfile }: CoachProfileFormProps) {
     <form onSubmit={save} className="grid gap-5 lg:grid-cols-[1fr_320px]">
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Compléter le profil coach</h1>
+          <h1 className="text-2xl font-semibold text-white">{t('coachCompletion.title')}</h1>
           <p className="mt-1 text-sm text-zinc-400">
-            Ces informations servent à vérifier votre identité professionnelle. Vous pourrez utiliser l’application pendant la validation.
+            {t('coachCompletion.description')}
           </p>
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <label className="grid gap-1.5">
-            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Prénom</span>
+            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('coachMembers.create.firstName')}</span>
             <input required value={form.firstName} onChange={(e) => updateField('firstName', e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <label className="grid gap-1.5">
-            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Nom de famille</span>
+            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('coachMembers.create.lastName')}</span>
             <input required value={form.lastName} onChange={(e) => updateField('lastName', e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <label className="grid gap-1.5">
-            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Date de naissance</span>
+            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('coachCompletion.birthDate')}</span>
             <input required type="date" value={form.birthDate} onChange={(e) => updateField('birthDate', e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <label className="grid gap-1.5">
-            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Spécialité</span>
-            <input required value={form.specialty} onChange={(e) => updateField('specialty', e.target.value)} placeholder="Musculation, nutrition, mobilité..." className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
+            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('coachCompletion.specialty')}</span>
+            <input required value={form.specialty} onChange={(e) => updateField('specialty', e.target.value)} placeholder={t('coachCompletion.specialtyPlaceholder')} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <label className="grid gap-1.5">
-            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Expérience</span>
+            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('auth.register.coach.experienceSummary')}</span>
             <input required min={0} max={60} type="number" value={form.experience} onChange={(e) => updateField('experience', e.target.value)} placeholder="5" className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <div className="sm:col-span-2">
             <VisibilityToggle
               checked={form.showYearsExperience}
               onChange={(checked) => updateField('showYearsExperience', checked)}
-              label="Rendre mon expérience visible"
-              description="Les membres verront ou non vos années d'expérience sur votre profil."
+              label={t('coachCompletion.showExperience')}
+              description={t('coachCompletion.showExperienceDescription')}
             />
           </div>
           <label className="grid gap-1.5">
-            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Certifications</span>
-            <input required value={form.certifications} onChange={(e) => updateField('certifications', e.target.value)} placeholder="BPJEPS, NASM, nutrition sportive" className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
+            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('coachSettings.certifications')}</span>
+            <input required value={form.certifications} onChange={(e) => updateField('certifications', e.target.value)} placeholder={t('coachSettings.certificationsPlaceholder')} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <label className="grid gap-1.5 sm:col-span-2">
-            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Description professionnelle</span>
+            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('coachCompletion.professionalDescription')}</span>
             <textarea required minLength={30} rows={5} value={form.description} onChange={(e) => updateField('description', e.target.value)} className="resize-none rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]" />
           </label>
           <label className="grid gap-2 sm:col-span-2">
-            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Diplôme, certification ou document officiel</span>
+            <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('coachCompletion.officialDocument')}</span>
             <span className="flex min-h-[96px] cursor-pointer items-center justify-center rounded-xl border border-dashed border-zinc-700 bg-zinc-800 px-4 py-5 text-center text-sm text-zinc-300 transition-colors hover:border-[#C8F135]">
               <input required={!form.documentFileName} type="file" accept="image/*,.pdf,.txt,.json" className="sr-only" onChange={(e) => setDocument(e.target.files?.[0] ?? null)} />
               <span className="flex flex-col items-center gap-2">
                 <FileUp className="size-5 text-[#C8F135]" />
-                {document?.name ?? form.documentFileName ?? 'Ajouter un document'}
+                {document?.name ?? form.documentFileName ?? t('coachCompletion.addDocument')}
               </span>
             </span>
           </label>
@@ -170,74 +172,74 @@ export function CoachCompletionForm({ initialProfile }: CoachProfileFormProps) {
 
       <aside className="space-y-4">
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-          <h2 className="text-sm font-semibold text-white">Visibilité membre</h2>
+          <h2 className="text-sm font-semibold text-white">{t('coachSettings.visibility.title')}</h2>
           <p className="mt-2 text-xs leading-5 text-zinc-400">
-            Choisissez maintenant quelles informations seront visibles par les membres. Vous pourrez les modifier plus tard dans votre profil coach.
+            {t('coachCompletion.visibilityDescription')}
           </p>
           <div className="mt-4 space-y-3">
             <VisibilityToggle
               checked={form.showMemberCount}
               onChange={(checked) => updateField('showMemberCount', checked)}
-              label="Nombre de membres"
-              description="Calculé automatiquement depuis vos clients liés."
+              label={t('coachCompletion.memberCount')}
+              description={t('coachSettings.visibility.memberCountDescription')}
             />
             <VisibilityToggle
               checked={form.showPublicRating}
               onChange={(checked) => updateField('showPublicRating', checked)}
-              label="Étoiles publiques"
-              description="Affiche la note saisie ci-dessous sur votre profil."
+              label={t('coachCompletion.publicStars')}
+              description={t('coachCompletion.publicStarsDescription')}
             />
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="grid min-w-0 gap-1.5">
-              <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Note</span>
+              <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('auth.register.coach.rating')}</span>
               <input min={0} max={5} step={0.1} type="number" value={form.publicRating} onChange={(e) => updateField('publicRating', e.target.value)} placeholder="4.8" className="w-full min-w-0 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-sm text-white outline-none focus:border-[#C8F135]" />
             </label>
             <label className="grid min-w-0 gap-1.5">
-              <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Avis</span>
+              <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('auth.register.coach.reviews')}</span>
               <input min={0} type="number" value={form.publicRatingCount} onChange={(e) => updateField('publicRatingCount', e.target.value)} className="w-full min-w-0 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-sm text-white outline-none focus:border-[#C8F135]" />
             </label>
           </div>
         </section>
 
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-          <h2 className="text-sm font-semibold text-white">Entretien découverte</h2>
+          <h2 className="text-sm font-semibold text-white">{t('coachSettings.discovery.title')}</h2>
           <div className="mt-4 space-y-3">
             <VisibilityToggle
               checked={form.discoveryCallEnabled}
               onChange={(checked) => updateField('discoveryCallEnabled', checked)}
-              label="Activer l'entretien"
-              description="Permet aux membres de réserver un premier échange."
+              label={t('coachSettings.discovery.enable')}
+              description={t('coachSettings.discovery.enableDescription')}
             />
             <VisibilityToggle
               checked={form.showDiscoveryCall}
               onChange={(checked) => updateField('showDiscoveryCall', checked)}
-              label="Afficher sur mon profil"
-              description="Affiche ou masque le bloc entretien côté membre."
+              label={t('auth.register.coach.showDiscovery')}
+              description={t('coachSettings.discovery.showDescription')}
             />
           </div>
           <div className="mt-4 grid gap-3">
             <label className="grid gap-1.5">
-              <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Nom affiché</span>
+              <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('coachSettings.displayName')}</span>
               <input value={form.discoveryCallTitle} onChange={(e) => updateField('discoveryCallTitle', e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-sm text-white outline-none focus:border-[#C8F135]" />
             </label>
             <label className="grid gap-1.5">
-              <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Durée en minutes</span>
+              <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('coachCompletion.durationMinutes')}</span>
               <input min={5} max={180} type="number" value={form.discoveryCallDuration} onChange={(e) => updateField('discoveryCallDuration', e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-sm text-white outline-none focus:border-[#C8F135]" />
             </label>
           </div>
         </section>
 
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-          <h2 className="text-sm font-semibold text-white">Analyse automatique</h2>
+          <h2 className="text-sm font-semibold text-white">{t('coachCompletion.autoAnalysis')}</h2>
           <p className="mt-2 text-xs leading-5 text-zinc-400">
-            Le document est comparé au prénom, au nom et à la date de naissance saisis. Les incohérences n’empêchent pas l’accès à l’application.
+            {t('coachCompletion.autoAnalysisDescription')}
           </p>
           {issues.length > 0 && (
             <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-amber-200">
                 <AlertTriangle className="size-4" />
-                Corrections à vérifier
+                {t('coachCompletion.corrections')}
               </div>
               <ul className="mt-2 space-y-1 text-xs leading-5 text-amber-100">
                 {issues.map((issue) => <li key={`${issue.field}-${issue.message}`}>{issue.message}</li>)}
@@ -252,7 +254,7 @@ export function CoachCompletionForm({ initialProfile }: CoachProfileFormProps) {
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 py-3 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] disabled:opacity-50"
         >
           <Save className="size-4" />
-          {saving ? 'Envoi...' : 'Envoyer en vérification'}
+          {saving ? t('coachCompletion.sending') : t('coachCompletion.sendForReview')}
         </button>
       </aside>
     </form>

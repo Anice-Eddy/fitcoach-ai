@@ -1,6 +1,6 @@
 // ============================================================
-// FITCOACH AI — Schéma Prisma
-// Base de données : PostgreSQL via Neon
+// FITCOACH AI - Prisma schema
+// Database: PostgreSQL via Neon
 // ============================================================
 
 generator client {
@@ -45,11 +45,11 @@ enum Gender {
 }
 
 enum ActivityLevel {
-  SEDENTARY         // 1.2  — bureau, pas d'exercice
-  LIGHTLY_ACTIVE    // 1.375 — 1-3j/semaine
-  MODERATELY_ACTIVE // 1.55  — 3-5j/semaine
-  VERY_ACTIVE       // 1.725 — 6-7j/semaine
-  EXTREMELY_ACTIVE  // 1.9   — athlète 2x/jour
+  SEDENTARY         // 1.2  - desk work, no exercise
+  LIGHTLY_ACTIVE    // 1.375 - 1-3 days/week
+  MODERATELY_ACTIVE // 1.55  - 3-5 days/week
+  VERY_ACTIVE       // 1.725 - 6-7 days/week
+  EXTREMELY_ACTIVE  // 1.9   - athlete, twice daily
 }
 
 enum FitnessGoal {
@@ -173,10 +173,10 @@ enum Equipment {
 }
 
 // ============================================================
-// MODÈLES
+// MODELS
 // ============================================================
 
-// Compte utilisateur principal
+// Main user account
 model User {
   id                 String             @id @default(cuid())
   email              String             @unique
@@ -235,18 +235,18 @@ model User {
   @@map("users")
 }
 
-// Profil physique et préférences de l'utilisateur
+// User physical profile and preferences
 model Profile {
   id     String @id @default(cuid())
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Identité
+  // Identity
   firstName String
   age       Int
   gender    Gender
 
-  // Mensurations
+  // Body measurements
   weightKg   Float
   heightCm   Float
   waistCm    Float?
@@ -254,25 +254,25 @@ model Profile {
   weightUnit WeightUnit @default(KG)
   heightUnit HeightUnit @default(CM)
 
-  // Activité
+  // Activity
   activityLevel       ActivityLevel
   availableEquipment  Equipment[]
   trainingDaysPerWeek Int          @default(3)
 
-  // Objectifs
+  // Goals
   fitnessGoal    FitnessGoal
   targetWeightKg Float?
   fitnessLevel   FitnessLevel
   bodyFocus      BodyFocus?   @default(FULL_BODY)
 
-  // Blessures / contraintes physiques
+  // Injuries / physical constraints
   injuries Json?  // InjuryEntry[]  { bodyPart, severity, description }
 
-  // Alimentation
+  // Nutrition
   dietaryRestrictions String[]
   foodPreferences     String[]
 
-  // Calculs automatiques (mis à jour à chaque modification du profil)
+  // Automatic calculations (updated whenever the profile changes)
   bmi                 Float?
   bmr                 Float?
   tdee                Float?
@@ -281,12 +281,12 @@ model Profile {
   recommendedCarbsG   Float?
   recommendedFatG     Float?
 
-  // Préférences app
+  // App preferences
   language            String  @default("fr")
   darkMode            Boolean @default(true)
   onboardingCompleted Boolean @default(false)
 
-  // Paramètres IA
+  // AI settings
   aiMemoryEnabled  Boolean @default(true)
   aiHistoryEnabled Boolean @default(true)
 
@@ -297,7 +297,7 @@ model Profile {
   @@map("profiles")
 }
 
-// Historique des mesures corporelles
+// Body measurement history
 model BodyMetric {
   id     String @id @default(cuid())
   userId String
@@ -312,7 +312,7 @@ model BodyMetric {
   chestCm      Float?
   armCm        Float?
 
-  // Signaux quotidiens utiles pour relier la progression au mode de vie.
+  // Daily signals used to connect progress with lifestyle.
   steps            Int?
   sleepHours       Float?
   waterLiters      Float?
@@ -320,20 +320,20 @@ model BodyMetric {
   stressLevel      Int?
   progressPhotoUrl String?
 
-  // Données Apple Health — synchronisées via le Raccourci iOS BodyOps.
-  heartRateAvg     Int?   // FC moyenne journalière (bpm)
-  caloriesActive   Int?   // Calories actives brûlées (kcal)
-  restingHeartRate Int?   // FC au repos (bpm) — meilleur indicateur de forme cardiovasculaire
-  vo2Max           Float? // VO2 max estimé (ml/kg/min) — nécessite Apple Watch
-  hrv              Float? // Variabilité FC SDNN (ms) — indicateur de récupération, Apple Watch
-  spo2             Float? // Saturation O2 sanguin (%) — Apple Watch Series 6+
+  // Apple Health data synced through the BodyOps iOS Shortcut.
+  heartRateAvg     Int?   // Daily average heart rate (bpm)
+  caloriesActive   Int?   // Active calories burned (kcal)
+  restingHeartRate Int?   // Resting heart rate (bpm) - strong cardiovascular fitness indicator
+  vo2Max           Float? // Estimated VO2 max (ml/kg/min) - requires Apple Watch
+  hrv              Float? // SDNN heart-rate variability (ms) - Apple Watch recovery indicator
+  spo2             Float? // Blood oxygen saturation (%) - Apple Watch Series 6+
 
-  // Données Evolt Active (composition corporelle avancée)
+  // Evolt Active data (advanced body composition)
   evoltBioAge Float?
   evoltBwi    Float?
   evoltBmr    Float?
 
-  // Données Renpho (balance connectée)
+  // Renpho data (smart scale)
   renphoFatFreeMassKg    Float?
   renphoSubcutaneousFatPct Float?
   renphoVisceralFat      Float?
@@ -353,7 +353,7 @@ model BodyMetric {
   @@map("body_metrics")
 }
 
-// Programme d'entraînement (multi-semaines)
+// Multi-week workout program
 model WorkoutProgram {
   id     String @id @default(cuid())
   userId String
@@ -376,7 +376,7 @@ model WorkoutProgram {
   @@map("workout_programs")
 }
 
-// Séance d'entraînement individuelle
+// Individual workout session
 model WorkoutSession {
   id      String  @id @default(cuid())
   userId  String
@@ -385,7 +385,7 @@ model WorkoutSession {
   programId String?
 
   name            String
-  dayOfWeek       Int?          // 0=lundi … 6=dimanche
+  dayOfWeek       Int?          // 0=Monday ... 6=Sunday
   weekNumber      Int?
   scheduledAt     DateTime?
   startedAt       DateTime?
@@ -405,7 +405,7 @@ model WorkoutSession {
   @@map("workout_sessions")
 }
 
-// Bibliothèque d'exercices (partagée entre tous les utilisateurs)
+// Exercise library shared across users
 model Exercise {
   id           String       @id @default(cuid())
   name         String
@@ -426,7 +426,7 @@ model Exercise {
   @@map("exercises")
 }
 
-// Log d'un exercice au sein d'une séance
+// Exercise log within a workout session
 model ExerciseLog {
   id         String         @id @default(cuid())
   sessionId  String
@@ -439,12 +439,16 @@ model ExerciseLog {
   reps             Int
   weightKg         Float?
   restSeconds      Int?
-  tempo            String?  // ex: "3-1-2-0" (excentrique-pause-concentrique-pause)
+  tempo            String?  // Example: "3-1-2-0" (eccentric-pause-concentric-pause)
   rpe              Int?     // Rate of Perceived Exertion 1-10
   isCompleted      Boolean  @default(false)
   notes            String?
+  velocityPeakMps  Float?   @map("velocity_peak_mps")
+  velocityAvgMps   Float?   @map("velocity_avg_mps")
+  barPathDeviationCm Float? @map("bar_path_deviation_cm")
+  barPathPoints    Json?    @map("bar_path_points")
 
-  // Référence semaine précédente pour surcharge progressive
+  // Previous-week reference for progressive overload
   previousWeightKg Float?
   previousReps     Int?
 
@@ -455,7 +459,7 @@ model ExerciseLog {
   @@map("exercise_logs")
 }
 
-// Plan nutritionnel hebdomadaire
+// Weekly nutrition plan
 model NutritionPlan {
   id     String @id @default(cuid())
   userId String
@@ -479,16 +483,16 @@ model NutritionPlan {
   @@map("nutrition_plans")
 }
 
-// Repas au sein d'un plan nutritionnel
+// Meal inside a nutrition plan
 model Meal {
   id     String        @id @default(cuid())
   planId String
   plan   NutritionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
 
-  dayOfWeek     Int       // 0=lundi … 6=dimanche
+  dayOfWeek     Int       // 0=Monday ... 6=Sunday
   type          MealType
   name          String
-  scheduledTime String?   // ex: "08:00"
+  scheduledTime String?   // Example: "08:00"
   totalCalories Float
   totalProteinG Float
   totalCarbsG   Float
@@ -503,7 +507,7 @@ model Meal {
   @@map("meals")
 }
 
-// Aliment au sein d'un repas
+// Food item inside a meal
 model FoodItem {
   id     String @id @default(cuid())
   mealId String
@@ -519,7 +523,7 @@ model FoodItem {
   fiberG      Float?
   sugarG      Float?
 
-  // Lien affilié optionnel (complément recommandé dans le repas)
+  // Optional affiliate link for recommended meal supplements
   affiliateProductId String?
   affiliateProduct   AffiliateProduct? @relation(fields: [affiliateProductId], references: [id])
 
@@ -529,14 +533,14 @@ model FoodItem {
   @@map("food_items")
 }
 
-// Journal nutritionnel quotidien réellement saisi par l'utilisateur
+// Daily nutrition log manually entered by the user
 model NutritionLog {
   id     String @id @default(cuid())
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  date      String   // YYYY-MM-DD, stable pour les resets quotidiens côté dashboard
-  clientKey String   // meal:<id> ou manual:<id>, unique par jour
+  date      String   // YYYY-MM-DD, stable for daily dashboard resets
+  clientKey String   // meal:<id> or manual:<id>, unique per day
   source    String   @default("PLANNED")
   mealType  MealType?
   name      String
@@ -557,14 +561,16 @@ model NutritionLog {
   @@map("nutrition_logs")
 }
 
-// Bibliothèque alimentaire partagée : les aliments BodyOps restent statiques,
-// ceux-ci sont créés par les utilisateurs et peuvent être visibles par tous.
+// Shared food library: static BodyOps foods remain code-owned,
+// these entries are user-created and can be visible to everyone.
 model FoodLibraryItem {
   id              String  @id @default(cuid())
   createdByUserId String? @map("created_by_user_id")
   createdByUser   User?   @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   name       String
+  nameFr     String? @map("name_fr")
+  nameEn     String? @map("name_en")
   brand      String?
   category   String
   visibility String  @default("PUBLIC")
@@ -586,7 +592,7 @@ model FoodLibraryItem {
   @@map("food_library_items")
 }
 
-// Suivi quotidien des habitudes clés BodyOps
+// Daily tracking for key BodyOps habits
 model DailyHabitLog {
   id     String @id @default(cuid())
   userId String
@@ -609,7 +615,7 @@ model DailyHabitLog {
   @@map("daily_habit_logs")
 }
 
-// Mission quotidienne calculée ou validée par l'utilisateur
+// Daily mission computed or validated by the user
 model DailyMission {
   id     String @id @default(cuid())
   userId String
@@ -634,7 +640,7 @@ model DailyMission {
   @@map("daily_missions")
 }
 
-// Score quotidien BodyOps /100, composé des piliers principaux
+// Daily BodyOps score /100, composed from the main pillars
 model BodyOpsScore {
   id     String @id @default(cuid())
   userId String
@@ -658,7 +664,7 @@ model BodyOpsScore {
   @@map("bodyops_scores")
 }
 
-// Liste de courses générée depuis le plan nutritionnel
+// Shopping list generated from the nutrition plan
 model ShoppingList {
   id     String  @id @default(cuid())
   userId String
@@ -678,7 +684,7 @@ model ShoppingList {
   @@map("shopping_lists")
 }
 
-// Compte d'intégration externe (Strava, Fitbit, etc.)
+// External integration account (Strava, Fitbit, etc.)
 model IntegrationAccount {
   id     String @id @default(cuid())
   userId String
@@ -690,7 +696,7 @@ model IntegrationAccount {
   tokenExpiry  DateTime?
   isConnected  Boolean            @default(false)
   lastSyncedAt DateTime?
-  metadata     Json?              // données spécifiques au service
+  metadata     Json?              // service-specific data
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -700,7 +706,7 @@ model IntegrationAccount {
   @@map("integration_accounts")
 }
 
-// Historique des exports (PDF / JSON)
+// Export history (PDF / JSON)
 model ExportHistory {
   id     String @id @default(cuid())
   userId String
@@ -709,7 +715,7 @@ model ExportHistory {
   type      ExportType
   fileName  String
   sizeBytes Int?
-  url       String?    // URL temporaire si stocké sur cloud
+  url       String?    // temporary URL when stored in cloud
 
   createdAt DateTime @default(now())
 
@@ -717,7 +723,7 @@ model ExportHistory {
   @@map("export_history")
 }
 
-// Abonnement Stripe de l'utilisateur
+// User Stripe subscription
 model Subscription {
   id     String @id @default(cuid())
   userId String @unique
@@ -737,7 +743,7 @@ model Subscription {
   @@map("subscriptions")
 }
 
-// Produit affilié (complément, équipement, vêtement, livre)
+// Affiliate product (supplement, equipment, clothing, book)
 model AffiliateProduct {
   id          String            @id @default(cuid())
   name        String
@@ -764,7 +770,7 @@ model AffiliateProduct {
   @@map("affiliate_products")
 }
 
-// Clic sur un lien affilié (tracking RGPD)
+// Affiliate-link click (GDPR tracking)
 model AffiliateClick {
   id        String  @id @default(cuid())
   userId    String?
@@ -773,9 +779,9 @@ model AffiliateClick {
   product   AffiliateProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   category  AffiliateCategory
-  source    String?            // page d'origine du clic
+  source    String?            // click source page
   userAgent String?
-  ipHash    String?            // IP hashée pour conformité RGPD
+  ipHash    String?            // hashed IP for GDPR compliance
 
   createdAt DateTime @default(now())
 
@@ -785,7 +791,7 @@ model AffiliateClick {
   @@map("affiliate_clicks")
 }
 
-// Enums pour Coach
+// Coach enums
 enum AppointmentStatus {
   PENDING
   PROPOSED
@@ -830,7 +836,7 @@ enum AIReportType {
   COACH_REPORT
 }
 
-// Profil Coach — structure pour Phase 2 B2B Coach
+// Coach profile - structure for Phase 2 B2B Coach
 model CoachProfile {
   id     String @id @default(cuid())
   userId String @unique
@@ -845,7 +851,7 @@ model CoachProfile {
   certifications  String[]
   yearsExperience Int?
   city            String?
-  country         String? // Pays du coach (affiché sur le profil public)
+  country         String? // Coach country, displayed on the public profile
   phone           String?
   isVerified      Boolean  @default(false)
   memberLimit     Int      @default(10)
@@ -855,7 +861,7 @@ model CoachProfile {
   publicRatingCount Int    @default(0)
   showPublicRating Boolean @default(false)
   discoveryCallEnabled Boolean @default(true)
-  discoveryCallTitle String @default("Entretien découverte")
+  discoveryCallTitle String @default("Discovery call")
   discoveryCallDuration Int @default(30)
   showDiscoveryCall Boolean @default(true)
   verificationStatus CoachVerificationStatus @default(NEEDS_CORRECTION)
@@ -880,7 +886,7 @@ model CoachProfile {
   @@map("coach_profiles")
 }
 
-// Membres suivis par un coach
+// Members tracked by a coach
 model CoachMember {
   id           String @id @default(cuid())
   coachId      String
@@ -898,7 +904,7 @@ model CoachMember {
   @@map("coach_members")
 }
 
-// Rendez-vous Coach ↔ Membre
+// Coach/member appointment
 model CoachAppointment {
   id           String @id @default(cuid())
   coachId      String
@@ -910,7 +916,7 @@ model CoachAppointment {
   title       String
   description String?
   scheduledAt DateTime
-  duration    Int      @default(60)  // en minutes
+  duration    Int      @default(60)  // in minutes
   status      AppointmentStatus @default(PENDING)
   meetLink    String?
   coachNote   String?
@@ -925,18 +931,18 @@ model CoachAppointment {
   @@map("coach_appointments")
 }
 
-// Créneaux de disponibilité récurrents du coach (par jour de la semaine)
+// Recurring coach availability slots by weekday
 model CoachAvailability {
   id           String       @id @default(cuid())
   coachId      String
   coachProfile CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
 
-  dayOfWeek    Int  // 1=Lundi, 2=Mardi, ... 7=Dimanche (ISO)
+  dayOfWeek    Int  // 1=Monday, 2=Tuesday, ... 7=Sunday (ISO)
   startHour    Int  // 0-23
   startMinute  Int  @default(0)
   endHour      Int  // 0-23
   endMinute    Int  @default(0)
-  slotDuration Int  @default(60)  // durée d'un créneau en minutes
+  slotDuration Int  @default(60)  // slot duration in minutes
 
   createdAt DateTime @default(now())
 
@@ -944,7 +950,7 @@ model CoachAvailability {
   @@map("coach_availabilities")
 }
 
-// Notifications pour le coach
+// Coach/member notifications
 model Notification {
   id           String @id @default(cuid())
   coachId      String
@@ -967,7 +973,7 @@ model Notification {
   @@map("notifications")
 }
 
-// Notes du coach sur un membre
+// Coach notes about a member
 model CoachNote {
   id           String @id @default(cuid())
   coachId      String
@@ -1019,7 +1025,7 @@ model CoachNoteReply {
   @@map("coach_note_replies")
 }
 
-// Conversation directe Coach ↔ Membre
+// Direct coach/member conversation
 model CoachChat {
   id           String @id @default(cuid())
   coachId      String
@@ -1162,7 +1168,7 @@ model AIReport {
   @@map("ai_reports")
 }
 
-// Ancien suivi quotidien des appels IA, conservé pour les exports et le nettoyage des données existantes.
+// Legacy daily AI-call tracking, kept for exports and existing-data cleanup.
 model AIUsageDaily {
   id     String @id @default(cuid())
   userId String
@@ -1203,7 +1209,7 @@ model AuthHandoffToken {
 }
 
 // ============================================================
-// NEXT-AUTH — requis par PrismaAdapter
+// NEXT-AUTH - required by PrismaAdapter
 // ============================================================
 
 model Account {

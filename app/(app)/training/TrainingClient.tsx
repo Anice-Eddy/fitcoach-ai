@@ -9,6 +9,7 @@ import { EmptyState }        from '@/components/ui/EmptyState'
 import { ListSkeleton }      from '@/components/ui/LoadingSkeleton'
 import type { WorkoutSession } from '@/types'
 import { Dumbbell, RefreshCw } from 'lucide-react'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface DBExercise {
   id: string
@@ -70,13 +71,14 @@ function mapPersistedExercises(session: DBSession): WorkoutSession['exercises'] 
     tempo:        log.tempo ?? undefined,
     rpe:          log.rpe ?? undefined,
     isCompleted:  log.isCompleted,
-    // Les exercices cardio persistés récupèrent la durée de séance comme fallback.
+    // Persisted cardio exercises use session duration as a fallback.
     durationMinutes: log.exercise.muscleGroups.includes('CARDIO') ? session.durationMinutes ?? undefined : undefined,
   }))
 }
 
 /** Interactive training view: fetches the active workout program and renders each session with exercise details and status controls. */
 export function TrainingClient() {
+  const { t, locale } = useLocale()
   const { profile }     = useUserStore()
   const { programCache, setProgramCache, clearProgramCache, isProgramCacheFresh } = useTrainingStore()
 
@@ -88,10 +90,10 @@ export function TrainingClient() {
   const [loading,      setLoading]      = useState(!isProgramCacheFresh())
   const [error,        setError]        = useState<string | null>(null)
 
-  // Ref pour éviter le double-fetch du React Strict Mode en développement
+  // Ref to avoid double-fetch in React Strict Mode during development.
   const fetchingRef = useRef(false)
 
-  // Sérialiser l'équipement — évite que la référence tableau déstabilise useCallback
+  // Serialize equipment to prevent array reference changes from destabilizing useCallback.
   const equipmentKey = JSON.stringify(profile?.availableEquipment ?? [])
 
   const fetchAndCache = useCallback((force = false) => {
@@ -99,7 +101,7 @@ export function TrainingClient() {
       setLoading(false)
       return
     }
-    // Utiliser le cache si frais et pas de forçage
+    // Use cache when fresh and not forced.
     if (!force && isProgramCacheFresh() && programCache) {
       setSessions(programCache.sessions)
       setProgramName(programCache.programName)
@@ -123,6 +125,7 @@ export function TrainingClient() {
           fitnessLevel:        profile.fitnessLevel!,
           trainingDaysPerWeek: profile.trainingDaysPerWeek ?? 3,
           availableEquipment:  profile.availableEquipment ?? [],
+          locale,
         })
 
         const combined: WorkoutSession[] = program.sessions.map(dbSess => {
@@ -156,12 +159,12 @@ export function TrainingClient() {
         setLoading(false)
       })
       .catch(() => {
-        setError('Impossible de charger le programme.')
+        setError(t('training.loadError'))
         setLoading(false)
       })
       .finally(() => { fetchingRef.current = false })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.fitnessGoal, profile?.fitnessLevel, profile?.trainingDaysPerWeek, equipmentKey])
+  }, [profile?.fitnessGoal, profile?.fitnessLevel, profile?.trainingDaysPerWeek, equipmentKey, locale, t])
 
   useEffect(() => { fetchAndCache() }, [fetchAndCache])
 
@@ -178,6 +181,7 @@ export function TrainingClient() {
         fitnessLevel:        profile!.fitnessLevel!,
         trainingDaysPerWeek: profile!.trainingDaysPerWeek ?? 3,
         availableEquipment:  profile!.availableEquipment ?? [],
+        locale,
       })
       const combined: WorkoutSession[] = program.sessions.map(dbSess => {
         const gen = generated.sessions.find(s => s.name === dbSess.name)
@@ -208,12 +212,12 @@ export function TrainingClient() {
       setProgramWeek({ current: program.currentWeek, total: program.weeksTotal })
       setLoading(false)
     } catch {
-      setError('Impossible de régénérer le programme.')
+      setError(t('training.regenerationError'))
       setLoading(false)
     }
   }
 
-  // Mise à jour de l'état local si le cache change (ex: autre onglet)
+  // Update local state if the cache changes, for example from another tab.
   useEffect(() => {
     if (programCache && isProgramCacheFresh()) {
       setSessions(programCache.sessions)
@@ -231,9 +235,9 @@ export function TrainingClient() {
     return (
       <EmptyState
         icon={<Dumbbell className="size-6" />}
-        title="Complète ton profil d'abord"
-        description="L'onboarding te permet de générer un programme personnalisé en 2 minutes."
-        action={{ label: 'Commencer l\'onboarding', href: '/onboarding' }}
+        title={t('training.noProfile')}
+        description={t('training.noProfileDescription')}
+        action={{ label: t('training.startOnboarding'), href: '/onboarding' }}
       />
     )
   }
@@ -242,9 +246,9 @@ export function TrainingClient() {
     return (
       <EmptyState
         icon={<Dumbbell className="size-6" />}
-        title="Erreur de chargement"
+        title={t('training.loadingErrorTitle')}
         description={error}
-        action={{ label: 'Réessayer', href: '/training' }}
+        action={{ label: t('common.retry'), href: '/training' }}
       />
     )
   }
@@ -255,23 +259,23 @@ export function TrainingClient() {
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-base font-bold text-white">{programName}</h2>
-            <p className="text-sm text-zinc-400 mt-0.5">Semaine {programWeek.current} / {programWeek.total}</p>
+            <p className="text-sm text-zinc-400 mt-0.5">{t('training.week')} {programWeek.current} / {programWeek.total}</p>
             {programDescription && (
               <p className="mt-2 max-w-3xl text-xs leading-5 text-zinc-500">{programDescription}</p>
             )}
             {aiMeta && (
               <span className="mt-3 inline-flex rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#C8F135]">
-                {aiMeta.generated ? `Assisté IA · ${aiMeta.provider}` : 'Génération BodyOps locale'}
+                {aiMeta.generated ? `${t('training.aiAssisted')} · ${aiMeta.provider}` : t('training.localGeneration')}
               </span>
             )}
           </div>
           <button
             type="button"
             onClick={regenerate}
-            aria-label="Régénérer le programme d'entraînement"
+            aria-label={t('training.regenerateAria')}
             className="flex items-center gap-1.5 text-xs text-zinc-400 transition-colors hover:text-white"
           >
-            <RefreshCw className="size-3.5" /> Régénérer
+            <RefreshCw className="size-3.5" /> {t('training.regenerate')}
           </button>
         </div>
         <div className="mt-4 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
@@ -282,13 +286,13 @@ export function TrainingClient() {
 
       <div>
         <h3 className="text-sm font-semibold text-white mb-3">
-          Séances ({sessions.length})
+          {t('training.sessions')} ({sessions.length})
         </h3>
         {sessions.length === 0 ? (
           <EmptyState
             icon={<Dumbbell className="size-6" />}
-            title="Aucune séance planifiée"
-            description="Vérifiez votre profil."
+            title={t('training.noSessionsTitle')}
+            description={t('training.noSessionsDescription')}
           />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

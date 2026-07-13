@@ -1,5 +1,11 @@
 import { test, expect, type Page } from '@playwright/test'
 
+async function preferFrench(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('bodyops:locale', 'fr')
+  })
+}
+
 async function mockFirebasePasswordSignInError(page: Page, message = 'INVALID_LOGIN_CREDENTIALS') {
   await page.route('https://identitytoolkit.googleapis.com/**', async (route) => {
     const request = route.request()
@@ -56,37 +62,40 @@ async function mockFirebaseEmailActionSuccess(page: Page) {
   })
 }
 
-test.describe('Page de connexion', () => {
+test.describe('Sign-in page', () => {
+  test.use({ locale: 'fr-FR' })
+
   test.beforeEach(async ({ page }) => {
+    await preferFrench(page)
     await page.goto('/auth/signin')
   })
 
-  test('affiche la page de connexion', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /connexion/i })).toBeVisible()
+  test('shows the sign-in page', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: /se connecter/i })).toBeVisible()
   })
 
-  test('affiche le bouton Google', async ({ page }) => {
+  test('shows the Google button', async ({ page }) => {
     const googleBtn = page.locator('button:has-text("Google"), a:has-text("Google")')
     await expect(googleBtn.first()).toBeVisible()
   })
 
-  test('affiche le bouton Facebook', async ({ page }) => {
+  test('shows the Facebook button', async ({ page }) => {
     const facebookBtn = page.locator('button:has-text("Facebook"), a:has-text("Facebook")')
     await expect(facebookBtn.first()).toBeVisible()
   })
 
-  test('affiche la connexion par email', async ({ page }) => {
+  test('shows email sign-in', async ({ page }) => {
     await expect(page.getByPlaceholder('jean@example.com')).toBeVisible()
     await expect(page.getByPlaceholder('••••••••')).toBeVisible()
   })
 
-  test('explique quand un compte social existe déjà en contexte coach', async ({ page }) => {
+  test('explains when a social account already exists in coach context', async ({ page }) => {
     await page.goto('/auth/signin?role=coach&error=OAuthAccountNotLinked')
     await expect(page.getByText('Connexion coach')).toBeVisible()
     await expect(page.getByText("Ce compte social est déjà lié à un autre utilisateur. Essayez de vous connecter avec votre email et mot de passe, ou contactez le support.")).toBeVisible()
   })
 
-  test("affiche une erreur si l'email est introuvable sans bloquer le bouton", async ({ page }) => {
+  test('shows an error for unknown email without blocking the button', async ({ page }) => {
     await mockFirebasePasswordSignInError(page, 'EMAIL_NOT_FOUND')
     await page.getByPlaceholder('jean@example.com').fill('missing@example.com')
     await page.getByPlaceholder('••••••••').fill('password123')
@@ -97,7 +106,7 @@ test.describe('Page de connexion', () => {
     await expect(submit).toBeEnabled()
   })
 
-  test('affiche une erreur si le mot de passe est incorrect sans bloquer le bouton', async ({ page }) => {
+  test('shows an error for incorrect password without blocking the button', async ({ page }) => {
     await mockFirebasePasswordSignInError(page, 'INVALID_PASSWORD')
     await page.getByPlaceholder('jean@example.com').fill('member@example.com')
     await page.getByPlaceholder('••••••••').fill('wrong-password')
@@ -108,14 +117,14 @@ test.describe('Page de connexion', () => {
     await expect(submit).toBeEnabled()
   })
 
-  test('redirige vers la landing si on clique sur retour', async ({ page }) => {
+  test('links back to the landing page', async ({ page }) => {
     const homeLink = page.getByRole('link', { name: /bodyops/i }).first()
     await expect(homeLink).toHaveAttribute('href', '/')
   })
 })
 
-test.describe('Protection des routes authentifiées', () => {
-  test('redirige vers signin si non authentifié sur /dashboard', async ({ page }) => {
+test.describe('Authenticated route protection', () => {
+  test('redirects to signin when unauthenticated on /dashboard', async ({ page }) => {
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
     // Should be redirected to signin
@@ -123,14 +132,14 @@ test.describe('Protection des routes authentifiées', () => {
     expect(url).toMatch(/signin|auth|login/)
   })
 
-  test('redirige vers signin si non authentifié sur /training', async ({ page }) => {
+  test('redirects to signin when unauthenticated on /training', async ({ page }) => {
     await page.goto('/training')
     await page.waitForLoadState('networkidle')
     const url = page.url()
     expect(url).toMatch(/signin|auth|login/)
   })
 
-  test('redirige vers signin si non authentifié sur /nutrition', async ({ page }) => {
+  test('redirects to signin when unauthenticated on /nutrition', async ({ page }) => {
     await page.goto('/nutrition')
     await page.waitForLoadState('networkidle')
     const url = page.url()
@@ -138,8 +147,11 @@ test.describe('Protection des routes authentifiées', () => {
   })
 })
 
-test.describe('Actions email Firebase', () => {
-  test('valide un lien de vérification email', async ({ page }) => {
+test.describe('Firebase email actions', () => {
+  test.use({ locale: 'fr-FR' })
+
+  test('validates an email verification link', async ({ page }) => {
+    await preferFrench(page)
     await mockFirebaseEmailActionSuccess(page)
 
     await page.goto('/auth/action?mode=verifyEmail&oobCode=test-code&continueUrl=%2Fauth%2Fsignin')
@@ -148,7 +160,8 @@ test.describe('Actions email Firebase', () => {
     await expect(page.getByRole('button', { name: 'Continuer' })).toBeVisible()
   })
 
-  test('affiche puis confirme la réinitialisation du mot de passe', async ({ page }) => {
+  test('shows and confirms password reset', async ({ page }) => {
+    await preferFrench(page)
     await mockFirebaseEmailActionSuccess(page)
 
     await page.goto('/auth/action?mode=resetPassword&oobCode=reset-code&continueUrl=%2Fauth%2Fsignin')

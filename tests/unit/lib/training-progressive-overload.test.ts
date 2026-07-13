@@ -17,28 +17,28 @@ const baseExercise = {
   isCompleted: true,
 }
 
-describe('calculateNextWeight — exercice compound', () => {
-  it('augmente de 2.5 kg si tous les sets complétés', () => {
+describe('calculateNextWeight — compound exercise', () => {
+  it('increases by 2.5 kg when all sets are completed', () => {
     const result = calculateNextWeight(baseExercise, true)
     expect(result.nextWeightKg).toBe(62.5)
   })
 
-  it('maintient le poids si les sets ne sont pas tous complétés', () => {
+  it('keeps weight when all sets are not completed', () => {
     const result = calculateNextWeight(baseExercise, false)
     expect(result.nextWeightKg).toBe(60)
   })
 
-  it('retourne progression = true si augmentation', () => {
+  it('returns progressed=true when weight increases', () => {
     const result = calculateNextWeight(baseExercise, true)
     expect(result.progressed).toBe(true)
   })
 
-  it('retourne progression = false si maintien', () => {
+  it('returns progressed=false when weight is maintained', () => {
     const result = calculateNextWeight(baseExercise, false)
     expect(result.progressed).toBe(false)
   })
 
-  it('arrondit à 0.25 kg près', () => {
+  it('rounds to the nearest 0.25 kg', () => {
     const ex = { ...baseExercise, weightKg: 61.75 }
     const result = calculateNextWeight(ex, true)
     const decimals = ((result.nextWeightKg! * 100) % 25)
@@ -46,16 +46,16 @@ describe('calculateNextWeight — exercice compound', () => {
   })
 })
 
-describe('calculateNextWeight — exercice isolation', () => {
-  it('augmente de 1.25 kg si tous les sets complétés', () => {
+describe('calculateNextWeight — isolation exercise', () => {
+  it('increases by 1.25 kg when all sets are completed', () => {
     const isolation = { ...baseExercise, isCompound: false, weightKg: 20 }
     const result    = calculateNextWeight(isolation, true)
     expect(result.nextWeightKg).toBe(21.25)
   })
 })
 
-describe('calculateNextWeight — sans poids (bodyweight)', () => {
-  it('retourne null si weightKg est null', () => {
+describe('calculateNextWeight — bodyweight exercise', () => {
+  it('returns null when weightKg is null', () => {
     const bw = { ...baseExercise, weightKg: null }
     const result = calculateNextWeight(bw, true)
     expect(result.nextWeightKg).toBeNull()
@@ -63,12 +63,12 @@ describe('calculateNextWeight — sans poids (bodyweight)', () => {
 })
 
 describe('getProgressionMessage', () => {
-  it('retourne un message pour progression', () => {
+  it('returns a progression message', () => {
     const msg = getProgressionMessage(true, 60, 62.5)
     expect(msg).toContain('62.5')
   })
 
-  it('retourne un message pour maintien', () => {
+  it('returns a maintenance message', () => {
     const msg = getProgressionMessage(false, 60, 60)
     expect(typeof msg).toBe('string')
     expect(msg.length).toBeGreaterThan(0)

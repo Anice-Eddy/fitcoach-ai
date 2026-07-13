@@ -13,7 +13,7 @@ export async function PATCH(
 ) {
   const session = await auth()
   if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
   }
 
   const coach = await prisma.user.findUnique({
@@ -21,14 +21,14 @@ export async function PATCH(
     include: { coachProfile: true },
   })
   if (!coach?.coachProfile) {
-    return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
+    return NextResponse.json({ error: 'Access denied' }, { status: 403 })
   }
 
   const appointment = await prisma.coachAppointment.findUnique({
     where: { id: params.id },
   })
   if (!appointment || appointment.coachId !== coach.coachProfile.id) {
-    return NextResponse.json({ error: 'Rendez-vous introuvable' }, { status: 404 })
+    return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
   }
 
   const body = await req.json()
@@ -63,15 +63,15 @@ export async function PATCH(
     || (coachNote !== undefined && coachNote !== appointment.coachNote)
   if (notifyMember && updated.member?.id) {
     const title = status === 'CONFIRMED'
-      ? 'Rendez-vous confirmé'
+      ? 'Appointment confirmed'
       : status === 'PROPOSED'
-        ? 'Nouvelle proposition de date'
-        : 'Note de votre coach'
+        ? 'Appointment proposal'
+        : 'Appointment note from coach'
     const msg = status === 'CONFIRMED'
-      ? `Votre rendez-vous "${updated.title}" a été confirmé par votre coach.`
+      ? `Your appointment "${updated.title}" was confirmed by your coach.`
       : status === 'PROPOSED'
-        ? `Votre coach vous propose une nouvelle date pour "${updated.title}".`
-        : `Votre coach a ajouté une note à votre rendez-vous "${updated.title}".`
+        ? `Your coach proposed a new date for "${updated.title}".`
+        : `Your coach added a note to your appointment "${updated.title}".`
 
     await prisma.notification.create({
       data: {

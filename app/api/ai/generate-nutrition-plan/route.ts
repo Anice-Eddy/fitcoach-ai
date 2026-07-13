@@ -23,9 +23,9 @@ export async function POST(req: Request) {
       'NUTRITION_PLAN',
       'NUTRITION',
       [
-        'Génère une proposition nutritionnelle non médicale.',
-        'Inclure calories, macros, idées de repas simples, cohérence avec objectif et recommandations pratiques.',
-        'Ajouter un disclaimer santé clair.',
+        'Generate a non-medical nutrition proposal.',
+        'Include calories, macros, simple meal ideas, goal consistency, and practical recommendations.',
+        'Add a clear health disclaimer.',
       ].join(' '),
     )
     return NextResponse.json(result)

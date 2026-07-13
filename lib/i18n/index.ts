@@ -6,13 +6,45 @@ export type Messages = typeof fr
 
 const messages: Record<Locale, Messages> = { fr, en }
 
-/** Detects the preferred locale from localStorage, falling back to the browser language, then 'fr'. */
-export function detectLocale(): Locale {
-  if (typeof window === 'undefined') return 'fr'
-  const stored = localStorage.getItem('bodyops:locale') as Locale | null
+function isLocale(value: string | undefined): value is Locale {
+  return value === 'fr' || value === 'en'
+}
+
+/** Resolves the first supported locale from a browser language header/list, honoring q-values. */
+export function resolveLocaleFromLanguages(value: string | readonly string[] | null | undefined, fallback: Locale = 'fr'): Locale {
+  const raw = typeof value === 'string' ? value : value?.join(',')
+  if (!raw) return fallback
+
+  const candidates = raw
+    .split(',')
+    .map((part, index) => {
+      const [tag = '', ...params] = part.trim().toLowerCase().split(';')
+      const qParam = params.find(param => param.trim().startsWith('q='))
+      const q = qParam ? Number(qParam.split('=')[1]) : 1
+      return { tag, q: Number.isFinite(q) ? q : 0, index }
+    })
+    .sort((a, b) => b.q - a.q || a.index - b.index)
+
+  for (const candidate of candidates) {
+    const base = candidate.tag.split('-')[0]
+    if (isLocale(base)) return base
+  }
+
+  return fallback
+}
+
+/** Detects the preferred locale from localStorage, falling back to the browser language, then the provided fallback. */
+export function detectLocale(fallback: Locale = 'fr'): Locale {
+  if (typeof window === 'undefined') return fallback
+  let stored: string | null = null
+  try {
+    stored = localStorage.getItem('bodyops:locale')
+  } catch {
+    stored = null
+  }
   if (stored === 'fr' || stored === 'en') return stored
-  const lang = navigator.language.toLowerCase()
-  return lang.startsWith('fr') ? 'fr' : 'en'
+  const languages = navigator.languages?.length ? navigator.languages : [navigator.language]
+  return resolveLocaleFromLanguages(languages, fallback)
 }
 
 /** Returns the full messages object for the given locale. */

@@ -17,7 +17,7 @@ export async function GET(
   { params }: { params: { coachId: string } },
 ) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
   const fromParam = searchParams.get('from')
@@ -29,7 +29,7 @@ export async function GET(
   to.setHours(23, 59, 59, 999)
 
   const coach = await prisma.coachProfile.findUnique({ where: { id: params.coachId } })
-  if (!coach) return NextResponse.json({ error: 'Coach introuvable' }, { status: 404 })
+  if (!coach) return NextResponse.json({ error: 'Coach not found' }, { status: 404 })
 
   const [rules, appointments] = await Promise.all([
     prisma.coachAvailability.findMany({ where: { coachId: params.coachId } }),
@@ -47,7 +47,7 @@ export async function GET(
   const slots: AvailableSlot[] = []
 
   for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
-    // ISO day of week: JS getDay() returns 0=Sun, 1=Mon..6=Sat → convert to 1=Mon..7=Sun
+    // ISO day of week: JS getDay() returns 0=Sun, 1=Mon..6=Sat; convert to 1=Mon..7=Sun.
     const iso  = d.getDay() === 0 ? 7 : d.getDay()
     const dayRules = rules.filter(r => r.dayOfWeek === iso)
 

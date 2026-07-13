@@ -1,6 +1,5 @@
-// Stockage cloud : appels API Next.js → Prisma → Neon PostgreSQL
-// Utilisé après connexion OAuth (Google / GitHub)
-// Synchronisation multi-device + migration depuis localStorage possible
+// Cloud storage: Next.js API calls backed by Prisma and Neon PostgreSQL.
+// Used after OAuth sign-in, with multi-device sync and local migration support.
 
 import type { StorageAdapter, UserProfile } from './StorageAdapter'
 import type { OnboardingData, BodyMetricInput } from '@/utils/validators'
@@ -12,7 +11,7 @@ export class CloudStorageAdapter implements StorageAdapter {
   /** Always returns true since cloud storage is always ready once authenticated. */
   isReady()  { return true }
 
-  // --- Profil ---
+  // --- Profile ---
 
   /** Fetches the user profile from the API; returns null on error. */
   async getProfile(): Promise<UserProfile | null> {
@@ -28,11 +27,11 @@ export class CloudStorageAdapter implements StorageAdapter {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(data),
     })
-    if (!res.ok) throw new Error('Erreur lors de la sauvegarde du profil')
+    if (!res.ok) throw new Error('Error while saving the profile')
     return res.json()
   }
 
-  // --- Métriques corporelles ---
+  // --- Body metrics ---
 
   /** Fetches body metrics from the API up to the given limit; returns empty array on error. */
   async getBodyMetrics(limit = 90): Promise<BodyMetricInput[]> {
@@ -48,10 +47,10 @@ export class CloudStorageAdapter implements StorageAdapter {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(metric),
     })
-    if (!res.ok) throw new Error('Erreur lors de l\'ajout de la métrique')
+    if (!res.ok) throw new Error('Error while adding the metric')
   }
 
-  // --- Onboarding (stocké localement même en mode cloud — pas besoin d'une route dédiée) ---
+  // --- Onboarding: stored locally in cloud mode to avoid a dedicated route. ---
 
   /** Persists onboarding progress locally (in cloud mode the cloud key is used) to avoid a dedicated API route. */
   async saveOnboardingProgress(step: number, data: Partial<OnboardingData>): Promise<void> {
@@ -73,7 +72,7 @@ export class CloudStorageAdapter implements StorageAdapter {
   /** Sends a DELETE to the profile API to permanently remove the user account; throws on API error. */
   async clear(): Promise<void> {
     const res = await fetch('/api/user/profile', { method: 'DELETE' })
-    if (!res.ok) throw new Error('Erreur lors de la suppression du compte')
+    if (!res.ok) throw new Error('Error while deleting the account')
   }
 
   // Reads the cloud onboarding progress key from localStorage; returns null in SSR or when absent.
@@ -84,7 +83,7 @@ export class CloudStorageAdapter implements StorageAdapter {
   }
 }
 
-// Migration : copie les données locales vers le cloud après connexion OAuth
+// Migration helper: copies local data to cloud storage after OAuth sign-in.
 /** Copies the local profile and all metrics to cloud storage, then clears local data; called once after OAuth sign-in. */
 export async function migrateLocalToCloud(
   local: StorageAdapter,

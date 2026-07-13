@@ -9,7 +9,7 @@ export const runtime = 'nodejs'
 /** Returns all appointments for the authenticated member, ordered by scheduledAt ascending, including coach info. */
 export async function GET(_req: NextRequest) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
   const appointments = await prisma.coachAppointment.findMany({
     where: { memberId: session.user.id },
@@ -29,19 +29,19 @@ export async function GET(_req: NextRequest) {
 /** Creates an appointment request to a coach, upserts the CoachMember relation, and notifies the coach in-app. */
 export async function POST(req: NextRequest) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
   const { coachProfileId, title, description, scheduledAt, duration, meetLink, memberNote } = await req.json()
 
   if (!coachProfileId || !title || !scheduledAt) {
-    return NextResponse.json({ error: 'coachProfileId, title et scheduledAt sont requis' }, { status: 400 })
+    return NextResponse.json({ error: 'coachProfileId, title and scheduledAt are required' }, { status: 400 })
   }
 
   const coachProfile = await prisma.coachProfile.findUnique({
     where: { id: coachProfileId },
     include: { user: { select: { name: true, email: true } } },
   })
-  if (!coachProfile) return NextResponse.json({ error: 'Coach introuvable' }, { status: 404 })
+  if (!coachProfile) return NextResponse.json({ error: 'Coach not found' }, { status: 404 })
 
   const appointment = await prisma.coachAppointment.create({
     data: {
@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
       coachId:         coachProfileId,
       recipientUserId: null,
       type:            'APPOINTMENT',
-      title:           `Nouvelle demande: ${title}`,
-      message:         `Un membre a demandé un rendez-vous le ${new Date(scheduledAt).toLocaleDateString('fr-FR')}`,
+      title:           `Appointment request: ${title}`,
+      message:         `A member requested an appointment on ${new Date(scheduledAt).toLocaleDateString('en-US')}`,
       relatedId:       appointment.id,
     },
   })

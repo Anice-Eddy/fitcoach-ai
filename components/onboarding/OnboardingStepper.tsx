@@ -18,20 +18,12 @@ import { LocalStorageAdapter } from '@/lib/storage/LocalStorageAdapter'
 import type { OnboardingData } from '@/utils/validators'
 import { getInitialOnboardingStep, profileToOnboardingData } from '@/utils/onboarding-profile'
 import type { UserProfile } from '@/lib/storage/StorageAdapter'
+import { useLocale } from '@/contexts/LocaleContext'
 
 // This component can be used both for first onboarding and profile updates.
 // It therefore hydrates its form from the current profile before showing steps.
 
-const STEPS = [
-  { title: 'Unités de mesure', desc: 'Kg ou lb ? Cm ou ft ?' },
-  { title: 'Identité',         desc: 'Qui es-tu ?' },
-  { title: 'Mensurations',     desc: 'Ton corps aujourd\'hui' },
-  { title: 'Activité',         desc: 'Ton mode de vie' },
-  { title: 'Objectifs',        desc: 'Où veux-tu aller ?' },
-  { title: 'Santé',            desc: 'Zones à ménager' },
-  { title: 'Alimentation',     desc: 'Tes préférences' },
-  { title: 'Ton profil',       desc: 'Résumé calculé' },
-]
+const STEP_KEYS = ['units', 'identity', 'measurements', 'activity', 'goals', 'health', 'diet', 'summary'] as const
 
 const slideVariants = {
   enter:  (dir: number) => ({ x: dir > 0 ? 60 : -60, opacity: 0 }),
@@ -41,6 +33,7 @@ const slideVariants = {
 
 /** Multi-step animated onboarding form that hydrates from localStorage, cloud profile, or saved progress; persists each step and saves the final profile on completion. */
 export function OnboardingStepper() {
+  const { t, locale } = useLocale()
   const router         = useRouter()
   const { update: updateSession } = useSession()
   const { profile, setProfile } = useUserStore()
@@ -84,7 +77,7 @@ export function OnboardingStepper() {
       setStep(getInitialOnboardingStep({
         completed: source?.onboardingCompleted,
         savedStep: progress?.step ?? null,
-        totalSteps: STEPS.length,
+        totalSteps: STEP_KEYS.length,
       }))
       setHydrating(false)
     }
@@ -113,7 +106,7 @@ export function OnboardingStepper() {
       const payload = {
         ...(data as OnboardingData),
         onboardingCompleted: true,
-        language: 'fr',
+        language: locale,
         darkMode: true,
         id:       crypto.randomUUID(),
       }
@@ -133,23 +126,23 @@ export function OnboardingStepper() {
       setProfile(savedProfile)
       await updateSession()
       await storage.clearOnboardingProgress()
-      toast.success('Profil prêt. Choisis maintenant ton accompagnement.')
+      toast.success(t('onboarding.profileReady'))
       router.push('/choose?returnTo=/dashboard')
     } catch {
-      toast.error('Erreur lors de la sauvegarde. Réessaie.')
+      toast.error(t('onboarding.saveError'))
     } finally {
       setSaving(false)
     }
   }
 
-  const total     = STEPS.length
+  const total     = STEP_KEYS.length
   const progress  = Math.round(((step + 1) / total) * 100)
-  const current   = STEPS[step]
+  const currentKey = STEP_KEYS[step]
 
   if (hydrating) {
     return (
       <div className="w-full max-w-lg mx-auto rounded-xl border border-zinc-800 bg-zinc-900 p-6 text-sm text-zinc-400">
-        Chargement de ton profil...
+        {t('onboarding.loadingProfile')}
       </div>
     )
   }
@@ -160,7 +153,7 @@ export function OnboardingStepper() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-zinc-400">
-            Étape {step + 1} sur {total}
+            {t('onboarding.stepProgress')} {step + 1} {t('onboarding.stepProgressMiddle')} {total}
           </span>
           <span className="text-sm font-medium text-[#C8F135]">{progress}%</span>
         </div>
@@ -175,7 +168,7 @@ export function OnboardingStepper() {
 
         {/* Step indicators */}
         <div className="flex gap-1.5 mt-3">
-          {STEPS.map((_, i) => (
+          {STEP_KEYS.map((_, i) => (
             <div
               key={i}
               className={`flex-1 h-0.5 rounded-full transition-colors duration-300 ${
@@ -186,8 +179,8 @@ export function OnboardingStepper() {
         </div>
 
         <div className="mt-3">
-          <h2 className="text-xl font-bold text-white">{current.title}</h2>
-          <p className="text-sm text-zinc-400">{current.desc}</p>
+          <h2 className="text-xl font-bold text-white">{t(`onboarding.stepsMeta.${currentKey}.title`)}</h2>
+          <p className="text-sm text-zinc-400">{t(`onboarding.stepsMeta.${currentKey}.description`)}</p>
         </div>
       </div>
 

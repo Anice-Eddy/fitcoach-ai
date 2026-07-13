@@ -30,7 +30,7 @@ async function getCoach() {
   const session = await auth()
 
   if (!session?.user?.email) {
-    return { error: NextResponse.json({ error: 'Non authentifié' }, { status: 401 }) }
+    return { error: NextResponse.json({ error: 'Unauthenticated' }, { status: 401 }) }
   }
 
   const coach = await prisma.user.findUnique({
@@ -39,7 +39,7 @@ async function getCoach() {
   })
 
   if (!coach?.coachProfile) {
-    return { error: NextResponse.json({ error: 'Vous n\'êtes pas un coach' }, { status: 403 }) }
+    return { error: NextResponse.json({ error: 'Coach access required' }, { status: 403 }) }
   }
 
   return { coach }
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
 
     if (!memberId) {
       return NextResponse.json(
-        { error: 'memberId manquant' },
+        { error: 'Missing memberId' },
         { status: 400 }
       )
     }
@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('GET /api/coach/notes:', error)
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Server error' },
       { status: 500 }
     )
   }
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
       where: { coachId_memberId: { coachId: coach!.coachProfile!.id, memberId } },
     })
     if (!membership) {
-      return NextResponse.json({ error: 'Ce membre n’est pas suivi par ce coach' }, { status: 403 })
+      return NextResponse.json({ error: 'This member is not followed by this coach' }, { status: 403 })
     }
 
     const { isImportant } = parsed.data
@@ -138,8 +138,8 @@ export async function POST(req: NextRequest) {
           coachId:         coach!.coachProfile!.id,
           recipientUserId: memberId,
           type:            'MESSAGE',
-          title:           `Nouvelle note: ${title}`,
-          message:         `Votre coach a partagé une note: ${title}`,
+          title:           `Shared note: ${title}`,
+          message:         `Your coach shared a note: ${title}`,
           relatedId:       note.id,
         },
       })
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('POST /api/coach/notes:', error)
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Server error' },
       { status: 500 }
     )
   }
@@ -171,13 +171,13 @@ export async function PATCH(req: NextRequest) {
     const note = await prisma.coachNote.findFirst({
       where: { id: noteId, coachId: coach!.coachProfile!.id },
     })
-    if (!note) return NextResponse.json({ error: 'Note introuvable' }, { status: 404 })
+    if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
     const CONTENT_FIELDS = ['title', 'content', 'category', 'priority', 'tags', 'isSharedWithMember'] as const
     const hasContentEdit = CONTENT_FIELDS.some(f => f in data) || followUpAt !== undefined
     if (note.status === 'DONE' && hasContentEdit) {
       return NextResponse.json(
-        { error: 'Cette note est terminée et ne peut plus être modifiée.' },
+        { error: 'This note is completed and can no longer be edited.' },
         { status: 403 },
       )
     }
@@ -193,7 +193,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json(updated)
   } catch (error) {
     console.error('PATCH /api/coach/notes:', error)
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
 
@@ -204,17 +204,17 @@ export async function DELETE(req: NextRequest) {
     if (error) return error
 
     const { noteId } = await req.json()
-    if (!noteId) return NextResponse.json({ error: 'noteId manquant' }, { status: 400 })
+    if (!noteId) return NextResponse.json({ error: 'Missing noteId' }, { status: 400 })
 
     const note = await prisma.coachNote.findFirst({
       where: { id: noteId, coachId: coach!.coachProfile!.id },
     })
-    if (!note) return NextResponse.json({ error: 'Note introuvable' }, { status: 404 })
+    if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
     await prisma.coachNote.delete({ where: { id: noteId } })
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('DELETE /api/coach/notes:', error)
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { notificationHref } from '@/lib/notifications/notification-links'
+import { notificationDisplay } from '@/lib/notifications/display'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface Notification {
   id:        string
@@ -18,6 +20,7 @@ interface Notification {
 
 /** Bell icon with unread badge that polls /api/coach/notifications every 30 s; clicking a notification marks it read and navigates to the relevant page. */
 export function NotificationBell() {
+  const { locale, t } = useLocale()
   const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount]     = useState(0)
@@ -91,7 +94,7 @@ export function NotificationBell() {
         type="button"
         onClick={() => setIsOpen((v) => !v)}
         className="relative p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
-        aria-label="Notifications"
+        aria-label={t('coachNavigation.notifications')}
       >
         <Bell className="size-5" />
         {unreadCount > 0 && (
@@ -104,7 +107,7 @@ export function NotificationBell() {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 rounded-xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/50 z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
-            <h3 className="text-sm font-semibold text-white">Notifications</h3>
+            <h3 className="text-sm font-semibold text-white">{t('coachNavigation.notifications')}</h3>
             {unreadCount > 0 && (
               <button
                 type="button"
@@ -112,7 +115,7 @@ export function NotificationBell() {
                 disabled={isLoading}
                 className="text-xs text-zinc-400 hover:text-[#C8F135] transition-colors disabled:opacity-50"
               >
-                Tout marquer comme lu
+                {t('coachNavigation.markAllRead')}
               </button>
             )}
           </div>
@@ -120,43 +123,46 @@ export function NotificationBell() {
           <div className="max-h-[360px] overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center text-sm text-zinc-500">
-                Aucune notification
+                {t('coachNavigation.noNotification')}
               </div>
             ) : (
               <div className="divide-y divide-zinc-800">
-                {notifications.map((notif) => (
-                  <button
-                    key={notif.id}
-                    type="button"
-                    className={cn(
-                      'w-full text-left px-4 py-3 transition-colors hover:bg-zinc-900',
-                      !notif.isRead && 'bg-zinc-900/60',
-                    )}
-                    onClick={() => handleNotificationClick(notif)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className={cn('text-sm font-medium truncate', notif.isRead ? 'text-zinc-300' : 'text-white')}>
-                          {notif.title}
-                        </p>
-                        <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2">
-                          {notif.message}
-                        </p>
-                        <p className="text-xs text-zinc-600 mt-1">
-                          {new Date(notif.createdAt).toLocaleDateString('fr-FR', {
-                            day:    '2-digit',
-                            month:  'short',
-                            hour:   '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
-                      {!notif.isRead && (
-                        <div className="mt-1 size-2 shrink-0 rounded-full bg-[#C8F135]" />
+                {notifications.map((notif) => {
+                  const display = notificationDisplay(notif, t, locale)
+                  return (
+                    <button
+                      key={notif.id}
+                      type="button"
+                      className={cn(
+                        'w-full text-left px-4 py-3 transition-colors hover:bg-zinc-900',
+                        !notif.isRead && 'bg-zinc-900/60',
                       )}
-                    </div>
-                  </button>
-                ))}
+                      onClick={() => handleNotificationClick(notif)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className={cn('text-sm font-medium truncate', notif.isRead ? 'text-zinc-300' : 'text-white')}>
+                            {display.title}
+                          </p>
+                          <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2">
+                            {display.message}
+                          </p>
+                          <p className="text-xs text-zinc-600 mt-1">
+                            {new Date(notif.createdAt).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+                              day:    '2-digit',
+                              month:  'short',
+                              hour:   '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </p>
+                        </div>
+                        {!notif.isRead && (
+                          <div className="mt-1 size-2 shrink-0 rounded-full bg-[#C8F135]" />
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>

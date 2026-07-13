@@ -72,26 +72,26 @@ describe('POST /api/coach/members create member', () => {
     }))
   })
 
-  it('retourne 401 si non authentifié', async () => {
+  it('returns 401 when unauthenticated', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const res = await POST(req(validBody))
     expect(res.status).toBe(401)
   })
 
-  it('retourne 403 si l’utilisateur connecté n’est pas coach', async () => {
+  it('returns 403 when the signed-in user is not a coach', async () => {
     ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockReset()
     ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ id: 'u1', coachProfile: null })
     const res = await POST(req(validBody))
     expect(res.status).toBe(403)
   })
 
-  it('crée un client complet en transaction', async () => {
+  it('creates a complete client inside a transaction', async () => {
     const res = await POST(req(validBody))
     expect(res.status).toBe(201)
     expect(prisma.$transaction).toHaveBeenCalled()
   })
 
-  it('rejette un profil client incomplet', async () => {
+  it('rejects an incomplete client profile', async () => {
     const res = await POST(req({ ...validBody, email: 'pas-un-email' }))
     expect(res.status).toBe(422)
   })

@@ -1,4 +1,5 @@
 import type { Exercise } from '@/types'
+import type { Locale } from '@/lib/i18n'
 
 // First element of muscleGroups = primary muscle (determines session placement)
 export const EXERCISE_DATABASE: Exercise[] = [
@@ -907,7 +908,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
     instructions: [
       'Échauffement 3–5 min à intensité modérée.',
       'Sprint 20–40 sec à effort maximal.',
-      'Récupération active 40–60 sec (marche ou trot).',
+      'Recovery active 40–60 sec (marche ou trot).',
       'Répéter 8–12 cycles selon le niveau.',
       'Retour au calme 3–5 min.',
     ],
@@ -975,7 +976,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
     videoUrl: 'https://www.youtube.com/watch?v=H0r_HNxe-Cc',
   },
 
-  // ── CHEST — variantes avancées ─────────────────────────────────────────────
+  // --- CHEST: advanced variations ------------------------------------------
   {
     id: 'ex-decline-bench-press', name: 'Développé décliné barre',
     description: 'Développé couché sur banc décliné ciblant le bas des pectoraux.',
@@ -1079,7 +1080,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
     videoUrl: 'https://www.youtube.com/watch?v=0g5HCsFotS8',
   },
 
-  // ── BACK — variantes avancées ──────────────────────────────────────────────
+  // --- BACK: advanced variations -------------------------------------------
   {
     id: 'ex-shrug-barbell', name: 'Shrug barre',
     description: 'Exercice de référence pour les trapèzes supérieurs.',
@@ -1172,7 +1173,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
     videoUrl: 'https://www.youtube.com/watch?v=mW_JoUEbDH0',
   },
 
-  // ── SHOULDERS — variantes avancées ────────────────────────────────────────
+  // --- SHOULDERS: advanced variations --------------------------------------
   {
     id: 'ex-seated-db-press', name: 'Développé épaules haltères assis',
     description: 'Développé militaire assis aux haltères, amplitude maximale.',
@@ -1221,7 +1222,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
     videoUrl: 'https://www.youtube.com/watch?v=bYRXQE_dq5g',
   },
 
-  // ── BICEPS — variantes avancées ────────────────────────────────────────────
+  // --- BICEPS: advanced variations -----------------------------------------
   {
     id: 'ex-incline-db-curl', name: 'Curl haltères incliné',
     description: 'Curl sur banc incliné : étirement maximal du biceps en bas du mouvement.',
@@ -1268,7 +1269,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
     videoUrl: 'https://www.youtube.com/watch?v=GlUMCuB0XJ8',
   },
 
-  // ── TRICEPS — variantes avancées ──────────────────────────────────────────
+  // --- TRICEPS: advanced variations ----------------------------------------
   {
     id: 'ex-triceps-rope-pushdown', name: 'Pushdown câble avec corde',
     description: 'Pushdown avec corde : rotation des poignets en bas pour activer les 3 chefs.',
@@ -1303,7 +1304,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
     videoUrl: 'https://www.youtube.com/watch?v=0326dy_-CzM',
   },
 
-  // ── LEGS — variantes avancées ──────────────────────────────────────────────
+  // --- LEGS: advanced variations -------------------------------------------
   {
     id: 'ex-reverse-lunge', name: 'Fentes arrière',
     description: 'Fentes en reculant, moins d\'impact sur les genoux que les fentes avant.',
@@ -1428,7 +1429,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
     videoUrl: 'https://www.youtube.com/watch?v=Q_o4nBXXHAA',
   },
 
-  // ── GLUTES — variantes avancées ───────────────────────────────────────────
+  // --- GLUTES: advanced variations -----------------------------------------
   {
     id: 'ex-single-leg-hip-thrust', name: 'Hip Thrust unilatéral',
     description: 'Hip thrust sur une jambe pour corriger les asymétries et intensifier le travail.',
@@ -1474,7 +1475,7 @@ export const EXERCISE_DATABASE: Exercise[] = [
     videoUrl: 'https://www.youtube.com/watch?v=ExCKub9ibdg',
   },
 
-  // ── CORE — variantes avancées ─────────────────────────────────────────────
+  // --- CORE: advanced variations -------------------------------------------
   {
     id: 'ex-pallof-press', name: 'Pallof Press (anti-rotation)',
     description: 'Exercice anti-rotation pour renforcer la stabilité du tronc.',
@@ -1676,6 +1677,197 @@ export const EXERCISE_DATABASE: Exercise[] = [
     videoUrl: 'https://www.youtube.com/watch?v=0bWRPC49-KI',
   },
 ]
+
+const EXERCISE_NAME_EN: Record<string, string> = {
+  'ex-bench-press': 'Barbell bench press',
+  'ex-incline-db-press': 'Incline dumbbell press',
+  'ex-push-up': 'Push-ups',
+  'ex-cable-fly': 'Cable fly',
+  'ex-dips': 'Dips',
+  'ex-pull-up': 'Pull-ups',
+  'ex-chin-up': 'Chin-ups',
+  'ex-row': 'Barbell row',
+  'ex-db-row': 'Single-arm dumbbell row',
+  'ex-face-pull': 'Face pull',
+  'ex-deadlift': 'Deadlift',
+  'ex-ohp': 'Overhead press',
+  'ex-lateral-raise': 'Lateral raises',
+  'ex-arnold-press': 'Arnold press',
+  'ex-rear-delt-fly': 'Rear delt fly',
+  'ex-curl': 'Dumbbell curl',
+  'ex-barbell-curl': 'Barbell curl',
+  'ex-hammer-curl': 'Hammer curl',
+  'ex-triceps-ext': 'Dumbbell triceps extension',
+  'ex-triceps-pushdown': 'Cable triceps pushdown',
+  'ex-skull-crusher': 'Skull crusher',
+  'ex-squat': 'Barbell squat',
+  'ex-goblet-squat': 'Goblet squat',
+  'ex-lunges': 'Forward lunges',
+  'ex-bulgarian-split-squat': 'Bulgarian split squat',
+  'ex-leg-press': 'Leg press',
+  'ex-rdl': 'Romanian deadlift',
+  'ex-leg-curl': 'Leg curl',
+  'ex-db-bench-press': 'Dumbbell bench press',
+  'ex-db-bench-press-alt': 'Alternating dumbbell bench press',
+  'ex-machine-chest-press': 'Machine chest press',
+  'ex-hip-thrust': 'Hip thrust',
+  'ex-hip-thrust-db': 'Dumbbell hip thrust',
+  'ex-hip-thrust-machine': 'Machine hip thrust',
+  'ex-glute-bridge': 'Glute bridge',
+  'ex-plank': 'Plank',
+  'ex-hanging-knee-raise': 'Hanging knee raise',
+  'ex-russian-twist': 'Russian twist',
+  'ex-crunch': 'Crunches',
+  'ex-calf-raise': 'Standing calf raise',
+  'ex-seated-calf-raise': 'Seated calf raise',
+  'ex-pec-deck': 'Pec deck / butterfly machine',
+  'ex-cable-crossover': 'Cable crossover',
+  'ex-lat-pulldown': 'Lat pulldown',
+  'ex-lat-pulldown-neutral': 'Neutral-grip lat pulldown',
+  'ex-cable-row': 'Seated cable row',
+  'ex-tbar-row': 'T-bar row',
+  'ex-hyperextension': 'Hyperextension / good morning',
+  'ex-upright-row': 'Upright row',
+  'ex-front-raise': 'Front raise',
+  'ex-cable-lateral-raise': 'Cable lateral raise',
+  'ex-leg-extension': 'Leg extension',
+  'ex-hack-squat': 'Hack squat',
+  'ex-sumo-squat': 'Sumo squat',
+  'ex-step-up': 'Step-up',
+  'ex-sumo-deadlift': 'Sumo deadlift',
+  'ex-cable-kickback': 'Cable kickback',
+  'ex-abductor-machine': 'Abductor machine',
+  'ex-preacher-curl': 'Preacher curl',
+  'ex-concentration-curl': 'Concentration curl',
+  'ex-cable-curl': 'Cable curl',
+  'ex-ez-bar-curl': 'EZ-bar curl',
+  'ex-close-grip-bench': 'Close-grip bench press',
+  'ex-overhead-triceps-cable': 'Overhead cable triceps extension',
+  'ex-triceps-kickback': 'Triceps kickback',
+  'ex-dead-bug': 'Dead bug',
+  'ex-bicycle-crunch': 'Bicycle crunch',
+  'ex-leg-raise': 'Lying leg raise',
+  'ex-side-plank': 'Side plank',
+  'ex-ab-wheel': 'Ab wheel rollout',
+  'ex-kettlebell-swing': 'Kettlebell swing',
+  'ex-burpee': 'Burpee',
+  'ex-mountain-climber': 'Mountain climbers',
+  'ex-jump-rope': 'Jump rope',
+  'ex-hiit': 'HIIT',
+  'ex-treadmill-12-3-30': 'Treadmill 12-3-30',
+  'ex-incline-walk': 'Incline walk',
+  'ex-cycling': 'Cycling',
+  'ex-running': 'Outdoor running',
+  'ex-rowing': 'Rowing machine',
+  'ex-decline-bench-press': 'Decline barbell bench press',
+  'ex-incline-bench-press': 'Incline barbell bench press',
+  'ex-decline-db-press': 'Decline dumbbell press',
+  'ex-db-fly': 'Dumbbell fly',
+  'ex-incline-db-fly': 'Incline dumbbell fly',
+  'ex-high-to-low-cable-fly': 'High-to-low cable fly',
+  'ex-low-to-high-cable-fly': 'Low-to-high cable fly',
+  'ex-diamond-push-up': 'Diamond push-ups',
+  'ex-pullover': 'Dumbbell pullover',
+  'ex-shrug-dumbbell': 'Dumbbell shrug',
+  'ex-underhand-row': 'Underhand barbell row',
+  'ex-chest-supported-row': 'Chest-supported row',
+  'ex-weighted-pull-up': 'Weighted pull-ups',
+  'ex-close-grip-pulldown': 'Close-grip lat pulldown',
+  'ex-seated-db-press': 'Seated dumbbell shoulder press',
+  'ex-reverse-pec-deck': 'Reverse pec deck',
+  'ex-ytw': 'Y-T-W raise',
+  'ex-incline-db-curl': 'Incline dumbbell curl',
+  'ex-reverse-curl': 'Reverse curl',
+  'ex-triceps-rope-pushdown': 'Rope triceps pushdown',
+  'ex-reverse-lunge': 'Reverse lunge',
+  'ex-walking-lunge': 'Walking lunges',
+  'ex-lateral-lunge': 'Lateral lunge',
+  'ex-jump-squat': 'Jump squat',
+  'ex-single-leg-press': 'Single-leg leg press',
+  'ex-single-leg-hip-thrust': 'Single-leg hip thrust',
+  'ex-side-lying-abduction': 'Side-lying hip abduction',
+  'ex-cable-glute-kickback': 'Cable glute kickback',
+  'ex-cable-crunch': 'Cable crunch',
+  'ex-hanging-leg-raise': 'Hanging straight-leg raise',
+  'ex-wrist-curl': 'Wrist curl',
+  'ex-reverse-wrist-curl': 'Reverse wrist curl',
+  'ex-leg-press-calf-raise': 'Leg press calf raise',
+  'ex-single-leg-calf-raise': 'Single-leg calf raise',
+}
+
+const GENERIC_INSTRUCTIONS_EN = [
+  'Set up with a stable position and keep control before starting.',
+  'Move through a comfortable range of motion with steady tempo.',
+  'Keep the target muscles engaged and avoid rushing the eccentric phase.',
+  'Stop the set if technique breaks down or pain appears.',
+]
+
+const EXERCISE_DESCRIPTION_EN: Record<string, string> = {
+  'ex-bench-press': 'Compound barbell press for chest, shoulders, and triceps.',
+  'ex-incline-db-press': 'Dumbbell press emphasizing the upper chest and shoulders.',
+  'ex-push-up': 'Bodyweight chest exercise that also trains shoulders and triceps.',
+  'ex-cable-fly': 'Cable isolation movement that keeps constant tension on the chest.',
+  'ex-dips': 'Bodyweight pressing movement for chest and triceps.',
+  'ex-pull-up': 'Bodyweight vertical pull for back and biceps.',
+  'ex-deadlift': 'Full-body hinge movement focused on posterior-chain strength.',
+  'ex-squat': 'Compound lower-body lift for quads, glutes, and core stability.',
+  'ex-hip-thrust': 'Glute-focused hip extension movement.',
+  'ex-plank': 'Isometric core stability exercise.',
+}
+
+const EXERCISE_INSTRUCTIONS_EN: Record<string, string[]> = {
+  'ex-bench-press': [
+    'Lie on the bench with your feet flat on the floor.',
+    'Grip the bar slightly wider than shoulder width.',
+    'Lower the bar under control until it reaches your chest.',
+    'Press the bar up while exhaling, keeping the elbows controlled.',
+  ],
+  'ex-squat': [
+    'Set the bar securely on your upper back and brace your core.',
+    'Descend by bending hips and knees while keeping your chest proud.',
+    'Reach a controlled depth without losing balance.',
+    'Drive through the floor to stand back up.',
+  ],
+  'ex-deadlift': [
+    'Stand close to the bar with your mid-foot under it.',
+    'Hinge at the hips, grip the bar, and brace your core.',
+    'Push the floor away while keeping the bar close to your legs.',
+    'Lock out with hips and knees extended, then lower under control.',
+  ],
+  'ex-push-up': [
+    'Start in a plank with hands around shoulder width.',
+    'Lower your chest toward the floor while keeping your body aligned.',
+    'Press back up without letting your hips sag.',
+  ],
+  'ex-pull-up': [
+    'Hang from the bar with a firm grip.',
+    'Pull your chest toward the bar by driving elbows down.',
+    'Lower under control until the arms are extended.',
+  ],
+}
+
+/** Returns a localized exercise label while preserving the stored exercise name. */
+export function exerciseDisplayName(exerciseOrName: Exercise | string, locale: Locale = 'fr'): string {
+  const exercise = typeof exerciseOrName === 'string'
+    ? EXERCISE_DATABASE.find((item) => item.id === exerciseOrName || item.name === exerciseOrName)
+    : exerciseOrName
+  if (!exercise) return String(exerciseOrName)
+  return locale === 'en' ? (exercise.nameEn ?? EXERCISE_NAME_EN[exercise.id] ?? exercise.name) : exercise.name
+}
+
+/** Returns localized exercise instructions; English falls back to safe generic technique cues instead of French text. */
+export function exerciseDisplayInstructions(exercise: Exercise, locale: Locale = 'fr'): string[] {
+  if (locale !== 'en') return exercise.instructions
+  return exercise.instructionsEn?.length
+    ? exercise.instructionsEn
+    : EXERCISE_INSTRUCTIONS_EN[exercise.id] ?? GENERIC_INSTRUCTIONS_EN
+}
+
+/** Returns a localized exercise description without exposing French copy in English mode. */
+export function exerciseDisplayDescription(exercise: Exercise, locale: Locale = 'fr'): string | undefined {
+  if (locale !== 'en') return exercise.description
+  return exercise.descriptionEn ?? EXERCISE_DESCRIPTION_EN[exercise.id]
+}
 
 export function getExerciseById(id: string): Exercise | undefined {
   return EXERCISE_DATABASE.find((e) => e.id === id)

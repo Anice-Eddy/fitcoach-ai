@@ -8,7 +8,7 @@ import { bodyMetricSchema } from '@/utils/validators'
 /** Returns up to `limit` (max 365, default 90) body metric records for the authenticated user, ordered by date descending. */
 export async function GET(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '90'), 365)
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
 /** Creates a new body metric entry for the authenticated user; validates via bodyMetricSchema. */
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body   = await req.json()
   const parsed = bodyMetricSchema.safeParse(body)
@@ -41,16 +41,16 @@ export async function POST(req: Request) {
 /** Deletes a body metric entry by id query param, verifying the record belongs to the authenticated user. */
 export async function DELETE(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
   const metricId = searchParams.get('id')
-  if (!metricId) return NextResponse.json({ error: 'id manquant' }, { status: 400 })
+  if (!metricId) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
   const existing = await prisma.bodyMetric.findFirst({
     where: { id: metricId, userId: session.user.id },
   })
-  if (!existing) return NextResponse.json({ error: 'Mesure introuvable' }, { status: 404 })
+  if (!existing) return NextResponse.json({ error: 'Measurement not found' }, { status: 404 })
 
   await prisma.bodyMetric.delete({ where: { id: metricId } })
   return NextResponse.json({ ok: true })

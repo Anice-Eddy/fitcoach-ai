@@ -6,14 +6,15 @@ import {
   Edit3, Link2, Send, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Settings2,
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { enUS, fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { appendAppointmentNote } from '@/lib/appointments/notes'
 import { AppointmentNotesList } from '@/components/appointments/AppointmentNotesList'
 import { CoachPageHeader } from '@/components/coach/CoachPageHeader'
+import { useLocale } from '@/contexts/LocaleContext'
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// Types
 
 interface Member { id: string; name: string | null; email: string }
 
@@ -39,22 +40,21 @@ interface AvailabilityRule {
 
 type Panel = 'propose' | 'note' | 'edit' | null
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// Constants
 
-const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  PENDING:   { label: 'En attente',    color: 'text-amber-400   bg-amber-400/10  border-amber-400/20' },
-  PROPOSED:  { label: 'Date proposée', color: 'text-blue-400    bg-blue-400/10   border-blue-400/20' },
-  CONFIRMED: { label: 'Confirmé',      color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' },
-  COMPLETED: { label: 'Terminé',       color: 'text-zinc-400    bg-zinc-800       border-zinc-700' },
-  CANCELLED: { label: 'Annulé',        color: 'text-red-400     bg-red-400/10     border-red-400/20' },
-  NO_SHOW:   { label: 'Absent',        color: 'text-red-400     bg-red-400/10     border-red-400/20' },
+const STATUS_LABEL: Record<string, { labelKey: string; color: string }> = {
+  PENDING:   { labelKey: 'coachAppointments.status.pending', color: 'text-amber-400   bg-amber-400/10  border-amber-400/20' },
+  PROPOSED:  { labelKey: 'coachAppointments.status.proposed', color: 'text-blue-400    bg-blue-400/10   border-blue-400/20' },
+  CONFIRMED: { labelKey: 'coachAppointments.status.confirmed', color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' },
+  COMPLETED: { labelKey: 'coachAppointments.status.completed', color: 'text-zinc-400    bg-zinc-800       border-zinc-700' },
+  CANCELLED: { labelKey: 'coachAppointments.status.cancelled', color: 'text-red-400     bg-red-400/10     border-red-400/20' },
+  NO_SHOW:   { labelKey: 'coachAppointments.status.noShow', color: 'text-red-400     bg-red-400/10     border-red-400/20' },
 }
 
-const DAY_SHORT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
-const DAY_FULL  = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
-const HOURS     = Array.from({ length: 14 }, (_, i) => i + 7) // 7h–20h
+const WEEK_DAY_COUNT = 7
+const HOURS     = Array.from({ length: 14 }, (_, i) => i + 7) // 7:00-20:00
 
-// ─── Calendar helpers ─────────────────────────────────────────────────────────
+// Calendar helpers
 
 function getMonday(date: Date) {
   const d = new Date(date); d.setHours(0, 0, 0, 0)
@@ -70,8 +70,8 @@ function isoDay(date: Date) { const d = date.getDay(); return d === 0 ? 7 : d }
 function fmtTime(h: number, m: number) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
-function fmtShortDate(d: Date) {
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+function fmtShortDate(d: Date, locale: 'fr' | 'en') {
+  return d.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' })
 }
 function initials(name: string | null, email: string) {
   if (name) {
@@ -114,12 +114,14 @@ function shouldOpenNewAppointmentFromUrl() {
   return new URLSearchParams(window.location.search).get('new') === '1'
 }
 
-// ─── Shared sub-components ────────────────────────────────────────────────────
+// Shared sub-components
 
 function DateRow({ scheduledAt, duration }: { scheduledAt: string; duration: number }) {
+  const { locale } = useLocale()
+
   return (
     <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400">
-      <span className="flex items-center gap-1"><Calendar className="size-3" />{format(new Date(scheduledAt), 'PPP', { locale: fr })}</span>
+      <span className="flex items-center gap-1"><Calendar className="size-3" />{format(new Date(scheduledAt), 'PPP', { locale: locale === 'fr' ? fr : enUS })}</span>
       <span className="flex items-center gap-1"><Clock className="size-3" />{format(new Date(scheduledAt), 'HH:mm')} · {duration} min</span>
     </div>
   )
@@ -135,19 +137,21 @@ function AppointmentNoteActions({
   onAdd: () => void
   onEdit: () => void
 }) {
+  const { t } = useLocale()
+
   return (
     <div className="mt-2 flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950/70 px-2.5 py-2">
       <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
         <MessageSquare className="size-3 text-[#C8F135]" />
-        Notes
+        {t('coachAppointments.notes')}
       </span>
       <div className="flex items-center gap-1">
         {hasCoachNote && (
           <button
             type="button"
             onClick={onEdit}
-            title="Modifier la note"
-            aria-label="Modifier la note"
+            title={t('coachAppointments.editNote')}
+            aria-label={t('coachAppointments.editNote')}
             className={cn(
               'rounded-md p-1.5 transition-colors',
               activeMode === 'edit'
@@ -161,8 +165,8 @@ function AppointmentNoteActions({
         <button
           type="button"
           onClick={onAdd}
-          title="Ajouter une note"
-          aria-label="Ajouter une note"
+          title={t('coachAppointments.addNote')}
+          aria-label={t('coachAppointments.addNote')}
           className={cn(
             'rounded-md p-1.5 transition-colors',
             activeMode === 'append'
@@ -177,12 +181,13 @@ function AppointmentNoteActions({
   )
 }
 
-// ─── Appointment cards ────────────────────────────────────────────────────────
+// Appointment cards
 
 function PendingCard({ appt, onPatch, selected, aptRef }: {
   appt: Appointment; onPatch: (id: string, b: object) => Promise<void>
   selected: boolean; aptRef: React.RefObject<HTMLDivElement>
 }) {
+  const { locale, t } = useLocale()
   const [panel, setPanel]     = useState<Panel>(null)
   const [newDate, setNewDate] = useState(appt.scheduledAt.slice(0, 16))
   const [newDur,  setNewDur]  = useState(appt.duration)
@@ -193,7 +198,7 @@ function PendingCard({ appt, onPatch, selected, aptRef }: {
   const save = async (body: object) => { setSaving(true); await onPatch(appt.id, body); setSaving(false); setPanel(null) }
   const saveNote = () => save({
     coachNote: noteMode === 'append'
-      ? appendAppointmentNote(appt.coachNote, note, 'Coach')
+      ? appendAppointmentNote(appt.coachNote, note, t('common.coach'), locale)
       : note,
   })
 
@@ -204,7 +209,7 @@ function PendingCard({ appt, onPatch, selected, aptRef }: {
           <div><p className="text-sm font-semibold text-white">{appt.title}</p>
             {appt.description && <p className="text-xs text-zinc-500 mt-0.5 line-clamp-1">{appt.description}</p>}
           </div>
-          <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border text-amber-400 bg-amber-400/10 border-amber-400/20">En attente</span>
+          <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border text-amber-400 bg-amber-400/10 border-amber-400/20">{t('coachAppointments.status.pending')}</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-2">
           <User className="size-3" />{appt.member.name ?? appt.member.email}
@@ -215,14 +220,14 @@ function PendingCard({ appt, onPatch, selected, aptRef }: {
             {appt.coachNote && (
               <AppointmentNotesList
                 note={appt.coachNote}
-                title="Vos notes"
+                title={t('coachAppointments.yourNotes')}
                 accent="lime"
                 canEdit
                 compact
                 onSave={(coachNote) => save({ coachNote })}
               />
             )}
-            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title="Notes du membre" compact />}
+            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title={t('coachAppointments.memberNotes')} compact />}
           </div>
         )}
         <AppointmentNoteActions
@@ -234,40 +239,40 @@ function PendingCard({ appt, onPatch, selected, aptRef }: {
         <div className="flex flex-wrap gap-1.5 mt-3">
           <button onClick={() => save({ status: 'CONFIRMED' })} disabled={saving}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/25 disabled:opacity-50">
-            <Check className="size-3" /> Accepter
+            <Check className="size-3" /> {t('coachAppointments.accept')}
           </button>
           <button onClick={() => setPanel(p => p === 'propose' ? null : 'propose')}
             className={cn('flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold', panel === 'propose' ? 'bg-blue-500/15 text-blue-400' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700')}>
-            <Send className="size-3" /> Proposer date
+            <Send className="size-3" /> {t('coachAppointments.proposeDate')}
           </button>
           <button onClick={() => save({ status: 'CANCELLED' })} disabled={saving}
             className="ml-auto flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs font-semibold hover:bg-red-500/20 disabled:opacity-50">
-            <X className="size-3" /> Refuser
+            <X className="size-3" /> {t('coachAppointments.refuse')}
           </button>
         </div>
       </div>
       {panel === 'propose' && (
         <div className="border-t border-zinc-800 bg-zinc-950 px-3 py-4 space-y-3">
-          <p className="text-xs font-semibold text-white">Proposer une date</p>
+          <p className="text-xs font-semibold text-white">{t('coachAppointments.proposeDate')}</p>
           <div className="grid grid-cols-2 gap-2">
-            <div><label className="block text-[11px] text-zinc-500 mb-1">Date et heure</label>
+            <div><label className="block text-[11px] text-zinc-500 mb-1">{t('coachAppointments.dateTime')}</label>
               <input type="datetime-local" value={newDate} onChange={e => setNewDate(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135]" /></div>
-            <div><label className="block text-[11px] text-zinc-500 mb-1">Durée (min)</label>
+            <div><label className="block text-[11px] text-zinc-500 mb-1">{t('coachAppointments.durationMin')}</label>
               <input type="number" value={newDur} onChange={e => setNewDur(+e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135]" /></div>
-            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">Lien réunion</label>
-              <input type="url" value={newMeet} onChange={e => setNewMeet(e.target.value)} placeholder="https://meet.google.com/…"
+            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">{t('coachAppointments.meetingLink')}</label>
+              <input type="url" value={newMeet} onChange={e => setNewMeet(e.target.value)} placeholder={t('coachAppointments.meetingLinkPlaceholder')}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]" /></div>
-            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">Note du coach</label>
+            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">{t('coachAppointments.coachNote')}</label>
               <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-[#C8F135] resize-none" /></div>
           </div>
           <div className="flex gap-2 justify-end">
-            <button onClick={() => setPanel(null)} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">Annuler</button>
+            <button onClick={() => setPanel(null)} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">{t('common.cancel')}</button>
             <button disabled={saving || !newDate} onClick={() => save({ status: 'PROPOSED', scheduledAt: newDate, duration: newDur, meetLink: newMeet || null, coachNote: note || null })}
               className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-400 disabled:opacity-50">
-              <Send className="size-3" />{saving ? 'Envoi…' : 'Envoyer'}
+              <Send className="size-3" />{saving ? t('coachAppointments.sending') : t('common.send')}
             </button>
           </div>
         </div>
@@ -275,16 +280,16 @@ function PendingCard({ appt, onPatch, selected, aptRef }: {
       {panel === 'note' && (
         <div className="border-t border-zinc-800 bg-zinc-950 px-3 py-3 space-y-2">
           <p className="text-xs font-semibold text-white">
-            {noteMode === 'append' && appt.coachNote ? 'Ajouter une note' : 'Note du coach'}
+            {noteMode === 'append' && appt.coachNote ? t('coachAppointments.addNote') : t('coachAppointments.coachNote')}
           </p>
           <textarea value={note} onChange={e => setNote(e.target.value)} rows={3}
-            placeholder="Consignes, objectif, préparation avant le rendez-vous…"
+            placeholder={t('coachAppointments.notePlaceholder')}
             className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-[#C8F135] resize-none" />
           <div className="flex gap-2 justify-end">
-            <button onClick={() => setPanel(null)} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">Annuler</button>
+            <button onClick={() => setPanel(null)} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">{t('common.cancel')}</button>
             <button disabled={saving || !note.trim()} onClick={saveNote}
               className="px-3 py-1.5 text-xs rounded-lg bg-[#C8F135] text-zinc-900 font-semibold hover:bg-[#d4f54d] disabled:opacity-50">
-              {saving ? 'Enregistrement…' : 'Enregistrer'}
+              {saving ? t('coachAppointments.saving') : t('common.save')}
             </button>
           </div>
         </div>
@@ -297,6 +302,7 @@ function ProposedCard({ appt, onPatch, selected, aptRef }: {
   appt: Appointment; onPatch: (id: string, b: object) => Promise<void>
   selected: boolean; aptRef: React.RefObject<HTMLDivElement>
 }) {
+  const { t } = useLocale()
   const [panel, setPanel]     = useState<Panel>(null)
   const [newDate, setNewDate] = useState(appt.scheduledAt.slice(0, 16))
   const [newDur,  setNewDur]  = useState(appt.duration)
@@ -310,56 +316,56 @@ function ProposedCard({ appt, onPatch, selected, aptRef }: {
       <div className="p-3">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div><p className="text-sm font-semibold text-white">{appt.title}</p></div>
-          <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border text-blue-400 bg-blue-400/10 border-blue-400/20">Date proposée</span>
+          <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border text-blue-400 bg-blue-400/10 border-blue-400/20">{t('coachAppointments.status.proposed')}</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-2">
           <User className="size-3" />{appt.member.name ?? appt.member.email}
         </div>
         <DateRow scheduledAt={appt.scheduledAt} duration={appt.duration} />
-        {appt.meetLink && <a href={appt.meetLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-[#C8F135] hover:underline mt-1"><Link2 className="size-3" />Lien réunion</a>}
+        {appt.meetLink && <a href={appt.meetLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-[#C8F135] hover:underline mt-1"><Link2 className="size-3" />{t('coachAppointments.meetingLink')}</a>}
         {(appt.coachNote || appt.memberNote) && (
           <div className="mt-2 space-y-1.5">
-            {appt.coachNote && <AppointmentNotesList note={appt.coachNote} title="Vos notes" accent="lime" compact />}
-            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title="Notes du membre" compact />}
+            {appt.coachNote && <AppointmentNotesList note={appt.coachNote} title={t('coachAppointments.yourNotes')} accent="lime" compact />}
+            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title={t('coachAppointments.memberNotes')} compact />}
           </div>
         )}
         <div className="flex flex-wrap gap-1.5 mt-3">
           <button onClick={() => save({ status: 'CONFIRMED' })} disabled={saving}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/25 disabled:opacity-50">
-            <Check className="size-3" /> Confirmer
+            <Check className="size-3" /> {t('common.confirm')}
           </button>
           <button onClick={() => setPanel(p => p === 'edit' ? null : 'edit')}
             className={cn('flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold', panel === 'edit' ? 'bg-blue-500/15 text-blue-400' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700')}>
-            <Edit3 className="size-3" /> Modifier
+            <Edit3 className="size-3" /> {t('common.edit')}
           </button>
           <button onClick={() => save({ status: 'CANCELLED' })} disabled={saving}
             className="ml-auto flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs font-semibold hover:bg-red-500/20 disabled:opacity-50">
-            <X className="size-3" /> Annuler
+            <X className="size-3" /> {t('common.cancel')}
           </button>
         </div>
       </div>
       {panel === 'edit' && (
         <div className="border-t border-zinc-800 bg-zinc-950 px-3 py-4 space-y-3">
-          <p className="text-xs font-semibold text-white">Modifier la proposition</p>
+          <p className="text-xs font-semibold text-white">{t('coachAppointments.editProposal')}</p>
           <div className="grid grid-cols-2 gap-2">
-            <div><label className="block text-[11px] text-zinc-500 mb-1">Date et heure</label>
+            <div><label className="block text-[11px] text-zinc-500 mb-1">{t('coachAppointments.dateTime')}</label>
               <input type="datetime-local" value={newDate} onChange={e => setNewDate(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135]" /></div>
-            <div><label className="block text-[11px] text-zinc-500 mb-1">Durée (min)</label>
+            <div><label className="block text-[11px] text-zinc-500 mb-1">{t('coachAppointments.durationMin')}</label>
               <input type="number" value={newDur} onChange={e => setNewDur(+e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135]" /></div>
-            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">Lien réunion</label>
-              <input type="url" value={newMeet} onChange={e => setNewMeet(e.target.value)} placeholder="https://meet.google.com/…"
+            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">{t('coachAppointments.meetingLink')}</label>
+              <input type="url" value={newMeet} onChange={e => setNewMeet(e.target.value)} placeholder={t('coachAppointments.meetingLinkPlaceholder')}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]" /></div>
-            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">Note du coach</label>
+            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">{t('coachAppointments.coachNote')}</label>
               <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs resize-none focus:outline-none focus:border-[#C8F135]" /></div>
           </div>
           <div className="flex gap-2 justify-end">
-            <button onClick={() => setPanel(null)} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">Annuler</button>
+            <button onClick={() => setPanel(null)} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">{t('common.cancel')}</button>
             <button disabled={saving} onClick={() => save({ scheduledAt: newDate, duration: newDur, meetLink: newMeet || null, coachNote: note || null })}
               className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-400 disabled:opacity-50">
-              <Send className="size-3" />{saving ? 'Envoi…' : 'Renvoyer'}
+              <Send className="size-3" />{saving ? t('coachAppointments.sending') : t('coachAppointments.resend')}
             </button>
           </div>
         </div>
@@ -372,6 +378,7 @@ function ConfirmedCard({ appt, onPatch, selected, aptRef }: {
   appt: Appointment; onPatch: (id: string, b: object) => Promise<void>
   selected: boolean; aptRef: React.RefObject<HTMLDivElement>
 }) {
+  const { locale, t } = useLocale()
   const [panel, setPanel]     = useState<Panel>(null)
   const [note,    setNote]    = useState(appt.coachNote ?? '')
   const [noteMode, setNoteMode] = useState<'edit' | 'append'>('edit')
@@ -382,7 +389,7 @@ function ConfirmedCard({ appt, onPatch, selected, aptRef }: {
   const save = async (body: object) => { setSaving(true); await onPatch(appt.id, body); setSaving(false); setPanel(null) }
   const saveNote = () => save({
     coachNote: noteMode === 'append'
-      ? appendAppointmentNote(appt.coachNote, note, 'Coach')
+      ? appendAppointmentNote(appt.coachNote, note, t('common.coach'), locale)
       : note,
   })
 
@@ -393,26 +400,26 @@ function ConfirmedCard({ appt, onPatch, selected, aptRef }: {
           <div><p className="text-sm font-semibold text-white">{appt.title}</p>
             {appt.description && <p className="text-xs text-zinc-500 mt-0.5 line-clamp-1">{appt.description}</p>}
           </div>
-          <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border text-emerald-400 bg-emerald-400/10 border-emerald-400/20">Confirmé</span>
+          <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border text-emerald-400 bg-emerald-400/10 border-emerald-400/20">{t('coachAppointments.status.confirmed')}</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-2">
           <User className="size-3" />{appt.member.name ?? appt.member.email}
         </div>
         <DateRow scheduledAt={appt.scheduledAt} duration={appt.duration} />
-        {appt.meetLink && <a href={appt.meetLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-[#C8F135] hover:underline mt-1"><Link2 className="size-3" />Rejoindre</a>}
+        {appt.meetLink && <a href={appt.meetLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-[#C8F135] hover:underline mt-1"><Link2 className="size-3" />{t('coachAppointments.join')}</a>}
         {(appt.coachNote || appt.memberNote) && (
           <div className="mt-2 space-y-1.5">
             {appt.coachNote && (
               <AppointmentNotesList
                 note={appt.coachNote}
-                title="Vos notes"
+                title={t('coachAppointments.yourNotes')}
                 accent="lime"
                 canEdit
                 compact
                 onSave={(coachNote) => save({ coachNote })}
               />
             )}
-            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title="Notes du membre" compact />}
+            {appt.memberNote && <AppointmentNotesList note={appt.memberNote} title={t('coachAppointments.memberNotes')} compact />}
           </div>
         )}
         <AppointmentNoteActions
@@ -424,32 +431,32 @@ function ConfirmedCard({ appt, onPatch, selected, aptRef }: {
         <div className="flex flex-wrap gap-1.5 mt-3">
           <button onClick={() => setPanel(p => p === 'edit' ? null : 'edit')}
             className={cn('flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium', panel === 'edit' ? 'bg-[#C8F135]/15 text-[#C8F135]' : 'bg-zinc-800 text-zinc-400 hover:text-white')}>
-            <Edit3 className="size-3" /> Modifier
+            <Edit3 className="size-3" /> {t('common.edit')}
           </button>
           <button onClick={() => save({ status: 'COMPLETED' })} disabled={saving}
             className="ml-auto flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 text-xs font-medium hover:text-white disabled:opacity-50">
-            <Check className="size-3" /> Terminé
+            <Check className="size-3" /> {t('coachAppointments.status.completed')}
           </button>
         </div>
       </div>
       {panel === 'edit' && (
         <div className="border-t border-zinc-800 bg-zinc-950 px-3 py-3 space-y-2">
           <div className="grid grid-cols-2 gap-2">
-            <div><label className="block text-[11px] text-zinc-500 mb-1">Date et heure</label>
+            <div><label className="block text-[11px] text-zinc-500 mb-1">{t('coachAppointments.dateTime')}</label>
               <input type="datetime-local" value={newDate} onChange={e => setNewDate(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135]" /></div>
-            <div><label className="block text-[11px] text-zinc-500 mb-1">Durée (min)</label>
+            <div><label className="block text-[11px] text-zinc-500 mb-1">{t('coachAppointments.durationMin')}</label>
               <input type="number" value={newDur} onChange={e => setNewDur(+e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135]" /></div>
-            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">Lien réunion</label>
-              <input type="url" value={newMeet} onChange={e => setNewMeet(e.target.value)} placeholder="https://meet.google.com/…"
+            <div className="col-span-2"><label className="block text-[11px] text-zinc-500 mb-1">{t('coachAppointments.meetingLink')}</label>
+              <input type="url" value={newMeet} onChange={e => setNewMeet(e.target.value)} placeholder={t('coachAppointments.meetingLinkPlaceholder')}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]" /></div>
           </div>
           <div className="flex gap-2 justify-end">
-            <button onClick={() => setPanel(null)} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">Annuler</button>
+            <button onClick={() => setPanel(null)} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">{t('common.cancel')}</button>
             <button disabled={saving} onClick={() => save({ scheduledAt: newDate, duration: newDur, meetLink: newMeet || null })}
               className="px-3 py-1.5 text-xs rounded-lg bg-[#C8F135] text-zinc-900 font-semibold hover:bg-[#d4f54d] disabled:opacity-50">
-              {saving ? 'Enregistrement…' : 'Sauvegarder'}
+              {saving ? t('coachAppointments.saving') : t('common.save')}
             </button>
           </div>
         </div>
@@ -457,16 +464,16 @@ function ConfirmedCard({ appt, onPatch, selected, aptRef }: {
       {panel === 'note' && (
         <div className="border-t border-zinc-800 bg-zinc-950 px-3 py-3 space-y-2">
           <p className="text-xs font-semibold text-white">
-            {noteMode === 'append' && appt.coachNote ? 'Ajouter une note' : 'Note du coach'}
+            {noteMode === 'append' && appt.coachNote ? t('coachAppointments.addNote') : t('coachAppointments.coachNote')}
           </p>
           <textarea value={note} onChange={e => setNote(e.target.value)} rows={3}
-            placeholder="Consignes, objectifs, préparation…"
+            placeholder={t('coachAppointments.notePlaceholderShort')}
             className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-[#C8F135] resize-none" />
           <div className="flex gap-2 justify-end">
-            <button onClick={() => setPanel(null)} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">Annuler</button>
+            <button onClick={() => setPanel(null)} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">{t('common.cancel')}</button>
             <button disabled={saving || !note.trim()} onClick={saveNote}
               className="px-3 py-1.5 text-xs rounded-lg bg-[#C8F135] text-zinc-900 font-semibold hover:bg-[#d4f54d] disabled:opacity-50">
-              {saving ? 'Enregistrement…' : 'Enregistrer'}
+              {saving ? t('coachAppointments.saving') : t('common.save')}
             </button>
           </div>
         </div>
@@ -478,19 +485,20 @@ function ConfirmedCard({ appt, onPatch, selected, aptRef }: {
 function HistoryCard({ appt, selected, aptRef }: {
   appt: Appointment; selected: boolean; aptRef: React.RefObject<HTMLDivElement>
 }) {
+  const { locale, t } = useLocale()
   const st = STATUS_LABEL[appt.status]
   return (
     <div ref={aptRef} className={cn('rounded-xl border p-3 opacity-60 transition-opacity hover:opacity-90', selected ? 'border-zinc-600 opacity-90' : 'border-zinc-800/60 bg-zinc-900/50')}>
       <div className="flex items-start justify-between gap-2 mb-1.5">
         <p className="text-xs font-medium text-zinc-300">{appt.title}</p>
         <span className={cn('shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border', st?.color ?? 'text-zinc-400 bg-zinc-800 border-zinc-700')}>
-          {st?.label ?? appt.status}
+          {st ? t(st.labelKey) : appt.status}
         </span>
       </div>
       <div className="flex items-center gap-1.5 text-xs text-zinc-500">
         <User className="size-3" />{appt.member.name ?? appt.member.email}
         <span className="text-zinc-700 mx-1">·</span>
-        {format(new Date(appt.scheduledAt), 'PPP', { locale: fr })}
+        {format(new Date(appt.scheduledAt), 'PPP', { locale: locale === 'fr' ? fr : enUS })}
         <span className="text-zinc-700 mx-1">·</span>
         {format(new Date(appt.scheduledAt), 'HH:mm')}
       </div>
@@ -498,12 +506,13 @@ function HistoryCard({ appt, selected, aptRef }: {
   )
 }
 
-// ─── New appointment form ─────────────────────────────────────────────────────
+// New appointment form
 
 function NewAptForm({ members, onCreated, onClose, prefill }: {
   members: Member[]; onCreated: () => void; onClose: () => void
   prefill?: { scheduledAt?: string; memberId?: string }
 }) {
+  const { t } = useLocale()
   const [form, setForm]     = useState({ memberId: '', title: '', description: '', scheduledAt: prefill?.scheduledAt ?? '', duration: 60, meetLink: '', coachNote: '' })
   const [creating, setCreating] = useState(false)
 
@@ -530,58 +539,59 @@ function NewAptForm({ members, onCreated, onClose, prefill }: {
   return (
     <form onSubmit={submit} className="border-b border-zinc-800 bg-zinc-950 px-4 py-4 space-y-3">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-sm font-semibold text-white">Nouveau rendez-vous</p>
+        <p className="text-sm font-semibold text-white">{t('coachAppointments.newAppointment')}</p>
         <button type="button" onClick={onClose} className="text-zinc-500 hover:text-white"><X className="size-4" /></button>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="col-span-2">
-          <label className={lbl}>Membre</label>
+          <label className={lbl}>{t('messagesPage.member')}</label>
           <select value={form.memberId} onChange={e => setForm(f => ({ ...f, memberId: e.target.value }))} required className={inp}>
-            <option value="">Sélectionner…</option>
+            <option value="">{t('coachAppointments.select')}</option>
             {members.map(m => <option key={m.id} value={m.id}>{m.name ?? m.email}</option>)}
           </select>
         </div>
         <div className="col-span-2">
-          <label className={lbl}>Titre</label>
-          <input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required placeholder="Ex: Bilan mensuel" className={inp} />
+          <label className={lbl}>{t('notes.titleField')}</label>
+          <input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required placeholder={t('coachAppointments.titlePlaceholder')} className={inp} />
         </div>
         <div>
-          <label className={lbl}>Date et heure</label>
+          <label className={lbl}>{t('coachAppointments.dateTime')}</label>
           <input type="datetime-local" value={form.scheduledAt} onChange={e => setForm(f => ({ ...f, scheduledAt: e.target.value }))} required className={inp} />
         </div>
         <div>
-          <label className={lbl}>Durée (min)</label>
+          <label className={lbl}>{t('coachAppointments.durationMin')}</label>
           <input type="number" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: +e.target.value }))} className={inp} />
         </div>
         <div className="col-span-2">
-          <label className={lbl}>Lien réunion</label>
-          <input type="url" value={form.meetLink} onChange={e => setForm(f => ({ ...f, meetLink: e.target.value }))} placeholder="https://meet.google.com/…" className={inp} />
+          <label className={lbl}>{t('coachAppointments.meetingLink')}</label>
+          <input type="url" value={form.meetLink} onChange={e => setForm(f => ({ ...f, meetLink: e.target.value }))} placeholder={t('coachAppointments.meetingLinkPlaceholder')} className={inp} />
         </div>
         <div className="col-span-2">
-          <label className={lbl}>Note du coach</label>
-          {/* Cette note est rattachée au rendez-vous et reste modifiable après création. */}
+          <label className={lbl}>{t('coachAppointments.coachNote')}</label>
+          {/* This note is attached to the appointment and remains editable after creation. */}
           <textarea
             value={form.coachNote}
             onChange={e => setForm(f => ({ ...f, coachNote: e.target.value }))}
             rows={3}
-            placeholder="Objectif de l'appel, points à vérifier, consignes..."
+            placeholder={t('coachAppointments.createNotePlaceholder')}
             className={`${inp} min-h-[86px] resize-none`}
           />
         </div>
       </div>
       <div className="flex gap-2 justify-end">
-        <button type="button" onClick={onClose} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">Annuler</button>
+        <button type="button" onClick={onClose} className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">{t('common.cancel')}</button>
         <button type="submit" disabled={creating} className="px-3 py-1.5 text-xs rounded-lg bg-[#C8F135] text-zinc-900 font-semibold hover:bg-[#d4f54d] disabled:opacity-50">
-          {creating ? 'Création…' : 'Créer'}
+          {creating ? t('coachAppointments.creating') : t('coachAppointments.create')}
         </button>
       </div>
     </form>
   )
 }
 
-// ─── Availability panel ───────────────────────────────────────────────────────
+// Availability panel
 
 function AvailabilityPanel({ rules, onRefresh }: { rules: AvailabilityRule[]; onRefresh: () => void }) {
+  const { t } = useLocale()
   const [form, setForm]   = useState({ dayOfWeek: 1, startHour: 9, startMinute: 0, endHour: 18, endMinute: 0, slotDuration: 60 })
   const [adding, setAdding]   = useState(false)
   const [saving, setSaving]   = useState(false)
@@ -603,12 +613,12 @@ function AvailabilityPanel({ rules, onRefresh }: { rules: AvailabilityRule[]; on
   return (
     <div className="px-4 pb-4 pt-3 space-y-3">
       {rules.length === 0 && !adding ? (
-        <p className="text-xs text-zinc-500">Aucune disponibilité. Ajoutez des créneaux pour que vos membres puissent réserver.</p>
+        <p className="text-xs text-zinc-500">{t('coachAppointments.noAvailability')}</p>
       ) : (
         <div className="flex flex-wrap gap-2">
           {rules.map(r => (
             <div key={r.id} className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800/50 px-2.5 py-1.5 text-xs">
-              <span className="font-medium text-white">{DAY_SHORT[r.dayOfWeek - 1]}</span>
+              <span className="font-medium text-white">{t(`coachAppointments.daysShort.${r.dayOfWeek - 1}`)}</span>
               <span className="text-zinc-400">{fmtTime(r.startHour, r.startMinute)}–{fmtTime(r.endHour, r.endMinute)}</span>
               <span className="text-zinc-600">·{r.slotDuration}min</span>
               <button onClick={() => del(r.id)} disabled={deleting === r.id} className="text-zinc-600 hover:text-red-400 ml-1 disabled:opacity-40">
@@ -622,46 +632,47 @@ function AvailabilityPanel({ rules, onRefresh }: { rules: AvailabilityRule[]; on
       {adding ? (
         <div className="rounded-lg border border-zinc-700 bg-zinc-800/40 p-3 space-y-2">
           <div className="grid grid-cols-3 gap-2">
-            <div><label className="block text-[10px] text-zinc-500 mb-1">Jour</label>
+            <div><label className="block text-[10px] text-zinc-500 mb-1">{t('coachAppointments.day')}</label>
               <select className={sel} value={form.dayOfWeek} onChange={e => setForm(f => ({ ...f, dayOfWeek: +e.target.value }))}>
-                {DAY_FULL.map((n, i) => <option key={i + 1} value={i + 1}>{n}</option>)}
+                {Array.from({ length: WEEK_DAY_COUNT }, (_, i) => <option key={i + 1} value={i + 1}>{t(`coachAppointments.daysFull.${i}`)}</option>)}
               </select></div>
-            <div><label className="block text-[10px] text-zinc-500 mb-1">Début</label>
+            <div><label className="block text-[10px] text-zinc-500 mb-1">{t('coachAppointments.start')}</label>
               <select className={sel} value={form.startHour * 60 + form.startMinute}
                 onChange={e => { const v = +e.target.value; setForm(f => ({ ...f, startHour: Math.floor(v / 60), startMinute: v % 60 })) }}>
                 {Array.from({ length: 28 }, (_, i) => { const h = Math.floor(i / 2) + 7, m = (i % 2) * 30; return <option key={i} value={h * 60 + m}>{fmtTime(h, m)}</option> })}
               </select></div>
-            <div><label className="block text-[10px] text-zinc-500 mb-1">Fin</label>
+            <div><label className="block text-[10px] text-zinc-500 mb-1">{t('coachAppointments.end')}</label>
               <select className={sel} value={form.endHour * 60 + form.endMinute}
                 onChange={e => { const v = +e.target.value; setForm(f => ({ ...f, endHour: Math.floor(v / 60), endMinute: v % 60 })) }}>
                 {Array.from({ length: 28 }, (_, i) => { const h = Math.floor(i / 2) + 7, m = (i % 2) * 30; return <option key={i} value={h * 60 + m}>{fmtTime(h, m)}</option> })}
               </select></div>
           </div>
-          <div><label className="block text-[10px] text-zinc-500 mb-1">Durée créneau</label>
+          <div><label className="block text-[10px] text-zinc-500 mb-1">{t('coachAppointments.slotDuration')}</label>
             <select className={sel} value={form.slotDuration} onChange={e => setForm(f => ({ ...f, slotDuration: +e.target.value }))}>
               {[30, 45, 60, 90, 120].map(v => <option key={v} value={v}>{v} min</option>)}
             </select></div>
           <div className="flex gap-2 justify-end pt-1">
-            <button onClick={() => setAdding(false)} className="px-2.5 py-1.5 text-xs rounded-lg bg-zinc-700 text-zinc-300 hover:bg-zinc-600">Annuler</button>
+            <button onClick={() => setAdding(false)} className="px-2.5 py-1.5 text-xs rounded-lg bg-zinc-700 text-zinc-300 hover:bg-zinc-600">{t('common.cancel')}</button>
             <button onClick={save} disabled={saving} className="px-2.5 py-1.5 text-xs rounded-lg bg-[#C8F135] text-zinc-900 font-semibold hover:bg-[#d4f54d] disabled:opacity-50">
-              {saving ? '…' : 'Ajouter'}
+              {saving ? '…' : t('common.add')}
             </button>
           </div>
         </div>
       ) : (
         <button onClick={() => setAdding(true)}
           className="flex items-center gap-1 text-xs text-zinc-500 hover:text-[#C8F135] transition-colors">
-          <Plus className="size-3" /> Ajouter un créneau
+          <Plus className="size-3" /> {t('coachAppointments.addSlot')}
         </button>
       )}
     </div>
   )
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// Main page
 
 /** Merged agenda page: weekly calendar grid on the left with availability management, full appointment list on the right. Clicking a calendar cell highlights the matching appointment. */
 export default function AgendaPage() {
+  const { locale, t } = useLocale()
   const [monday,       setMonday]       = useState<Date>(() => getMonday(new Date()))
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [rules,        setRules]        = useState<AvailabilityRule[]>([])
@@ -740,9 +751,9 @@ export default function AgendaPage() {
       })
       if (!res.ok) throw new Error('availability')
       await fetchRules()
-      toast.success(`Disponibilité ajoutée ${DAY_FULL[isoDay(day) - 1]} à ${fmtTime(hour, 0)}`)
+      toast.success(`${t('coachAppointments.availabilityAdded')} ${t(`coachAppointments.daysFull.${isoDay(day) - 1}`)} ${t('common.at')} ${fmtTime(hour, 0)}`)
     } catch {
-      toast.error("Impossible d'ajouter cette disponibilité")
+      toast.error(t('coachAppointments.availabilityAddError'))
     } finally {
       setAddingAvailability(null)
     }
@@ -801,9 +812,9 @@ export default function AgendaPage() {
       }
 
       await fetchRules()
-      toast.success(`Disponibilité retirée ${DAY_FULL[isoDay(day) - 1]} à ${fmtTime(hour, 0)}`)
+      toast.success(`${t('coachAppointments.availabilityRemoved')} ${t(`coachAppointments.daysFull.${isoDay(day) - 1}`)} ${t('common.at')} ${fmtTime(hour, 0)}`)
     } catch {
-      toast.error("Impossible de retirer cette disponibilité")
+      toast.error(t('coachAppointments.availabilityRemoveError'))
       await fetchRules()
     } finally {
       setAddingAvailability(null)
@@ -819,23 +830,23 @@ export default function AgendaPage() {
   )
 
   const todayStr = new Date().toDateString()
-  const weekLabel = `${fmtShortDate(days[0])} – ${fmtShortDate(days[6])} ${days[6].getFullYear()}`
+  const weekLabel = `${fmtShortDate(days[0], locale)} – ${fmtShortDate(days[6], locale)} ${days[6].getFullYear()}`
 
   return (
     <div className="space-y-8">
       <CoachPageHeader
-        title="Agenda"
-        description="Gérez vos disponibilités, vos rendez-vous et les notes rattachées à chaque suivi."
+        title={t('coachAppointments.title')}
+        description={t('coachAppointments.description')}
       />
 
       <div className="grid h-[calc(100vh-15rem)] min-h-[620px] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 xl:grid-cols-[minmax(0,1fr)_420px]">
 
-      {/* ── LEFT: Calendar ───────────────────────────────────────── */}
+      {/* Left: calendar */}
       <div className="flex min-w-0 flex-col overflow-hidden border-r border-zinc-800">
 
         {/* Week nav */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800 shrink-0">
-          <h1 className="text-base font-bold text-white">Agenda</h1>
+          <h1 className="text-base font-bold text-white">{t('coachAppointments.title')}</h1>
           <div className="flex items-center gap-2">
             <button onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })}
               className="rounded-lg border border-zinc-700 p-1.5 text-zinc-400 hover:text-white transition-colors">
@@ -855,7 +866,7 @@ export default function AgendaPage() {
             onClick={() => setShowAvail(v => !v)}
             className="flex w-full items-center justify-between px-4 py-2.5 text-xs font-medium text-zinc-300 hover:text-white transition-colors"
           >
-            <span className="flex items-center gap-1.5"><Settings2 className="size-3.5 text-[#C8F135]" /> Disponibilités hebdomadaires</span>
+            <span className="flex items-center gap-1.5"><Settings2 className="size-3.5 text-[#C8F135]" /> {t('coachAppointments.weeklyAvailability')}</span>
             {showAvail ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
           </button>
           {showAvail && <AvailabilityPanel rules={rules} onRefresh={fetchRules} />}
@@ -869,7 +880,7 @@ export default function AgendaPage() {
                 <th className="w-10 py-2.5 text-zinc-600 font-normal" />
                 {days.map((day, i) => (
                   <th key={i} className={cn('py-2.5 px-1 font-medium text-center border-l border-zinc-800', day.toDateString() === todayStr ? 'text-[#C8F135]' : 'text-zinc-400')}>
-                    <span className="text-[10px] block">{DAY_SHORT[i]}</span>
+                    <span className="text-[10px] block">{t(`coachAppointments.daysShort.${i}`)}</span>
                     <span className={cn('mt-0.5 flex size-5 items-center justify-center rounded-full text-xs font-bold mx-auto', day.toDateString() === todayStr ? 'bg-[#C8F135] text-zinc-950' : '')}>
                       {day.getDate()}
                     </span>
@@ -893,7 +904,7 @@ export default function AgendaPage() {
                     return (
                       <td key={di}
                         onClick={() => apt ? selectApt(apt.id) : avail ? removeAvailabilityFromCalendar(day, hour) : addAvailabilityFromCalendar(day, hour)}
-                        aria-label={apt ? 'Voir le rendez-vous' : avail ? 'Retirer cette disponibilité' : 'Ajouter une disponibilité'}
+                        aria-label={apt ? t('coachAppointments.viewAppointment') : avail ? t('coachAppointments.removeAvailability') : t('coachAppointments.addAvailability')}
                         className={cn(
                           'group border-l border-zinc-800/40 h-10 px-0.5 py-0.5 align-top cursor-pointer',
                           avail && !apt ? 'bg-[#C8F135]/5 cursor-pointer hover:bg-red-500/10' : '',
@@ -934,17 +945,17 @@ export default function AgendaPage() {
 
       </div>
 
-      {/* ── RIGHT: Appointments list ──────────────────────────────── */}
+      {/* Right: appointments list */}
       <div className="flex min-w-0 flex-col overflow-hidden">
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 shrink-0">
-          <p className="text-sm font-semibold text-white">Rendez-vous</p>
+          <p className="text-sm font-semibold text-white">{t('coachAppointments.appointments')}</p>
           <button
             onClick={() => { setPrefillDate(undefined); setShowNew(v => !v) }}
             className="flex items-center gap-1.5 rounded-lg bg-[#C8F135] px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-[#d4f54d] transition-colors"
           >
-            <Plus className="size-3.5" /> Nouveau
+            <Plus className="size-3.5" /> {t('coachAppointments.new')}
           </button>
         </div>
 
@@ -961,13 +972,13 @@ export default function AgendaPage() {
         {/* List */}
         <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-5">
           {loading ? (
-            <p className="text-xs text-zinc-500 text-center py-8">Chargement…</p>
+            <p className="text-xs text-zinc-500 text-center py-8">{t('common.loading')}</p>
           ) : (
             <>
               {pending.length > 0 && (
                 <section>
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-400 mb-2 flex items-center gap-2">
-                    En attente <span className="rounded-full bg-amber-400/15 px-1.5 py-0.5">{pending.length}</span>
+                    {t('coachAppointments.status.pending')} <span className="rounded-full bg-amber-400/15 px-1.5 py-0.5">{pending.length}</span>
                   </p>
                   <div className="space-y-2">
                     {pending.map(a => <PendingCard key={a.id} appt={a} onPatch={patch} selected={selectedId === a.id} aptRef={aptRefs.current[a.id]!} />)}
@@ -978,7 +989,7 @@ export default function AgendaPage() {
               {proposed.length > 0 && (
                 <section>
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-blue-400 mb-2 flex items-center gap-2">
-                    Proposé <span className="rounded-full bg-blue-400/15 px-1.5 py-0.5">{proposed.length}</span>
+                    {t('coachAppointments.proposedSection')} <span className="rounded-full bg-blue-400/15 px-1.5 py-0.5">{proposed.length}</span>
                   </p>
                   <div className="space-y-2">
                     {proposed.map(a => <ProposedCard key={a.id} appt={a} onPatch={patch} selected={selectedId === a.id} aptRef={aptRefs.current[a.id]!} />)}
@@ -988,10 +999,10 @@ export default function AgendaPage() {
 
               <section>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 mb-2 flex items-center gap-2">
-                  À venir <span className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-zinc-400">{upcoming.length}</span>
+                  {t('coachAppointments.upcoming')} <span className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-zinc-400">{upcoming.length}</span>
                 </p>
                 {upcoming.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-zinc-800 py-5 text-center text-xs text-zinc-600">Aucun rendez-vous confirmé</div>
+                  <div className="rounded-xl border border-dashed border-zinc-800 py-5 text-center text-xs text-zinc-600">{t('coachAppointments.noConfirmedAppointment')}</div>
                 ) : (
                   <div className="space-y-2">
                     {upcoming.map(a => <ConfirmedCard key={a.id} appt={a} onPatch={patch} selected={selectedId === a.id} aptRef={aptRefs.current[a.id]!} />)}
@@ -1002,7 +1013,7 @@ export default function AgendaPage() {
               {history.length > 0 && (
                 <section>
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600 mb-2 flex items-center gap-2">
-                    Historique <span className="rounded-full bg-zinc-800 px-1.5 py-0.5">{history.length}</span>
+                    {t('coachAppointments.history')} <span className="rounded-full bg-zinc-800 px-1.5 py-0.5">{history.length}</span>
                   </p>
                   <div className="space-y-1.5">
                     {history.map(a => <HistoryCard key={a.id} appt={a} selected={selectedId === a.id} aptRef={aptRefs.current[a.id]!} />)}

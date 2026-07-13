@@ -1,5 +1,5 @@
-// Interface abstraite du système de stockage
-// Permet de basculer entre local (IndexedDB) et cloud (Prisma) sans changer le code appelant
+// Abstract storage system interface.
+// Allows switching between local (IndexedDB) and cloud (Prisma) storage without changing callers.
 
 import type { OnboardingData, BodyMetricInput } from '@/utils/validators'
 
@@ -43,7 +43,7 @@ export interface StorageAdapter {
   getProfile(): Promise<UserProfile | null>
   saveProfile(data: Partial<UserProfile>): Promise<UserProfile>
 
-  // Métriques corporelles
+  // Body metrics
   getBodyMetrics(limit?: number): Promise<BodyMetricInput[]>
   addBodyMetric(metric: BodyMetricInput): Promise<void>
 

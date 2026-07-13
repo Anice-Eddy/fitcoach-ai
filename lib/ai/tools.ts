@@ -16,11 +16,11 @@ export function createAITools(memberId: string): AITool[] {
   return [
     {
       name: 'getUserProfile',
-      description: "Récupère le profil fitness de l'utilisateur : poids, taille, objectif, niveau, équipement disponible, blessures et focus corporel.",
+      description: "Retrieves the user's fitness profile: weight, height, goal, level, available equipment, injuries, and body focus.",
       parameters: { type: 'object', properties: {} },
       async handler() {
         const profile = await prisma.profile.findUnique({ where: { userId: memberId } })
-        if (!profile) return { error: 'Profil introuvable' }
+        if (!profile) return { error: 'Profile not found' }
         return {
           weightKg:           profile.weightKg,
           heightCm:           profile.heightCm,
@@ -42,7 +42,7 @@ export function createAITools(memberId: string): AITool[] {
 
     {
       name: 'getWorkoutHistory',
-      description: "Récupère les 10 dernières séances d'entraînement complétées avec les exercices et les performances (séries, répétitions, charges).",
+      description: "Retrieves the 10 latest completed workout sessions with exercises and performance data (sets, reps, loads).",
       parameters: { type: 'object', properties: {} },
       async handler() {
         const sessions = await prisma.workoutSession.findMany({
@@ -70,14 +70,14 @@ export function createAITools(memberId: string): AITool[] {
 
     {
       name: 'getNutritionPlan',
-      description: "Récupère le plan nutritionnel actif avec les objectifs en macronutriments (calories, protéines, glucides, lipides).",
+      description: "Retrieves the active nutrition plan with macro targets (calories, protein, carbs, fat).",
       parameters: { type: 'object', properties: {} },
       async handler() {
         const plan = await prisma.nutritionPlan.findFirst({
           where:   { userId: memberId, isActive: true },
           include: { meals: { take: 20, include: { foodItems: { take: 8 } } } },
         })
-        if (!plan) return { message: 'Aucun plan nutritionnel actif' }
+        if (!plan) return { message: 'No active nutrition plan' }
         return {
           name:           plan.name,
           targetCalories: plan.targetCalories,
@@ -91,7 +91,7 @@ export function createAITools(memberId: string): AITool[] {
 
     {
       name: 'getWeightHistory',
-      description: "Récupère l'historique de poids et de composition corporelle des 30 derniers jours.",
+      description: "Retrieves weight and body-composition history from the last 30 days.",
       parameters: { type: 'object', properties: {} },
       async handler() {
         const metrics = await prisma.bodyMetric.findMany({
@@ -112,7 +112,7 @@ export function createAITools(memberId: string): AITool[] {
 
     {
       name: 'getCurrentProgram',
-      description: "Récupère le programme d'entraînement actif avec les séances planifiées par semaine et par jour.",
+      description: "Retrieves the active workout program with sessions planned by week and day.",
       parameters: { type: 'object', properties: {} },
       async handler() {
         const program = await prisma.workoutProgram.findFirst({
@@ -124,7 +124,7 @@ export function createAITools(memberId: string): AITool[] {
             },
           },
         })
-        if (!program) return { message: 'Aucun programme actif' }
+        if (!program) return { message: 'No active workout program' }
         return {
           name:          program.name,
           sessionsCount: program.sessions.length,
@@ -139,7 +139,7 @@ export function createAITools(memberId: string): AITool[] {
 
     {
       name: 'getProgressAnalytics',
-      description: "Calcule les tendances de progression sur les 4 dernières semaines : évolution du poids, nombre de séances complétées, régularité.",
+      description: "Calculates progress trends over the last 4 weeks: weight change, completed sessions, and consistency.",
       parameters: { type: 'object', properties: {} },
       async handler() {
         const since = new Date()
@@ -165,7 +165,7 @@ export function createAITools(memberId: string): AITool[] {
           weeksAnalyzed:    4,
           completedSessions: sessionsCount,
           weeklyAverage:    (sessionsCount / 4).toFixed(1),
-          weightChange:     weightChange ? `${weightChange} kg` : 'Données insuffisantes',
+          weightChange:     weightChange ? `${weightChange} kg` : 'Insufficient data',
         }
       },
     },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FOOD_DATABASE, calculateFoodMacros, filterFoodsByRestrictions } from '@/lib/nutrition/food-database'
+import { FOOD_DATABASE, calculateFoodMacros, filterFoodsByRestrictions, foodDisplayName } from '@/lib/nutrition/food-database'
 import { generateMealPlan } from '@/lib/nutrition/generate-meal-plan'
 
 const baseParams = {
@@ -12,7 +12,7 @@ const baseParams = {
 }
 
 describe('food database helpers', () => {
-  it('calcule les macros proportionnellement au grammage', () => {
+  it('calculates macros proportionally to grams', () => {
     expect(calculateFoodMacros('rice-white', 50)).toMatchObject({
       name:     'Riz blanc cuit',
       grams:    50,
@@ -21,21 +21,38 @@ describe('food database helpers', () => {
     })
   })
 
-  it('filtre les aliments incompatibles avec une alimentation vegan', () => {
+  it('filters foods that conflict with vegan nutrition', () => {
     const foods = filterFoodsByRestrictions(['VEGAN'])
     expect(foods.some(food => food.id === 'chicken-breast')).toBe(false)
     expect(foods.some(food => food.id === 'tofu-firm')).toBe(true)
   })
+
+  it('keeps legacy food names stable while exposing English display names', () => {
+    const chicken = FOOD_DATABASE.find(food => food.id === 'chicken-breast')
+    expect(chicken?.name).toBe('Blanc de poulet')
+    expect(foodDisplayName('Blanc de poulet', 'en')).toBe('Chicken breast')
+    expect(foodDisplayName('Blanc de poulet', 'fr')).toBe('Blanc de poulet')
+  })
+
+  it('does not expose obvious French food names in English mode', () => {
+    const frenchFoodPattern = /[éèêëàâùûçîïôöœÉÈÊËÀÂÙÛÇÎÏÔÖŒ]|\b(Poulet|Riz|Blanc|Bœuf|Oeuf|Œuf|Patate|Pâtes|Lait|Fromage|Beurre|Huile|Épinards|Haricots|Légumes|Saumon|Thon|Cabillaud|Dinde|avoine|cuit|cuits|cuites|protéine)\b/i
+
+    const untranslated = FOOD_DATABASE
+      .map((food) => [food.id, foodDisplayName(food, 'en')] as const)
+      .filter(([, name]) => frenchFoodPattern.test(name))
+
+    expect(untranslated).toEqual([])
+  })
 })
 
 describe('generateMealPlan', () => {
-  it('génère une semaine de repas sans aliment introuvable dans la base', () => {
+  it('generates a week of meals without unknown database foods', () => {
     const knownFoodNames = new Set(FOOD_DATABASE.map(food => food.name))
     const plan = generateMealPlan(baseParams)
 
     expect(plan.meals.length).toBeGreaterThan(0)
     for (const meal of plan.meals) {
-      // Chaque item doit venir de la base afin d'éviter des repas incomplets silencieux.
+      // Every item must come from the database to avoid silently incomplete meals.
       expect(meal.foodItems.length).toBeGreaterThan(0)
       for (const item of meal.foodItems) {
         expect(knownFoodNames.has(item.name)).toBe(true)
@@ -43,7 +60,7 @@ describe('generateMealPlan', () => {
     }
   })
 
-  it('respecte les restrictions vegan dans les repas principaux', () => {
+  it('respects vegan restrictions in generated meals', () => {
     const veganFoods = new Set(filterFoodsByRestrictions(['VEGAN']).map(food => food.name))
     const plan = generateMealPlan({ ...baseParams, dietaryRestrictions: ['VEGAN'] })
 
@@ -52,5 +69,26 @@ describe('generateMealPlan', () => {
         expect(veganFoods.has(item.name)).toBe(true)
       }
     }
+  })
+
+  it('localizes the generated plan name without changing meal data', () => {
+    expect(generateMealPlan(baseParams).name).toBe('Mon plan nutritionnel')
+    expect(generateMealPlan({ ...baseParams, locale: 'en' }).name).toBe('My nutrition plan')
+  })
+
+  it('uses polished French meal names when French is requested', () => {
+    const plan = generateMealPlan(baseParams)
+
+    expect(plan.meals.some(meal => meal.name.includes('Œufs'))).toBe(true)
+    expect(plan.meals.some(meal => meal.name.includes('épinards'))).toBe(true)
+    expect(plan.meals.some(meal => meal.name.includes('epinards'))).toBe(false)
+  })
+
+  it('localizes generated meal and food names when English is requested', () => {
+    const plan = generateMealPlan({ ...baseParams, locale: 'en' })
+
+    expect(plan.meals[0]?.name).toContain('Monday')
+    expect(plan.meals.flatMap(meal => meal.foodItems).some(item => item.name === 'Rolled oats')).toBe(true)
+    expect(plan.meals.flatMap(meal => meal.foodItems).some(item => item.name === 'Flocons d\'avoine')).toBe(false)
   })
 })

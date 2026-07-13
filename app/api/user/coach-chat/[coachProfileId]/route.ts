@@ -13,13 +13,13 @@ const messageSchema = z.object({
 
 async function getMemberAccess(coachProfileId: string) {
   const session = await auth()
-  if (!session?.user?.id) return { error: NextResponse.json({ error: 'Non authentifié' }, { status: 401 }) }
+  if (!session?.user?.id) return { error: NextResponse.json({ error: 'Unauthenticated' }, { status: 401 }) }
 
   const membership = await prisma.coachMember.findUnique({
     where: { coachId_memberId: { coachId: coachProfileId, memberId: session.user.id } },
     include: { coachProfile: { include: { user: { select: { id: true, name: true, image: true } } } } },
   })
-  if (!membership) return { error: NextResponse.json({ error: 'Coach introuvable' }, { status: 404 }) }
+  if (!membership) return { error: NextResponse.json({ error: 'Coach not found' }, { status: 404 }) }
 
   return { memberId: session.user.id, membership }
 }
@@ -47,7 +47,7 @@ export async function GET(
     data:  { readAt: new Date() },
   })
 
-  // Quand le membre ouvre la conversation, les notifications liées à ce chat disparaissent des non-lues.
+  // When the member opens the conversation, chat-related notifications are cleared from unread counts.
   await prisma.notification.updateMany({
     where: {
       recipientUserId: memberId,
@@ -95,13 +95,13 @@ export async function POST(
       data:  { lastMessageAt: created.createdAt },
     })
 
-    // Notifie le coach dans sa cloche; recipientUserId null signifie notification côté espace coach.
+    // Notify the coach in the bell; a null recipientUserId targets the coach space.
     await tx.notification.create({
       data: {
         coachId:         params.coachProfileId,
         recipientUserId: null,
         type:            'MESSAGE',
-        title:           'Nouveau message membre',
+        title:           'New member message',
         message:         created.content.slice(0, 140),
         relatedId:       chat.id,
       },

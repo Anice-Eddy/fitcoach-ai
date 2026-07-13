@@ -31,13 +31,13 @@ describe('/api/user/nutrition/logs', () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(session)
   })
 
-  it('retourne 401 si non connecté', async () => {
+  it('returns 401 when unauthenticated', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const res = await GET(request('GET'))
     expect(res.status).toBe(401)
   })
 
-  it('retourne les logs du jour avec les totaux', async () => {
+  it('returns daily logs with totals', async () => {
     ;(prisma.nutritionLog.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([
       { calories: 500, proteinG: 40, carbsG: 55, fatG: 12, loggedAt: new Date() },
       { calories: 300, proteinG: 20, carbsG: 30, fatG: 8, loggedAt: new Date() },
@@ -52,12 +52,12 @@ describe('/api/user/nutrition/logs', () => {
       .toEqual({ userId: 'user-1', date: '2026-06-02' })
   })
 
-  it('retourne 422 si le log est invalide', async () => {
+  it('returns 422 when the log is invalid', async () => {
     const res = await POST(request('POST', { clientKey: '', calories: -1 }))
     expect(res.status).toBe(422)
   })
 
-  it('upsert un repas consommé pour éviter les doublons', async () => {
+  it('upserts a consumed meal to avoid duplicates', async () => {
     ;(prisma.nutritionLog.upsert as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'log-1' })
 
     const res = await POST(request('POST', {
@@ -77,7 +77,7 @@ describe('/api/user/nutrition/logs', () => {
     expect(call.create.userId).toBe('user-1')
   })
 
-  it('supprime le repas quand il est décoché', async () => {
+  it('deletes the meal when it is unchecked', async () => {
     ;(prisma.nutritionLog.deleteMany as ReturnType<typeof vi.fn>).mockResolvedValue({ count: 1 })
 
     const res = await DELETE(request('DELETE', { date: '2026-06-02', clientKey: 'meal:m1' }))

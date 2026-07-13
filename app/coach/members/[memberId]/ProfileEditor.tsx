@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { Edit3, Save, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { useLocale } from '@/contexts/LocaleContext'
+import { ACTIVITY_LABEL_KEYS, GOAL_LABEL_KEYS, LEVEL_LABEL_KEYS } from '@/lib/i18n/profile-label-keys'
 
 interface Profile {
   firstName: string; age: number; gender: string
@@ -14,22 +16,9 @@ interface Profile {
 
 interface Props { memberId: string; profile: Profile | null }
 
-const GOAL_LABELS: Record<string, string> = {
-  WEIGHT_LOSS: 'Perte de poids', MUSCLE_GAIN: 'Prise de masse',
-  MAINTENANCE: 'Maintien', ENDURANCE: 'Endurance',
-  FLEXIBILITY: 'Flexibilité', GENERAL_FITNESS: 'Forme générale',
-}
-const LEVEL_LABELS: Record<string, string> = {
-  BEGINNER: 'Débutant', INTERMEDIATE: 'Intermédiaire', ADVANCED: 'Avancé', ATHLETE: 'Athlète',
-}
-const ACTIVITY_LABELS: Record<string, string> = {
-  SEDENTARY: 'Sédentaire', LIGHTLY_ACTIVE: 'Légèrement actif',
-  MODERATELY_ACTIVE: 'Modérément actif', VERY_ACTIVE: 'Très actif',
-  EXTREMELY_ACTIVE: 'Extrêmement actif',
-}
-
 /** Editable member profile form: displays current physical stats and allows the coach to update them via PATCH /api/coach/members/[memberId]. */
 export function ProfileEditor({ memberId, profile }: Props) {
+  const { locale, t } = useLocale()
   const [editing, setEditing] = useState(false)
   const [saving,  setSaving]  = useState(false)
   const [form, setForm] = useState<Partial<Profile>>(profile ?? {})
@@ -44,48 +33,52 @@ export function ProfileEditor({ memberId, profile }: Props) {
       })
       if (!res.ok) throw new Error()
       setEditing(false)
-      toast.success('Profil mis à jour')
+      toast.success(t('coachMemberProfile.updated'))
     } catch {
-      toast.error('Erreur lors de la mise à jour')
+      toast.error(t('coachMemberProfile.updateError'))
     } finally {
       setSaving(false)
     }
   }
 
-  if (!profile) return <p className="text-xs text-zinc-600 italic">Profil non renseigné.</p>
+  if (!profile) return <p className="text-xs text-zinc-600 italic">{t('coachMemberProfile.empty')}</p>
+
+  const goalOptions = Object.entries(GOAL_LABEL_KEYS).map(([value, key]) => [value, t(key)] as const)
+  const levelOptions = Object.entries(LEVEL_LABEL_KEYS).map(([value, key]) => [value, t(key)] as const)
+  const activityOptions = Object.entries(ACTIVITY_LABEL_KEYS).map(([value, key]) => [value, t(key)] as const)
 
   const rows = [
-    { k: 'Objectif',     v: editing ? undefined : (GOAL_LABELS[profile.fitnessGoal] ?? profile.fitnessGoal), highlight: true, field: 'fitnessGoal', options: Object.entries(GOAL_LABELS) },
-    { k: 'Âge',          v: editing ? undefined : `${profile.age} ans`,               field: 'age',     type: 'number' },
-    { k: 'Poids',        v: editing ? undefined : `${profile.weightKg} kg`,            field: 'weightKg', type: 'number' },
-    { k: 'Objectif poids', v: editing ? undefined : profile.targetWeightKg ? `${profile.targetWeightKg} kg` : '—', field: 'targetWeightKg', type: 'number' },
-    { k: 'Taille',       v: editing ? undefined : `${profile.heightCm} cm`,            field: 'heightCm', type: 'number' },
-    { k: 'IMC',          v: editing ? undefined : profile.bmi ? `${profile.bmi?.toFixed(1)} — ${profile.bmi < 18.5 ? 'Insuffisant' : profile.bmi < 25 ? 'Normal' : profile.bmi < 30 ? 'Surpoids' : 'Obésité'}` : '—', readOnly: true },
-    { k: 'Calories/jour',v: editing ? undefined : profile.tdee ? `${Math.round(profile.tdee).toLocaleString('fr-FR')} kcal` : '—', readOnly: true },
-    { k: 'Niveau',       v: editing ? undefined : (LEVEL_LABELS[profile.fitnessLevel] ?? profile.fitnessLevel), field: 'fitnessLevel', options: Object.entries(LEVEL_LABELS) },
-    { k: 'Activité',     v: editing ? undefined : (ACTIVITY_LABELS[profile.activityLevel] ?? profile.activityLevel), field: 'activityLevel', options: Object.entries(ACTIVITY_LABELS) },
-    { k: 'Jours dispo',  v: editing ? undefined : `${profile.trainingDaysPerWeek} / semaine`, field: 'trainingDaysPerWeek', type: 'number' },
+    { k: t('coachMemberProfile.goal'),     v: editing ? undefined : (t(GOAL_LABEL_KEYS[profile.fitnessGoal] ?? '') || profile.fitnessGoal), highlight: true, field: 'fitnessGoal', options: goalOptions },
+    { k: t('coachMemberProfile.age'),      v: editing ? undefined : `${profile.age} ${t('coachMemberProfile.years')}`, field: 'age', type: 'number' },
+    { k: t('coachMemberProfile.weight'),   v: editing ? undefined : `${profile.weightKg} kg`, field: 'weightKg', type: 'number' },
+    { k: t('coachMemberProfile.targetWeight'), v: editing ? undefined : profile.targetWeightKg ? `${profile.targetWeightKg} kg` : '—', field: 'targetWeightKg', type: 'number' },
+    { k: t('coachMemberProfile.height'),   v: editing ? undefined : `${profile.heightCm} cm`, field: 'heightCm', type: 'number' },
+    { k: t('coachMemberProfile.bmi'),      v: editing ? undefined : profile.bmi ? `${profile.bmi?.toFixed(1)} — ${profile.bmi < 18.5 ? t('coachMemberProfile.bmiLow') : profile.bmi < 25 ? t('coachMemberProfile.bmiNormal') : profile.bmi < 30 ? t('coachMemberProfile.bmiOverweight') : t('coachMemberProfile.bmiObesity')}` : '—', readOnly: true },
+    { k: t('coachMemberProfile.caloriesPerDay'), v: editing ? undefined : profile.tdee ? `${Math.round(profile.tdee).toLocaleString(locale === 'en' ? 'en-US' : 'fr-FR')} kcal` : '—', readOnly: true },
+    { k: t('coachMemberProfile.level'),    v: editing ? undefined : (t(LEVEL_LABEL_KEYS[profile.fitnessLevel] ?? '') || profile.fitnessLevel), field: 'fitnessLevel', options: levelOptions },
+    { k: t('coachMemberProfile.activity'), v: editing ? undefined : (t(ACTIVITY_LABEL_KEYS[profile.activityLevel] ?? '') || profile.activityLevel), field: 'activityLevel', options: activityOptions },
+    { k: t('coachMemberProfile.availableDays'), v: editing ? undefined : `${profile.trainingDaysPerWeek} / ${t('coachMemberProfile.week')}`, field: 'trainingDaysPerWeek', type: 'number' },
   ]
 
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Profil client</p>
+        <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">{t('coachMemberProfile.title')}</p>
         {editing ? (
           <div className="flex gap-2">
             <button type="button" onClick={handleSave} disabled={saving}
               className="flex items-center gap-1 text-[10px] text-[#C8F135] hover:text-[#d4f54d]">
-              <Save className="size-3" /> Enregistrer
+              <Save className="size-3" /> {t('common.save')}
             </button>
             <button type="button" onClick={() => { setEditing(false); setForm(profile) }}
               className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-white">
-              <X className="size-3" /> Annuler
+              <X className="size-3" /> {t('common.cancel')}
             </button>
           </div>
         ) : (
           <button type="button" onClick={() => setEditing(true)}
             className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-white transition-colors">
-            <Edit3 className="size-3" /> Modifier
+            <Edit3 className="size-3" /> {t('common.edit')}
           </button>
         )}
       </div>

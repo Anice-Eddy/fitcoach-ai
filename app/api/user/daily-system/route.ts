@@ -27,10 +27,32 @@ function pct(actual: number, target: number) {
   return Math.max(0, Math.min(100, Math.round((actual / target) * 100)))
 }
 
+type DailySystemLocale = 'fr' | 'en'
+
+function missionCopy(locale: DailySystemLocale, targets: { steps: number; protein: number; water: number; sleep: number }) {
+  if (locale === 'en') {
+    return {
+      steps:    { title: `${targets.steps} steps`, unit: 'steps' },
+      protein:  { title: `${targets.protein} g protein`, unit: 'g' },
+      water:    { title: `${targets.water} L water`, unit: 'L' },
+      sleep:    { title: `${targets.sleep} h sleep`, unit: 'h' },
+      training: { title: 'Daily session', unit: 'session' },
+    }
+  }
+
+  return {
+    steps:    { title: `${targets.steps} pas`, unit: 'pas' },
+    protein:  { title: `${targets.protein} g protéines`, unit: 'g' },
+    water:    { title: `${targets.water} L d'eau`, unit: 'L' },
+    sleep:    { title: `${targets.sleep} h de sommeil`, unit: 'h' },
+    training: { title: 'Séance du jour', unit: 'séance' },
+  }
+}
+
 /** Returns daily missions, habits and BodyOps Score computed from persisted user data. */
 export async function GET(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const url = new URL(req.url)
   const parsedDate = dateSchema.safeParse(url.searchParams.get('date') ?? localDateKey())
@@ -65,13 +87,15 @@ export async function GET(req: Request) {
   const sleepActual = metric?.sleepHours ?? 0
   const stepsTarget = 8000
   const stepsActual = metric?.steps ?? 0
+  const locale = profile?.language === 'en' ? 'en' : 'fr'
+  const copy = missionCopy(locale, { steps: stepsTarget, protein: proteinTarget, water: waterTarget, sleep: sleepTarget })
 
   const missions = [
-    { key: 'steps', title: `${stepsTarget} pas`, type: 'HABIT' as const, targetValue: stepsTarget, actualValue: stepsActual, unit: 'pas', isCompleted: stepsActual >= stepsTarget },
-    { key: 'protein', title: `${proteinTarget} g protéines`, type: 'NUTRITION' as const, targetValue: proteinTarget, actualValue: proteinActual, unit: 'g', isCompleted: proteinActual >= proteinTarget },
-    { key: 'water', title: `${waterTarget} L eau`, type: 'HABIT' as const, targetValue: waterTarget, actualValue: waterActual, unit: 'L', isCompleted: waterActual >= waterTarget },
-    { key: 'sleep', title: `${sleepTarget} h sommeil`, type: 'RECOVERY' as const, targetValue: sleepTarget, actualValue: sleepActual, unit: 'h', isCompleted: sleepActual >= sleepTarget },
-    { key: 'training', title: 'Séance du jour', type: 'TRAINING' as const, targetValue: 1, actualValue: completedSessions, unit: 'séance', isCompleted: completedSessions > 0 },
+    { key: 'steps', title: copy.steps.title, type: 'HABIT' as const, targetValue: stepsTarget, actualValue: stepsActual, unit: copy.steps.unit, isCompleted: stepsActual >= stepsTarget },
+    { key: 'protein', title: copy.protein.title, type: 'NUTRITION' as const, targetValue: proteinTarget, actualValue: proteinActual, unit: copy.protein.unit, isCompleted: proteinActual >= proteinTarget },
+    { key: 'water', title: copy.water.title, type: 'HABIT' as const, targetValue: waterTarget, actualValue: waterActual, unit: copy.water.unit, isCompleted: waterActual >= waterTarget },
+    { key: 'sleep', title: copy.sleep.title, type: 'RECOVERY' as const, targetValue: sleepTarget, actualValue: sleepActual, unit: copy.sleep.unit, isCompleted: sleepActual >= sleepTarget },
+    { key: 'training', title: copy.training.title, type: 'TRAINING' as const, targetValue: 1, actualValue: completedSessions, unit: copy.training.unit, isCompleted: completedSessions > 0 },
   ]
 
   const nutritionScore = pct(proteinActual, proteinTarget)
@@ -89,7 +113,7 @@ export async function GET(req: Request) {
     progressionScore * 0.1,
   )
 
-  // Persiste le score et les missions calculées pour que coach/IA lisent le même état quotidien.
+  // Persist the computed score and missions so coach and AI read the same daily state.
   const [savedScore] = await Promise.all([
     prisma.bodyOpsScore.upsert({
       where: { userId_date: { userId, date } },

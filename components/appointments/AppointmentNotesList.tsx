@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Check, Edit3, X } from 'lucide-react'
 import { parseAppointmentNotes, updateAppointmentNoteAt } from '@/lib/appointments/notes'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/contexts/LocaleContext'
 
 type AppointmentNotesListProps = {
   note: string
@@ -22,6 +23,7 @@ const ACCENT_CLASS = {
 
 /** Displays appointment notes as individual scrollable items so long histories do not stretch the appointment card. */
 export function AppointmentNotesList({ note, title, accent = 'zinc', canEdit = false, compact = false, onSave }: AppointmentNotesListProps) {
+  const { t } = useLocale()
   const entries = parseAppointmentNotes(note)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [draft, setDraft] = useState('')
@@ -58,15 +60,15 @@ export function AppointmentNotesList({ note, title, accent = 'zinc', canEdit = f
             <article key={`${entry.header ?? 'note'}-${index}`} className={cn('rounded-lg border border-zinc-800 bg-zinc-950/70 text-zinc-300', compact ? 'p-2' : 'p-2.5')}>
               <div className="mb-1.5 flex items-center justify-between gap-2">
                 <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
-                  {entry.header ?? `Note ${index + 1}`}
+                  {entry.header ?? `${t('appointmentNotes.note')} ${index + 1}`}
                 </p>
                 {canEdit && !isEditing && (
                   <button
                     type="button"
                     onClick={() => startEdit(index)}
                     className="rounded-md p-1 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-[#C8F135]"
-                    aria-label={`Modifier la note ${index + 1}`}
-                    title="Modifier cette note"
+                    aria-label={`${t('appointmentNotes.editNote')} ${index + 1}`}
+                    title={t('appointmentNotes.editThisNote')}
                   >
                     <Edit3 className="size-3.5" />
                   </button>
@@ -86,7 +88,7 @@ export function AppointmentNotesList({ note, title, accent = 'zinc', canEdit = f
                       type="button"
                       onClick={() => setEditingIndex(null)}
                       className="rounded-md bg-zinc-800 p-1.5 text-zinc-400 hover:text-white"
-                      aria-label="Annuler la modification"
+                      aria-label={t('appointmentNotes.cancelEdit')}
                     >
                       <X className="size-3.5" />
                     </button>
@@ -95,7 +97,7 @@ export function AppointmentNotesList({ note, title, accent = 'zinc', canEdit = f
                       onClick={saveEdit}
                       disabled={saving || !draft.trim()}
                       className="rounded-md bg-[#C8F135] p-1.5 text-zinc-950 disabled:opacity-50"
-                      aria-label="Enregistrer cette note"
+                      aria-label={t('appointmentNotes.saveNote')}
                     >
                       <Check className="size-3.5" />
                     </button>

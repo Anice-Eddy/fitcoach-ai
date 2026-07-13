@@ -13,18 +13,18 @@ const messageSchema = z.object({
 
 async function getCoachAccess(memberId: string) {
   const session = await auth()
-  if (!session?.user?.email) return { error: NextResponse.json({ error: 'Non authentifié' }, { status: 401 }) }
+  if (!session?.user?.email) return { error: NextResponse.json({ error: 'Unauthenticated' }, { status: 401 }) }
 
   const coach = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: { coachProfile: true },
   })
-  if (!coach?.coachProfile) return { error: NextResponse.json({ error: 'Non autorisé' }, { status: 403 }) }
+  if (!coach?.coachProfile) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 403 }) }
 
   const membership = await prisma.coachMember.findUnique({
     where: { coachId_memberId: { coachId: coach.coachProfile.id, memberId } },
   })
-  if (!membership) return { error: NextResponse.json({ error: 'Membre introuvable' }, { status: 404 }) }
+  if (!membership) return { error: NextResponse.json({ error: 'Member not found' }, { status: 404 }) }
 
   return { coach }
 }
@@ -52,7 +52,7 @@ export async function GET(
     data:  { readAt: new Date() },
   })
 
-  // Quand le coach ouvre la conversation, les notifications liées à ce chat disparaissent des non-lues.
+  // When the coach opens the conversation, chat-related notifications are cleared from unread counts.
   await prisma.notification.updateMany({
     where: {
       coachId:         coach!.coachProfile!.id,
@@ -101,13 +101,13 @@ export async function POST(
       data:  { lastMessageAt: created.createdAt },
     })
 
-    // Notifie le membre sans marquer le message lu; le clic ouvrira son espace Messages.
+    // Notify the member without marking the message as read; clicking opens their Messages area.
     await tx.notification.create({
       data: {
         coachId:         coach!.coachProfile!.id,
         recipientUserId: params.memberId,
         type:            'MESSAGE',
-        title:           'Nouveau message de votre coach',
+        title:           'New coach message',
         message:         created.content.slice(0, 140),
         relatedId:       chat.id,
       },

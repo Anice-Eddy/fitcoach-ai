@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, Bot, Brain, Dumbbell, Loader2, MessageSquare, Send, Sparkles, Utensils, Users } from 'lucide-react'
 import { InsightCards, MemoryStrip } from '@/components/ai/InsightCards'
 import type { InsightsPayload } from '@/app/api/ai/insights/route'
+import { useLocale } from '@/contexts/LocaleContext'
 
 type AgentType = 'TRAINING' | 'NUTRITION' | 'PROGRESSION' | 'MOTIVATION' | 'COACH_REPORT'
 
@@ -22,21 +23,21 @@ type CoachMember = {
   }
 }
 
-const AGENTS: { value: AgentType; label: string; desc: string; icon: React.ElementType }[] = [
-  { value: 'TRAINING',     label: 'Entraînement', desc: 'Charges, volume, programme',      icon: Dumbbell },
-  { value: 'NUTRITION',    label: 'Nutrition',    desc: 'Calories, macros, repas',          icon: Utensils },
-  { value: 'PROGRESSION',  label: 'Progression',  desc: 'Tendances, stagnation',            icon: Brain },
-  { value: 'MOTIVATION',   label: 'Motivation',   desc: 'Conseils et adhérence',            icon: Sparkles },
-  { value: 'COACH_REPORT', label: 'Rapport coach', desc: 'Synthèse complète',               icon: Users },
+const AGENTS: { value: AgentType; labelKey: string; descKey: string; icon: React.ElementType }[] = [
+  { value: 'TRAINING',     labelKey: 'aiAssistant.agents.training',    descKey: 'aiAssistant.agentDescriptions.training',    icon: Dumbbell },
+  { value: 'NUTRITION',    labelKey: 'aiAssistant.agents.nutrition',   descKey: 'aiAssistant.agentDescriptions.nutrition',   icon: Utensils },
+  { value: 'PROGRESSION',  labelKey: 'aiAssistant.agents.progression', descKey: 'aiAssistant.agentDescriptions.progression', icon: Brain },
+  { value: 'MOTIVATION',   labelKey: 'aiAssistant.agents.motivation',  descKey: 'aiAssistant.agentDescriptions.motivation',  icon: Sparkles },
+  { value: 'COACH_REPORT', labelKey: 'aiAssistant.agents.coachReport', descKey: 'aiAssistant.agentDescriptions.coachReport', icon: Users },
 ]
 
 const QUICK_ACTIONS = [
-  { label: 'Générer un programme',       endpoint: '/api/ai/generate-workout-plan' },
-  { label: 'Générer un plan nutritionnel', endpoint: '/api/ai/generate-nutrition-plan' },
-  { label: 'Analyse IA complète',         endpoint: '/api/ai/member-analysis' },
+  { labelKey: 'aiAssistant.quickActions.workout', endpoint: '/api/ai/generate-workout-plan' },
+  { labelKey: 'aiAssistant.quickActions.nutrition', endpoint: '/api/ai/generate-nutrition-plan' },
+  { labelKey: 'aiAssistant.quickActions.fullAnalysis', endpoint: '/api/ai/member-analysis' },
 ]
 
-// Simple inline markdown renderer — handles **bold**, bullet lists, headings, line breaks.
+// Simple inline markdown renderer for bold text, bullet lists, headings, and line breaks.
 function MarkdownContent({ text }: { text: string }) {
   const lines = text.split('\n')
   return (
@@ -77,6 +78,7 @@ function MarkdownContent({ text }: { text: string }) {
 
 /** Full AI assistant with insight cards, memory strip, agent tabs, quick actions, and markdown-rendered chat. */
 export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
+  const { t } = useLocale()
   const [agent, setAgent]               = useState<AgentType>(mode === 'coach' ? 'COACH_REPORT' : 'TRAINING')
   const [message, setMessage]           = useState('')
   const [messages, setMessages]         = useState<ChatMessage[]>([])
@@ -149,20 +151,20 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
       })
       const data = await res.json()
       if (!res.ok) {
-        // data.error peut être un objet Zod → le sérialiser en string lisible
+        // data.error can be a Zod object; serialize it into a readable string.
         const errMsg = typeof data?.error === 'string'
           ? data.error
           : data?.error?.fieldErrors
             ? Object.entries(data.error.fieldErrors).map(([k, v]) => `${k}: ${(v as string[]).join(', ')}`).join(' · ')
-            : 'Erreur IA'
+            : t('aiAssistant.errors.generic')
         throw new Error(errMsg)
       }
       setConversationId(data.conversationId)
-      // Garantir que la réponse est bien une string avant de la stocker
+      // Ensure the response is a string before storing it.
       const responseText = typeof data.response === 'string' ? data.response : JSON.stringify(data.response ?? '')
       setMessages(prev => [...prev, { role: 'assistant', content: responseText }])
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Erreur IA')
+      showError(err instanceof Error ? err.message : t('aiAssistant.errors.generic'))
     } finally {
       setLoading(false)
     }
@@ -179,13 +181,13 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
       })
       const data = await res.json()
       if (!res.ok) {
-        const errMsg = typeof data?.error === 'string' ? data.error : 'Erreur IA'
+        const errMsg = typeof data?.error === 'string' ? data.error : t('aiAssistant.errors.generic')
         throw new Error(errMsg)
       }
       const responseText = typeof data.response === 'string' ? data.response : JSON.stringify(data.response ?? '')
       setMessages(prev => [...prev, { role: 'assistant', content: responseText }])
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Erreur IA')
+      showError(err instanceof Error ? err.message : t('aiAssistant.errors.generic'))
     } finally {
       setLoading(false)
     }
@@ -194,18 +196,18 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
   return (
     <div className="space-y-4 sm:space-y-5">
 
-      {/* ── Header ───────────────────────────────────────────── */}
+      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white sm:text-2xl">Assistant IA</h1>
+          <h1 className="text-xl font-bold text-white sm:text-2xl">{t('aiAssistant.title')}</h1>
           <p className="mt-1 text-sm text-zinc-400">
-            Analyse personnalisée basée sur tes données réelles.{' '}
-            <span className="text-zinc-600">L'IA est un outil d'aide, pas un substitut à un professionnel de santé.</span>
+            {t('aiAssistant.description')}{' '}
+            <span className="text-zinc-600">{t('aiAssistant.healthDisclaimerShort')}</span>
           </p>
         </div>
         {mode === 'coach' && (
           <label className="min-w-64">
-            <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-500">Membre analysé</span>
+            <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-500">{t('aiAssistant.analyzedMember')}</span>
             <select
               value={memberId}
               onChange={(e) => {
@@ -216,7 +218,7 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
               className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm text-white outline-none focus:border-[#C8F135]"
             >
               {members.length === 0
-                ? <option value="">Aucun membre assigné</option>
+                ? <option value="">{t('aiAssistant.noAssignedMember')}</option>
                 : members.map(m => (
                     <option key={m.memberId} value={m.memberId}>{m.member.name ?? m.member.email}</option>
                   ))
@@ -226,36 +228,34 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
         )}
       </div>
 
-      {/* ── AI disclaimer ─────────────────────────────────────── */}
+      {/* AI disclaimer */}
       {mode === 'member' && (
         <div className="flex items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/8 px-4 py-3">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-400" />
           <p className="text-xs text-amber-200/75 leading-relaxed">
-            <strong className="text-amber-300 font-semibold">Information importante —</strong>{' '}
-            L'assistant IA de BodyOps est un outil d'aide à la planification et ne remplace pas un coach certifié,
-            un nutritionniste ou un médecin. Consultez un professionnel de santé avant tout changement significatif
-            de régime alimentaire ou d'entraînement.{' '}
-            <a href="/terms" target="_blank" className="underline hover:text-amber-300 transition-colors">CGU</a>
+            <strong className="text-amber-300 font-semibold">{t('aiAssistant.importantInfo')}</strong>{' '}
+            {t('aiAssistant.healthDisclaimerLong')}{' '}
+            <a href="/terms" target="_blank" className="underline hover:text-amber-300 transition-colors">{t('aiAssistant.terms')}</a>
             {' · '}
-            <a href="/privacy" target="_blank" className="underline hover:text-amber-300 transition-colors">Confidentialité</a>
+            <a href="/privacy" target="_blank" className="underline hover:text-amber-300 transition-colors">{t('aiAssistant.privacy')}</a>
           </p>
         </div>
       )}
 
-      {/* ── Insight badges ────────────────────────────────────── */}
+      {/* Insight badges */}
       {insights && <InsightCards insights={insights.insights} />}
 
-      {/* ── Memory strip ──────────────────────────────────────── */}
+      {/* Memory strip */}
       {insights?.memory && <MemoryStrip memory={insights.memory} />}
 
-      {/* ── Assistant topic ───────────────────────────────────── */}
+      {/* Assistant topic */}
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Sujet de l'assistant</p>
-          <p className="text-xs text-zinc-600">{AGENTS.find(a => a.value === agent)?.desc}</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">{t('aiAssistant.topic')}</p>
+          <p className="text-xs text-zinc-600">{AGENTS.find(a => a.value === agent)?.descKey ? t(AGENTS.find(a => a.value === agent)!.descKey) : ''}</p>
         </div>
         <div className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:px-0 sm:pb-0 md:grid-cols-5">
-          {AGENTS.filter(a => mode === 'coach' || a.value !== 'COACH_REPORT').map(({ value, label, icon: Icon }) => (
+          {AGENTS.filter(a => mode === 'coach' || a.value !== 'COACH_REPORT').map(({ value, labelKey, icon: Icon }) => (
             <button
               key={value}
               type="button"
@@ -268,15 +268,15 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
               aria-pressed={agent === value}
             >
               <Icon className={`size-4 shrink-0 ${agent === value ? 'text-[#C8F135]' : 'text-zinc-500'}`} />
-              <span className="truncate text-sm font-semibold">{label}</span>
+              <span className="truncate text-sm font-semibold">{t(labelKey)}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── Quick actions ─────────────────────────────────────── */}
+      {/* Quick actions */}
       <div className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Actions rapides</p>
+        <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">{t('aiAssistant.quickActionsTitle')}</p>
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:px-0 sm:pb-0">
           {QUICK_ACTIONS.map(action => (
             <button
@@ -286,7 +286,7 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
               onClick={() => runAction(action.endpoint)}
               className="min-w-[190px] rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-[#C8F135]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:min-w-0"
             >
-              {action.label}
+              {t(action.labelKey)}
             </button>
           ))}
           {mode === 'coach' && (
@@ -296,20 +296,20 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
               onClick={() => runAction('/api/ai/coach-report')}
               className="min-w-[220px] rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-[#C8F135]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-3 sm:min-w-0"
             >
-              Rapport coach — {selectedMemberName || 'ce membre'}
+              {t('aiAssistant.quickActions.coachReport')} — {selectedMemberName || t('aiAssistant.thisMember')}
             </button>
           )}
         </div>
       </div>
 
-      {/* ── Chat ─────────────────────────────────────────────── */}
+      {/* Chat */}
       <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
 
         <div className="border-b border-zinc-800 px-4 py-3.5 sm:px-5">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
               <Bot className="size-4 text-[#C8F135]" />
-              <p className="text-sm font-semibold text-white">Chat</p>
+              <p className="text-sm font-semibold text-white">{t('aiAssistant.chat')}</p>
             </div>
           </div>
         </div>
@@ -318,9 +318,9 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
           {messages.length === 0 ? (
             <div className="flex min-h-56 flex-col items-center justify-center text-center">
               <MessageSquare className="mb-3 size-7 text-zinc-700" />
-              <p className="text-sm font-medium text-zinc-400">Posez une question à votre coach IA.</p>
+              <p className="text-sm font-medium text-zinc-400">{t('aiAssistant.emptyTitle')}</p>
               <p className="mt-1 max-w-64 text-xs leading-relaxed text-zinc-600 sm:max-w-none">
-                "Fais-moi un programme cette semaine" · "Comment améliorer mes macros ?"
+                {t('aiAssistant.emptyExamples')}
               </p>
             </div>
           ) : (
@@ -342,7 +342,7 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
           {loading && (
             <div className="flex items-center gap-2 text-xs text-zinc-500 pl-1">
               <Loader2 className="size-3.5 animate-spin" />
-              <span>Analyse en cours…</span>
+              <span>{t('aiAssistant.analyzing')}</span>
             </div>
           )}
           <div ref={bottomRef} />
@@ -361,7 +361,7 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
-                placeholder={mode === 'coach' && !memberId ? 'Sélectionnez un membre...' : 'Votre message…'}
+                placeholder={mode === 'coach' && !memberId ? t('aiAssistant.selectMemberPlaceholder') : t('aiAssistant.messagePlaceholder')}
                 disabled={loading || (mode === 'coach' && !memberId)}
                 maxLength={2000}
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-3 text-base text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-[#C8F135] disabled:opacity-50 sm:px-4 sm:text-sm"
@@ -379,7 +379,7 @@ export function AIAssistantClient({ mode }: { mode: 'member' | 'coach' }) {
               disabled={!canSend}
               onClick={sendMessage}
               className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#C8F135] text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="Envoyer"
+              aria-label={t('common.send')}
             >
               {loading ? <Loader2 className="size-5 animate-spin" /> : <Send className="size-5" />}
             </button>

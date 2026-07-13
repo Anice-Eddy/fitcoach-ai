@@ -1,6 +1,7 @@
-// Utilitaires nutrition : calcul des totaux, pourcentages, ajustements
+// Nutrition utilities: totals, percentages, and adjustments.
 
 import type { Meal, Macros } from '@/types'
+export { generateShoppingList } from './shopping-list'
 
 /** Sums the calories and macros of all provided meals into a single aggregate object. */
 export function sumMacros(meals: Meal[]): Macros & { calories: number } {
@@ -31,19 +32,4 @@ export function macroPct(
 /** Filters meals to only those scheduled for the given dayOfWeek (0 = Monday). */
 export function getMealsForDay(meals: Meal[], dayOfWeek: number): Meal[] {
   return meals.filter((m) => m.dayOfWeek === dayOfWeek)
-}
-
-/** Aggregates all food items across meals into a shopping list keyed by food name with total gram quantities. */
-export function generateShoppingList(meals: Meal[]): Record<string, { name: string; totalGrams: number; category: string }> {
-  const list: Record<string, { name: string; totalGrams: number; category: string }> = {}
-  meals.forEach((meal) => {
-    meal.foodItems.forEach((item) => {
-      if (list[item.name]) {
-        list[item.name].totalGrams += item.gramsAmount
-      } else {
-        list[item.name] = { name: item.name, totalGrams: item.gramsAmount, category: 'Aliment' }
-      }
-    })
-  })
-  return list
 }

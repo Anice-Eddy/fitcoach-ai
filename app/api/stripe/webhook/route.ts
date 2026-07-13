@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
-// POST /api/stripe/webhook — reçoit et traite les événements Stripe
-// IMPORTANT : le body doit être lu comme raw buffer (pas JSON.parse)
+// POST /api/stripe/webhook - receives and processes Stripe events.
+// IMPORTANT: the body must be read as a raw buffer, not JSON.parse
 
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/client'
@@ -17,13 +17,13 @@ export async function POST(req: Request) {
   const body      = await req.text()
   const signature = req.headers.get('stripe-signature')
 
-  if (!signature) return NextResponse.json({ error: 'Signature manquante' }, { status: 400 })
+  if (!signature) return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
 
   let event: Stripe.Event
   try {
     event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!)
   } catch {
-    return NextResponse.json({ error: 'Signature invalide' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
   try {
@@ -42,12 +42,12 @@ export async function POST(req: Request) {
         break
 
       default:
-        // Événements non gérés ignorés silencieusement
+        // Unhandled events are ignored silently
         break
     }
   } catch (err) {
-    console.error(`[Stripe webhook] Erreur sur ${event.type}:`, err)
-    return NextResponse.json({ error: 'Erreur interne' }, { status: 500 })
+    console.error(`[Stripe webhook] Error on ${event.type}:`, err)
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 
   return NextResponse.json({ received: true })

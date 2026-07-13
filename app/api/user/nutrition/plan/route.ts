@@ -8,7 +8,7 @@ import { NextResponse } from 'next/server'
 /** Returns the authenticated member's active coach nutrition target, when one exists. */
 export async function GET() {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const plan = await prisma.nutritionPlan.findFirst({
     where: { userId: session.user.id, isActive: true },

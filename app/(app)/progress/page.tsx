@@ -7,6 +7,8 @@ import { useUserStore } from '@/stores/userStore'
 import { toast } from 'sonner'
 import { Plus, Scale, Target, TrendingDown, TrendingUp, Activity, Trash2, Ruler, Footprints, Moon, Droplets, Battery, Brain, Camera, Heart, Wind, Zap, HeartPulse } from 'lucide-react'
 import { MetricCard } from '@/components/ui/MetricCard'
+import { useLocale } from '@/contexts/LocaleContext'
+import { GOAL_LABEL_KEYS } from '@/lib/i18n/profile-label-keys'
 
 interface BodyMetric {
   id:               string
@@ -15,10 +17,10 @@ interface BodyMetric {
   weightKg?:        number | null
   bodyFatPct?:      number | null
   muscleMassKg?:    number | null
-  // Activité quotidienne
+  // Daily activity
   steps?:           number | null
   caloriesActive?:  number | null
-  // Récupération
+  // Recovery
   sleepHours?:      number | null
   waterLiters?:     number | null
   energyLevel?:     number | null
@@ -41,14 +43,9 @@ function localDateKey(date: Date) {
   return `${year}-${month}-${day}`
 }
 
-const GOAL_LABELS: Record<string, string> = {
-  WEIGHT_LOSS: 'Perte de poids', MUSCLE_GAIN: 'Prise de masse',
-  MAINTENANCE: 'Maintien du poids', ENDURANCE: 'Endurance',
-  GENERAL_FITNESS: 'Forme générale', FLEXIBILITY: 'Flexibilité',
-}
-
 /** Progress tracking page: displays body weight history chart, allows logging new weight entries, and shows BMI and body composition metrics. */
 export default function ProgressPage() {
+  const { locale, t } = useLocale()
   const { profile }         = useUserStore()
   const [form, setForm] = useState({
     weightKg: '',
@@ -85,12 +82,12 @@ export default function ProgressPage() {
   const hasAnyMetricInput = Object.values(form).some(value => value.trim() !== '')
 
   const handleAddMetric = async () => {
-    if (!hasAnyMetricInput) { toast.error('Ajoute au moins une donnée à enregistrer'); return }
+    if (!hasAnyMetricInput) { toast.error(t('progress.addAtLeastOne')); return }
     const val = optionalNumber(form.weightKg)
-    if (val !== undefined && (isNaN(val) || val < 30 || val > 300)) { toast.error('Poids invalide (30–300 kg)'); return }
+    if (val !== undefined && (isNaN(val) || val < 30 || val > 300)) { toast.error(t('progress.invalidWeight')); return }
     setSaving(true)
     try {
-      // On envoie aussi les signaux de récupération pour que l'IA explique mieux les variations.
+      // Also send recovery signals so the AI can better explain variations.
       const payload = {
         weightKg: val,
         bodyFatPct: optionalNumber(form.bodyFatPct),
@@ -107,7 +104,7 @@ export default function ProgressPage() {
         body: JSON.stringify(payload),
       })
       if (res.ok) {
-        toast.success('Mesure enregistrée !')
+        toast.success(t('progress.saved'))
         setForm({
           weightKg: '',
           bodyFatPct: '',
@@ -120,9 +117,9 @@ export default function ProgressPage() {
         })
         fetchMetrics()
       } else {
-        toast.error('Certaines valeurs sont hors limites')
+        toast.error(t('progress.outOfRange'))
       }
-    } catch { toast.error('Erreur réseau') }
+    } catch { toast.error(t('progress.networkError')) }
     finally { setSaving(false) }
   }
 
@@ -130,9 +127,9 @@ export default function ProgressPage() {
     setDeletingId(id)
     try {
       const res = await fetch(`/api/user/metrics?id=${id}`, { method: 'DELETE' })
-      if (res.ok) { toast.success('Mesure supprimée'); fetchMetrics() }
-      else toast.error('Erreur lors de la suppression')
-    } catch { toast.error('Erreur réseau') }
+      if (res.ok) { toast.success(t('progress.deleted')); fetchMetrics() }
+      else toast.error(t('progress.deleteError'))
+    } catch { toast.error(t('progress.networkError')) }
     finally { setDeletingId(null) }
   }
 
@@ -140,7 +137,7 @@ export default function ProgressPage() {
   const chartData: WeightPoint[] = sortedAsc
     .filter((m): m is BodyMetric & { weightKg: number } => typeof m.weightKg === 'number')
     .map(m => ({
-      date:   new Date(m.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+      date:   new Date(m.date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: '2-digit', month: '2-digit' }),
       weight: m.weightKg,
     }))
 
@@ -156,62 +153,62 @@ export default function ProgressPage() {
 
   return (
     <>
-      <Header title="Progression" />
+      <Header titleKey="progress.title" />
       <PageWrapper>
         <div className="space-y-6">
 
-          {/* Objectif */}
+          {/* Goal */}
           {profile?.fitnessGoal && (
             <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Target className="size-4 text-[#C8F135]" />
-                <h3 className="text-sm font-semibold text-white">Objectif principal</h3>
+                <h3 className="text-sm font-semibold text-white">{t('progress.primaryGoal')}</h3>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <p className="text-xs text-zinc-500 mb-0.5">Objectif</p>
-                  <p className="font-medium text-[#C8F135]">{GOAL_LABELS[profile.fitnessGoal] ?? profile.fitnessGoal}</p>
+                  <p className="text-xs text-zinc-500 mb-0.5">{t('progress.objective')}</p>
+                  <p className="font-medium text-[#C8F135]">{GOAL_LABEL_KEYS[profile.fitnessGoal] ? t(GOAL_LABEL_KEYS[profile.fitnessGoal]) : profile.fitnessGoal}</p>
                 </div>
                 {profile.targetWeightKg ? (
                   <div>
-                    <p className="text-xs text-zinc-500 mb-0.5">Poids cible</p>
+                    <p className="text-xs text-zinc-500 mb-0.5">{t('progress.targetWeight')}</p>
                     <p className="font-medium text-white">{profile.targetWeightKg} kg</p>
                   </div>
                 ) : null}
                 {profile.tdee ? (
                   <div>
-                    <p className="text-xs text-zinc-500 mb-0.5">Dépense calorique</p>
-                    <p className="font-medium text-white">{Math.round(profile.tdee)} kcal/jour</p>
+                    <p className="text-xs text-zinc-500 mb-0.5">{t('progress.caloricExpenditure')}</p>
+                    <p className="font-medium text-white">{Math.round(profile.tdee)} {t('progress.kcalPerDay')}</p>
                   </div>
                 ) : null}
                 {profile.recommendedCalories ? (
                   <div>
-                    <p className="text-xs text-zinc-500 mb-0.5">Calories recommandées</p>
-                    <p className="font-medium text-white">{Math.round(profile.recommendedCalories)} kcal/jour</p>
+                    <p className="text-xs text-zinc-500 mb-0.5">{t('progress.calories')}</p>
+                    <p className="font-medium text-white">{Math.round(profile.recommendedCalories)} {t('progress.kcalPerDay')}</p>
                   </div>
                 ) : null}
               </div>
             </div>
           )}
 
-          {/* Métriques */}
+          {/* Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <MetricCard
-              title="Poids actuel"
+              title={t('progress.currentWeight')}
               value={lastWeight ?? '—'}
               unit={lastWeight ? 'kg' : ''}
               icon={<Scale className="size-4" />}
               isLoading={loading}
             />
             <MetricCard
-              title="Objectif poids"
+              title={t('progress.weightObjective')}
               value={profile?.targetWeightKg ?? '—'}
               unit={profile?.targetWeightKg ? 'kg' : ''}
               icon={<Target className="size-4" />}
               accentColor="#38bdf8"
             />
             <MetricCard
-              title="Progression"
+              title={t('progress.progression')}
               value={delta !== null ? (delta > 0 ? `+${delta}` : String(delta)) : '—'}
               unit={delta !== null ? 'kg' : ''}
               icon={delta !== null
@@ -222,10 +219,10 @@ export default function ProgressPage() {
               isLoading={loading}
             />
             <MetricCard
-              title="IMC"
+              title={t('progress.bmi')}
               value={bmi ? bmi.toFixed(1) : '—'}
               unit={bmi
-                ? (bmi < 18.5 ? 'Insuffisant' : bmi < 25 ? 'Normal' : bmi < 30 ? 'Surpoids' : 'Obésité')
+                ? (bmi < 18.5 ? t('progress.bmiUnderweight') : bmi < 25 ? t('progress.bmiNormal') : bmi < 30 ? t('progress.bmiOverweight') : t('progress.bmiObesity'))
                 : ''
               }
               icon={<Ruler className="size-4" />}
@@ -238,20 +235,20 @@ export default function ProgressPage() {
 
           {/* Ajout mesure */}
           <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
-            <h3 className="text-sm font-semibold text-white mb-3">Ajouter une mesure</h3>
+            <h3 className="text-sm font-semibold text-white mb-3">{t('progress.addMeasurement')}</h3>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <MetricInput label="Poids (kg)" value={form.weightKg} onChange={value => updateForm('weightKg', value)} min={30} max={300} step="0.1" />
-              <MetricInput label="Masse grasse (%)" value={form.bodyFatPct} onChange={value => updateForm('bodyFatPct', value)} min={1} max={70} step="0.1" />
-              <MetricInput label="Pas" value={form.steps} onChange={value => updateForm('steps', value)} min={0} max={100000} step="1" />
-              <MetricInput label="Sommeil (h)" value={form.sleepHours} onChange={value => updateForm('sleepHours', value)} min={0} max={24} step="0.25" />
-              <MetricInput label="Litres d'eau" value={form.waterLiters} onChange={value => updateForm('waterLiters', value)} min={0} max={15} step="0.1" />
-              <MetricInput label="Énergie 1-5" value={form.energyLevel} onChange={value => updateForm('energyLevel', value)} min={1} max={5} step="1" />
-              <MetricInput label="Stress 1-5" value={form.stressLevel} onChange={value => updateForm('stressLevel', value)} min={1} max={5} step="1" />
+              <MetricInput label={t('progress.weightKg')} value={form.weightKg} onChange={value => updateForm('weightKg', value)} min={30} max={300} step="0.1" />
+              <MetricInput label={t('progress.bodyFatPct')} value={form.bodyFatPct} onChange={value => updateForm('bodyFatPct', value)} min={1} max={70} step="0.1" />
+              <MetricInput label={t('progress.steps')} value={form.steps} onChange={value => updateForm('steps', value)} min={0} max={100000} step="1" />
+              <MetricInput label={t('progress.sleepHours')} value={form.sleepHours} onChange={value => updateForm('sleepHours', value)} min={0} max={24} step="0.25" />
+              <MetricInput label={t('progress.waterLiters')} value={form.waterLiters} onChange={value => updateForm('waterLiters', value)} min={0} max={15} step="0.1" />
+              <MetricInput label={t('progress.energyLevel')} value={form.energyLevel} onChange={value => updateForm('energyLevel', value)} min={1} max={5} step="1" />
+              <MetricInput label={t('progress.stressLevel')} value={form.stressLevel} onChange={value => updateForm('stressLevel', value)} min={1} max={5} step="1" />
               <label className="grid gap-1.5">
-                <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Photo URL</span>
+                <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('progress.photoUrl')}</span>
                 <input
                   type="url"
-                  placeholder="https://..."
+                  placeholder={t('common.urlPlaceholder')}
                   value={form.progressPhotoUrl}
                   onChange={e => updateForm('progressPhotoUrl', e.target.value)}
                   className="h-11 rounded-xl border border-zinc-700 bg-zinc-800 px-4 text-sm text-white outline-none transition-colors focus:border-[#C8F135]"
@@ -260,26 +257,26 @@ export default function ProgressPage() {
               <button
                 type="button" onClick={handleAddMetric}
                 disabled={saving || !hasAnyMetricInput}
-                aria-label="Enregistrer ma mesure"
+                aria-label={t('progress.saveMeasurement')}
                 className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] disabled:opacity-50 sm:col-span-2 lg:col-span-4"
               >
-                <Plus className="size-4" /> Enregistrer
+                <Plus className="size-4" /> {t('common.save')}
               </button>
             </div>
           </div>
 
-          {/* Récupération quotidienne */}
+          {/* Daily recovery */}
           {lastMetric && (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-              <MetricCard title="Pas" value={lastMetric.steps ?? '—'} icon={<Footprints className="size-4" />} accentColor="#38bdf8" />
-              <MetricCard title="Sommeil" value={lastMetric.sleepHours ?? '—'} unit={lastMetric.sleepHours ? 'h' : ''} icon={<Moon className="size-4" />} accentColor="#a78bfa" />
-              <MetricCard title="Litres d'eau" value={lastMetric.waterLiters ?? '—'} unit={lastMetric.waterLiters ? 'L' : ''} icon={<Droplets className="size-4" />} accentColor="#22d3ee" />
-              <MetricCard title="Énergie" value={lastMetric.energyLevel ?? '—'} unit={lastMetric.energyLevel ? '/5' : ''} icon={<Battery className="size-4" />} accentColor="#4ade80" />
-              <MetricCard title="Stress" value={lastMetric.stressLevel ?? '—'} unit={lastMetric.stressLevel ? '/5' : ''} icon={<Brain className="size-4" />} accentColor="#f87171" />
+              <MetricCard title={t('progress.steps')} value={lastMetric.steps ?? '—'} icon={<Footprints className="size-4" />} accentColor="#38bdf8" />
+              <MetricCard title={t('progress.sleep')} value={lastMetric.sleepHours ?? '—'} unit={lastMetric.sleepHours ? 'h' : ''} icon={<Moon className="size-4" />} accentColor="#a78bfa" />
+              <MetricCard title={t('progress.waterLiters')} value={lastMetric.waterLiters ?? '—'} unit={lastMetric.waterLiters ? 'L' : ''} icon={<Droplets className="size-4" />} accentColor="#22d3ee" />
+              <MetricCard title={t('progress.energy')} value={lastMetric.energyLevel ?? '—'} unit={lastMetric.energyLevel ? '/5' : ''} icon={<Battery className="size-4" />} accentColor="#4ade80" />
+              <MetricCard title={t('progress.stress')} value={lastMetric.stressLevel ?? '—'} unit={lastMetric.stressLevel ? '/5' : ''} icon={<Brain className="size-4" />} accentColor="#f87171" />
             </div>
           )}
 
-          {/* Apple Health — données cardiovasculaires */}
+          {/* Apple Health: cardiovascular data */}
           {lastMetric && (
             lastMetric.heartRateAvg || lastMetric.restingHeartRate || lastMetric.caloriesActive ||
             lastMetric.vo2Max || lastMetric.hrv || lastMetric.spo2 || lastMetric.muscleMassKg
@@ -293,21 +290,21 @@ export default function ProgressPage() {
                 <h3 className="text-sm font-semibold text-white">Apple Health</h3>
                 <span className="text-xs text-zinc-500 ml-auto">
                   {lastMetric.date
-                    ? new Date(lastMetric.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                    ? new Date(lastMetric.date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' })
                     : ''}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                 {lastMetric.heartRateAvg != null && (
-                  <MetricCard title="FC moy." value={lastMetric.heartRateAvg} unit="bpm"
+                  <MetricCard title={t('progress.avgHeartRate')} value={lastMetric.heartRateAvg} unit="bpm"
                     icon={<HeartPulse className="size-4" />} accentColor="#f87171" />
                 )}
                 {lastMetric.restingHeartRate != null && (
-                  <MetricCard title="FC repos" value={lastMetric.restingHeartRate} unit="bpm"
+                  <MetricCard title={t('progress.restingHeartRate')} value={lastMetric.restingHeartRate} unit="bpm"
                     icon={<Heart className="size-4" />} accentColor="#fb923c" />
                 )}
                 {lastMetric.caloriesActive != null && (
-                  <MetricCard title="Cal. actives" value={lastMetric.caloriesActive} unit="kcal"
+                  <MetricCard title={t('progress.activeCalories')} value={lastMetric.caloriesActive} unit="kcal"
                     icon={<Zap className="size-4" />} accentColor="#fbbf24" />
                 )}
                 {lastMetric.vo2Max != null && (
@@ -315,7 +312,7 @@ export default function ProgressPage() {
                     icon={<Wind className="size-4" />} accentColor="#34d399" />
                 )}
                 {lastMetric.hrv != null && (
-                  <MetricCard title="VFC (HRV)" value={Math.round(lastMetric.hrv)} unit="ms"
+                  <MetricCard title={t('progress.hrvTitle')} value={Math.round(lastMetric.hrv)} unit="ms"
                     icon={<Activity className="size-4" />} accentColor="#a78bfa" />
                 )}
                 {lastMetric.spo2 != null && (
@@ -323,35 +320,35 @@ export default function ProgressPage() {
                     icon={<Droplets className="size-4" />} accentColor="#60a5fa" />
                 )}
                 {lastMetric.muscleMassKg != null && (
-                  <MetricCard title="Masse musc." value={lastMetric.muscleMassKg.toFixed(1)} unit="kg"
+                  <MetricCard title={t('progress.muscleMassShort')} value={lastMetric.muscleMassKg.toFixed(1)} unit="kg"
                     icon={<Activity className="size-4" />} accentColor="#C8F135" />
                 )}
               </div>
 
-              {/* Interprétation VFC */}
+              {/* HRV interpretation */}
               {lastMetric.hrv != null && (
                 <p className={`text-xs mt-3 ${
                   lastMetric.hrv >= 60 ? 'text-emerald-400' : lastMetric.hrv >= 40 ? 'text-amber-400' : 'text-red-400'
                 }`}>
                   {lastMetric.hrv >= 60
-                    ? 'VFC élevée — bonne récupération, corps prêt pour l\'effort.'
+                    ? t('progress.hrvHigh')
                     : lastMetric.hrv >= 40
-                    ? 'VFC modérée — récupération correcte, entraînement modéré conseillé.'
-                    : 'VFC faible — récupération insuffisante, privilégier repos ou cardio léger.'}
+                    ? t('progress.hrvModerate')
+                    : t('progress.hrvLow')}
                 </p>
               )}
-              {/* Interprétation FC repos */}
+              {/* Resting heart rate interpretation */}
               {lastMetric.restingHeartRate != null && (
                 <p className={`text-xs mt-1 ${
                   lastMetric.restingHeartRate < 60 ? 'text-emerald-400' : lastMetric.restingHeartRate < 70 ? 'text-zinc-400' : 'text-red-400'
                 }`}>
                   {lastMetric.restingHeartRate < 50
-                    ? 'FC repos excellente (athlète).'
+                    ? t('progress.restingHeartExcellent')
                     : lastMetric.restingHeartRate < 60
-                    ? 'FC repos très bonne (< 60 bpm).'
+                    ? t('progress.restingHeartVeryGood')
                     : lastMetric.restingHeartRate < 70
-                    ? 'FC repos normale.'
-                    : 'FC repos élevée — surveiller stress, hydratation, sommeil.'}
+                    ? t('progress.restingHeartNormal')
+                    : t('progress.restingHeartHigh')}
                 </p>
               )}
             </div>
@@ -363,20 +360,20 @@ export default function ProgressPage() {
           ) : !loading ? (
             <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-8 text-center">
               <Scale className="size-8 text-zinc-600 mx-auto mb-3" />
-              <p className="text-zinc-400 font-medium">Aucune mesure enregistrée</p>
-              <p className="text-sm text-zinc-600 mt-1">Saisis ton poids ci-dessus pour voir ta progression.</p>
+              <p className="text-zinc-400 font-medium">{t('progress.noData')}</p>
+              <p className="text-sm text-zinc-600 mt-1">{t('progress.noDataDescription')}</p>
             </div>
           ) : null}
 
           {/* Macros */}
           {profile?.recommendedProteinG ? (
             <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
-              <h3 className="text-sm font-semibold text-white mb-4">Macronutriments recommandés</h3>
+              <h3 className="text-sm font-semibold text-white mb-4">{t('progress.recommendedMacros')}</h3>
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { label: 'Protéines', value: Math.round(profile.recommendedProteinG), color: 'text-[#C8F135]', bg: 'bg-[#C8F135]/10' },
-                  { label: 'Glucides',  value: Math.round(profile.recommendedCarbsG ?? 0), color: 'text-blue-400', bg: 'bg-blue-400/10' },
-                  { label: 'Lipides',   value: Math.round(profile.recommendedFatG ?? 0), color: 'text-pink-400', bg: 'bg-pink-400/10' },
+                  { label: t('nutrition.protein'), value: Math.round(profile.recommendedProteinG), color: 'text-[#C8F135]', bg: 'bg-[#C8F135]/10' },
+                  { label: t('nutrition.carbs'),  value: Math.round(profile.recommendedCarbsG ?? 0), color: 'text-blue-400', bg: 'bg-blue-400/10' },
+                  { label: t('nutrition.fat'),   value: Math.round(profile.recommendedFatG ?? 0), color: 'text-pink-400', bg: 'bg-pink-400/10' },
                 ].map(m => (
                   <div key={m.label} className={`rounded-xl p-4 text-center ${m.bg}`}>
                     <p className={`text-2xl font-bold ${m.color}`}>{m.value}g</p>
@@ -390,29 +387,29 @@ export default function ProgressPage() {
           {/* Historique */}
           {metrics.length > 0 && (
             <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
-              <h3 className="text-sm font-semibold text-white mb-3">Historique</h3>
+              <h3 className="text-sm font-semibold text-white mb-3">{t('progress.history')}</h3>
               <div className="space-y-1">
                 {metrics.map((m, i) => (
                   <div key={m.id ?? i} className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0 group">
                     <span className="text-xs text-zinc-400">
-                      {new Date(m.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                      {new Date(m.date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                     <div className="flex items-center gap-3 flex-wrap justify-end">
                       {typeof m.weightKg === 'number' ? <span className="text-sm font-semibold text-white">{m.weightKg} kg</span> : null}
-                      {m.bodyFatPct    ? <span className="text-xs text-zinc-500">{m.bodyFatPct}% MG</span>          : null}
-                      {m.muscleMassKg  ? <span className="text-xs text-zinc-500">{m.muscleMassKg}kg mus.</span>     : null}
-                      {m.steps         ? <span className="text-xs text-zinc-600">{m.steps.toLocaleString()} pas</span> : null}
+                      {m.bodyFatPct    ? <span className="text-xs text-zinc-500">{m.bodyFatPct}% {t('progress.bodyFatShort')}</span>          : null}
+                      {m.muscleMassKg  ? <span className="text-xs text-zinc-500">{m.muscleMassKg}kg {t('progress.muscleShort')}</span>     : null}
+                      {m.steps         ? <span className="text-xs text-zinc-600">{m.steps.toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-US')} {t('progress.steps').toLowerCase()}</span> : null}
                       {m.heartRateAvg  ? <span className="text-xs text-red-400/70">{m.heartRateAvg} bpm</span>      : null}
                       {m.restingHeartRate ? <span className="text-xs text-orange-400/70">{m.restingHeartRate} bpm↓</span> : null}
                       {m.vo2Max        ? <span className="text-xs text-emerald-400/70">VO₂ {m.vo2Max.toFixed(1)}</span> : null}
                       {m.hrv           ? <span className="text-xs text-violet-400/70">HRV {Math.round(m.hrv)}ms</span> : null}
                       {m.spo2          ? <span className="text-xs text-blue-400/70">SpO₂ {m.spo2}%</span>          : null}
-                      {m.progressPhotoUrl ? <Camera className="size-3.5 text-zinc-500" aria-label="Photo de progression enregistrée" /> : null}
+                      {m.progressPhotoUrl ? <Camera className="size-3.5 text-zinc-500" aria-label={t('progress.photoSaved')} /> : null}
                       <button
                         type="button"
                         onClick={() => handleDelete(m.id)}
                         disabled={deletingId === m.id}
-                        aria-label="Supprimer cette mesure"
+                        aria-label={t('progress.deleteMeasurement')}
                         className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 transition-all disabled:opacity-50"
                       >
                         <Trash2 className="size-3.5" />

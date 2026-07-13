@@ -12,19 +12,19 @@ export async function GET(
   { params }: { params: { memberId: string } },
 ) {
   const session = await auth()
-  if (!session?.user?.email) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  if (!session?.user?.email) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
   const coach = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: { coachProfile: true },
   })
-  if (!coach?.coachProfile) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
+  if (!coach?.coachProfile) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
 
   // Verify the member belongs to this coach
   const membership = await prisma.coachMember.findUnique({
     where: { coachId_memberId: { coachId: coach.coachProfile.id, memberId: params.memberId } },
   })
-  if (!membership) return NextResponse.json({ error: 'Membre introuvable' }, { status: 404 })
+  if (!membership) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
 
   const member = await prisma.user.findUnique({
     where: { id: params.memberId },
@@ -34,7 +34,7 @@ export async function GET(
       workoutSessions: {
         where: { status: { in: ['COMPLETED', 'IN_PROGRESS', 'PLANNED'] } },
         include: {
-          // Le coach doit voir le détail de la séance pour pouvoir ajuster chaque exercice.
+          // The coach needs session details to adjust each exercise.
           exerciseLogs: { include: { exercise: true }, orderBy: { order: 'asc' } },
         },
         orderBy: { createdAt: 'desc' },
@@ -45,7 +45,7 @@ export async function GET(
     },
   })
 
-  if (!member) return NextResponse.json({ error: 'Membre introuvable' }, { status: 404 })
+  if (!member) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
 
   const notes = await prisma.coachNote.findMany({
     where: { coachId: coach.coachProfile.id, memberId: params.memberId },
@@ -61,13 +61,13 @@ export async function DELETE(
   { params }: { params: { memberId: string } },
 ) {
   const session = await auth()
-  if (!session?.user?.email) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  if (!session?.user?.email) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
   const coach = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: { coachProfile: true },
   })
-  if (!coach?.coachProfile) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
+  if (!coach?.coachProfile) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
 
   await prisma.coachMember.deleteMany({
     where: { coachId: coach.coachProfile.id, memberId: params.memberId },
@@ -82,18 +82,18 @@ export async function PATCH(
   { params }: { params: { memberId: string } },
 ) {
   const session = await auth()
-  if (!session?.user?.email) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  if (!session?.user?.email) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
   const coach = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: { coachProfile: true },
   })
-  if (!coach?.coachProfile) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
+  if (!coach?.coachProfile) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
 
   const membership = await prisma.coachMember.findUnique({
     where: { coachId_memberId: { coachId: coach.coachProfile.id, memberId: params.memberId } },
   })
-  if (!membership) return NextResponse.json({ error: 'Membre introuvable' }, { status: 404 })
+  if (!membership) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
 
   const body = await req.json()
 

@@ -1,30 +1,42 @@
 'use client'
-// Liste de courses groupée par catégorie avec ajout manuel, export texte et impression PDF
+// Shopping list grouped by category with manual add, text export, and PDF printing.
 
 import { useState } from 'react'
 import { Check, ShoppingCart, Download, Printer, RotateCcw, Plus, CheckCheck, Beef, Wheat, Droplets, Leaf, Apple, GlassWater, ShoppingBasket, Pencil } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import type { GroupedShoppingList, FoodCategory, ShoppingItem } from '@/lib/nutrition/shopping-list'
 import { shoppingListToText } from '@/lib/nutrition/shopping-list'
+import { foodDisplayName } from '@/lib/nutrition/food-database'
+import { useLocale } from '@/contexts/LocaleContext'
 
 const CATEGORY_ICONS: Record<FoodCategory, React.ElementType> = {
-  'Protéines':         Beef,
-  'Glucides':          Wheat,
-  'Lipides':           Droplets,
-  'Légumes':           Leaf,
-  'Fruits':            Apple,
-  'Produits laitiers': GlassWater,
-  'Autres':            ShoppingBasket,
+  protein:   Beef,
+  carb:      Wheat,
+  fat:       Droplets,
+  vegetable: Leaf,
+  fruit:     Apple,
+  dairy:     GlassWater,
+  other:     ShoppingBasket,
 }
 
 const CATEGORY_COLORS: Record<FoodCategory, string> = {
-  'Protéines':         'text-red-400',
-  'Glucides':          'text-amber-400',
-  'Lipides':           'text-yellow-400',
-  'Légumes':           'text-green-400',
-  'Fruits':            'text-emerald-400',
-  'Produits laitiers': 'text-sky-400',
-  'Autres':            'text-zinc-400',
+  protein:   'text-red-400',
+  carb:      'text-amber-400',
+  fat:       'text-yellow-400',
+  vegetable: 'text-green-400',
+  fruit:     'text-emerald-400',
+  dairy:     'text-sky-400',
+  other:     'text-zinc-400',
+}
+
+const CATEGORY_LABEL_KEYS: Record<FoodCategory, string> = {
+  protein:   'nutrition.categories.protein',
+  carb:      'nutrition.categories.carb',
+  fat:       'nutrition.categories.fat',
+  vegetable: 'nutrition.categories.vegetable',
+  fruit:     'nutrition.categories.fruit',
+  dairy:     'nutrition.categories.dairy',
+  other:     'nutrition.categories.other',
 }
 
 interface Props {
@@ -33,6 +45,7 @@ interface Props {
 
 /** Renders a grouped, checkable shopping list with manual add, check-all, text export and print support. */
 export function ShoppingList({ grouped }: Props) {
+  const { locale, t } = useLocale()
   const [checked,   setChecked]   = useState<Set<string>>(new Set())
   const [custom,    setCustom]    = useState<ShoppingItem[]>([])
   const [inputVal,  setInputVal]  = useState('')
@@ -64,21 +77,21 @@ export function ShoppingList({ grouped }: Props) {
       setInputVal('')
       return
     }
-    setCustom(prev => [...prev, { name, totalGrams: 0, category: 'Autres' as const }])
+    setCustom(prev => [...prev, { name, totalGrams: 0, category: 'other' as const }])
     setInputVal('')
   }
 
   const downloadText = () => {
     const allGrouped: GroupedShoppingList = { ...grouped }
     if (custom.length > 0) {
-      allGrouped['Autres'] = [...(allGrouped['Autres'] ?? []), ...custom]
+      allGrouped.other = [...(allGrouped.other ?? []), ...custom]
     }
-    const text = shoppingListToText(allGrouped)
+    const text = shoppingListToText(allGrouped, undefined, locale)
     const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href     = url
-    a.download = 'liste-de-courses.txt'
+    a.download = locale === 'fr' ? 'liste-de-courses.txt' : 'shopping-list.txt'
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -87,8 +100,8 @@ export function ShoppingList({ grouped }: Props) {
     return (
       <EmptyState
         icon={<ShoppingCart className="size-6" />}
-        title="Aucun article"
-        description="Générez un plan nutritionnel pour créer votre liste de courses."
+        title={t('shoppingList.emptyTitle')}
+        description={t('shoppingList.emptyDescription')}
       />
     )
   }
@@ -104,7 +117,7 @@ export function ShoppingList({ grouped }: Props) {
           value={inputVal}
           onChange={e => setInputVal(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') addCustomItem() }}
-          placeholder="Ajouter un article manuellement…"
+          placeholder={t('shoppingList.manualPlaceholder')}
           className="flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[#C8F135] transition-colors"
         />
         <button
@@ -112,33 +125,33 @@ export function ShoppingList({ grouped }: Props) {
           disabled={!inputVal.trim()}
           className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-zinc-700 text-sm text-zinc-300 hover:border-[#C8F135]/50 hover:text-white disabled:opacity-40 transition-colors"
         >
-          <Plus className="size-4" /> Ajouter
+          <Plus className="size-4" /> {t('common.add')}
         </button>
       </div>
 
       {/* Header bar */}
       <div className="flex items-center justify-between flex-wrap gap-2 print:hidden">
         <p className="text-sm text-zinc-400">
-          <span className="text-[#C8F135] font-semibold">{done}</span>/{total} articles cochés
+          <span className="text-[#C8F135] font-semibold">{done}</span>/{total} {t('shoppingList.checkedItems')}
         </p>
         <div className="flex items-center gap-2">
           <button
             onClick={toggleAll}
             className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
           >
-            <CheckCheck className="size-3" /> {allChecked ? 'Tout décocher' : 'Tout cocher'}
+            <CheckCheck className="size-3" /> {allChecked ? t('shoppingList.uncheckAll') : t('shoppingList.checkAll')}
           </button>
           <button
             onClick={() => setChecked(new Set())}
             className="flex items-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
           >
-            <RotateCcw className="size-3" /> Réinit.
+            <RotateCcw className="size-3" /> {t('shoppingList.resetShort')}
           </button>
           <button
             onClick={downloadText}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-700 text-xs text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors"
           >
-            <Download className="size-3" /> Texte
+            <Download className="size-3" /> {t('shoppingList.textExport')}
           </button>
           <button
             onClick={() => window.print()}
@@ -154,7 +167,7 @@ export function ShoppingList({ grouped }: Props) {
         <div key={category}>
           <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
             {(() => { const Icon = CATEGORY_ICONS[category]; return <Icon className={`size-3.5 ${CATEGORY_COLORS[category]}`} /> })()}
-            {category}
+            {t(CATEGORY_LABEL_KEYS[category])}
             <span className="ml-auto text-zinc-600 normal-case tracking-normal">
               {items.filter(i => checked.has(i.name)).length}/{items.length}
             </span>
@@ -178,7 +191,7 @@ export function ShoppingList({ grouped }: Props) {
                     {isChecked && <Check className="size-3 text-zinc-900" />}
                   </div>
                   <span className={`flex-1 text-sm ${isChecked ? 'line-through text-zinc-500' : 'text-white'}`}>
-                    {item.name}
+                    {foodDisplayName(item.name, locale)}
                   </span>
                   <span className="text-xs text-zinc-500 shrink-0">{Math.round(item.totalGrams)} g</span>
                 </button>
@@ -192,7 +205,7 @@ export function ShoppingList({ grouped }: Props) {
       {custom.length > 0 && (
         <div>
           <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <Pencil className="size-3.5 text-zinc-500" /> Ajoutés manuellement
+            <Pencil className="size-3.5 text-zinc-500" /> {t('shoppingList.manualItems')}
             <span className="ml-auto text-zinc-600 normal-case tracking-normal">
               {custom.filter(i => checked.has(i.name)).length}/{custom.length}
             </span>

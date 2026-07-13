@@ -6,9 +6,11 @@ import { NotificationBell } from '@/components/coach/NotificationBell'
 import { CoachDropdown } from '@/components/coach/CoachDropdown'
 import { isCoachProfileComplete } from '@/lib/coach/verification'
 import { CoachSidebarNav } from '@/components/coach/CoachSidebarNav'
+import { getServerTranslations } from '@/lib/i18n/server'
 
 /** Coach layout: verifies auth, ensures coachProfile exists (redirects to completion if not), then renders the coach shell with sidebar and header. */
 export default async function CoachLayout({ children }: { children: React.ReactNode }) {
+  const { t } = getServerTranslations()
   const session = await auth()
   if (!session?.user?.id) redirect('/auth/signin?callbackUrl=/coach/dashboard')
 
@@ -39,7 +41,7 @@ export default async function CoachLayout({ children }: { children: React.ReactN
     <div className="min-h-screen bg-zinc-950 flex flex-col">
       <header className="h-16 border-b border-zinc-800 bg-zinc-900 flex items-center justify-between px-6">
         <span className="text-xs text-zinc-500 font-medium uppercase tracking-widest">
-          Espace Coach
+          {t('auth.coachSpace')}
         </span>
         <div className="flex items-center gap-3">
           <NotificationBell />

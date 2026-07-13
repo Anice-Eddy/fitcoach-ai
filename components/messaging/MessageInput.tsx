@@ -1,4 +1,5 @@
 import { Send } from 'lucide-react'
+import { useLocale } from '@/contexts/LocaleContext'
 
 type MessageInputProps = {
   value: string
@@ -11,6 +12,8 @@ type MessageInputProps = {
 
 /** Shared text input for chat messages; Enter sends and Shift+Enter inserts a newline. */
 export function MessageInput({ value, onChange, onSend, placeholder, disabled, sending }: MessageInputProps) {
+  const { t } = useLocale()
+
   return (
     <div className="border-t border-zinc-800 p-3">
       <div className="flex min-w-0 gap-2">
@@ -29,7 +32,7 @@ export function MessageInput({ value, onChange, onSend, placeholder, disabled, s
           onClick={onSend}
           disabled={sending || disabled || !value.trim()}
           className="shrink-0 self-end rounded-xl bg-[#C8F135] p-3 text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50"
-          aria-label="Envoyer le message"
+          aria-label={t('messagesPage.sendMessageAria')}
         >
           <Send className="size-4" />
         </button>

@@ -13,12 +13,14 @@ import { useUserStore }        from '@/stores/userStore'
 import { Clock, ChevronLeft }  from 'lucide-react'
 import Link from 'next/link'
 import type { SessionExercise } from '@/types'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface DBSession { id: string; name: string; status: string; durationMinutes: number | null }
 
 /** Focus-mode workout session: one exercise at a time, set-by-set tracking, auto rest timer. */
 export default function SessionPage({ params }: { params: { sessionId: string } }) {
   const router      = useRouter()
+  const { t, locale } = useLocale()
   const { profile } = useUserStore()
   const {
     activeSession, startSession, setCurrentExercise,
@@ -49,6 +51,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
       fitnessLevel:        profile.fitnessLevel!,
       trainingDaysPerWeek: profile.trainingDaysPerWeek ?? 3,
       availableEquipment:  profile.availableEquipment ?? [],
+      locale,
     })
 
     fetch(`/api/user/training/sessions/${params.sessionId}`)
@@ -87,7 +90,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
         })
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.sessionId, profile?.fitnessGoal, profile?.fitnessLevel, profile?.trainingDaysPerWeek,
+  }, [params.sessionId, profile?.fitnessGoal, profile?.fitnessLevel, profile?.trainingDaysPerWeek, locale,
       // eslint-disable-next-line react-hooks/exhaustive-deps
       JSON.stringify(profile?.availableEquipment), activeSession?.sessionId])
 
@@ -118,7 +121,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
     if (done >= exercise.sets) {
       toggleExercise(currentIdx, { weightKg: weights[currentIdx], reps: repsArr[currentIdx] })
     }
-    // Pour le cardio, pas de timer de repos automatique
+    // Cardio exercises do not start an automatic rest timer.
     if (!isCardio) {
       startRestTimer(exercise.restSeconds)
     }
@@ -126,7 +129,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
 
   const handleSetsChange = (newSets: number) => {
     updateExerciseField(currentIdx, { sets: newSets })
-    // Si des séries déjà faites dépassent le nouveau total, cap
+    // Cap completed sets if they exceed the new total.
     setSetProgress(prev => {
       const next = [...prev]
       next[currentIdx] = Math.min(prev[currentIdx] ?? 0, newSets)
@@ -139,6 +142,12 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
   }
 
   const handleCardioChange = (fields: Partial<Pick<SessionExercise, 'durationMinutes' | 'distanceKm' | 'speedKmH' | 'inclinePct'>>) => {
+    updateExerciseField(currentIdx, fields)
+  }
+
+  const handleLiftTrackingChange = (
+    fields: Partial<Pick<SessionExercise, 'velocityPeakMps' | 'velocityAvgMps' | 'barPathDeviationCm' | 'barPathPoints'>>,
+  ) => {
     updateExerciseField(currentIdx, fields)
   }
 
@@ -159,7 +168,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
   }
 
   const handleFinish = async () => {
-    // 1. Marquer la séance comme terminée
+    // 1. Mark the session as completed.
     await fetch(`/api/user/training/sessions/${params.sessionId}`, {
       method:  'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -170,7 +179,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
       }),
     }).catch(() => {})
 
-    // 2. Enregistrer les logs d'exercices pour la progression
+    // 2. Persist exercise logs for progression tracking.
     if (activeSession) {
       const logs = activeSession.exercises.map((ex, i) => ({
         exerciseName:    ex.name,
@@ -189,6 +198,10 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
         distanceKm:      ex.distanceKm,
         speedKmH:        ex.speedKmH,
         inclinePct:      ex.inclinePct,
+        velocityPeakMps: ex.velocityPeakMps,
+        velocityAvgMps:  ex.velocityAvgMps,
+        barPathDeviationCm: ex.barPathDeviationCm,
+        barPathPoints:   ex.barPathPoints,
       }))
 
       await fetch(`/api/user/training/sessions/${params.sessionId}/logs`, {
@@ -211,7 +224,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2">
             <Link href="/training" className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">
-              <ChevronLeft className="size-4" /> Retour
+              <ChevronLeft className="size-4" /> {t('common.back')}
             </Link>
             <div className="flex items-center gap-2 text-xs text-zinc-400">
               <Clock className="size-3.5" />
@@ -219,7 +232,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
                 {minutes}:{String(secs).padStart(2, '0')}
               </span>
               <span className="text-zinc-600">·</span>
-              {completedExs}/{totalEx} terminés
+              {completedExs}/{totalEx} {t('training.finishedCount')}
             </div>
           </div>
           <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
@@ -243,6 +256,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
           onSetsChange={handleSetsChange}
           onRestChange={handleRestChange}
           onCardioChange={handleCardioChange}
+          onLiftTrackingChange={handleLiftTrackingChange}
           onSetComplete={handleSetComplete}
           onPrev={handlePrev}
           onNext={handleNext}

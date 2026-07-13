@@ -7,6 +7,8 @@ import { MacroRing } from '@/components/ui/MacroRing'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import type { OnboardingData } from '@/utils/validators'
 import type { ActivityLevel, FitnessGoal, Gender } from '@/types'
+import { useLocale } from '@/contexts/LocaleContext'
+import { GOAL_LABEL_KEYS } from '@/lib/i18n/profile-label-keys'
 
 interface Props {
   data:      OnboardingData
@@ -15,13 +17,9 @@ interface Props {
   isLoading: boolean
 }
 
-const GOAL_LABELS: Record<string, string> = {
-  WEIGHT_LOSS: 'Perte de poids', MUSCLE_GAIN: 'Prise de masse', MAINTENANCE: 'Maintien',
-  ENDURANCE: 'Endurance', GENERAL_FITNESS: 'Forme générale', FLEXIBILITY: 'Souplesse',
-}
-
 /** Final onboarding step: displays the calculated BMI, TDEE, and macro targets, then calls onFinish to save the profile. */
 export function SummaryStep({ data, onFinish, onBack, isLoading }: Props) {
+  const { locale, t } = useLocale()
   const result = calculateFitnessProfile({
     weightKg:      data.weightKg,
     heightCm:      data.heightCm,
@@ -31,18 +29,19 @@ export function SummaryStep({ data, onFinish, onBack, isLoading }: Props) {
     fitnessGoal:   data.fitnessGoal as FitnessGoal,
   })
 
-  const bmiCategory = getBMICategory(result.bmi)
+  const bmiCategory = getBMICategory(result.bmi, locale)
+  const goalLabel = GOAL_LABEL_KEYS[data.fitnessGoal] ? t(GOAL_LABEL_KEYS[data.fitnessGoal]) : data.fitnessGoal
 
   return (
     <div className="space-y-5">
-      <p className="text-zinc-400 text-sm">Voici ton profil fitness calculé. Tu pourras modifier ces données à tout moment.</p>
+      <p className="text-zinc-400 text-sm">{t('onboarding.summaryStep.description')}</p>
 
-      {/* IMC */}
+      {/* BMI */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         className="rounded-2xl bg-zinc-800 p-4 border border-zinc-700"
       >
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-zinc-400">Indice de Masse Corporelle (IMC)</span>
+          <span className="text-sm text-zinc-400">{t('onboarding.summaryStep.bmi')}</span>
           <span className="text-lg font-bold text-white">{result.bmi}</span>
         </div>
         <ProgressBar value={result.bmi} max={40} color={bmiCategory.color} size="sm" />
@@ -53,13 +52,13 @@ export function SummaryStep({ data, onFinish, onBack, isLoading }: Props) {
         </div>
       </motion.div>
 
-      {/* Métabolisme */}
+      {/* Metabolism */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
         className="grid grid-cols-2 gap-3"
       >
         {[
-          { label: 'Calories au repos',  value: result.bmr,  unit: 'kcal/j', desc: 'Énergie utilisée sans activité' },
-          { label: 'Dépense quotidienne', value: result.tdee, unit: 'kcal/j', desc: 'Calories brûlées par jour' },
+          { label: t('onboarding.summaryStep.restingCalories'),  value: result.bmr,  unit: t('onboarding.summaryStep.kcalShort'), desc: t('onboarding.summaryStep.restingCaloriesDescription') },
+          { label: t('onboarding.summaryStep.dailyExpenditure'), value: result.tdee, unit: t('onboarding.summaryStep.kcalShort'), desc: t('onboarding.summaryStep.dailyExpenditureDescription') },
         ].map((item) => (
           <div key={item.label} className="rounded-xl bg-zinc-800 p-4 border border-zinc-700">
             <p className="text-xs text-zinc-500 mb-1">{item.label}</p>
@@ -69,13 +68,13 @@ export function SummaryStep({ data, onFinish, onBack, isLoading }: Props) {
         ))}
       </motion.div>
 
-      {/* Calories recommandées */}
+      {/* Recommended calories */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         className="rounded-2xl bg-[#C8F135]/5 border border-[#C8F135]/20 p-4"
       >
-        <p className="text-xs text-zinc-400 mb-1">Calories recommandées — {GOAL_LABELS[data.fitnessGoal] ?? data.fitnessGoal}</p>
+        <p className="text-xs text-zinc-400 mb-1">{t('onboarding.summaryStep.recommendedCalories')} — {goalLabel}</p>
         <p className="text-3xl font-bold text-[#C8F135]">
-          {result.recommendedCalories} <span className="text-lg text-zinc-400">kcal/jour</span>
+          {result.recommendedCalories} <span className="text-lg text-zinc-400">{t('onboarding.summaryStep.kcalPerDay')}</span>
         </p>
       </motion.div>
 
@@ -83,18 +82,18 @@ export function SummaryStep({ data, onFinish, onBack, isLoading }: Props) {
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
         className="rounded-2xl bg-zinc-800 p-4 border border-zinc-700"
       >
-        <p className="text-sm text-zinc-400 mb-4">Répartition des macros recommandée</p>
+        <p className="text-sm text-zinc-400 mb-4">{t('onboarding.summaryStep.macroSplit')}</p>
         <MacroRing proteinG={result.proteinG} carbsG={result.carbsG} fatG={result.fatG} />
       </motion.div>
 
       <div className="flex gap-3">
-        <button type="button" onClick={onBack} className="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-300 font-medium hover:bg-zinc-800 transition-colors">← Retour</button>
+        <button type="button" onClick={onBack} className="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-300 font-medium hover:bg-zinc-800 transition-colors">{t('onboarding.back')}</button>
         <button
           onClick={onFinish}
           disabled={isLoading}
           className="flex-1 py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-bold hover:bg-[#d4f54d] transition-colors disabled:opacity-60"
         >
-          {isLoading ? 'Sauvegarde…' : 'Commencer'}
+          {isLoading ? t('onboarding.summaryStep.saving') : t('onboarding.summaryStep.start')}
         </button>
       </div>
     </div>

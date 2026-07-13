@@ -6,8 +6,9 @@ import {
   Timer, Ruler, Wind, MoveUp, Activity,
 } from 'lucide-react'
 import type { SessionExercise } from '@/types'
+import { useLocale } from '@/contexts/LocaleContext'
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 function formatTime(totalSeconds: number): string {
   const h = Math.floor(totalSeconds / 3600)
@@ -31,10 +32,10 @@ function playBeep() {
   } catch {}
 }
 
-// Calories estimées selon vitesse (METs simplifiés)
+// Calories estimated from speed using simplified METs.
 function estimateCalories(durationMin: number, speedKmH: number): number {
   const met = speedKmH > 12 ? 11 : speedKmH > 8 ? 8 : speedKmH > 4 ? 6 : 5
-  return Math.round(durationMin * met * 70 / 60) // poids référence 70 kg
+  return Math.round(durationMin * met * 70 / 60) // 70 kg reference weight
 }
 
 // Pace min/km si vitesse > 0
@@ -46,11 +47,12 @@ function pace(speedKmH: number): string | null {
   return `${m}:${String(s).padStart(2, '0')} /km`
 }
 
-// ── Stepper inline ───────────────────────────────────────────────────────────
+// Inline stepper
 function Stepper({
-  label, value, unit, step = 1, min = 0, max, onChange,
+  label, value, unit, step = 1, min = 0, max, inputTitle, onChange,
 }: {
   label: string; value: number; unit?: string; step?: number; min?: number; max?: number
+  inputTitle: string
   onChange: (v: number) => void
 }) {
   const [editing, setEditing] = useState(false)
@@ -81,7 +83,7 @@ function Stepper({
         ) : (
           <button type="button" onClick={() => { setDraft(String(value)); setEditing(true) }}
             className="flex-1 text-center text-lg font-bold text-white hover:text-[#C8F135] transition-colors tabular-nums py-0.5"
-            title="Appuyer pour saisir">
+            title={inputTitle}>
             {value}{unit && <span className="text-xs text-zinc-500 ml-0.5">{unit}</span>}
           </button>
         )}
@@ -92,7 +94,7 @@ function Stepper({
   )
 }
 
-// Exercices HIIT/bodyweight : pas de distance/vitesse/pente
+// HIIT/bodyweight exercises do not track distance, speed, or incline.
 const HIIT_IDS = new Set([
   'ex-hiit', 'ex-burpee', 'ex-mountain-climber', 'ex-jump-rope',
   'ex-jump-squat', 'ex-box-jump', 'ex-thruster',
@@ -103,7 +105,7 @@ function isHIITExercise(exercise: SessionExercise): boolean {
     (!exercise.equipment.includes('CARDIO_MACHINE') && exercise.muscleGroups[0] === 'CARDIO')
 }
 
-// ── Props ────────────────────────────────────────────────────────────────────
+// Props
 interface Props {
   exercise:       SessionExercise
   isCompleted:    boolean
@@ -111,11 +113,12 @@ interface Props {
   onComplete:     () => void
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// Main component
 export function CardioTimerView({ exercise, isCompleted, onCardioChange, onComplete }: Props) {
+  const { t } = useLocale()
   const isHIIT = isHIITExercise(exercise)
 
-  // Paramètres locaux — ne resetent pas le timer quand une valeur change
+  // Local settings: do not reset the timer when a value changes.
   const [dur,   setDur]   = useState(exercise.durationMinutes ?? (isHIIT ? 20 : 30))
   const [dist,  setDist]  = useState(exercise.distanceKm     ?? 0)
   const [speed, setSpeed] = useState(exercise.speedKmH        ?? 0)
@@ -124,7 +127,7 @@ export function CardioTimerView({ exercise, isCompleted, onCardioChange, onCompl
   // Timer
   const [mode,    setMode]    = useState<'minuteur' | 'chrono'>('minuteur')
   const [running, setRunning] = useState(false)
-  const [elapsed, setElapsed] = useState(0) // secondes écoulées depuis start
+  const [elapsed, setElapsed] = useState(0) // seconds elapsed since start
   const [done,    setDone]    = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -133,7 +136,7 @@ export function CardioTimerView({ exercise, isCompleted, onCardioChange, onCompl
   const displaySec = mode === 'chrono' ? elapsed : remaining
   const pct = mode === 'minuteur' && targetSec > 0 ? Math.min(1, elapsed / targetSec) : 0
 
-  // Sync params → store sans affecter le timer
+  // Sync params to the store without affecting the timer.
   const updateParam = useCallback((fields: Partial<Pick<SessionExercise, 'durationMinutes' | 'distanceKm' | 'speedKmH' | 'inclinePct'>>) => {
     if (fields.durationMinutes !== undefined) setDur(fields.durationMinutes)
     if (fields.distanceKm      !== undefined) setDist(fields.distanceKm)
@@ -142,7 +145,7 @@ export function CardioTimerView({ exercise, isCompleted, onCardioChange, onCompl
     onCardioChange(fields)
   }, [onCardioChange])
 
-  // Auto-stop minuteur à 0
+  // Auto-stop timer at 0.
   useEffect(() => {
     if (mode === 'minuteur' && running && remaining === 0) {
       clearInterval(intervalRef.current!)
@@ -180,26 +183,26 @@ export function CardioTimerView({ exercise, isCompleted, onCardioChange, onCompl
   return (
     <div className="space-y-3">
 
-      {/* ── Paramètres ───────────────────────────────────────── */}
+      {/* Settings */}
       {isHIIT ? (
-        /* HIIT : durée uniquement */
-        <Stepper label="Durée totale (min)" value={dur} unit="min" step={5} min={1} max={120}
+        /* HIIT: duration only */
+        <Stepper label={t('cardioTimer.totalDuration')} value={dur} unit="min" step={5} min={1} max={120} inputTitle={t('cardioTimer.tapToEdit')}
           onChange={v => updateParam({ durationMinutes: v })} />
       ) : (
-        /* Cardio machine : tous les paramètres */
+        /* Cardio machine: all settings */
         <div className="grid grid-cols-2 gap-3">
-          <Stepper label="Durée (min)" value={dur}   unit="min"  step={5}   min={1}  max={300}
+          <Stepper label={t('cardioTimer.duration')} value={dur}   unit="min"  step={5}   min={1}  max={300} inputTitle={t('cardioTimer.tapToEdit')}
             onChange={v => updateParam({ durationMinutes: v })} />
-          <Stepper label="Distance (km)" value={dist} unit="km"  step={0.5} min={0}  max={100}
+          <Stepper label={t('cardioTimer.distance')} value={dist} unit="km"  step={0.5} min={0}  max={100} inputTitle={t('cardioTimer.tapToEdit')}
             onChange={v => updateParam({ distanceKm: v })} />
-          <Stepper label="Vitesse (km/h)" value={speed} unit="km/h" step={0.5} min={0} max={40}
+          <Stepper label={t('cardioTimer.speed')} value={speed} unit="km/h" step={0.5} min={0} max={40} inputTitle={t('cardioTimer.tapToEdit')}
             onChange={v => updateParam({ speedKmH: v })} />
-          <Stepper label="Pente (%)" value={incl} unit="%" step={1} min={0} max={20}
+          <Stepper label={t('cardioTimer.incline')} value={incl} unit="%" step={1} min={0} max={20} inputTitle={t('cardioTimer.tapToEdit')}
             onChange={v => updateParam({ inclinePct: v })} />
         </div>
       )}
 
-      {/* ── Résumé paramètres ─────────────────────────────────── */}
+      {/* Settings summary */}
       <div className="flex flex-wrap gap-2">
         {dur > 0 && (
           <span className="flex items-center gap-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 text-xs text-sky-300">
@@ -227,7 +230,7 @@ export function CardioTimerView({ exercise, isCompleted, onCardioChange, onCompl
         </span>
       </div>
 
-      {/* ── Chronomètre / Minuteur ────────────────────────────── */}
+      {/* Stopwatch / timer */}
       <div className={`rounded-2xl border p-5 space-y-4 ${
         done ? 'bg-[#C8F135]/5 border-[#C8F135]/30' : 'bg-zinc-900 border-zinc-800'
       }`}>
@@ -236,7 +239,7 @@ export function CardioTimerView({ exercise, isCompleted, onCardioChange, onCompl
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-sm font-semibold text-white">
             <Activity className="size-4 text-sky-400" />
-            Minuteur
+            {t('cardioTimer.timer')}
           </div>
           <div className="inline-flex rounded-xl border border-zinc-700 bg-zinc-800 p-0.5">
             {(['minuteur', 'chrono'] as const).map(m => (
@@ -248,13 +251,13 @@ export function CardioTimerView({ exercise, isCompleted, onCardioChange, onCompl
                   mode === m ? 'bg-[#C8F135] text-zinc-900' : 'text-zinc-400 hover:text-white'
                 }`}
               >
-                {m === 'minuteur' ? 'Décompte' : 'Chrono'}
+                {m === 'minuteur' ? t('cardioTimer.countdown') : t('cardioTimer.stopwatch')}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Affichage temps */}
+        {/* Time display */}
         <div className="text-center">
           <span className={`text-5xl font-bold tabular-nums font-mono tracking-tight ${
             done ? 'text-[#C8F135]' : mode === 'minuteur' && remaining <= 30 && remaining > 0 ? 'text-red-400' : 'text-white'
@@ -263,15 +266,15 @@ export function CardioTimerView({ exercise, isCompleted, onCardioChange, onCompl
           </span>
           {mode === 'minuteur' && dur > 0 && (
             <p className="text-xs text-zinc-500 mt-1">
-              {done ? 'Terminé !' : `/ ${formatTime(targetSec)}`}
+              {done ? t('cardioTimer.done') : `/ ${formatTime(targetSec)}`}
             </p>
           )}
           {mode === 'chrono' && elapsed > 0 && (
-            <p className="text-xs text-zinc-500 mt-1">écoulé</p>
+            <p className="text-xs text-zinc-500 mt-1">{t('cardioTimer.elapsed')}</p>
           )}
         </div>
 
-        {/* Barre de progression (minuteur seulement) */}
+        {/* Progress bar for timer mode only */}
         {mode === 'minuteur' && (
           <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
             <div
@@ -283,13 +286,13 @@ export function CardioTimerView({ exercise, isCompleted, onCardioChange, onCompl
           </div>
         )}
 
-        {/* Contrôles */}
+        {/* Controls */}
         <div className="flex gap-2">
           <button
             type="button"
             onClick={resetTimer}
             className="size-11 rounded-xl border border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-600 transition-colors"
-            title="Réinitialiser"
+            title={t('common.reset')}
           >
             <RotateCcw className="size-4" />
           </button>
@@ -304,18 +307,18 @@ export function CardioTimerView({ exercise, isCompleted, onCardioChange, onCompl
                 : 'bg-[#C8F135] text-zinc-900 hover:bg-[#d4f54d]'
             }`}
           >
-            {running ? <><Pause className="size-4" /> Pause</> : <><Play className="size-4" /> {elapsed > 0 ? 'Reprendre' : 'Démarrer'}</>}
+            {running ? <><Pause className="size-4" /> {t('cardioTimer.pause')}</> : <><Play className="size-4" /> {elapsed > 0 ? t('cardioTimer.resume') : t('cardioTimer.start')}</>}
           </button>
         </div>
 
         {done && (
           <div className="rounded-xl bg-[#C8F135]/10 border border-[#C8F135]/30 px-4 py-2.5 text-center">
-            <p className="text-sm font-semibold text-[#C8F135]">Cardio terminé !</p>
+            <p className="text-sm font-semibold text-[#C8F135]">{t('cardioTimer.cardioDone')}</p>
           </div>
         )}
       </div>
 
-      {/* ── Bouton Terminer ───────────────────────────────────── */}
+      {/* Finish button */}
       <button
         type="button"
         onClick={onComplete}
@@ -325,7 +328,7 @@ export function CardioTimerView({ exercise, isCompleted, onCardioChange, onCompl
             : 'bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
         }`}
       >
-        {isCompleted ? '✓ Cardio enregistré' : 'Marquer comme terminé'}
+        {isCompleted ? `✓ ${t('cardioTimer.saved')}` : t('exerciseItem.markAsDoneButton')}
       </button>
     </div>
   )

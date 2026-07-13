@@ -61,7 +61,7 @@ describe('firebase client auth helpers', () => {
     window.history.replaceState(null, '', 'http://localhost:3000/settings/profile')
   })
 
-  it('envoie la vérification email avec une URL de retour BodyOps', async () => {
+  it('sends email verification with a BodyOps return URL', async () => {
     await firebaseClient.firebaseSendCurrentUserEmailVerification('/settings/profile')
 
     expect(mocks.sendEmailVerificationMock).toHaveBeenCalledWith(mocks.authUser, {
@@ -70,7 +70,7 @@ describe('firebase client auth helpers', () => {
     })
   })
 
-  it('demande le changement email via vérification avant mise à jour', async () => {
+  it('requests an email change through verification before updating', async () => {
     await firebaseClient.firebaseRequestEmailChange('new@example.com', '/settings/profile')
 
     expect(mocks.verifyBeforeUpdateEmailMock).toHaveBeenCalledWith(mocks.authUser, 'new@example.com', {
@@ -79,7 +79,7 @@ describe('firebase client auth helpers', () => {
     })
   })
 
-  it('envoie le reset password avec retour vers la connexion', async () => {
+  it('sends password reset with a return URL to sign-in', async () => {
     await firebaseClient.firebaseForgotPassword('eddy@example.com')
 
     expect(mocks.sendPasswordResetEmailMock).toHaveBeenCalledWith(mocks.authMock, 'eddy@example.com', {
@@ -88,7 +88,7 @@ describe('firebase client auth helpers', () => {
     })
   })
 
-  it('expose les actions Firebase utilisées par le handler email', async () => {
+  it('exposes Firebase actions used by the email action handler', async () => {
     await firebaseClient.firebaseCheckActionCode('code-1')
     await firebaseClient.firebaseApplyActionCode('code-2')
     await firebaseClient.firebaseVerifyPasswordResetCode('code-3')
@@ -100,7 +100,7 @@ describe('firebase client auth helpers', () => {
     expect(mocks.confirmPasswordResetMock).toHaveBeenCalledWith(mocks.authMock, 'code-4', 'password123')
   })
 
-  it('rafraîchit l’utilisateur courant avant de retourner le token', async () => {
+  it('reloads the current user before returning the token', async () => {
     mocks.authUser.getIdToken.mockResolvedValue('fresh-token')
 
     await expect(firebaseClient.firebaseCurrentUserIdToken(true)).resolves.toBe('fresh-token')

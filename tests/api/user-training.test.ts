@@ -49,13 +49,13 @@ describe('/api/user/training', () => {
     vi.unstubAllEnvs()
   })
 
-  it('retourne 401 si non connecté', async () => {
+  it('returns 401 when unauthenticated', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const res = await GET()
     expect(res.status).toBe(401)
   })
 
-  it('crée les séances avec leurs exerciseLogs persistés', async () => {
+  it('creates sessions with persisted exerciseLogs', async () => {
     ;(prisma.workoutProgram.create as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 'program-1',
       sessions: [],
@@ -70,7 +70,7 @@ describe('/api/user/training', () => {
     expect(firstSession.exerciseLogs.create[0].exercise.connectOrCreate.where.id).toMatch(/^ex-/)
   })
 
-  it('désactive les programmes actifs sur DELETE', async () => {
+  it('deactivates active programs on DELETE', async () => {
     ;(prisma.workoutProgram.updateMany as ReturnType<typeof vi.fn>).mockResolvedValue({ count: 1 })
     const res = await DELETE()
     expect(res.status).toBe(200)
@@ -78,7 +78,7 @@ describe('/api/user/training', () => {
       .toEqual({ userId: 'user-1', isActive: true })
   })
 
-  it('régénère un programme sur POST avec fallback local', async () => {
+  it('regenerates a program on POST with local fallback', async () => {
     ;(prisma.workoutProgram.updateMany as ReturnType<typeof vi.fn>).mockResolvedValue({ count: 1 })
     ;(prisma.workoutProgram.create as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 'program-2',

@@ -12,6 +12,8 @@ import {
   firebaseRequestEmailChange,
   firebaseSendCurrentUserEmailVerification,
 } from '@/lib/firebase/client'
+import { useLocale } from '@/contexts/LocaleContext'
+import { LanguageToggle } from '@/components/i18n/LanguageToggle'
 
 type CoachVerificationIssue = { field: string; message: string }
 
@@ -31,13 +33,13 @@ type CoachProfileVerification = {
 /** Profile settings page: update display name, avatar, timezone, and account email/password; includes account deletion. */
 export default function ProfileSettingsPage() {
   const router = useRouter()
+  const { t } = useLocale()
   const { data: session, update } = useSession()
   const { profile, updateProfile, timezone, setTimezone } = useUserStore()
   const [firstName, setFirstName] = useState(profile?.firstName ?? session?.user?.name ?? '')
   const [email, setEmail] = useState(session?.user?.email ?? '')
   const [image, setImage] = useState(session?.user?.image ?? '')
   const [password, setPassword] = useState('')
-  const [language, setLanguage] = useState<'fr' | 'en'>((profile?.language as 'fr' | 'en') ?? 'fr')
   const [tz, setTz] = useState(timezone)
   const [saving, setSaving] = useState(false)
   const [sendingVerification, setSendingVerification] = useState(false)
@@ -67,13 +69,13 @@ export default function ProfileSettingsPage() {
 
   const coachIssues = coachProfile?.verificationIssues ?? []
   const missingCoachFields = coachProfile ? [
-    !coachProfile.documentFileName ? 'Document officiel non envoyé.' : '',
-    !coachProfile.firstName ? 'Prénom coach manquant.' : '',
-    !coachProfile.lastName ? 'Nom de famille coach manquant.' : '',
-    !coachProfile.birthDate ? 'Date de naissance coach manquante.' : '',
-    !coachProfile.bio ? 'Description professionnelle manquante.' : '',
-    coachProfile.specialties.length === 0 ? 'Spécialité manquante.' : '',
-    coachProfile.certifications.length === 0 ? 'Certification manquante.' : '',
+    !coachProfile.documentFileName ? t('settings.missingOfficialDocument') : '',
+    !coachProfile.firstName ? t('settings.missingCoachFirstName') : '',
+    !coachProfile.lastName ? t('settings.missingCoachLastName') : '',
+    !coachProfile.birthDate ? t('settings.missingCoachBirthDate') : '',
+    !coachProfile.bio ? t('settings.missingCoachBio') : '',
+    coachProfile.specialties.length === 0 ? t('settings.missingCoachSpecialty') : '',
+    coachProfile.certifications.length === 0 ? t('settings.missingCoachCertification') : '',
   ].filter(Boolean) : []
   const showCoachVerificationBanner = Boolean(
     coachProfile
@@ -100,18 +102,18 @@ export default function ProfileSettingsPage() {
       const profileRes = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, language }),
+        body: JSON.stringify({ firstName }),
       })
       if (!profileRes.ok) throw new Error('profile')
-      updateProfile({ firstName, language })
+      updateProfile({ firstName })
       setTimezone(tz)
       setPassword('')
       await update()
       toast.success(emailChanged
-        ? 'Profil mis à jour. Vérifie ta nouvelle adresse email pour confirmer le changement.'
-        : 'Profil mis à jour')
+        ? t('settings.profileUpdatedEmail')
+        : t('settings.profileUpdated'))
     } catch {
-      toast.error('Impossible de sauvegarder le profil')
+      toast.error(t('settings.profileSaveError'))
     } finally {
       setSaving(false)
     }
@@ -121,9 +123,9 @@ export default function ProfileSettingsPage() {
     setSendingVerification(true)
     try {
       await firebaseSendCurrentUserEmailVerification('/settings/profile')
-      toast.success('Email de vérification envoyé.')
+      toast.success(t('settings.emailVerificationSent'))
     } catch {
-      toast.error('Impossible d’envoyer l’email de vérification. Reconnecte-toi puis réessaie.')
+      toast.error(t('settings.emailVerificationError'))
     } finally {
       setSendingVerification(false)
     }
@@ -139,10 +141,10 @@ export default function ProfileSettingsPage() {
       const data = await res.json()
       setCoachProfile(data)
       await update()
-      toast.success('Espace coach créé')
+      toast.success(t('settings.coachSpaceCreated'))
       router.push('/auth/coach/complete')
     } catch {
-      toast.error("Impossible de créer l'espace coach")
+      toast.error(t('settings.coachSpaceCreateError'))
     } finally {
       setCreatingCoach(false)
     }
@@ -156,7 +158,7 @@ export default function ProfileSettingsPage() {
 
   return (
     <>
-      <Header title="Mon profil" />
+      <Header title={t('settings.myProfile')} />
       <PageWrapper>
         <div className="max-w-2xl space-y-6">
           {showCoachVerificationBanner && (
@@ -165,10 +167,10 @@ export default function ProfileSettingsPage() {
                 <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-200" />
                 <div>
                   <p className="text-sm font-semibold text-amber-100">
-                    Votre profil coach est en cours de vérification.
+                    {t('settings.coachVerificationTitle')}
                   </p>
                   <p className="mt-1 text-sm leading-6 text-amber-100/90">
-                    Certaines informations ou documents doivent être validés avant certification complète.
+                    {t('settings.coachVerificationDescription')}
                   </p>
                   {(missingCoachFields.length > 0 || coachIssues.length > 0) && (
                     <ul className="mt-3 space-y-1 text-xs leading-5 text-amber-100/90">
@@ -184,26 +186,26 @@ export default function ProfileSettingsPage() {
 
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
             <div className="flex items-center justify-between gap-4">
-              <h1 className="text-[22px] font-medium text-white">Mon profil</h1>
+              <h1 className="text-[22px] font-medium text-white">{t('settings.myProfile')}</h1>
               <button
                 type="button"
                 onClick={save}
                 disabled={saving || !firstName || !email}
-                aria-label="Enregistrer mon profil"
+                aria-label={t('settings.saveProfile')}
                 className="flex items-center gap-2 rounded-xl bg-[#C8F135] px-4 py-2.5 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Save className="size-4" />
-                {saving ? 'Sauvegarde...' : 'Enregistrer'}
+                {saving ? t('settings.saving') : t('common.save')}
               </button>
             </div>
 
             <div className="mt-6 grid gap-4">
               <label className="grid gap-1.5">
-                <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Prénom</span>
+                <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('settings.firstName')}</span>
                 <input value={firstName} onChange={(e) => setFirstName(e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#C8F135]" />
               </label>
               <label className="grid gap-1.5">
-                <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Email</span>
+                <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('auth.email')}</span>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#C8F135]" />
               </label>
               <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
@@ -211,9 +213,9 @@ export default function ProfileSettingsPage() {
                   <div className="flex gap-3">
                     <MailCheck className="mt-0.5 size-5 shrink-0 text-[#C8F135]" />
                     <div>
-                      <p className="text-sm font-semibold text-white">Vérification email</p>
+                      <p className="text-sm font-semibold text-white">{t('settings.emailVerification')}</p>
                       <p className="mt-1 text-xs leading-5 text-zinc-400">
-                        Pour changer d’adresse, BodyOps envoie un lien à la nouvelle adresse. Le changement sera appliqué après validation.
+                        {t('settings.emailVerificationDescription')}
                       </p>
                     </div>
                   </div>
@@ -224,28 +226,25 @@ export default function ProfileSettingsPage() {
                     className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-[#C8F135] hover:text-[#C8F135] disabled:opacity-50"
                   >
                     <Send className="size-3.5" />
-                    {sendingVerification ? 'Envoi...' : 'Renvoyer'}
+                    {sendingVerification ? t('settings.sending') : t('settings.resend')}
                   </button>
                 </div>
               </div>
               <label className="grid gap-1.5">
-                <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Photo de profil</span>
-                <input value={image} onChange={(e) => setImage(e.target.value)} placeholder="https://..." className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#C8F135]" />
+                <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('settings.profilePhoto')}</span>
+                <input value={image} onChange={(e) => setImage(e.target.value)} placeholder={t('common.urlPlaceholder')} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#C8F135]" />
               </label>
               <label className="grid gap-1.5">
-                <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Nouveau mot de passe</span>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Minimum 8 caractères" className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#C8F135]" />
+                <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('settings.newPassword')}</span>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('settings.passwordMin')} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#C8F135]" />
               </label>
               <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-1.5">
+                  <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('settings.language')}</span>
+                  <LanguageToggle />
+                </div>
                 <label className="grid gap-1.5">
-                  <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Langue</span>
-                  <select value={language} onChange={(e) => setLanguage(e.target.value as 'fr' | 'en')} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#C8F135]">
-                    <option value="fr">FR</option>
-                    <option value="en">EN</option>
-                  </select>
-                </label>
-                <label className="grid gap-1.5">
-                  <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Fuseau horaire</span>
+                  <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('settings.timezone')}</span>
                   <input value={tz} onChange={(e) => setTz(e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#C8F135]" />
                 </label>
               </div>
@@ -255,9 +254,9 @@ export default function ProfileSettingsPage() {
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-base font-semibold text-white">Espace coach</h2>
+                <h2 className="text-base font-semibold text-white">{t('settings.coachSpace')}</h2>
                 <p className="mt-1 text-sm leading-6 text-zinc-400">
-                  Utilise le même compte pour gérer ton profil professionnel, tes disponibilités et tes membres.
+                  {t('settings.coachSpaceDescription')}
                 </p>
               </div>
               {coachProfile ? (
@@ -267,7 +266,7 @@ export default function ProfileSettingsPage() {
                   className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-[#C8F135] hover:text-[#C8F135]"
                 >
                   <BriefcaseBusiness className="size-4" />
-                  Ouvrir mon espace coach
+                  {t('settings.openCoachSpace')}
                 </button>
               ) : (
                 <button
@@ -277,7 +276,7 @@ export default function ProfileSettingsPage() {
                   className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <BriefcaseBusiness className="size-4" />
-                  {creatingCoach ? 'Création...' : 'Créer mon espace coach'}
+                  {creatingCoach ? t('settings.creating') : t('settings.createCoachSpace')}
                 </button>
               )}
             </div>

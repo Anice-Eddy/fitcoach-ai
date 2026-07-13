@@ -30,6 +30,6 @@ export async function syncBodyOpsUserWithFirebaseIdToken(idToken: string) {
     method: 'POST',
     headers: { Authorization: `Bearer ${idToken}` },
   })
-  if (!res.ok) throw new Error('Impossible de synchroniser le compte avec BodyOps.')
+  if (!res.ok) throw new Error('Unable to sync the account with BodyOps.')
   return res.json()
 }

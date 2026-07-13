@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma/client'
 
 const schema = z.object({
   token:    z.string().min(1),
-  password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 
 /** Validates a password-reset token, updates the user's hashed password, and deletes the used token; returns 400 on invalid or expired token. */
@@ -29,12 +29,12 @@ export async function POST(req: Request) {
   })
 
   if (!resetToken) {
-    return NextResponse.json({ error: 'Lien invalide ou déjà utilisé' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid or already used link' }, { status: 400 })
   }
 
   if (resetToken.expiresAt < new Date()) {
     await prisma.passwordResetToken.delete({ where: { token } })
-    return NextResponse.json({ error: 'Lien expiré — demande un nouveau lien' }, { status: 400 })
+    return NextResponse.json({ error: 'Expired link - request a new one' }, { status: 400 })
   }
 
   const hashed = await hash(password, 12)

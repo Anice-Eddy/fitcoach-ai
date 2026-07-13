@@ -1,9 +1,9 @@
 /**
- * Script de remise à zéro des données en développement.
- * Supprime tous les utilisateurs et données liées dans le bon ordre.
- * NE PAS utiliser en production.
+ * Development data reset script.
+ * Deletes users and related data in dependency-safe order.
+ * DO NOT use in production.
  *
- * Usage : npx tsx prisma/reset-dev.ts
+ * Usage: npx tsx prisma/reset-dev.ts
  */
 import { PrismaClient } from '@prisma/client'
 
@@ -11,13 +11,13 @@ const prisma = new PrismaClient()
 
 async function main() {
   if (process.env.NODE_ENV === 'production') {
-    console.error('❌ Ce script ne peut pas tourner en production.')
+    console.error('This script cannot run in production.')
     process.exit(1)
   }
 
-  console.log('🧹 Nettoyage de la base de données...')
+  console.log('Cleaning development database...')
 
-  // Ordre important : enfants avant parents
+  // Important order: child records before parent records.
   await prisma.aIMessage.deleteMany()
   await prisma.aIMemory.deleteMany()
   await prisma.aIReport.deleteMany()
@@ -57,7 +57,7 @@ async function main() {
   await prisma.account.deleteMany()
   await prisma.user.deleteMany()
 
-  console.log('✅ Base de données remise à zéro. Tu peux recréer un compte.')
+  console.log('Development database reset complete. You can create a new account.')
 }
 
 main()

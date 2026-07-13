@@ -31,7 +31,7 @@ const schema = z.object({
 /** Updates coach profile settings (bio, specialties, certifications, memberLimit, avatarUrl, etc.); ignores undefined fields. */
 export async function PATCH(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const parsed = schema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
@@ -39,7 +39,7 @@ export async function PATCH(req: Request) {
   const coachProfile = await prisma.coachProfile.findUnique({
     where: { userId: session.user.id },
   })
-  if (!coachProfile) return NextResponse.json({ error: 'Profil coach introuvable' }, { status: 404 })
+  if (!coachProfile) return NextResponse.json({ error: 'Coach profile not found' }, { status: 404 })
 
   const d = parsed.data
   const updated = await prisma.coachProfile.update({

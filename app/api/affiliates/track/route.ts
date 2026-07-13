@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 
-// POST /api/affiliates/track — enregistre un clic affilié (RGPD : IP hashée)
+// POST /api/affiliates/track - records an affiliate click with a hashed IP.
 
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth/auth'
@@ -14,14 +14,14 @@ export async function POST(req: Request) {
 
   const body   = await req.json()
   const parsed = affiliateClickSchema.safeParse(body)
-  if (!parsed.success) return NextResponse.json({ error: 'Données invalides' }, { status: 422 })
+  if (!parsed.success) return NextResponse.json({ error: 'Invalid data' }, { status: 422 })
 
   const { productId, source } = parsed.data
 
   // Ensure the product row exists in DB (upsert from static catalog if needed)
   const { AFFILIATE_PRODUCTS } = await import('@/lib/affiliates/products')
   const staticProduct = AFFILIATE_PRODUCTS.find((p) => p.id === productId)
-  if (!staticProduct) return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 })
+  if (!staticProduct) return NextResponse.json({ error: 'Product not found' }, { status: 404 })
 
   await prisma.affiliateProduct.upsert({
     where:  { id: productId },

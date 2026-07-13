@@ -1,3 +1,10 @@
+import {
+  isAppointmentNoteNotification,
+  isAppointmentNotification,
+  isNoteReplyNotification,
+  isSharedNoteNotification,
+} from './patterns'
+
 type NotificationLinkInput = {
   type?: string | null
   title?: string | null
@@ -7,27 +14,14 @@ type NotificationLinkInput = {
 
 type NotificationContext = 'member' | 'coach'
 
-function hasWord(value: string | null | undefined, words: string[]) {
-  const text = (value ?? '').toLowerCase()
-  return words.some((word) => text.includes(word))
-}
-
 function relatedQuery(key: string, relatedId: string | null | undefined) {
   return relatedId ? `?${key}=${encodeURIComponent(relatedId)}` : ''
 }
 
 function isNoteNotification(notification: NotificationLinkInput) {
-  return notification.type === 'MESSAGE'
-    && (
-      hasWord(notification.title, ['note'])
-      || hasWord(notification.message, ['note'])
-    )
-}
-
-function isAppointmentNotification(notification: NotificationLinkInput) {
-  return notification.type === 'APPOINTMENT'
-    || hasWord(notification.title, ['rendez-vous'])
-    || hasWord(notification.message, ['rendez-vous'])
+  return notification.type === 'MESSAGE' &&
+    !isAppointmentNoteNotification(notification) &&
+    (isSharedNoteNotification(notification) || isNoteReplyNotification(notification))
 }
 
 /** Builds the in-app destination for a notification using the same rules for every bell/menu. */

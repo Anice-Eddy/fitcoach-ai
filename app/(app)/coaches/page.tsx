@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Star, Users, CheckCircle, ArrowLeft, MapPin, Award } from 'lucide-react'
 import { ListSkeleton } from '@/components/ui/LoadingSkeleton'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface Coach {
   id: string
@@ -29,6 +30,7 @@ interface Coach {
 
 /** Displays the public coach directory fetched from /api/coaches, with a search bar and coach cards. */
 function CoachesInner() {
+  const { t } = useLocale()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [coaches, setCoaches] = useState<Coach[]>([])
@@ -54,8 +56,8 @@ function CoachesInner() {
 
   const goBack = () => {
     // Prefer the explicit origin passed by settings/onboarding over browser history.
-    // Do NOT use router.back() — it creates a loop when the user navigated here from
-    // a coach detail page ("Choisir un autre coach" → /coaches → back → coach detail again).
+    // Do NOT use router.back(): it creates a loop when the user navigated here from
+    // a coach detail page ("Choose another coach" -> /coaches -> back -> coach detail again).
     router.push(safeReturnTo || '/dashboard')
   }
 
@@ -68,16 +70,16 @@ function CoachesInner() {
           onClick={goBack}
           className="mb-8 flex items-center gap-1.5 text-xs text-zinc-500 transition-colors hover:text-white"
         >
-          <ArrowLeft className="size-3.5" /> Retour
+          <ArrowLeft className="size-3.5" /> {t('coaches.back')}
         </button>
 
         <div className="mb-10 text-center">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[5px] text-[#C8F135]">
-            Coaching humain
+            {t('coaches.humanCoaching')}
           </p>
-          <h1 className="text-[32px] font-medium text-white">Choisissez votre coach</h1>
+          <h1 className="text-[32px] font-medium text-white">{t('coaches.title')}</h1>
           <p className="mt-3 text-sm text-zinc-400">
-            Des coachs certifiés disponibles pour un accompagnement personnalisé.
+            {t('coaches.description')}
           </p>
         </div>
 
@@ -87,7 +89,7 @@ function CoachesInner() {
           <div className="space-y-5">
             {coaches.length === 0 && (
               <div className="rounded-2xl border border-[#C8F135]/30 bg-[#C8F135]/10 p-4 text-sm text-[#e8ff91]">
-                Aucun coach réel n'est encore disponible.
+                {t('coaches.noCoach')}
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -107,7 +109,7 @@ function CoachesInner() {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h2 className="text-base font-semibold text-white truncate">{coach.name ?? 'Coach'}</h2>
+                        <h2 className="text-base font-semibold text-white truncate">{coach.name ?? t('coaches.coachFallback')}</h2>
                         {coach.coachProfile.isVerified && (
                           <CheckCircle className="size-4 text-[#C8F135] shrink-0" />
                         )}
@@ -124,7 +126,7 @@ function CoachesInner() {
                         {coach.coachProfile._count.coachMembers != null && (
                           <div className="flex items-center gap-1 text-xs text-zinc-500">
                             <Users className="size-3" />
-                            {coach.coachProfile._count.coachMembers} membre{coach.coachProfile._count.coachMembers !== 1 ? 's' : ''}
+                            {coach.coachProfile._count.coachMembers} {coach.coachProfile._count.coachMembers !== 1 ? t('coaches.members') : t('coaches.member')}
                           </div>
                         )}
                         {(coach.coachProfile.city || coach.coachProfile.country) && (
@@ -136,7 +138,7 @@ function CoachesInner() {
                         {coach.coachProfile.yearsExperience != null && (
                           <span className="flex items-center gap-1 text-xs text-zinc-500">
                             <Award className="size-3" />
-                            {coach.coachProfile.yearsExperience} ans
+                            {coach.coachProfile.yearsExperience} {t('coaches.years')}
                           </span>
                         )}
                         {coach.coachProfile.publicRating != null && (
@@ -159,10 +161,10 @@ function CoachesInner() {
                   <div className="mt-4 flex items-center justify-between">
                     <span className="text-xs text-zinc-500">
                       {coach.coachProfile.discoveryCallTitle && coach.coachProfile.discoveryCallDuration
-                        ? `${coach.coachProfile.discoveryCallTitle} · ${coach.coachProfile.discoveryCallDuration} min · Gratuit`
-                        : 'Profil coach disponible'}
+                        ? `${coach.coachProfile.discoveryCallTitle} · ${coach.coachProfile.discoveryCallDuration} min · ${t('coaches.free')}`
+                        : t('coaches.availableProfile')}
                     </span>
-                    <span className="text-xs text-[#C8F135] group-hover:underline">Réserver →</span>
+                    <span className="text-xs text-[#C8F135] group-hover:underline">{t('coaches.book')}</span>
                   </div>
                 </Link>
               ))}

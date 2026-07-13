@@ -4,11 +4,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { PLANS } from '@/lib/stripe/plans'
 import { Logo } from '@/components/ui/Logo'
+import { LanguageToggle } from '@/components/i18n/LanguageToggle'
 import { PricingCard } from '@/components/pricing/PricingCard'
 import { PricingToggle } from '@/components/pricing/PricingToggle'
+import { useLocale } from '@/contexts/LocaleContext'
 
 /** Pricing page with monthly/yearly toggle; renders plan cards and FAQs. */
 export default function PricingPage() {
+  const { t } = useLocale()
   const [isYearly, setIsYearly] = useState(false)
 
   return (
@@ -16,16 +19,19 @@ export default function PricingPage() {
       <div className="mx-auto max-w-6xl">
         <nav className="mb-12 flex items-center justify-between">
           <Logo href="/" size="md" />
-          <Link href="/auth/signin" className="rounded-xl border border-zinc-800 px-4 py-2 text-sm text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-white">
-            Connexion
-          </Link>
+          <div className="flex items-center gap-2">
+            <LanguageToggle compact />
+            <Link href="/auth/signin" className="rounded-xl border border-zinc-800 px-4 py-2 text-sm text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-white">
+              {t('auth.signIn')}
+            </Link>
+          </div>
         </nav>
 
         <section className="mb-10 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[4px] text-[#C8F135]">Tarifs</p>
-          <h1 className="text-[34px] font-medium leading-tight sm:text-[44px]">Choisis ton plan</h1>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[4px] text-[#C8F135]">{t('pricing.eyebrow')}</p>
+          <h1 className="text-[34px] font-medium leading-tight sm:text-[44px]">{t('pricing.title')}</h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-zinc-400">
-            Commence gratuitement, puis passe à un plan supérieur quand tu veux plus de suivi, de nutrition et d'exports.
+            {t('pricing.description')}
           </p>
         </section>
 

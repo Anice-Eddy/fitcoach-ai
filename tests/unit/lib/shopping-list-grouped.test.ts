@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  foodCategoryLabel,
   generateShoppingList,
   groupShoppingList,
   shoppingListToText,
@@ -31,7 +32,7 @@ const makeFoodItem = (name: string, grams: number): Meal['foodItems'][number] =>
 })
 
 describe('generateShoppingList', () => {
-  it('agrège les grammes du même aliment sur plusieurs repas', () => {
+  it('aggregates grams for the same food across multiple meals', () => {
     const meals = [
       makeMeal([makeFoodItem('Blanc de poulet', 150)]),
       makeMeal([makeFoodItem('Blanc de poulet', 120)]),
@@ -40,70 +41,93 @@ describe('generateShoppingList', () => {
     expect(list['Blanc de poulet'].totalGrams).toBe(270)
   })
 
-  it('attribue la bonne catégorie depuis la food database', () => {
+  it('assigns the right category from the food database', () => {
     const meals = [makeMeal([makeFoodItem('Blanc de poulet', 150)])]
     const list = generateShoppingList(meals)
-    expect(list['Blanc de poulet'].category).toBe('Protéines')
+    expect(list['Blanc de poulet'].category).toBe('protein')
   })
 
-  it('classe les aliments inconnus en Autres', () => {
+  it('classifies unknown foods as Other', () => {
     const meals = [makeMeal([makeFoodItem('Aliment inconnu', 50)])]
     const list = generateShoppingList(meals)
-    expect(list['Aliment inconnu'].category).toBe('Autres')
+    expect(list['Aliment inconnu'].category).toBe('other')
   })
 
-  it('retourne un objet vide pour une liste de repas sans aliments', () => {
+  it('assigns categories when meal foods use English display names', () => {
+    const meals = [makeMeal([makeFoodItem('Chicken breast', 150)])]
+    const list = generateShoppingList(meals)
+    expect(list['Chicken breast'].category).toBe('protein')
+  })
+
+  it('returns an empty object for meals without food items', () => {
     const meals = [makeMeal([])]
     expect(generateShoppingList(meals)).toEqual({})
   })
 })
 
 describe('groupShoppingList', () => {
-  it('groupe les aliments par catégorie', () => {
+  it('groups foods by category', () => {
     const flat = {
-      'Blanc de poulet': { name: 'Blanc de poulet', totalGrams: 150, category: 'Protéines' as const },
-      'Riz blanc cuit':  { name: 'Riz blanc cuit',  totalGrams: 200, category: 'Glucides'  as const },
+      'Blanc de poulet': { name: 'Blanc de poulet', totalGrams: 150, category: 'protein' as const },
+      'Riz blanc cuit':  { name: 'Riz blanc cuit',  totalGrams: 200, category: 'carb'  as const },
     }
     const grouped = groupShoppingList(flat)
-    expect(grouped['Protéines']).toHaveLength(1)
-    expect(grouped['Glucides']).toHaveLength(1)
-    expect(grouped['Légumes']).toHaveLength(0)
+    expect(grouped.protein).toHaveLength(1)
+    expect(grouped.carb).toHaveLength(1)
+    expect(grouped.vegetable).toHaveLength(0)
   })
 
-  it('trie les articles par ordre alphabétique dans chaque catégorie', () => {
+  it('sorts items alphabetically in each category', () => {
     const flat = {
-      'Saumon':          { name: 'Saumon',          totalGrams: 100, category: 'Protéines' as const },
-      'Blanc de poulet': { name: 'Blanc de poulet', totalGrams: 150, category: 'Protéines' as const },
+      'Saumon':          { name: 'Saumon',          totalGrams: 100, category: 'protein' as const },
+      'Blanc de poulet': { name: 'Blanc de poulet', totalGrams: 150, category: 'protein' as const },
     }
     const grouped = groupShoppingList(flat)
-    expect(grouped['Protéines'][0].name).toBe('Blanc de poulet')
-    expect(grouped['Protéines'][1].name).toBe('Saumon')
+    expect(grouped.protein[0].name).toBe('Blanc de poulet')
+    expect(grouped.protein[1].name).toBe('Saumon')
   })
 })
 
 describe('shoppingListToText', () => {
-  it('produit une chaîne lisible par un humain', () => {
+  it('produces a readable English string by default', () => {
     const grouped = groupShoppingList({
-      'Blanc de poulet': { name: 'Blanc de poulet', totalGrams: 300, category: 'Protéines' as const },
+      'Blanc de poulet': { name: 'Blanc de poulet', totalGrams: 300, category: 'protein' as const },
     })
     const text = shoppingListToText(grouped)
-    expect(text).toContain('Protéines')
-    expect(text).toContain('Blanc de poulet')
+    expect(text).toContain('Protein')
+    expect(text).toContain('Chicken breast')
     expect(text).toContain('300 g')
   })
 
-  it('inclut le titre de la semaine si fourni', () => {
+  it('produces a readable French string when requested', () => {
+    const grouped = groupShoppingList({
+      'Blanc de poulet': { name: 'Blanc de poulet', totalGrams: 300, category: 'protein' as const },
+    })
+    const text = shoppingListToText(grouped, undefined, 'fr')
+    expect(text).toContain('Liste de courses')
+    expect(text).toContain('Protéines')
+    expect(text).toContain('Blanc de poulet')
+  })
+
+  it('includes the week title when provided', () => {
     const grouped = groupShoppingList({})
     const text = shoppingListToText(grouped, '26 mai 2025')
     expect(text).toContain('26 mai 2025')
   })
 
-  it('n\'inclut pas les catégories vides', () => {
+  it('does not include empty categories', () => {
     const grouped = groupShoppingList({
-      'Banane': { name: 'Banane', totalGrams: 100, category: 'Fruits' as const },
+      'Banane': { name: 'Banane', totalGrams: 100, category: 'fruit' as const },
     })
     const text = shoppingListToText(grouped)
-    expect(text).not.toContain('Protéines:')
+    expect(text).not.toContain('Protein:')
     expect(text).toContain('Fruits:')
+  })
+})
+
+describe('foodCategoryLabel', () => {
+  it('keeps legacy category values while returning localized labels', () => {
+    expect(foodCategoryLabel('dairy', 'fr')).toBe('Produits laitiers')
+    expect(foodCategoryLabel('dairy', 'en')).toBe('Dairy')
   })
 })

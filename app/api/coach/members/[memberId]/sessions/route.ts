@@ -22,18 +22,18 @@ const deleteSchema = z.object({
 // Authenticates the session as a coach and verifies the member is in their roster; returns coachProfileId or an error response.
 async function authorizeCoach(memberId: string) {
   const session = await auth()
-  if (!session?.user?.email) return { error: NextResponse.json({ error: 'Non authentifié' }, { status: 401 }) }
+  if (!session?.user?.email) return { error: NextResponse.json({ error: 'Unauthenticated' }, { status: 401 }) }
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: { coachProfile: true },
   })
-  if (!user?.coachProfile) return { error: NextResponse.json({ error: 'Non autorisé' }, { status: 403 }) }
+  if (!user?.coachProfile) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 403 }) }
 
   const membership = await prisma.coachMember.findUnique({
     where: { coachId_memberId: { coachId: user.coachProfile.id, memberId } },
   })
-  if (!membership) return { error: NextResponse.json({ error: 'Membre introuvable' }, { status: 404 }) }
+  if (!membership) return { error: NextResponse.json({ error: 'Member not found' }, { status: 404 }) }
 
   return { coachProfileId: user.coachProfile.id, userId: user.id }
 }
@@ -72,7 +72,7 @@ export async function PATCH(
   const session = await prisma.workoutSession.findFirst({
     where: { id: sessionId, userId: params.memberId },
   })
-  if (!session) return NextResponse.json({ error: 'Séance introuvable' }, { status: 404 })
+  if (!session) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
 
   const updateData: Record<string, unknown> = { ...rest }
   if (status) {
@@ -107,9 +107,9 @@ export async function DELETE(
       where:  { id: sessionId, userId: params.memberId },
       select: { id: true },
     })
-    if (!session) return NextResponse.json({ error: 'Séance introuvable' }, { status: 404 })
+    if (!session) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
 
-    // Les ExerciseLog liés sont supprimés automatiquement par la relation onDelete: Cascade.
+    // Linked ExerciseLog rows are automatically deleted by the onDelete: Cascade relation.
     await prisma.workoutSession.delete({ where: { id: sessionId } })
     return NextResponse.json({ ok: true, deletedSessionId: sessionId })
   }
@@ -118,11 +118,11 @@ export async function DELETE(
     where: { id: exerciseLogId, session: { id: sessionId, userId: params.memberId } },
     select: { id: true },
   })
-  if (!exerciseLog) return NextResponse.json({ error: 'Exercice introuvable' }, { status: 404 })
+  if (!exerciseLog) return NextResponse.json({ error: 'Exercise not found' }, { status: 404 })
 
   await prisma.exerciseLog.delete({ where: { id: exerciseLogId } })
 
-  // Retourne la séance rafraîchie pour que l'interface garde les exercices synchronisés.
+  // Return the refreshed session so the UI keeps exercises synchronized.
   const updatedSession = await prisma.workoutSession.findFirst({
     where:   { id: sessionId, userId: params.memberId },
     include: { exerciseLogs: { include: { exercise: true }, orderBy: { order: 'asc' } } },

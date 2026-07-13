@@ -8,8 +8,10 @@ import { Header }              from '@/components/layout/Header'
 import { AffiliateDisclosure } from '@/components/affiliates/AffiliateDisclosure'
 import { AFFILIATE_CATEGORIES } from '@/lib/affiliates/categories'
 import { getAffiliateProductsForMarket } from '@/lib/affiliates/products'
+import { affiliateProductDescription, affiliateProductName, affiliateProductTags } from '@/lib/affiliates/display'
 import { ChevronRight, Search, X, ExternalLink } from 'lucide-react'
 import type { AffiliateMarket, AffiliateCategory, AffiliateProduct } from '@/types'
+import { useLocale } from '@/contexts/LocaleContext'
 
 const CATEGORY_STYLE: Record<AffiliateCategory, { iconBg: string; iconColor: string }> = {
   SUPPLEMENTS: { iconBg: 'bg-[#C8F135]/15', iconColor: 'text-[#C8F135]'       },
@@ -30,14 +32,8 @@ function detectMarket(): AffiliateMarket {
     ? 'CA' : 'FR'
 }
 
-const CATEGORY_LABEL: Record<AffiliateCategory, string> = {
-  SUPPLEMENTS: 'Suppléments',
-  EQUIPMENT:   'Équipement',
-  CLOTHING:    'Vêtements',
-  BOOKS:       'Livres',
-}
-
 export default function ShopPage() {
+  const { locale, t } = useLocale()
   const [market,  setMarket]  = useState<AffiliateMarket>('FR')
   const [query,   setQuery]   = useState('')
 
@@ -56,7 +52,7 @@ export default function ShopPage() {
     return c
   }, [products])
 
-  // Normalise une chaîne : minuscules + suppression des accents
+  // Normalize a string: lowercase and remove accents.
   const normalize = (s: string) =>
     s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 
@@ -64,37 +60,38 @@ export default function ShopPage() {
     const q = normalize(query.trim())
     if (!q) return []
     return products.filter(p =>
-      normalize(p.name).includes(q) ||
+      normalize(affiliateProductName(p, locale)).includes(q) ||
       normalize(p.brand ?? '').includes(q) ||
-      normalize(p.description ?? '').includes(q),
+      normalize(affiliateProductDescription(p, locale) ?? '').includes(q) ||
+      affiliateProductTags(p, locale).some((tag) => normalize(tag).includes(q)),
     ).slice(0, 12)
-  }, [query, products])
+  }, [locale, query, products])
 
   const isSearching = query.trim().length > 0
 
   return (
     <>
-      <Header title="Boutique" />
+      <Header titleKey="nav.shop" />
       <PageWrapper>
         <div className="space-y-6">
 
           {/* Page header */}
           <div>
-            <h1 className="text-2xl font-bold text-white">Boutique</h1>
+            <h1 className="text-2xl font-bold text-white">{t('shop.title')}</h1>
             <p className="text-sm text-zinc-400 mt-1">
-              Produits sélectionnés pour atteindre vos objectifs fitness.{' '}
-              <span className="text-zinc-600">{products.length} produits · {market === 'CA' ? 'Canada' : 'France'}</span>
+              {t('shop.subtitle')}{' '}
+              <span className="text-zinc-600">{products.length} {products.length !== 1 ? t('shop.products') : t('shop.product')} · {market === 'CA' ? 'Canada' : 'France'}</span>
             </p>
           </div>
 
-          {/* ── Barre de recherche ─────────────────────────────── */}
+          {/* Search bar */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-zinc-500 pointer-events-none" />
             <input
               type="search"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Rechercher un produit, une marque…"
+              placeholder={t('shop.searchPlaceholder')}
               className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 pl-11 pr-10 py-3.5 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-[#C8F135] transition-colors"
             />
             {query && (
@@ -108,20 +105,20 @@ export default function ShopPage() {
             )}
           </div>
 
-          {/* ── Résultats de recherche ─────────────────────────── */}
+          {/* Search results */}
           {isSearching ? (
             <div className="space-y-3">
               <p className="text-xs text-zinc-500">
                 {searchResults.length > 0
-                  ? `${searchResults.length} résultat${searchResults.length > 1 ? 's' : ''} pour « ${query} »`
-                  : `Aucun résultat pour « ${query} »`
+                  ? `${searchResults.length} ${searchResults.length > 1 ? t('shop.results') : t('shop.result')} ${t('shop.forQuery')} "${query}"`
+                  : `${t('shop.noResultFor')} "${query}"`
                 }
               </p>
               {searchResults.length === 0 ? (
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-center">
                   <Search className="size-8 text-zinc-700 mx-auto mb-2" />
-                  <p className="text-sm text-zinc-400">Aucun produit trouvé</p>
-                  <p className="text-xs text-zinc-600 mt-1">Essaie un autre terme de recherche</p>
+                  <p className="text-sm text-zinc-400">{t('shop.noProductFound')}</p>
+                  <p className="text-xs text-zinc-600 mt-1">{t('shop.tryAnotherSearch')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -137,7 +134,7 @@ export default function ShopPage() {
                         <div className="relative size-16 shrink-0 rounded-xl overflow-hidden bg-zinc-800">
                           <Image
                             src={product.imageUrl}
-                            alt={product.name}
+                            alt={affiliateProductName(product, locale)}
                             fill
                             className="object-contain p-1"
                             sizes="64px"
@@ -147,13 +144,13 @@ export default function ShopPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-sm font-semibold text-white leading-snug line-clamp-2">
-                            {product.name}
+                            {affiliateProductName(product, locale)}
                           </p>
                           <ExternalLink className="size-3.5 text-zinc-600 group-hover:text-[#C8F135] transition-colors shrink-0 mt-0.5" />
                         </div>
                         <p className="text-xs text-zinc-500 mt-0.5">
                           {product.brand && <span className="text-zinc-400">{product.brand} · </span>}
-                          {CATEGORY_LABEL[product.category as AffiliateCategory]}
+                          {t(`shop.categories.${(product.category as AffiliateCategory).toLowerCase()}`)}
                         </p>
                         {product.price && (
                           <p className="text-xs text-[#C8F135] font-semibold mt-1">{product.price.toFixed(2)} €</p>
@@ -165,7 +162,7 @@ export default function ShopPage() {
               )}
             </div>
           ) : (
-            /* ── Vue catégories (défaut) ──────────────────────── */
+            /* Category view (default) */
             <>
               {/* Market toggle */}
               <div className="inline-flex rounded-xl border border-zinc-800 bg-zinc-900 p-1">
@@ -201,11 +198,11 @@ export default function ShopPage() {
                         <Icon className={`size-7 transition-colors ${style.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-white">{cat.label}</p>
-                        <p className="text-xs text-zinc-500 mt-0.5">{count} produits</p>
+                        <p className="text-sm font-bold text-white">{t(`shop.categories.${cat.id.toLowerCase()}`)}</p>
+                        <p className="text-xs text-zinc-500 mt-0.5">{count} {count !== 1 ? t('shop.products') : t('shop.product')}</p>
                       </div>
                       <div className="flex items-center gap-1 text-xs text-zinc-500 group-hover:text-[#C8F135] transition-colors">
-                        Voir <ChevronRight className="size-3.5" />
+                        {t('shop.view')} <ChevronRight className="size-3.5" />
                       </div>
                     </Link>
                   )

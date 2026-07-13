@@ -12,7 +12,9 @@ function extractYtId(url: string): string | null {
 import type { SessionExercise } from '@/types'
 import { useTrainingStore } from '@/stores/trainingStore'
 import { useUserStore } from '@/stores/userStore'
-import { EXERCISE_DATABASE } from '@/lib/training/exercise-database'
+import { EXERCISE_DATABASE, exerciseDisplayInstructions, exerciseDisplayName } from '@/lib/training/exercise-database'
+import { MUSCLE_GROUP_LABEL_KEYS } from '@/lib/i18n/profile-label-keys'
+import { useLocale } from '@/contexts/LocaleContext'
 
 // Calculates the recommended rest period in seconds based on the user's fitness goal and whether the exercise is compound.
 function calcRestSeconds(goal: string | undefined, isCompound: boolean): number {
@@ -32,6 +34,7 @@ interface Props { exercise: SessionExercise; index: number }
 
 /** Expandable exercise row with weight/reps input, set completion toggle, YouTube thumbnail, and alternative exercise selector. */
 export function ExerciseItem({ exercise, index }: Props) {
+  const { locale, t } = useLocale()
   const [expanded, setExpanded] = useState(false)
   const [showAlternatives, setShowAlternatives] = useState(false)
   const [ytImgError, setYtImgError] = useState(false)
@@ -68,6 +71,12 @@ export function ExerciseItem({ exercise, index }: Props) {
     () => exercise.videoUrl ? extractYtId(exercise.videoUrl) : null,
     [exercise.videoUrl],
   )
+  const exerciseLabel = exerciseDisplayName(exercise, locale)
+  const exerciseInstructions = exerciseDisplayInstructions(exercise, locale)
+  const muscleGroupLabel = (group: string) => {
+    const key = MUSCLE_GROUP_LABEL_KEYS[group]
+    return key ? t(key) : group
+  }
 
   const alternatives = EXERCISE_DATABASE.filter((item) =>
     item.id !== exercise.id && item.muscleGroups.some((group) => exercise.muscleGroups.includes(group)),
@@ -93,7 +102,7 @@ export function ExerciseItem({ exercise, index }: Props) {
       animate={{ backgroundColor: exercise.isCompleted ? 'rgba(200, 241, 53, 0.06)' : 'rgb(24, 24, 27)' }}
       className={`rounded-xl border transition-colors ${exercise.isCompleted ? 'border-[#C8F135]/30' : 'border-zinc-800'}`}
     >
-      {/* En-tête */}
+      {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-3 p-4 text-left"
@@ -103,13 +112,15 @@ export function ExerciseItem({ exercise, index }: Props) {
           : <Circle className="size-5 text-zinc-600 shrink-0" />
         }
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-medium truncate ${exercise.isCompleted ? 'text-[#C8F135]' : 'text-white'}`}>{exercise.name}</p>
-          <p className="text-xs text-zinc-500">{exercise.sets} séries × {reps} reps · {weight > 0 ? `${weight} kg` : 'au poids du corps'}</p>
+          <p className={`text-sm font-medium truncate ${exercise.isCompleted ? 'text-[#C8F135]' : 'text-white'}`}>{exerciseLabel}</p>
+          <p className="text-xs text-zinc-500">
+            {exercise.sets} {t('exerciseItem.sets')} × {reps} {t('exerciseItem.reps')} · {weight > 0 ? `${weight} kg` : t('exerciseItem.bodyweight')}
+          </p>
         </div>
         <ChevronDown className={`size-4 text-zinc-500 transition-transform shrink-0 ${expanded ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Détails expandés */}
+      {/* Expanded details */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -120,12 +131,12 @@ export function ExerciseItem({ exercise, index }: Props) {
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 space-y-3 border-t border-zinc-800 pt-3">
-              {/* Ajustement charge et reps */}
+              {/* Weight and rep adjustment */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">Charge (kg)</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">{t('exerciseItem.weightKg')}</label>
                   <div className="flex items-center gap-1.5">
-                    <button type="button" aria-label="Diminuer la charge"
+                    <button type="button" aria-label={t('exerciseItem.decreaseWeight')}
                       onClick={() => { const v = Math.max(0, weight - 2.5); setWeight(v); setWeightInput(String(v)) }}
                       className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 shrink-0">−</button>
                     <input
@@ -135,15 +146,15 @@ export function ExerciseItem({ exercise, index }: Props) {
                       onBlur={() => setWeightInput(String(weight))}
                       className="flex-1 min-w-0 text-center text-sm font-bold text-white bg-zinc-800 border border-zinc-700 rounded-lg py-1.5 focus:outline-none focus:border-[#C8F135]"
                     />
-                    <button type="button" aria-label="Augmenter la charge"
+                    <button type="button" aria-label={t('exerciseItem.increaseWeight')}
                       onClick={() => { const v = weight + 2.5; setWeight(v); setWeightInput(String(v)) }}
                       className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 shrink-0">+</button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">Répétitions</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">{t('exerciseItem.repetitions')}</label>
                   <div className="flex items-center gap-1.5">
-                    <button type="button" aria-label="Diminuer les répétitions"
+                    <button type="button" aria-label={t('exerciseItem.decreaseReps')}
                       onClick={() => { const v = Math.max(1, reps - 1); setReps(v); setRepsInput(String(v)) }}
                       className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 shrink-0">−</button>
                     <input
@@ -153,7 +164,7 @@ export function ExerciseItem({ exercise, index }: Props) {
                       onBlur={() => setRepsInput(String(reps))}
                       className="flex-1 min-w-0 text-center text-sm font-bold text-white bg-zinc-800 border border-zinc-700 rounded-lg py-1.5 focus:outline-none focus:border-[#C8F135]"
                     />
-                    <button type="button" aria-label="Augmenter les répétitions"
+                    <button type="button" aria-label={t('exerciseItem.increaseReps')}
                       onClick={() => { const v = reps + 1; setReps(v); setRepsInput(String(v)) }}
                       className="size-8 rounded-lg bg-zinc-800 text-white font-bold hover:bg-zinc-700 shrink-0">+</button>
                   </div>
@@ -161,11 +172,11 @@ export function ExerciseItem({ exercise, index }: Props) {
               </div>
 
               {/* Instructions */}
-              {exercise.instructions.length > 0 && (
+              {exerciseInstructions.length > 0 && (
                 <div className="rounded-lg bg-zinc-800 p-3">
-                  <p className="text-xs font-medium text-zinc-300 mb-2">Instructions</p>
+                  <p className="text-xs font-medium text-zinc-300 mb-2">{t('exerciseItem.instructions')}</p>
                   <ol className="space-y-1">
-                    {exercise.instructions.map((inst, i) => (
+                    {exerciseInstructions.map((inst, i) => (
                       <li key={i} className="text-xs text-zinc-400 flex gap-2">
                         <span className="text-[#C8F135] font-bold shrink-0">{i+1}.</span>
                         {inst}
@@ -180,13 +191,13 @@ export function ExerciseItem({ exercise, index }: Props) {
                   href={exercise.videoUrl}
                   target="_blank"
                   rel="noreferrer"
-                  aria-label={`Voir tutoriel YouTube pour ${exercise.name}`}
+                  aria-label={`${t('exerciseItem.watchYoutube')} ${exerciseLabel}`}
                   className="block relative rounded-xl overflow-hidden group/yt"
                 >
                   {videoId && !ytImgError ? (
                     <Image
                       src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
-                      alt={`Tutoriel ${exercise.name}`}
+                      alt={`${t('exerciseItem.watchYoutube')} ${exerciseLabel}`}
                       width={480}
                       height={360}
                       className="w-full h-36 object-cover"
@@ -195,7 +206,7 @@ export function ExerciseItem({ exercise, index }: Props) {
                   ) : (
                     <div className="w-full h-36 bg-gradient-to-br from-zinc-800 to-zinc-900 flex flex-col items-center justify-center gap-2">
                       <Youtube className="size-10 text-red-500" />
-                      <span className="text-xs text-zinc-400 text-center px-6 leading-relaxed">{exercise.name}</span>
+                      <span className="text-xs text-zinc-400 text-center px-6 leading-relaxed">{exerciseLabel}</span>
                     </div>
                   )}
                   {/* Play button overlay */}
@@ -208,7 +219,7 @@ export function ExerciseItem({ exercise, index }: Props) {
                   </div>
                   {/* Bottom bar */}
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 py-2 flex items-center justify-between">
-                    <span className="text-xs text-white font-medium">Voir la technique</span>
+                    <span className="text-xs text-white font-medium">{t('exerciseItem.watchTechnique')}</span>
                     <ExternalLink className="size-3 text-zinc-400" />
                   </div>
                 </a>
@@ -217,23 +228,23 @@ export function ExerciseItem({ exercise, index }: Props) {
               <button
                 type="button"
                 onClick={() => setShowAlternatives(true)}
-                aria-label={`Remplacer exercice ${exercise.name}`}
+                aria-label={`${t('exerciseItem.replaceExercise')} ${exerciseLabel}`}
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white disabled:opacity-50"
               >
-                <RefreshCw className="size-4" /> Remplacer exercice
+                <RefreshCw className="size-4" /> {t('exerciseItem.replaceExercise')}
               </button>
 
               <button
                 type="button"
                 onClick={handleComplete}
-                aria-label={exercise.isCompleted ? `Marquer ${exercise.name} comme à faire` : `Marquer ${exercise.name} comme terminé`}
+                aria-label={exercise.isCompleted ? `${t('exerciseItem.markAsTodo')} ${exerciseLabel}` : `${t('exerciseItem.markAsDone')} ${exerciseLabel}`}
                 className={`w-full py-2 rounded-xl text-sm font-bold transition-colors ${
                   exercise.isCompleted
                     ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'
                     : 'bg-[#C8F135] text-zinc-900 hover:bg-[#d4f54d]'
                 }`}
               >
-                {exercise.isCompleted ? 'À faire' : 'Marquer comme terminé'}
+                {exercise.isCompleted ? t('exerciseItem.todo') : t('exerciseItem.markAsDoneButton')}
               </button>
             </div>
           </motion.div>
@@ -245,14 +256,14 @@ export function ExerciseItem({ exercise, index }: Props) {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
             <motion.div initial={{ y: 16 }} animate={{ y: 0 }} exit={{ y: 16 }} className="w-full max-w-md rounded-2xl border border-zinc-700 bg-zinc-900 p-5">
               <div className="mb-4 flex items-center justify-between gap-3">
-                <h3 className="text-base font-medium text-white">Exercices alternatifs</h3>
-                <button type="button" onClick={() => setShowAlternatives(false)} aria-label="Fermer les alternatives" className="rounded-lg px-2 py-1 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-white">Fermer</button>
+                <h3 className="text-base font-medium text-white">{t('exerciseItem.alternatives')}</h3>
+                <button type="button" onClick={() => setShowAlternatives(false)} aria-label={t('exerciseItem.closeAlternatives')} className="rounded-lg px-2 py-1 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-white">{t('common.close')}</button>
               </div>
               <div className="space-y-2">
                 {alternatives.map((item) => (
-                  <button key={item.id} type="button" onClick={() => chooseAlternative(item)} aria-label={`Choisir ${item.name}`} className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-left transition-colors hover:border-[#C8F135]/50 hover:bg-zinc-800">
-                    <p className="text-sm font-medium text-white">{item.name}</p>
-                    <p className="mt-1 text-xs text-zinc-500">{item.muscleGroups.join(', ')}</p>
+                  <button key={item.id} type="button" onClick={() => chooseAlternative(item)} aria-label={`${t('exerciseItem.choose')} ${exerciseDisplayName(item, locale)}`} className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-left transition-colors hover:border-[#C8F135]/50 hover:bg-zinc-800">
+                    <p className="text-sm font-medium text-white">{exerciseDisplayName(item, locale)}</p>
+                    <p className="mt-1 text-xs text-zinc-500">{item.muscleGroups.map(muscleGroupLabel).join(', ')}</p>
                   </button>
                 ))}
               </div>

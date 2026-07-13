@@ -1,4 +1,4 @@
-// Types partagés pour tous les connecteurs d'intégration
+// Shared types for all integration connectors.
 
 export interface NormalizedActivity {
   date:          string

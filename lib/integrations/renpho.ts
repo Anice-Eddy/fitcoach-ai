@@ -1,5 +1,5 @@
-// Renpho CSV parser — maps Renpho scale export columns to BodyMetric fields.
-// Export obtenu depuis l'app Renpho : Profil → Exporter les données → CSV
+// Renpho CSV parser - maps Renpho scale export columns to BodyMetric fields.
+// Export obtained from the Renpho app: Profile -> Export data -> CSV
 
 export interface RenphoRow {
   date:                    Date
@@ -42,13 +42,13 @@ function parseNum(val: string): number | undefined {
 
 export function parseRenphoCSV(csvText: string): RenphoRow[] {
   const lines = csvText.trim().split('\n').filter(Boolean)
-  if (lines.length < 2) throw new Error('CSV vide ou invalide')
+  if (lines.length < 2) throw new Error('Empty or invalid CSV')
 
   const sep     = lines[0].includes(';') ? ';' : ','
   const headers = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g, ''))
 
   const dateIdx = headers.indexOf('Time of Measurement')
-  if (dateIdx === -1) throw new Error('Colonne "Time of Measurement" introuvable — vérifiez que le fichier provient de l\'app Renpho')
+  if (dateIdx === -1) throw new Error('Column "Time of Measurement" not found; make sure the file comes from the Renpho app')
 
   const rows: RenphoRow[] = []
 
@@ -81,6 +81,6 @@ export function parseRenphoCSV(csvText: string): RenphoRow[] {
     }
   }
 
-  if (rows.length === 0) throw new Error('Aucune mesure valide trouvée dans le fichier')
+  if (rows.length === 0) throw new Error('No valid measurement found in the file')
   return rows
 }

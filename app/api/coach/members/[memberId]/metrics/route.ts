@@ -13,7 +13,7 @@ const metricSchema = z.object({
   muscleMassKg: z.number().min(10).max(200).optional().nullable(),
   waistCm:      z.number().min(40).max(300).optional().nullable(),
   hipsCm:       z.number().min(40).max(300).optional().nullable(),
-  // Les mêmes signaux quotidiens que côté membre, pour garder coach et IA synchronisés.
+  // Use the same daily signals as the member side to keep coach and AI data synchronized.
   steps:            z.number().int().min(0).max(100000).optional().nullable(),
   sleepHours:       z.number().min(0).max(24).optional().nullable(),
   waterLiters:      z.number().min(0).max(15).optional().nullable(),
@@ -26,18 +26,18 @@ const metricSchema = z.object({
 // Authenticates the session as a coach and verifies the member belongs to this coach; returns coachProfileId or an error response.
 async function authorizeCoach(memberId: string) {
   const session = await auth()
-  if (!session?.user?.email) return { error: NextResponse.json({ error: 'Non authentifié' }, { status: 401 }) }
+  if (!session?.user?.email) return { error: NextResponse.json({ error: 'Unauthenticated' }, { status: 401 }) }
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: { coachProfile: true },
   })
-  if (!user?.coachProfile) return { error: NextResponse.json({ error: 'Non autorisé' }, { status: 403 }) }
+  if (!user?.coachProfile) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 403 }) }
 
   const membership = await prisma.coachMember.findUnique({
     where: { coachId_memberId: { coachId: user.coachProfile.id, memberId } },
   })
-  if (!membership) return { error: NextResponse.json({ error: 'Membre introuvable' }, { status: 404 }) }
+  if (!membership) return { error: NextResponse.json({ error: 'Member not found' }, { status: 404 }) }
 
   return { coachProfileId: user.coachProfile.id, userId: user.id }
 }
@@ -81,7 +81,7 @@ export async function POST(
     },
   })
 
-  // Le profil ne change de poids que si la nouvelle mesure contient réellement un poids.
+  // The profile weight only changes when the new metric actually includes a weight.
   const latest = await prisma.bodyMetric.findFirst({
     where:   { userId: params.memberId },
     orderBy: { date: 'desc' },
@@ -105,12 +105,12 @@ export async function DELETE(
   if (error) return error
 
   const { metricId } = await req.json()
-  if (!metricId) return NextResponse.json({ error: 'metricId manquant' }, { status: 400 })
+  if (!metricId) return NextResponse.json({ error: 'Missing metricId' }, { status: 400 })
 
   const metric = await prisma.bodyMetric.findFirst({
     where: { id: metricId, userId: params.memberId },
   })
-  if (!metric) return NextResponse.json({ error: 'Métrique introuvable' }, { status: 404 })
+  if (!metric) return NextResponse.json({ error: 'Metric not found' }, { status: 404 })
 
   await prisma.bodyMetric.delete({ where: { id: metricId } })
   return NextResponse.json({ ok: true })

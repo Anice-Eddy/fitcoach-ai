@@ -1,11 +1,12 @@
 'use client'
-// Graphique progression du poids — Recharts + toggle 7/30/90 jours
+// Weight progression chart using Recharts with a 7/30/90-day range toggle.
 // deps: npm install recharts
 
 import { useState } from 'react'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine } from 'recharts'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { TrendingUp } from 'lucide-react'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface DataPoint { date: string; weight: number }
 interface Props     { data: DataPoint[]; targetWeight?: number }
@@ -16,13 +17,14 @@ interface WeightTooltipProps {
 }
 
 const RANGES = [
-  { label: '7j',  days: 7 },
-  { label: '30j', days: 30 },
-  { label: '90j', days: 90 },
+  { days: 7 },
+  { days: 30 },
+  { days: 90 },
 ]
 
 /** Renders a Recharts line chart of weight progression with 7/30/90-day range toggle and an optional target-weight reference line. */
 export function WeightChart({ data, targetWeight }: Props) {
+  const { locale, t } = useLocale()
   const [range, setRange] = useState(30)
 
   const filtered = data.slice(0, range).reverse()
@@ -31,9 +33,9 @@ export function WeightChart({ data, targetWeight }: Props) {
     return (
       <EmptyState
         icon={<TrendingUp className="size-6" />}
-        title="Aucune donnée de poids"
-        description="Ajoutez votre poids quotidiennement pour voir votre progression."
-        action={{ label: 'Ajouter une mesure', href: '/progress' }}
+        title={t('dashboard.noWeightData')}
+        description={t('dashboard.noWeightDataDescription')}
+        action={{ label: t('dashboard.addMeasurement'), href: '/progress' }}
       />
     )
   }
@@ -52,16 +54,16 @@ export function WeightChart({ data, targetWeight }: Props) {
     <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-sm font-semibold text-white">Évolution du poids</h3>
+          <h3 className="text-sm font-semibold text-white">{t('dashboard.weightChartTitle')}</h3>
           <p className="text-xs text-zinc-400">
             {filtered.length > 0 ? `${filtered[0].weight} → ${filtered[filtered.length-1]?.weight} kg` : ''}
           </p>
         </div>
         <div className="flex rounded-lg overflow-hidden border border-zinc-700">
-          {RANGES.map(({ label, days }) => (
+          {RANGES.map(({ days }) => (
             <button key={days} onClick={() => setRange(days)}
               className={`px-3 py-1.5 text-xs font-medium transition-colors ${range === days ? 'bg-[#C8F135] text-zinc-900' : 'bg-zinc-800 text-zinc-400 hover:text-white'}`}
-            >{label}</button>
+            >{days}{locale === 'fr' ? 'j' : 'd'}</button>
           ))}
         </div>
       </div>
@@ -73,7 +75,7 @@ export function WeightChart({ data, targetWeight }: Props) {
           <YAxis tick={{ fill: '#71717a', fontSize: 11 }} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
           <Tooltip content={<CustomTooltip />} />
           {targetWeight && (
-            <ReferenceLine y={targetWeight} stroke="#C8F135" strokeDasharray="4 2" label={{ value: `Objectif ${targetWeight}kg`, fill: '#C8F135', fontSize: 10 }} />
+            <ReferenceLine y={targetWeight} stroke="#C8F135" strokeDasharray="4 2" label={{ value: `${t('dashboard.target')} ${targetWeight}kg`, fill: '#C8F135', fontSize: 10 }} />
           )}
           <Line
             type="monotone" dataKey="weight"

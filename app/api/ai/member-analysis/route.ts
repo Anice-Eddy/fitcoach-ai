@@ -23,8 +23,8 @@ export async function POST(req: Request) {
       'MEMBER_ANALYSIS',
       'PROGRESSION',
       [
-        'Génère une analyse automatique du profil member.',
-        'Inclure: niveau actuel, points forts, points faibles, risques de stagnation, cohérence entraînement/nutrition/objectifs.',
+        'Generate an automatic member profile analysis.',
+        'Include: current level, strengths, weaknesses, stagnation risks, and training/nutrition/goals consistency.',
       ].join(' '),
     )
     return NextResponse.json(result)

@@ -41,7 +41,7 @@ test.describe('Page Pricing', () => {
 
   test('les plans ont des boutons d\'action', async ({ page }) => {
     await page.waitForLoadState('networkidle')
-    const actionButtons = page.locator('button:has-text("Commencer"), button:has-text("Choisir"), button:has-text("Bientôt disponible")')
+    const actionButtons = page.locator('[data-testid="plan-card"] button')
     const count = await actionButtons.count()
     expect(count).toBeGreaterThanOrEqual(1)
   })

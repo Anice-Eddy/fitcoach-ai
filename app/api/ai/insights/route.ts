@@ -41,7 +41,7 @@ function computeInsights(context: MemberAIContext): InsightsPayload {
   const { userFacts, nutritionPlans } = context
   const insights: Insight[] = []
 
-  // ── Adherence ────────────────────────────────────────────────
+  // Adherence
   const recentDone  = sessions.filter(s =>
     s['status'] === 'COMPLETED' &&
     s['completedAt'] &&
@@ -51,38 +51,38 @@ function computeInsights(context: MemberAIContext): InsightsPayload {
   const adherence   = target > 0 ? Math.min(100, Math.round((recentDone.length / target) * 100)) : null
 
   if (adherence !== null) {
-    if      (adherence >= 80) insights.push({ type: 'success', label: 'Régularité',      value: `${adherence}%` })
-    else if (adherence >= 50) insights.push({ type: 'warning', label: 'Régularité',      value: `${adherence}%` })
-    else                      insights.push({ type: 'alert',   label: 'Régularité faible', value: `${adherence}%` })
+    if      (adherence >= 80) insights.push({ type: 'success', label: 'Consistency',      value: `${adherence}%` })
+    else if (adherence >= 50) insights.push({ type: 'warning', label: 'Consistency',      value: `${adherence}%` })
+    else                      insights.push({ type: 'alert',   label: 'Low consistency', value: `${adherence}%` })
   }
 
-  // ── Last session ─────────────────────────────────────────────
+  // Last session
   const lastSession = sessions.find(s => s['status'] === 'COMPLETED' && s['completedAt'])
   const daysSinceSession = daysAgo(lastSession?.['completedAt'] as string | null)
 
   if (daysSinceSession === null) {
-    insights.push({ type: 'info', label: 'Séances', value: 'Aucune enregistrée' })
+    insights.push({ type: 'info', label: 'Sessions', value: 'None recorded' })
   } else if (daysSinceSession > 7) {
-    insights.push({ type: 'warning', label: 'Inactivité', value: `${daysSinceSession}j sans séance` })
+    insights.push({ type: 'warning', label: 'Inactivity', value: `${daysSinceSession}d without training` })
   }
 
-  // ── Weigh-in ─────────────────────────────────────────────────
+  // Weigh-in
   const daysSinceWeighin = daysAgo(metrics[0]?.date)
 
   if (daysSinceWeighin === null) {
-    insights.push({ type: 'info', label: 'Pesée', value: 'Aucune mesure' })
+    insights.push({ type: 'info', label: 'Weigh-in', value: 'No measurement' })
   } else if (daysSinceWeighin > 10) {
-    insights.push({ type: 'warning', label: 'Pesée manquante', value: `${daysSinceWeighin}j` })
+    insights.push({ type: 'warning', label: 'Missing weigh-in', value: `${daysSinceWeighin}d` })
   }
 
-  // ── Nutrition ─────────────────────────────────────────────────
+  // Nutrition
   if (!nutritionPlans.length) {
-    insights.push({ type: 'warning', label: 'Nutrition', value: 'Aucun plan actif' })
+    insights.push({ type: 'warning', label: 'Nutrition', value: 'No active plan' })
   } else {
-    insights.push({ type: 'success', label: 'Nutrition', value: 'Plan actif' })
+    insights.push({ type: 'success', label: 'Nutrition', value: 'Active plan' })
   }
 
-  // ── Weight trend ─────────────────────────────────────────────
+  // Weight trend
   const weights = metrics
     .slice(0, 4)
     .map(m => m.weightKg)
@@ -94,7 +94,7 @@ function computeInsights(context: MemberAIContext): InsightsPayload {
     const stagnant = Math.abs(delta) < 0.3
 
     if (stagnant && (goal === 'WEIGHT_LOSS' || goal === 'MUSCLE_GAIN')) {
-      insights.push({ type: 'info', label: 'Stagnation', value: 'Poids stable' })
+      insights.push({ type: 'info', label: 'Stagnation', value: 'Stable weight' })
     } else if (goal === 'WEIGHT_LOSS' && delta > 0.5) {
       insights.push({ type: 'success', label: 'Progression', value: `-${delta.toFixed(1)} kg` })
     } else if (goal === 'MUSCLE_GAIN' && delta < -0.5) {
@@ -102,7 +102,7 @@ function computeInsights(context: MemberAIContext): InsightsPayload {
     }
   }
 
-  // ── Memory state ──────────────────────────────────────────────
+  // Memory state
   const lastSessionMuscles = lastSession
     ? Array.from(new Set(
         ((lastSession['exerciseLogs'] as LogLike[] | undefined) ?? [])
@@ -115,11 +115,11 @@ function computeInsights(context: MemberAIContext): InsightsPayload {
     targetWeight:       userFacts.targetWeightKg,
     currentGoal:        userFacts.primaryGoal,
     lastSessionDate:    lastSession?.['completedAt']
-      ? new Date(lastSession['completedAt'] as string).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+      ? new Date(lastSession['completedAt'] as string).toISOString()
       : null,
     lastSessionMuscles,
     lastWeighinDate:    metrics[0]?.date
-      ? new Date(metrics[0].date as string).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+      ? new Date(metrics[0].date as string).toISOString()
       : null,
     daysWithoutSession: daysSinceSession,
     daysWithoutWeighin: daysSinceWeighin,
@@ -137,7 +137,7 @@ export async function GET(req: Request) {
   if (error) return error
 
   const context = await getMemberAIContext(access!.memberId, access!.coachId)
-  if (!context) return NextResponse.json({ error: 'Membre introuvable' }, { status: 404 })
+  if (!context) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
 
   return NextResponse.json(computeInsights(context))
 }

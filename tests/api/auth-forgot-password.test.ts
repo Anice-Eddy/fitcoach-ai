@@ -24,7 +24,7 @@ describe('POST /api/auth/forgot-password', () => {
     vi.resetAllMocks()
   })
 
-  it('autorise le frontend à demander un email Firebase pour un compte email', async () => {
+  it('allows the frontend to request a Firebase email for an email account', async () => {
     ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
       id:           'user-1',
       password:     null,
@@ -39,7 +39,7 @@ describe('POST /api/auth/forgot-password', () => {
     expect(json.method).toBe('firebase-client-email')
   })
 
-  it('refuse les comptes sociaux car leur mot de passe est géré par le fournisseur', async () => {
+  it('rejects social accounts because their password is managed by the provider', async () => {
     ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
       id:           'user-1',
       password:     null,

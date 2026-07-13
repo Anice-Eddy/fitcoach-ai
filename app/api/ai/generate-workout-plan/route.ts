@@ -23,9 +23,9 @@ export async function POST(req: Request) {
       'WORKOUT_PLAN',
       'TRAINING',
       [
-        'Génère une proposition de programme personnalisé.',
-        'Inclure exercices, séries, répétitions, temps de repos, progression proposée et justification.',
-        'Le coach doit pouvoir valider/modifier avant envoi: présente donc le plan comme une proposition.',
+        'Generate a personalized workout program proposal.',
+        'Include exercises, sets, reps, rest times, proposed progression, and rationale.',
+        'The coach must be able to validate or edit before sending, so present the plan as a proposal.',
       ].join(' '),
     )
     return NextResponse.json(result)

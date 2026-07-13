@@ -3,22 +3,26 @@
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, ChevronDown, Youtube, RefreshCw, CheckCircle2 } from 'lucide-react'
+import { Activity, ChevronLeft, ChevronRight, ChevronDown, Youtube, RefreshCw, CheckCircle2 } from 'lucide-react'
 import type { SessionExercise } from '@/types'
 import { useTrainingStore } from '@/stores/trainingStore'
-import { EXERCISE_DATABASE } from '@/lib/training/exercise-database'
+import { EXERCISE_DATABASE, exerciseDisplayInstructions, exerciseDisplayName } from '@/lib/training/exercise-database'
+import { MUSCLE_GROUP_LABEL_KEYS } from '@/lib/i18n/profile-label-keys'
 import { CardioTimerView } from './CardioTimerView'
+import { LiftTracker } from './LiftTracker'
+import { useLocale } from '@/contexts/LocaleContext'
 
 function extractYtId(url: string): string | null {
   const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
   return m?.[1] ?? null
 }
 
-// ── Stepper avec champ numérique éditable à la main ─────────────────────────
+// Stepper with manually editable numeric field.
 function Stepper({
-  label, value, unit, step = 1, min = 0, max, onChange,
+  label, value, unit, step = 1, min = 0, max, editHint, onChange,
 }: {
   label: string; value: number; unit?: string; step?: number; min?: number; max?: number
+  editHint: string
   onChange: (v: number) => void
 }) {
   const [editing, setEditing] = useState(false)
@@ -61,7 +65,7 @@ function Stepper({
             type="button"
             onClick={() => { setDraft(String(value)); setEditing(true) }}
             className="flex-1 text-center text-2xl font-bold text-white py-1 hover:text-[#C8F135] transition-colors tabular-nums"
-            title="Appuyer pour modifier"
+            title={editHint}
           >
             {value}{unit && <span className="text-sm text-zinc-500 ml-1">{unit}</span>}
           </button>
@@ -73,12 +77,12 @@ function Stepper({
           className="size-10 rounded-xl bg-zinc-800 text-white text-xl font-bold hover:bg-zinc-700 shrink-0 active:scale-95 transition-transform"
         >+</button>
       </div>
-      <p className="text-[10px] text-zinc-600 text-center mt-1">Appuie sur la valeur pour saisir</p>
+      <p className="text-[10px] text-zinc-600 text-center mt-1">{editHint}</p>
     </div>
   )
 }
 
-// Formate les secondes en "1m 30s" ou "45s"
+// Formats seconds as "1m 30s" or "45s".
 function formatRestLabel(seconds: number): string {
   const m = Math.floor(seconds / 60)
   const s = seconds % 60
@@ -98,6 +102,7 @@ interface Props {
   onRepsChange:      (r: number) => void
   onSetsChange:      (s: number) => void
   onRestChange:      (r: number) => void
+  onLiftTrackingChange: (fields: Partial<Pick<SessionExercise, 'velocityPeakMps' | 'velocityAvgMps' | 'barPathDeviationCm' | 'barPathPoints'>>) => void
   onCardioChange:    (fields: Partial<Pick<SessionExercise, 'durationMinutes' | 'distanceKm' | 'speedKmH' | 'inclinePct'>>) => void
   onSetComplete:     () => void
   onPrev:            () => void
@@ -109,10 +114,12 @@ interface Props {
 export function FocusExerciseView({
   exercise, exerciseIndex, totalExercises, completedSets,
   weight, reps, onWeightChange, onRepsChange, onSetsChange, onRestChange, onCardioChange,
-  onSetComplete, onPrev, onNext, hasPrev, hasNext,
+  onLiftTrackingChange, onSetComplete, onPrev, onNext, hasPrev, hasNext,
 }: Props) {
+  const { locale, t } = useLocale()
   const [showInstructions, setShowInstructions] = useState(false)
   const [showAlternatives, setShowAlternatives] = useState(false)
+  const [showAdvancedTracking, setShowAdvancedTracking] = useState(false)
   const [ytImgError,       setYtImgError]       = useState(false)
   const { replaceExercise } = useTrainingStore()
 
@@ -121,6 +128,16 @@ export function FocusExerciseView({
   const isAllDone = isCardio
     ? completedSets >= 1
     : completedSets >= totalSets
+  const hasLiftMetrics = exercise.velocityPeakMps != null
+    || exercise.velocityAvgMps != null
+    || exercise.barPathDeviationCm != null
+  const stepperEditHint = t('training.tapToEdit')
+  const exerciseLabel = exerciseDisplayName(exercise, locale)
+  const exerciseInstructions = exerciseDisplayInstructions(exercise, locale)
+  const muscleGroupLabel = (group: string) => {
+    const key = MUSCLE_GROUP_LABEL_KEYS[group]
+    return key ? t(key) : group
+  }
 
   const videoId = useMemo(
     () => exercise.videoUrl ? extractYtId(exercise.videoUrl) : null,
@@ -131,7 +148,7 @@ export function FocusExerciseView({
     const matches = EXERCISE_DATABASE.filter(
       item => item.id !== exercise.id && item.muscleGroups.some(g => exercise.muscleGroups.includes(g)),
     )
-    // Mélange Fisher-Yates pour que tous les exercices aient une chance d'apparaître
+    // Fisher-Yates shuffle so every exercise has a chance to appear.
     const shuffled = [...matches]
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -157,7 +174,7 @@ export function FocusExerciseView({
   return (
     <div className="space-y-4">
 
-      {/* ── En-tête exercice ─────────────────────────────────── */}
+      {/* Exercise header */}
       <motion.div
         key={exercise.id}
         initial={{ opacity: 0, x: 24 }}
@@ -168,23 +185,25 @@ export function FocusExerciseView({
         }`}
       >
         <p className="text-xs text-zinc-500 mb-1">
-          Exercice {exerciseIndex + 1} / {totalExercises}
+          {t('training.exercise')} {exerciseIndex + 1} / {totalExercises}
           {isCardio && (
-            <span className="ml-2 px-1.5 py-0.5 rounded-md bg-sky-500/15 text-sky-400 text-[10px] font-semibold">CARDIO</span>
+            <span className="ml-2 px-1.5 py-0.5 rounded-md bg-sky-500/15 text-sky-400 text-[10px] font-semibold">{muscleGroupLabel('CARDIO')}</span>
           )}
         </p>
         <div className="flex items-center gap-2">
           {isAllDone && <CheckCircle2 className="size-5 text-[#C8F135] shrink-0" />}
           <h2 className={`text-xl font-bold ${isAllDone ? 'text-[#C8F135]' : 'text-white'}`}>
-            {exercise.name}
+            {exerciseLabel}
           </h2>
         </div>
         <p className="text-xs text-zinc-500 mt-1">
-          {exercise.muscleGroups.filter(g => g !== 'CARDIO').join(' · ') || exercise.muscleGroups.join(' · ')}
+          {(exercise.muscleGroups.filter(g => g !== 'CARDIO').length > 0
+            ? exercise.muscleGroups.filter(g => g !== 'CARDIO')
+            : exercise.muscleGroups).map(muscleGroupLabel).join(' · ')}
         </p>
       </motion.div>
 
-      {/* ── VUE CARDIO — délégué à CardioTimerView ───────────── */}
+      {/* Cardio view delegated to CardioTimerView */}
       {isCardio ? (
         <CardioTimerView
           exercise={exercise}
@@ -193,33 +212,34 @@ export function FocusExerciseView({
           onComplete={onSetComplete}
         />
       ) : (
-        /* ── VUE MUSCULATION ─────────────────────────────────── */
+        /* Strength training view */
         <>
-          {/* Charge + Répétitions */}
+          {/* Load + reps */}
           <div className="grid grid-cols-2 gap-3">
-            <Stepper label="Charge (kg)" value={weight} step={2.5} min={0}   onChange={onWeightChange} />
-            <Stepper label="Répétitions" value={reps}   step={1}   min={1}   onChange={onRepsChange} />
+            <Stepper label={t('training.weightKg')} value={weight} step={2.5} min={0} editHint={stepperEditHint} onChange={onWeightChange} />
+            <Stepper label={t('training.repetitions')} value={reps} step={1} min={1} editHint={stepperEditHint} onChange={onRepsChange} />
           </div>
 
-          {/* Séries + Repos */}
+          {/* Sets + rest */}
           <div className="grid grid-cols-2 gap-3">
-            <Stepper label="Séries" value={totalSets} step={1} min={1} max={10} onChange={onSetsChange} />
+            <Stepper label={t('training.sets')} value={totalSets} step={1} min={1} max={10} editHint={stepperEditHint} onChange={onSetsChange} />
             <Stepper
-              label={`Repos (${formatRestLabel(exercise.restSeconds)})`}
+              label={`${t('training.rest')} (${formatRestLabel(exercise.restSeconds)})`}
               value={exercise.restSeconds}
               unit="s"
               step={15}
               min={15}
+              editHint={stepperEditHint}
               onChange={onRestChange}
             />
           </div>
 
-          {/* ── Suivi des séries ─────────────────────────────── */}
+          {/* Set tracking */}
           <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 space-y-3">
             {/* Progression */}
             <div className="flex items-center justify-between">
               <p className="text-xs text-zinc-400">
-                Progression des séries
+                {t('training.setProgress')}
               </p>
               <p className="text-xs font-semibold">
                 <span className={completedSets >= totalSets ? 'text-[#C8F135]' : 'text-white'}>
@@ -229,7 +249,7 @@ export function FocusExerciseView({
               </p>
             </div>
 
-            {/* Pastilles de séries */}
+            {/* Set indicators */}
             <div className="flex gap-2 flex-wrap">
               {Array.from({ length: totalSets }, (_, i) => {
                 const isDone    = i < completedSets
@@ -251,42 +271,96 @@ export function FocusExerciseView({
               })}
             </div>
 
-            {/* Bouton principal — Valider la série */}
+            {/* Primary button: validate set */}
             {completedSets < totalSets && (
               <button
                 type="button"
                 onClick={onSetComplete}
                 className="w-full py-4 rounded-2xl bg-[#C8F135] text-zinc-900 text-base font-bold shadow-lg hover:bg-[#d4f54d] active:scale-95 transition-all"
               >
-                Valider la série {completedSets + 1} / {totalSets}
+                {t('training.validateSet')} {completedSets + 1} / {totalSets}
               </button>
             )}
 
             {completedSets >= totalSets && (
               <div className="w-full py-3 rounded-2xl bg-[#C8F135]/10 border border-[#C8F135]/30 text-center">
-                <p className="text-sm font-semibold text-[#C8F135]">✓ Toutes les séries terminées</p>
+                <p className="text-sm font-semibold text-[#C8F135]">✓ {t('training.allSetsDone')}</p>
                 <p className="text-xs text-zinc-500 mt-0.5">
-                  {weight > 0 ? `${weight} kg × ${reps} rép.` : `${reps} rép.`}
+                  {weight > 0 ? `${weight} kg × ${reps} ${t('training.repShort')}` : `${reps} ${t('training.repShort')}`}
                 </p>
               </div>
             )}
           </div>
+
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowAdvancedTracking(value => !value)}
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-800/60"
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-zinc-950 text-[#C8F135]">
+                  <Activity className="size-4" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-white">{t('training.advancedAnalysis')}</span>
+                  <span className="block truncate text-xs text-zinc-500">
+                    {hasLiftMetrics
+                      ? `${t('training.liftTracking.peak')} ${exercise.velocityPeakMps ?? '--'} m/s · ${t('training.liftTracking.drift')} ${exercise.barPathDeviationCm ?? '--'} cm`
+                      : t('training.advancedAnalysisDescription')}
+                  </span>
+                </span>
+              </span>
+              <ChevronDown className={`size-4 shrink-0 text-zinc-500 transition-transform ${showAdvancedTracking ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {showAdvancedTracking && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="border-t border-zinc-800 p-3">
+                    <LiftTracker
+                      value={
+                        exercise.velocityPeakMps != null && exercise.velocityAvgMps != null && exercise.barPathDeviationCm != null
+                          ? {
+                            velocityPeakMps:      exercise.velocityPeakMps,
+                            velocityAvgMps:       exercise.velocityAvgMps,
+                            barPathDeviationCm:   exercise.barPathDeviationCm,
+                            barPathPoints:        exercise.barPathPoints ?? [],
+                          }
+                          : null
+                      }
+                      onChange={summary => onLiftTrackingChange(summary ?? {
+                        velocityPeakMps: undefined,
+                        velocityAvgMps: undefined,
+                        barPathDeviationCm: undefined,
+                        barPathPoints: undefined,
+                      })}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </>
       )}
 
-      {/* ── Tutoriel YouTube ─────────────────────────────────── */}
+      {/* YouTube tutorial */}
       {exercise.videoUrl && (
         <a
           href={exercise.videoUrl}
           target="_blank"
           rel="noreferrer"
-          aria-label={`Tutoriel YouTube pour ${exercise.name}`}
+          aria-label={`${t('training.youtubeTechnique')} ${exerciseLabel}`}
           className="block relative rounded-2xl overflow-hidden group/yt"
         >
           {videoId && !ytImgError ? (
             <Image
               src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
-              alt={exercise.name}
+              alt={exerciseLabel}
               width={480} height={360}
               className="w-full h-32 object-cover"
               onError={() => setYtImgError(true)}
@@ -294,7 +368,7 @@ export function FocusExerciseView({
           ) : (
             <div className="w-full h-32 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center gap-3">
               <Youtube className="size-7 text-red-500" />
-              <span className="text-sm text-zinc-400">Voir la technique</span>
+              <span className="text-sm text-zinc-400">{t('training.youtubeTechnique')}</span>
             </div>
           )}
           <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover/yt:bg-black/35 transition-colors">
@@ -305,15 +379,15 @@ export function FocusExerciseView({
         </a>
       )}
 
-      {/* ── Instructions ─────────────────────────────────────── */}
-      {exercise.instructions.length > 0 && (
+      {/* Instructions */}
+      {exerciseInstructions.length > 0 && (
         <div className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
           <button
             type="button"
             onClick={() => setShowInstructions(v => !v)}
             className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-zinc-300 hover:text-white"
           >
-            Instructions
+            {t('training.instructions')}
             <ChevronDown className={`size-4 transition-transform ${showInstructions ? 'rotate-180' : ''}`} />
           </button>
           <AnimatePresence>
@@ -324,7 +398,7 @@ export function FocusExerciseView({
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden px-4 pb-4 space-y-1.5"
               >
-                {exercise.instructions.map((inst, i) => (
+                {exerciseInstructions.map((inst, i) => (
                   <li key={i} className="text-xs text-zinc-400 flex gap-2">
                     <span className="text-[#C8F135] font-bold shrink-0">{i + 1}.</span>
                     {inst}
@@ -336,16 +410,16 @@ export function FocusExerciseView({
         </div>
       )}
 
-      {/* ── Remplacer ─────────────────────────────────────────── */}
+      {/* Replacement action */}
       <button
         type="button"
         onClick={() => setShowAlternatives(true)}
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 py-2.5 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
       >
-        <RefreshCw className="size-4" /> Remplacer cet exercice
+        <RefreshCw className="size-4" /> {t('training.replaceExercise')}
       </button>
 
-      {/* ── Précédent / Suivant ───────────────────────────────── */}
+      {/* Previous / next */}
       <div className="flex gap-3 pt-1">
         <button
           type="button"
@@ -353,7 +427,7 @@ export function FocusExerciseView({
           disabled={!hasPrev}
           className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl border border-zinc-700 text-sm font-medium text-zinc-300 disabled:opacity-30 hover:bg-zinc-900 transition-colors"
         >
-          <ChevronLeft className="size-4" /> Précédent
+          <ChevronLeft className="size-4" /> {t('training.previous')}
         </button>
         <button
           type="button"
@@ -364,12 +438,12 @@ export function FocusExerciseView({
               : 'border border-zinc-700 text-zinc-300 hover:bg-zinc-900'
           }`}
         >
-          {!hasNext ? (isAllDone ? 'Terminer' : 'Terminer quand même') : (isAllDone ? 'Suivant ✓' : 'Passer')}
+          {!hasNext ? (isAllDone ? t('common.finish') : t('training.finishAnyway')) : (isAllDone ? t('training.nextDone') : t('training.skip'))}
           <ChevronRight className="size-4" />
         </button>
       </div>
 
-      {/* ── Modal alternatives ────────────────────────────────── */}
+      {/* Exercise alternatives modal */}
       <AnimatePresence>
         {showAlternatives && (
           <motion.div
@@ -385,19 +459,19 @@ export function FocusExerciseView({
               className="w-full max-w-md rounded-2xl border border-zinc-700 bg-zinc-900 p-5"
             >
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-base font-semibold text-white">Exercices alternatifs</h3>
+                <h3 className="text-base font-semibold text-white">{t('training.alternativeExercises')}</h3>
                 <button type="button" onClick={() => setShowAlternatives(false)}
-                  className="text-sm text-zinc-400 hover:text-white transition-colors">Fermer</button>
+                  className="text-sm text-zinc-400 hover:text-white transition-colors">{t('common.close')}</button>
               </div>
               <div className="space-y-2">
                 {alternatives.length === 0 ? (
-                  <p className="text-sm text-zinc-500 text-center py-4">Aucun exercice similaire.</p>
+                  <p className="text-sm text-zinc-500 text-center py-4">{t('training.noSimilarExercise')}</p>
                 ) : alternatives.map(item => (
                   <button key={item.id} type="button" onClick={() => chooseAlternative(item)}
                     className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-left hover:border-[#C8F135]/50 hover:bg-zinc-800 transition-colors"
                   >
-                    <p className="text-sm font-medium text-white">{item.name}</p>
-                    <p className="mt-0.5 text-xs text-zinc-500">{item.muscleGroups.join(', ')}</p>
+                    <p className="text-sm font-medium text-white">{exerciseDisplayName(item, locale)}</p>
+                    <p className="mt-0.5 text-xs text-zinc-500">{item.muscleGroups.map(muscleGroupLabel).join(', ')}</p>
                   </button>
                 ))}
               </div>

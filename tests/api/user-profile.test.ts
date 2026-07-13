@@ -45,12 +45,12 @@ describe('GET /api/user/profile', () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(null)
   })
 
-  it('retourne 401 si non connecté', async () => {
+  it('returns 401 when unauthenticated', async () => {
     const res = await GET()
     expect(res.status).toBe(401)
   })
 
-  it('retourne null (200) si aucun profil', async () => {
+  it('returns null with 200 when no profile exists', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
     ;(prisma.profile.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const res  = await GET()
@@ -59,7 +59,7 @@ describe('GET /api/user/profile', () => {
     expect(json).toBeNull()
   })
 
-  it('retourne le profil si existant', async () => {
+  it('returns the profile when it exists', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
     ;(prisma.profile.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockProfile)
     const res  = await GET()
@@ -75,20 +75,20 @@ describe('PATCH /api/user/profile', () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(null)
   })
 
-  it('retourne 401 si non connecté', async () => {
+  it('returns 401 when unauthenticated', async () => {
     const req = makeRequest({ firstName: 'Bob' })
     const res = await PATCH(req)
     expect(res.status).toBe(401)
   })
 
-  it('retourne 422 si données invalides', async () => {
+  it('returns 422 for invalid data', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
     const req = makeRequest({ age: -1 })
     const res = await PATCH(req)
     expect(res.status).toBe(422)
   })
 
-  it('upsert le profil avec des données valides', async () => {
+  it('upserts the profile with valid data', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
     ;(prisma.profile.upsert as ReturnType<typeof vi.fn>).mockResolvedValue({ ...mockProfile, firstName: 'Bob' })
     const req  = makeRequest({ firstName: 'Bob' })
@@ -98,7 +98,7 @@ describe('PATCH /api/user/profile', () => {
     expect(json.firstName).toBe('Bob')
   })
 
-  it('recalcule IMC/BMR si toutes les données physiques sont présentes', async () => {
+  it('recalculates BMI/BMR when all physical data is present', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
     ;(prisma.profile.upsert as ReturnType<typeof vi.fn>).mockResolvedValue(mockProfile)
     const req = makeRequest({

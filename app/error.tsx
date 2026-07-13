@@ -1,8 +1,9 @@
 'use client'
-// Global error boundary Next.js — reset disponible
+// Global Next.js error boundary with reset support.
 
 import { useEffect } from 'react'
 import { TriangleAlert } from 'lucide-react'
+import { useLocale } from '@/contexts/LocaleContext'
 
 export default function GlobalError({
   error,
@@ -11,6 +12,8 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const { t } = useLocale()
+
   useEffect(() => {
     console.error(error)
   }, [error])
@@ -23,13 +26,13 @@ export default function GlobalError({
             <TriangleAlert className="size-7 text-red-400" />
           </div>
         </div>
-        <h2 className="mb-2 text-xl font-bold">Une erreur est survenue</h2>
-        <p className="mb-6 text-sm text-zinc-400">{error.message ?? 'Erreur inattendue.'}</p>
+        <h2 className="mb-2 text-xl font-bold">{t('common.error')}</h2>
+        <p className="mb-6 text-sm text-zinc-400">{error.message ?? t('system.unexpectedError')}</p>
         <button
           onClick={reset}
           className="rounded-xl bg-[#C8F135] px-6 py-2.5 font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d]"
         >
-          Réessayer
+          {t('common.retry')}
         </button>
       </div>
     </main>

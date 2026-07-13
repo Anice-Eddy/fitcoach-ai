@@ -6,9 +6,10 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { ChevronDown, LayoutDashboard, LogOut, UserCircle } from 'lucide-react'
 import { signOutAndClear } from '@/lib/auth/client-session'
+import { useLocale } from '@/contexts/LocaleContext'
 
 function initials(name: string, email: string) {
-  const source = name !== 'Coach' ? name : email
+  const source = name.trim() || email
   return source
     .split(/[\s@._-]+/)
     .filter(Boolean)
@@ -20,11 +21,12 @@ function initials(name: string, email: string) {
 
 /** Coach account dropdown showing name, email, avatar, profile link, and sign-out button; closes on outside pointer events. */
 export function CoachDropdown() {
+  const { t } = useLocale()
   const { data: session } = useSession()
   const [open, setOpen]   = useState(false)
   const ref               = useRef<HTMLDivElement>(null)
 
-  const name  = session?.user?.name  ?? 'Coach'
+  const name  = session?.user?.name  ?? t('common.coach')
   const email = session?.user?.email ?? ''
   const image = session?.user?.image ?? null
 
@@ -42,7 +44,7 @@ export function CoachDropdown() {
         type="button"
         onClick={() => setOpen(v => !v)}
         className="flex items-center gap-2 rounded-lg p-1 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white"
-        aria-label="Menu du compte"
+        aria-label={t('coachNavigation.accountMenu')}
         aria-expanded={open}
       >
         {image ? (
@@ -77,7 +79,7 @@ export function CoachDropdown() {
               className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-white"
             >
               <UserCircle className="size-4 text-zinc-500" />
-              Mon profil coach
+              {t('coachNavigation.myCoachProfile')}
             </Link>
 
           </div>
@@ -92,7 +94,7 @@ export function CoachDropdown() {
                   className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#C8F135] transition-colors hover:bg-[#C8F135]/10"
                 >
                   <LayoutDashboard className="size-4" />
-                  Passer à l'espace membre
+                  {t('coachNavigation.switchToMember')}
                 </Link>
               </div>
               <div className="h-px bg-zinc-800" />
@@ -105,7 +107,7 @@ export function CoachDropdown() {
             className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200"
           >
             <LogOut className="size-4" />
-            Déconnexion
+            {t('auth.signOut')}
           </button>
         </div>
       )}

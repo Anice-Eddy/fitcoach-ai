@@ -39,7 +39,7 @@ function assertFirebaseClientConfig() {
 
   if (missing.length > 0) {
     console.error('[auth-client] Missing client auth config:', missing.join(', '))
-    throw new Error('Configuration de connexion manquante.')
+    throw new Error('Missing authentication configuration.')
   }
 }
 
@@ -77,13 +77,13 @@ export async function firebaseEmailRegister(email: string, password: string, dis
 
 export async function firebaseSendCurrentUserEmailVerification(continuePath = '/dashboard') {
   const user = firebaseAuth().currentUser
-  if (!user) throw new Error('Connecte-toi pour vérifier ton email.')
+  if (!user) throw new Error('Sign in to verify your email.')
   await sendEmailVerification(user, actionCodeSettings(continuePath))
 }
 
 export async function firebaseRequestEmailChange(newEmail: string, continuePath = '/settings/profile') {
   const user = firebaseAuth().currentUser
-  if (!user) throw new Error('Connecte-toi de nouveau pour modifier ton email.')
+  if (!user) throw new Error('Sign in again to update your email.')
   await verifyBeforeUpdateEmail(user, newEmail, actionCodeSettings(continuePath))
 }
 

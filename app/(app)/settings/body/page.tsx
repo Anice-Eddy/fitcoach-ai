@@ -7,6 +7,8 @@ import { useUserStore } from '@/stores/userStore'
 import { bodyMetricSchema } from '@/utils/validators'
 import { toast } from 'sonner'
 import { Save } from 'lucide-react'
+import { useLocale } from '@/contexts/LocaleContext'
+import { ACTIVITY_LABEL_KEYS, EQUIPMENT_LABEL_KEYS, GENDER_LABEL_KEYS, GOAL_LABEL_KEYS, LEVEL_LABEL_KEYS } from '@/lib/i18n/profile-label-keys'
 
 const ACTIVITY = ['SEDENTARY', 'LIGHTLY_ACTIVE', 'MODERATELY_ACTIVE', 'VERY_ACTIVE', 'EXTREMELY_ACTIVE']
 const GOALS = ['WEIGHT_LOSS', 'MUSCLE_GAIN', 'MAINTENANCE', 'ENDURANCE', 'FLEXIBILITY', 'GENERAL_FITNESS']
@@ -17,6 +19,7 @@ type MetricHistoryItem = { weightKg: number; date?: string | Date }
 
 /** Body measurements settings page: allows updating weight, height, waist, hips, and body fat; displays historical weight chart. */
 export default function BodySettingsPage() {
+  const { locale, t } = useLocale()
   const { profile, setProfile } = useUserStore()
   const [saving, setSaving] = useState(false)
   const [metrics, setMetrics] = useState<MetricHistoryItem[]>([])
@@ -40,7 +43,7 @@ export default function BodySettingsPage() {
   })
 
   const loadMetrics = useCallback(async () => {
-    // L'historique vient de l'API pour rester synchronisé entre dashboard, coach et IA.
+    // History comes from the API to stay synchronized across dashboard, coach, and AI.
     const res = await fetch('/api/user/metrics?limit=10')
     if (res.ok) setMetrics(await res.json())
   }, [])
@@ -75,7 +78,7 @@ export default function BodySettingsPage() {
       hipsCm: payload.hipsCm,
     })
     if (!metric.success) {
-      toast.error('Valeurs hors limites : poids 30-300 kg, mensurations 40-200 cm')
+      toast.error(t('settings.bodySaveOutOfRange'))
       return
     }
 
@@ -96,9 +99,9 @@ export default function BodySettingsPage() {
       })
       if (!metricRes.ok) throw new Error()
       await loadMetrics()
-      toast.success('Informations physiques mises à jour')
+      toast.success(t('settings.bodyUpdated'))
     } catch {
-      toast.error('Impossible de sauvegarder les informations physiques')
+      toast.error(t('settings.bodySaveError'))
     } finally {
       setSaving(false)
     }
@@ -106,26 +109,26 @@ export default function BodySettingsPage() {
 
   return (
     <>
-      <Header title="Mes informations physiques" />
+      <Header title={t('settings.bodyInfoTitle')} />
       <PageWrapper>
         <div className="max-w-3xl space-y-6">
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
             <div className="flex items-center justify-between gap-4">
-              <h1 className="text-[22px] font-medium text-white">Informations physiques</h1>
-              <button type="button" onClick={save} disabled={saving} aria-label="Sauvegarder mes informations physiques" className="flex items-center gap-2 rounded-xl bg-[#C8F135] px-4 py-2.5 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] disabled:opacity-50">
-                <Save className="size-4" /> {saving ? 'Sauvegarde...' : 'Enregistrer'}
+              <h1 className="text-[22px] font-medium text-white">{t('settings.bodyInfo')}</h1>
+              <button type="button" onClick={save} disabled={saving} aria-label={t('settings.saveBody')} className="flex items-center gap-2 rounded-xl bg-[#C8F135] px-4 py-2.5 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] disabled:opacity-50">
+                <Save className="size-4" /> {saving ? t('settings.saving') : t('common.save')}
               </button>
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {[
-                ['weightKg', 'Poids actuel', 'number'],
-                ['heightCm', 'Taille', 'number'],
-                ['waistCm', 'Tour de taille', 'number'],
-                ['hipsCm', 'Tour de hanches', 'number'],
-                ['age', 'Âge', 'number'],
-                ['trainingDaysPerWeek', 'Jours/semaine', 'number'],
-                ['targetWeightKg', 'Poids cible', 'number'],
+                ['weightKg', t('settings.currentWeight'), 'number'],
+                ['heightCm', t('settings.height'), 'number'],
+                ['waistCm', t('settings.waist'), 'number'],
+                ['hipsCm', t('settings.hips'), 'number'],
+                ['age', t('settings.age'), 'number'],
+                ['trainingDaysPerWeek', t('settings.trainingDaysPerWeek'), 'number'],
+                ['targetWeightKg', t('settings.targetWeight'), 'number'],
               ].map(([key, label, type]) => (
                 <label key={key} className="grid gap-1.5">
                   <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{label}</span>
@@ -133,41 +136,41 @@ export default function BodySettingsPage() {
                 </label>
               ))}
 
-              <Select label="Unités poids" value={form.weightUnit} options={['KG', 'LB']} onChange={(v) => set('weightUnit', v)} />
-              <Select label="Unités taille" value={form.heightUnit} options={['CM', 'FT_IN']} onChange={(v) => set('heightUnit', v)} />
-              <Select label="Sexe" value={form.gender} options={['MALE', 'FEMALE']} onChange={(v) => set('gender', v)} />
-              <Select label="Activité" value={form.activityLevel} options={ACTIVITY} onChange={(v) => set('activityLevel', v)} />
-              <Select label="Objectif" value={form.fitnessGoal} options={GOALS} onChange={(v) => set('fitnessGoal', v)} />
-              <Select label="Niveau sportif" value={form.fitnessLevel} options={LEVELS} onChange={(v) => set('fitnessLevel', v)} />
+              <Select label={t('settings.weightUnits')} value={form.weightUnit} options={['KG', 'LB']} onChange={(v) => set('weightUnit', v)} />
+              <Select label={t('settings.heightUnits')} value={form.heightUnit} options={['CM', 'FT_IN']} onChange={(v) => set('heightUnit', v)} />
+              <Select label={t('settings.gender')} value={form.gender} options={['MALE', 'FEMALE']} onChange={(v) => set('gender', v)} getOptionLabel={(value) => t(GENDER_LABEL_KEYS[value] ?? value)} />
+              <Select label={t('settings.activity')} value={form.activityLevel} options={ACTIVITY} onChange={(v) => set('activityLevel', v)} getOptionLabel={(value) => t(ACTIVITY_LABEL_KEYS[value] ?? value)} />
+              <Select label={t('settings.goal')} value={form.fitnessGoal} options={GOALS} onChange={(v) => set('fitnessGoal', v)} getOptionLabel={(value) => t(GOAL_LABEL_KEYS[value] ?? value)} />
+              <Select label={t('settings.fitnessLevel')} value={form.fitnessLevel} options={LEVELS} onChange={(v) => set('fitnessLevel', v)} getOptionLabel={(value) => t(LEVEL_LABEL_KEYS[value] ?? value)} />
             </div>
 
             <div className="mt-4 grid gap-4">
               <label className="grid gap-1.5">
-                <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">Équipement disponible</span>
+                <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('settings.availableEquipment')}</span>
                 <div className="flex flex-wrap gap-2">
                   {EQUIPMENT.map((item) => {
                     const active = form.availableEquipment.includes(item)
                     return (
-                      <button key={item} type="button" onClick={() => set('availableEquipment', active ? form.availableEquipment.filter((v) => v !== item) : [...form.availableEquipment, item])} aria-label={`Basculer équipement ${item}`} className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${active ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]' : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600'}`}>
-                        {item}
+                      <button key={item} type="button" onClick={() => set('availableEquipment', active ? form.availableEquipment.filter((v) => v !== item) : [...form.availableEquipment, item])} aria-label={`${t('settings.toggleEquipment')} ${t(EQUIPMENT_LABEL_KEYS[item] ?? item)}`} className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${active ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]' : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600'}`}>
+                        {t(EQUIPMENT_LABEL_KEYS[item] ?? item)}
                       </button>
                     )
                   })}
                 </div>
               </label>
-              <TextArea label="Restrictions alimentaires" value={form.dietaryRestrictions} onChange={(v) => set('dietaryRestrictions', v)} />
-              <TextArea label="Préférences alimentaires" value={form.foodPreferences} onChange={(v) => set('foodPreferences', v)} />
+              <TextArea label={t('settings.dietaryRestrictions')} value={form.dietaryRestrictions} onChange={(v) => set('dietaryRestrictions', v)} />
+              <TextArea label={t('settings.foodPreferences')} value={form.foodPreferences} onChange={(v) => set('foodPreferences', v)} />
             </div>
           </section>
 
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-            <h2 className="text-base font-medium text-white">Historique du poids</h2>
+            <h2 className="text-base font-medium text-white">{t('settings.weightHistory')}</h2>
             <div className="mt-4 space-y-2">
               {metrics.length === 0 ? (
-                <p className="text-sm text-zinc-500">Aucune mesure enregistrée.</p>
+                <p className="text-sm text-zinc-500">{t('settings.noMeasurement')}</p>
               ) : metrics.map((metric, index) => (
                 <div key={index} className="flex items-center justify-between rounded-xl bg-zinc-800 px-4 py-3">
-                  <span className="text-xs text-zinc-500">{metric.date ? new Date(metric.date).toLocaleDateString('fr-FR') : 'Aujourd’hui'}</span>
+                  <span className="text-xs text-zinc-500">{metric.date ? new Date(metric.date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US') : t('settings.today')}</span>
                   <span className="font-mono text-sm font-medium text-white">{metric.weightKg} kg</span>
                 </div>
               ))}
@@ -179,12 +182,12 @@ export default function BodySettingsPage() {
   )
 }
 
-function Select({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
+function Select({ label, value, options, onChange, getOptionLabel = (option) => option }: { label: string; value: string; options: string[]; onChange: (value: string) => void; getOptionLabel?: (value: string) => string }) {
   return (
     <label className="grid gap-1.5">
       <span className="text-xs uppercase tracking-[0.5px] text-zinc-500">{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#C8F135]">
-        {options.map((option) => <option key={option} value={option}>{option}</option>)}
+        {options.map((option) => <option key={option} value={option}>{getOptionLabel(option)}</option>)}
       </select>
     </label>
   )

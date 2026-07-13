@@ -28,7 +28,7 @@ const makeMeal = (overrides: Partial<Meal> = {}): Meal => ({
 })
 
 describe('sumMacros', () => {
-  it('additionne les macros de plusieurs repas', () => {
+  it('sums macros from multiple meals', () => {
     const meals = [
       makeMeal({ totalProteinG: 30, totalCarbsG: 50, totalFatG: 10, totalCalories: 410 }),
       makeMeal({ totalProteinG: 20, totalCarbsG: 30, totalFatG: 5,  totalCalories: 245 }),
@@ -40,7 +40,7 @@ describe('sumMacros', () => {
     expect(result.calories).toBe(655)
   })
 
-  it('retourne des zéros pour une liste vide', () => {
+  it('returns zero values for an empty list', () => {
     const result = sumMacros([])
     expect(result.proteinG).toBe(0)
     expect(result.carbsG).toBe(0)
@@ -50,8 +50,8 @@ describe('sumMacros', () => {
 })
 
 describe('macroPct', () => {
-  it('calcule les pourcentages correctement (prend un objet Macros & calories)', () => {
-    // macroPct prend un objet { proteinG, carbsG, fatG, calories }
+  it('calculates percentages correctly from macros and calories', () => {
+    // macroPct accepts an object with { proteinG, carbsG, fatG, calories }.
     const macros = { proteinG: 100, carbsG: 200, fatG: 50, calories: 1650 }
     const pct = macroPct(macros)
     // Rounding per macro: 24+48+27=99 or 24+49+27=100 depending on rounding
@@ -60,14 +60,14 @@ describe('macroPct', () => {
     expect(pct.proteinPct).toBeGreaterThan(0)
   })
 
-  it('retourne 0/0/0 si calories = 0', () => {
+  it('returns 0/0/0 when calories are 0', () => {
     const pct = macroPct({ proteinG: 0, carbsG: 0, fatG: 0, calories: 0 })
     expect(pct.proteinPct).toBe(0)
     expect(pct.carbsPct).toBe(0)
     expect(pct.fatPct).toBe(0)
   })
 
-  it('fonctionne avec sumMacros', () => {
+  it('works with sumMacros', () => {
     const meals = [makeMeal({ totalProteinG: 100, totalCarbsG: 200, totalFatG: 50, totalCalories: 1650 })]
     const pct = macroPct(sumMacros(meals))
     // Allow ±2% due to per-macro integer rounding
@@ -77,7 +77,7 @@ describe('macroPct', () => {
 })
 
 describe('getMealsForDay', () => {
-  it('filtre les repas par jour', () => {
+  it('filters meals by day', () => {
     const meals = [
       makeMeal({ dayOfWeek: 1 }),
       makeMeal({ id: 'm2', dayOfWeek: 2 }),
@@ -88,14 +88,14 @@ describe('getMealsForDay', () => {
     result.forEach((m) => expect(m.dayOfWeek).toBe(1))
   })
 
-  it('retourne un tableau vide si aucun repas ce jour', () => {
+  it('returns an empty array when there are no meals that day', () => {
     const meals = [makeMeal({ dayOfWeek: 3 })]
     expect(getMealsForDay(meals, 5)).toHaveLength(0)
   })
 })
 
 describe('generateShoppingList', () => {
-  it('génère un objet d\'achats à partir des repas', () => {
+  it('generates a shopping object from meals', () => {
     const meals = [
       makeMeal({ foodItems: [
         makeFoodItem({ name: 'Poulet', gramsAmount: 200 }),
@@ -108,7 +108,7 @@ describe('generateShoppingList', () => {
     expect(list['Poulet'].totalGrams).toBe(200)
   })
 
-  it('agrège les grammages du même aliment', () => {
+  it('aggregates grams for the same food', () => {
     const meals = [
       makeMeal({ id: 'm1', foodItems: [makeFoodItem({ name: 'Poulet', gramsAmount: 150 })] }),
       makeMeal({ id: 'm2', foodItems: [makeFoodItem({ name: 'Poulet', gramsAmount: 100 })] }),
@@ -117,7 +117,7 @@ describe('generateShoppingList', () => {
     expect(list['Poulet'].totalGrams).toBe(250)
   })
 
-  it('retourne un objet vide pour des repas sans aliments', () => {
+  it('returns an empty object for meals without food items', () => {
     const meals = [makeMeal({ foodItems: [] })]
     expect(Object.keys(generateShoppingList(meals))).toHaveLength(0)
   })

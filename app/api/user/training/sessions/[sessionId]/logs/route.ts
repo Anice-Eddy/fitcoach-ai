@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
+import { Prisma } from '@prisma/client'
+import type { BarPathPoint } from '@/types'
 
 interface LogEntry {
   exerciseName:     string
@@ -22,6 +24,10 @@ interface LogEntry {
   distanceKm?:      number
   speedKmH?:        number
   inclinePct?:      number
+  velocityPeakMps?: number
+  velocityAvgMps?:  number
+  barPathDeviationCm?: number
+  barPathPoints?:   BarPathPoint[]
 }
 
 // MuscleGroup values valid in Prisma
@@ -43,19 +49,19 @@ const VALID_EQUIPMENT = new Set([
  */
 export async function POST(req: NextRequest, { params }: { params: { sessionId: string } }) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Verify session belongs to user
   const ws = await prisma.workoutSession.findFirst({
     where: { id: params.sessionId, userId: session.user.id },
   })
-  if (!ws) return NextResponse.json({ error: 'Séance introuvable' }, { status: 404 })
+  if (!ws) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
 
   let body: { logs: LogEntry[] }
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: 'Corps JSON invalide' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
   const { logs } = body
@@ -66,7 +72,7 @@ export async function POST(req: NextRequest, { params }: { params: { sessionId: 
   const saved: string[] = []
 
   for (const log of logs) {
-    // Sanitize enums — filter out values unknown to Prisma
+    // Sanitize enums by filtering out values unknown to Prisma.
     const safeMusGroups = log.muscleGroups.filter(g => VALID_MUSCLE_GROUPS.has(g)) as never[]
     const safeEquipment = log.equipment.filter(e => VALID_EQUIPMENT.has(e)) as never[]
 
@@ -92,10 +98,13 @@ export async function POST(req: NextRequest, { params }: { params: { sessionId: 
 
     // Build notes for cardio extra data
     const extraNotes: string[] = []
-    if (log.durationMinutes) extraNotes.push(`Durée : ${log.durationMinutes} min`)
-    if (log.distanceKm)      extraNotes.push(`Distance : ${log.distanceKm} km`)
-    if (log.speedKmH)        extraNotes.push(`Vitesse : ${log.speedKmH} km/h`)
-    if (log.inclinePct)      extraNotes.push(`Pente : ${log.inclinePct}%`)
+    if (log.durationMinutes) extraNotes.push(`Duration: ${log.durationMinutes} min`)
+    if (log.distanceKm)      extraNotes.push(`Distance: ${log.distanceKm} km`)
+    if (log.speedKmH)        extraNotes.push(`Speed: ${log.speedKmH} km/h`)
+    if (log.inclinePct)      extraNotes.push(`Incline: ${log.inclinePct}%`)
+    if (log.velocityPeakMps) extraNotes.push(`Peak velocity: ${log.velocityPeakMps} m/s`)
+    if (log.velocityAvgMps)  extraNotes.push(`Average velocity: ${log.velocityAvgMps} m/s`)
+    if (log.barPathDeviationCm) extraNotes.push(`Bar path drift: ${log.barPathDeviationCm} cm`)
 
     // Delete existing log for this session+exercise (idempotent)
     await prisma.exerciseLog.deleteMany({
@@ -114,6 +123,10 @@ export async function POST(req: NextRequest, { params }: { params: { sessionId: 
         restSeconds:      log.restSeconds ?? null,
         isCompleted:      log.isCompleted,
         notes:            extraNotes.length > 0 ? extraNotes.join(' · ') : null,
+        velocityPeakMps:  typeof log.velocityPeakMps === 'number' ? log.velocityPeakMps : null,
+        velocityAvgMps:   typeof log.velocityAvgMps === 'number' ? log.velocityAvgMps : null,
+        barPathDeviationCm: typeof log.barPathDeviationCm === 'number' ? log.barPathDeviationCm : null,
+        barPathPoints:    Array.isArray(log.barPathPoints) ? log.barPathPoints.slice(0, 80) as unknown as Prisma.InputJsonValue : undefined,
         previousWeightKg: previous?.weightKg ?? null,
         previousReps:     previous?.reps ?? null,
       },

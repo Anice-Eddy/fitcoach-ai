@@ -17,6 +17,7 @@ export interface TrainingProgramProfile {
   trainingDaysPerWeek: number
   availableEquipment: string[]
   injuries?: unknown
+  language?: string | null
 }
 
 interface AIExerciseProposal {
@@ -70,14 +71,15 @@ function buildExerciseCatalog(profile: TrainingProgramProfile) {
 function buildPrompt(profile: TrainingProgramProfile) {
   const catalog = buildExerciseCatalog(profile)
   return [
-    'Tu es le moteur sportif BodyOps. Génère un programme d’entraînement exploitable par l’application.',
-    'Réponds uniquement en JSON valide, sans Markdown.',
-    'Utilise uniquement les exercise.id fournis dans le catalogue.',
-    'Respecte strictement trainingDaysPerWeek pour le nombre de séances.',
-    'Adapte volume, repos, intensité et choix des exercices à l’objectif, au niveau, au focus corporel, aux blessures et à l’équipement.',
-    'Chaque séance doit contenir 4 à 7 exercices. Pour perte de poids/endurance, inclure cardio/conditioning si disponible.',
+    'You are the BodyOps training engine. Generate a workout program the application can use directly.',
+    'Reply only with valid JSON, without Markdown.',
+    'Use only the exercise.id values provided in the catalog.',
+    'Strictly respect trainingDaysPerWeek for the number of sessions.',
+    'Adapt volume, rest, intensity, and exercise selection to the goal, level, body focus, injuries, and equipment.',
+    `Use ${profile.language === 'en' ? 'English' : 'French'} for user-facing program and session names.`,
+    'Each session must include 4 to 7 exercises. For weight loss/endurance, include cardio or conditioning when available.',
     '',
-    `Profil utilisateur: ${JSON.stringify({
+    `User profile: ${JSON.stringify({
       firstName: profile.firstName,
       age: profile.age,
       gender: profile.gender,
@@ -91,21 +93,22 @@ function buildPrompt(profile: TrainingProgramProfile) {
       trainingDaysPerWeek: profile.trainingDaysPerWeek,
       availableEquipment: profile.availableEquipment,
       injuries: profile.injuries,
+      language: profile.language,
     })}`,
-    `Catalogue exercices autorisés: ${JSON.stringify(catalog)}`,
+    `Allowed exercise catalog: ${JSON.stringify(catalog)}`,
     '',
-    'Schéma JSON attendu:',
+    'Expected JSON schema:',
     JSON.stringify({
-      name: 'Programme BodyOps IA — Objectif',
-      description: 'Pourquoi ce plan est adapté au profil.',
+      name: 'BodyOps AI Program — Goal',
+      description: 'Why this plan fits the profile.',
       weeksTotal: 8,
       sessions: [
         {
-          name: 'Push A — Hypertrophie contrôlée',
+          name: 'Push A — Controlled hypertrophy',
           dayOfWeek: 0,
           durationMinutes: 60,
           exercises: [
-            { id: 'ex-push-up', sets: 4, reps: 10, restSeconds: 90, tempo: '3-1-1-0', rpe: 7, notes: 'Progression contrôlée.' },
+            { id: 'ex-push-up', sets: 4, reps: 10, restSeconds: 90, tempo: '3-1-1-0', rpe: 7, notes: 'Controlled progression.' },
           ],
         },
       ],
@@ -164,7 +167,7 @@ function sanitizeAIProgram(proposal: AIProgramProposal | null, profile: Training
 
       return {
         id: `ai-session-${sessionIndex}`,
-        name: typeof session.name === 'string' && session.name.trim() ? session.name.trim().slice(0, 90) : `Séance ${sessionIndex + 1}`,
+        name: typeof session.name === 'string' && session.name.trim() ? session.name.trim().slice(0, 90) : `Session ${sessionIndex + 1}`,
         dayOfWeek: clamp(session.dayOfWeek, 0, 6, sessionIndex),
         durationMinutes: clamp(session.durationMinutes, 25, 120, exercises.length * 12 + 10),
         status: 'PLANNED' as const,
@@ -179,7 +182,7 @@ function sanitizeAIProgram(proposal: AIProgramProposal | null, profile: Training
     id: 'ai-program',
     name: typeof proposal.name === 'string' && proposal.name.trim()
       ? proposal.name.trim().slice(0, 90)
-      : `Programme BodyOps IA — ${profile.fitnessGoal}`,
+      : `BodyOps AI Program — ${profile.fitnessGoal}`,
     description: typeof proposal.description === 'string' ? proposal.description.trim().slice(0, 1200) : undefined,
     fitnessGoal: profile.fitnessGoal as never,
     fitnessLevel: profile.fitnessLevel as never,
@@ -197,6 +200,7 @@ export async function generateAIEnhancedProgram(profile: TrainingProgramProfile)
     fitnessLevel: profile.fitnessLevel,
     trainingDaysPerWeek: profile.trainingDaysPerWeek,
     availableEquipment: profile.availableEquipment,
+    locale: profile.language === 'en' ? 'en' : 'fr',
   })
 
   if (!process.env.GEMINI_API_KEY && !process.env.GROQ_API_KEY) {
@@ -207,7 +211,7 @@ export async function generateAIEnhancedProgram(profile: TrainingProgramProfile)
     const result = await aiProvider.generate([
       {
         role: 'system',
-        content: 'Tu génères des programmes fitness structurés, prudents et personnalisés. Tu réponds uniquement en JSON valide.',
+        content: 'You generate structured, safe, personalized fitness programs. Reply only with valid JSON.',
       },
       { role: 'user', content: buildPrompt(profile) },
     ])

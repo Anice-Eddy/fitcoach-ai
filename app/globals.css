@@ -59,7 +59,7 @@
     font-family: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
-  /* Scrollbar personnalisée */
+  /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 4px;
     height: 4px;

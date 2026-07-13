@@ -55,7 +55,7 @@ describe('DELETE /api/coach/members/[memberId]/sessions', () => {
     ;(prisma.workoutSession.delete as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'session-1' })
   })
 
-  it('retourne 401 si le coach n’est pas connecté', async () => {
+  it('returns 401 when the coach is not signed in', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(null)
 
     const res = await DELETE(deleteReq({ sessionId: 'session-1', exerciseLogId: 'log-1' }) as never, {
@@ -65,7 +65,7 @@ describe('DELETE /api/coach/members/[memberId]/sessions', () => {
     expect(res.status).toBe(401)
   })
 
-  it('supprime seulement un exercice appartenant à une séance du membre suivi', async () => {
+  it('deletes only an exercise that belongs to a followed member session', async () => {
     const res = await DELETE(deleteReq({ sessionId: 'session-1', exerciseLogId: 'log-1' }) as never, {
       params: { memberId: 'member-1' },
     })
@@ -81,7 +81,7 @@ describe('DELETE /api/coach/members/[memberId]/sessions', () => {
     }))
   })
 
-  it('retourne 404 si l’exercice ne correspond pas à cette séance membre', async () => {
+  it('returns 404 when the exercise does not match the member session', async () => {
     ;(prisma.exerciseLog.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null)
 
     const res = await DELETE(deleteReq({ sessionId: 'session-1', exerciseLogId: 'log-2' }) as never, {
@@ -92,7 +92,7 @@ describe('DELETE /api/coach/members/[memberId]/sessions', () => {
     expect(prisma.exerciseLog.delete).not.toHaveBeenCalled()
   })
 
-  it('supprime une séance complète appartenant au membre suivi', async () => {
+  it('deletes a complete session that belongs to the followed member', async () => {
     const res = await DELETE(deleteReq({ sessionId: 'session-1' }) as never, {
       params: { memberId: 'member-1' },
     })

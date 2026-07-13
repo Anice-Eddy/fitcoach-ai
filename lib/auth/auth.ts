@@ -1,8 +1,8 @@
 import NextAuth from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import Credentials from 'next-auth/providers/credentials'
-import { compare } from 'bcryptjs'
 import { prisma } from '@/lib/prisma/client'
+import { sessionCallback } from '@/lib/auth/session-callbacks'
 
 const baseAdapter = PrismaAdapter(prisma)
 
@@ -16,7 +16,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       name: 'credentials',
       credentials: {
         email:    { label: 'Email',        type: 'email' },
-        password: { label: 'Mot de passe', type: 'password' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         try {
@@ -29,6 +29,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           if (!user?.password) return null
 
+          // Load bcrypt only inside the credentials route to keep middleware Edge-compatible.
+          const { compare } = await import('bcryptjs')
           const valid = await compare(credentials.password as string, user.password)
           if (!valid) return null
 
@@ -83,7 +85,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   callbacks: {
     async jwt({ token, user }) {
-      // Only query the DB on sign-in (user object present) — NOT on every auth() call.
+      // Only query the DB on sign-in (user object present), not on every auth() call.
       // Token fields persist in the signed JWT cookie; no need to re-fetch each request.
       if (user?.id) {
         token.userId = user.id
@@ -108,23 +110,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token
     },
 
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id      = (token.userId  ?? '') as string
-        session.user.plan    = (token.plan    ?? 'FREE') as string
-        session.user.status  = (token.status  ?? 'INACTIVE') as string
-        session.user.isCoach = (token.isCoach ?? false) as boolean
-        session.user.hasRoleConflict = (token.hasRoleConflict ?? false) as boolean
-        session.user.hasMemberProfile = (token.hasMemberProfile ?? false) as boolean
-      }
-      return session
-    },
+    session: sessionCallback,
   },
 
   session: {
     strategy:  'jwt',
-    maxAge:    30 * 24 * 60 * 60, // 30 jours
-    updateAge: 24 * 60 * 60,      // renouvelle le token 1x par jour
+    maxAge:    30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60,      // Refreshes the token once per day.
   },
 
   events: {

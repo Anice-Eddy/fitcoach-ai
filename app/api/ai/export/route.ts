@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 
-// GET /api/ai/export — exporte toutes les données IA de l'utilisateur (RGPD droit à la portabilité)
+// GET /api/ai/export - exports all user AI data for portability.
 
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth/auth'
@@ -8,7 +8,7 @@ import { prisma } from '@/lib/prisma/client'
 
 export async function GET() {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
   const userId = session.user.id
 

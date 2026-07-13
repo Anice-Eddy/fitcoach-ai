@@ -93,7 +93,7 @@ function HeroArtwork({ reduced }: { reduced: boolean }) {
 
   return (
     <div className="bg-artwork-reveal absolute inset-0" style={revealStyle}>
-      {/* Image fournie par l'utilisateur, traitée comme artwork de fond. */}
+      {/* User-provided image, treated as background artwork. */}
       <ArtworkImage opacity={reduced ? 0.5 : 0.82} />
       <ArtworkGlow />
       <ArtworkOverlay />

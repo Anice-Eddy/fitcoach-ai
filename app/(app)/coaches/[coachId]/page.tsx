@@ -8,6 +8,8 @@ import { toast } from 'sonner'
 import { Star, CheckCircle, ArrowLeft, CalendarDays, MapPin, Award } from 'lucide-react'
 import Link from 'next/link'
 import { ListSkeleton } from '@/components/ui/LoadingSkeleton'
+import { useLocale } from '@/contexts/LocaleContext'
+import { GOAL_LABEL_KEYS, LEVEL_LABEL_KEYS } from '@/lib/i18n/profile-label-keys'
 
 interface CoachData {
   id: string
@@ -31,27 +33,13 @@ interface CoachData {
   }
 }
 
-const GOAL_LABEL: Record<string, string> = {
-  WEIGHT_LOSS: 'Perte de poids', MUSCLE_GAIN: 'Prise de masse',
-  MAINTENANCE: 'Maintien', ENDURANCE: 'Endurance',
-  GENERAL_FITNESS: 'Forme générale', FLEXIBILITY: 'Flexibilité',
-}
-const LEVEL_LABEL: Record<string, string> = {
-  BEGINNER: 'Débutant', INTERMEDIATE: 'Intermédiaire',
-  ADVANCED: 'Avancé', ATHLETE: 'Athlète',
-}
-
-// Returns the next `count` days starting from tomorrow as an array of { date, dayLabel, dateLabel } in French.
+// Returns the next `count` days starting from tomorrow.
 function buildNextDays(count = 14) {
-  const days: { date: Date; dayLabel: string; dateLabel: string }[] = []
+  const days: { date: Date }[] = []
   const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + 1)
-  const DOW_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
-  const MONTHS_FR = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc']
   for (let i = 0; i < count; i++) {
     days.push({
       date:      new Date(d),
-      dayLabel:  DOW_FR[d.getDay()],
-      dateLabel: `${d.getDate()} ${MONTHS_FR[d.getMonth()]}`,
     })
     d.setDate(d.getDate() + 1)
   }
@@ -62,6 +50,7 @@ type AvailableSlot = { datetime: string; duration: number }
 
 /** Coach profile and appointment booking page: shows coach info, specialty, and a date/time slot picker to request an appointment. */
 export default function CoachBookingPage() {
+  const { locale, t } = useLocale()
   const router      = useRouter()
   const params      = useParams<{ coachId: string }>()
   const searchParams = useSearchParams()
@@ -108,10 +97,10 @@ export default function CoachBookingPage() {
   const placeFromEquip = () => {
     const eq = profile?.availableEquipment as string[] | undefined
     if (!eq?.length) return '—'
-    if (eq.includes('BARBELL')) return 'Salle de sport'
-    if (eq.includes('DUMBBELL')) return 'Maison (matériel)'
-    if (eq.length === 1 && eq[0] === 'BODYWEIGHT') return 'Maison (poids du corps)'
-    return 'Extérieur'
+    if (eq.includes('BARBELL')) return t('coaches.gym')
+    if (eq.includes('DUMBBELL')) return t('coaches.homeGear')
+    if (eq.length === 1 && eq[0] === 'BODYWEIGHT') return t('coaches.homeBodyweight')
+    return t('coaches.outdoor')
   }
 
   const daysWithSlots = new Set(allSlots.map(s => new Date(s.datetime).toDateString()))
@@ -133,7 +122,7 @@ export default function CoachBookingPage() {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
           coachProfileId: coachData.coachProfile.id,
-          title:          coachData.coachProfile.discoveryCallTitle ?? 'Entretien découverte',
+          title:          coachData.coachProfile.discoveryCallTitle ?? t('coaches.discoveryFallback'),
           description:    msg || undefined,
           memberNote:     msg || undefined,
           scheduledAt:    scheduledAt.toISOString(),
@@ -142,12 +131,12 @@ export default function CoachBookingPage() {
       })
       if (!res.ok) throw new Error()
 
-      toast.success('Demande envoyée avec succès !')
-      // Après réservation, on revient vers la page qui a lancé le choix du coach.
-      // Sans origine explicite, "Mon accompagnement" reste la page de confirmation naturelle.
+      toast.success(t('coaches.requestSent'))
+      // After booking, return to the page that initiated coach selection.
+      // Without an explicit origin, the coaching status page is the natural confirmation screen.
       router.replace(safeReturnTo || '/coaching/status')
     } catch {
-      toast.error('Erreur lors de la réservation')
+      toast.error(t('coaches.bookingError'))
       setBusy(false)
     }
   }
@@ -161,8 +150,8 @@ export default function CoachBookingPage() {
   if (!coachData) return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center">
       <div className="text-center">
-        <p className="text-zinc-400 mb-4">Coach introuvable.</p>
-        <Link href="/coaches" className="text-[#C8F135] hover:underline">Voir les coachs →</Link>
+        <p className="text-zinc-400 mb-4">{t('coaches.notFound')}</p>
+        <Link href="/coaches" className="text-[#C8F135] hover:underline">{t('coaches.viewCoaches')}</Link>
       </div>
     </div>
   )
@@ -173,7 +162,7 @@ export default function CoachBookingPage() {
     <div className="min-h-screen bg-black text-white">
       <section className="mx-auto max-w-6xl rounded-lg bg-[#0b0d09] px-6 py-10">
         <Link href={coachesHref} className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white mb-8 transition-colors">
-          <ArrowLeft className="size-3.5" /> Choisir un autre coach
+          <ArrowLeft className="size-3.5" /> {t('coaches.chooseAnother')}
         </Link>
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[420px_1fr]">
@@ -210,7 +199,7 @@ export default function CoachBookingPage() {
                       </>
                     )}
                     {coach.coachProfile._count.coachMembers != null && (
-                      <span className="text-xs text-zinc-500 ml-1">{coach.coachProfile._count.coachMembers} membres</span>
+                      <span className="text-xs text-zinc-500 ml-1">{coach.coachProfile._count.coachMembers} {t('coaches.members')}</span>
                     )}
                     {(coach.coachProfile.city || coach.coachProfile.country) && (
                       <span className="flex items-center gap-1 text-xs text-zinc-500 ml-2">
@@ -221,7 +210,7 @@ export default function CoachBookingPage() {
                     {coach.coachProfile.yearsExperience != null && (
                       <span className="flex items-center gap-1 text-xs text-zinc-500 ml-2">
                         <Award className="size-3" />
-                        {coach.coachProfile.yearsExperience} ans d'exp.
+                        {coach.coachProfile.yearsExperience} {t('coaches.yearsExperience')}
                       </span>
                     )}
                   </div>
@@ -238,9 +227,9 @@ export default function CoachBookingPage() {
                 <p className="mb-2 text-xs font-semibold uppercase tracking-[1px] text-[#C8F135]">
                   {coach.coachProfile.discoveryCallTitle}
                 </p>
-                <p className="text-sm font-medium text-white">{coach.coachProfile.discoveryCallDuration} minutes · Visio · Gratuit</p>
+                <p className="text-sm font-medium text-white">{coach.coachProfile.discoveryCallDuration} minutes · {t('coaches.video')} · {t('coaches.free')}</p>
                 <p className="mt-2 text-xs leading-relaxed text-zinc-400">
-                  Le coach analyse ton profil et définit ton plan avec toi.
+                  {t('coaches.discoveryDescription')}
                 </p>
               </div>
             )}
@@ -249,15 +238,15 @@ export default function CoachBookingPage() {
             {profile && (
               <div>
                 <p className="mb-3 text-xs font-semibold uppercase tracking-[2px] text-zinc-500">
-                  Ton profil partagé
+                  {t('coaches.sharedProfile')}
                 </p>
                 <div className="rounded-xl border border-zinc-700 bg-[#1a1d17] p-4 space-y-1.5">
                   {[
-                    { label: 'Objectif',       value: GOAL_LABEL[profile.fitnessGoal] ?? profile.fitnessGoal },
-                    { label: 'Niveau',         value: LEVEL_LABEL[profile.fitnessLevel] ?? profile.fitnessLevel },
-                    { label: 'Poids / Taille', value: `${profile.weightKg} kg · ${profile.heightCm} cm` },
-                    { label: 'Lieu',           value: placeFromEquip() },
-                    { label: 'Disponibilités', value: `${profile.trainingDaysPerWeek} jours / semaine` },
+                    { label: t('coaches.objective'),       value: GOAL_LABEL_KEYS[profile.fitnessGoal] ? t(GOAL_LABEL_KEYS[profile.fitnessGoal]) : profile.fitnessGoal },
+                    { label: t('coaches.level'),         value: LEVEL_LABEL_KEYS[profile.fitnessLevel] ? t(LEVEL_LABEL_KEYS[profile.fitnessLevel]) : profile.fitnessLevel },
+                    { label: t('coaches.weightHeight'), value: `${profile.weightKg} kg · ${profile.heightCm} cm` },
+                    { label: t('coaches.place'),           value: placeFromEquip() },
+                    { label: t('coaches.availability'), value: `${profile.trainingDaysPerWeek} ${t('coaches.daysPerWeek')}` },
                   ].map(r => (
                     <div key={r.label} className="flex justify-between text-xs">
                       <span className="text-zinc-500">{r.label}</span>
@@ -274,12 +263,13 @@ export default function CoachBookingPage() {
             <div>
               <p className="text-xs font-semibold uppercase tracking-[2px] text-zinc-400 mb-4">
                 <CalendarDays className="inline size-3.5 mr-1" />
-                Choisissez une date
+                {t('coaches.chooseDate')}
               </p>
               <div className="grid grid-cols-7 gap-2">
-                {days.map(({ date, dayLabel }) => {
+                {days.map(({ date }) => {
                   const selected  = selectedDay?.toDateString() === date.toDateString()
                   const hasSlots  = daysWithSlots.has(date.toDateString())
+                  const dayLabel = date.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'short' })
                   return (
                     <button
                       key={date.toISOString()}
@@ -306,17 +296,17 @@ export default function CoachBookingPage() {
             {selectedDay && (
               <div>
                 <p className="text-sm font-medium text-[#C8F135] mb-4 capitalize">
-                  {selectedDay.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} — Créneaux disponibles
+                  {selectedDay.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })} — {t('coaches.availableSlots')}
                 </p>
                 {slotsLoading ? (
-                  <p className="text-xs text-zinc-500">Chargement des créneaux…</p>
+                  <p className="text-xs text-zinc-500">{t('coaches.loadingSlots')}</p>
                 ) : daySlots.length === 0 ? (
-                  <p className="text-xs text-zinc-500">Aucun créneau disponible ce jour.</p>
+                  <p className="text-xs text-zinc-500">{t('coaches.noSlots')}</p>
                 ) : (
                   <div className="grid grid-cols-3 gap-3">
                     {daySlots.map(slot => {
                       const d    = new Date(slot.datetime)
-                      const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                      const time = d.toLocaleTimeString(locale === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' })
                       return (
                         <button
                           key={slot.datetime}
@@ -343,9 +333,9 @@ export default function CoachBookingPage() {
                 <div className="flex items-start gap-3 rounded-xl border border-[#C8F135]/35 bg-[#C8F135]/5 p-4">
                   <CheckCircle className="size-4 shrink-0 text-[#C8F135] mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-medium text-[#C8F135]">Rendez-vous sélectionné</p>
+                    <p className="font-medium text-[#C8F135]">{t('coaches.selectedAppointment')}</p>
                     <p className="text-white capitalize">
-                      {selectedDay.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à {selectedSlot ? new Date(selectedSlot).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''}
+                      {selectedDay.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })} {t('coaches.at')} {selectedSlot ? new Date(selectedSlot).toLocaleTimeString(locale === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
                     </p>
                   </div>
                 </div>
@@ -354,7 +344,7 @@ export default function CoachBookingPage() {
                   value={msg}
                   onChange={e => setMsg(e.target.value)}
                   rows={3}
-                  placeholder="Message optionnel pour le coach…"
+                  placeholder={t('coaches.optionalMessage')}
                   className="w-full resize-none rounded-xl border border-zinc-700 bg-[#1a1d17] px-4 py-3 text-sm text-white placeholder-zinc-500 focus:border-[#C8F135] focus:outline-none transition-colors"
                 />
 
@@ -363,10 +353,10 @@ export default function CoachBookingPage() {
                   disabled={busy}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#C8F135] py-4 text-base font-medium text-black transition-colors hover:bg-[#d4f54d] disabled:opacity-60"
                 >
-                  {busy ? 'Envoi en cours…' : 'Confirmer le rendez-vous →'}
+                  {busy ? t('coaches.sending') : t('coaches.confirm')}
                 </button>
                 <p className="text-center text-xs text-zinc-600">
-                  Confirmation par email · 100% gratuit
+                  {t('coaches.emailConfirmation')}
                 </p>
               </div>
             )}

@@ -1,6 +1,7 @@
 import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { enUS, fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/contexts/LocaleContext'
 
 export type MessageBubbleData = {
   id: string
@@ -18,6 +19,9 @@ type MessageBubbleProps = {
 
 /** Shared chat bubble with sender label, timestamp and optional read status. */
 export function MessageBubble({ message, mine, label, showReadStatus }: MessageBubbleProps) {
+  const { locale, t } = useLocale()
+  const dateLocale = locale === 'fr' ? fr : enUS
+
   return (
     <div className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
       <div className={cn(
@@ -29,8 +33,8 @@ export function MessageBubble({ message, mine, label, showReadStatus }: MessageB
         </p>
         <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{message.content}</p>
         <p className={cn('mt-1 text-[10px]', mine ? 'text-zinc-700' : 'text-zinc-500')}>
-          {format(new Date(message.createdAt), 'd MMM · HH:mm', { locale: fr })}
-          {showReadStatus && message.readAt ? ' · Lu' : ''}
+          {format(new Date(message.createdAt), 'd MMM · HH:mm', { locale: dateLocale })}
+          {showReadStatus && message.readAt ? ` · ${t('messagesPage.read')}` : ''}
         </p>
       </div>
     </div>

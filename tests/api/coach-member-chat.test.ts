@@ -54,7 +54,7 @@ describe('coach/member chat API', () => {
     }))
   })
 
-  it('permet au coach d’envoyer un message à un membre suivi', async () => {
+  it('allows the coach to send a message to a followed member', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { email: 'coach@test.com' } })
     ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 'coach-user',
@@ -86,13 +86,13 @@ describe('coach/member chat API', () => {
         coachId: 'coach-profile',
         recipientUserId: 'member-1',
         type: 'MESSAGE',
-        title: 'Nouveau message de votre coach',
+        title: 'New coach message',
         relatedId: 'chat-1',
       }),
     }))
   })
 
-  it('permet au membre de lire le fil avec un coach assigné', async () => {
+  it('allows the member to read the thread with an assigned coach', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'member-1' } })
     ;(prisma.coachMember.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
       coachId: 'coach-profile',

@@ -3,14 +3,8 @@
 import type { LucideIcon } from 'lucide-react'
 import { AlertTriangle, CheckCircle, Info, TrendingDown, Target, Dumbbell, Scale } from 'lucide-react'
 import type { Insight, InsightMemory, InsightType } from '@/app/api/ai/insights/route'
-
-const GOAL_LABELS: Record<string, string> = {
-  WEIGHT_LOSS:    'Perte de poids',
-  MUSCLE_GAIN:    'Prise de masse',
-  GENERAL_FITNESS:'Forme générale',
-  ENDURANCE:      'Endurance',
-  FLEXIBILITY:    'Flexibilité',
-}
+import { useLocale } from '@/contexts/LocaleContext'
+import { GOAL_LABEL_KEYS, MUSCLE_GROUP_LABEL_KEYS } from '@/lib/i18n/profile-label-keys'
 
 const TYPE_STYLES: Record<InsightType, { bg: string; border: string; text: string; icon: LucideIcon }> = {
   success: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', icon: CheckCircle },
@@ -19,8 +13,60 @@ const TYPE_STYLES: Record<InsightType, { bg: string; border: string; text: strin
   info:    { bg: 'bg-zinc-800',        border: 'border-zinc-700',       text: 'text-zinc-400',    icon: Info },
 }
 
+const INSIGHT_LABEL_KEYS: Record<string, string> = {
+  Consistency:       'aiAssistant.insights.labels.consistency',
+  'Low consistency': 'aiAssistant.insights.labels.lowConsistency',
+  Sessions:          'aiAssistant.insights.labels.sessions',
+  Inactivity:        'aiAssistant.insights.labels.inactivity',
+  'Weigh-in':        'aiAssistant.insights.labels.weighIn',
+  'Missing weigh-in': 'aiAssistant.insights.labels.missingWeighIn',
+  Nutrition:         'aiAssistant.insights.labels.nutrition',
+  Stagnation:        'aiAssistant.insights.labels.stagnation',
+  Progression:       'aiAssistant.insights.labels.progression',
+}
+
+const INSIGHT_VALUE_KEYS: Record<string, string> = {
+  'None recorded':  'aiAssistant.insights.values.noneRecorded',
+  'No measurement': 'aiAssistant.insights.values.noMeasurement',
+  'No active plan': 'aiAssistant.insights.values.noActivePlan',
+  'Active plan':    'aiAssistant.insights.values.activePlan',
+  'Stable weight':  'aiAssistant.insights.values.stableWeight',
+}
+
+function translateInsightLabel(label: string, t: (key: string) => string) {
+  const key = INSIGHT_LABEL_KEYS[label]
+  return key ? t(key) : label
+}
+
+function translateInsightValue(value: string, t: (key: string) => string) {
+  const staticKey = INSIGHT_VALUE_KEYS[value]
+  if (staticKey) return t(staticKey)
+
+  const inactivityMatch = value.match(/^(\d+)d without training$/)
+  if (inactivityMatch) {
+    return t('aiAssistant.insights.values.daysWithoutTraining').replace('{days}', inactivityMatch[1])
+  }
+
+  return value
+}
+
+function formatMemoryDate(value: string, locale: 'fr' | 'en') {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+    day:   '2-digit',
+    month: '2-digit',
+  })
+}
+
+function translateMuscleGroup(group: string, t: (key: string) => string) {
+  const key = MUSCLE_GROUP_LABEL_KEYS[group]
+  return key ? t(key) : group
+}
+
 /** Renders a compact row of insight badge cards derived from member fitness data. */
 export function InsightCards({ insights }: { insights: Insight[] }) {
+  const { t } = useLocale()
   if (!insights.length) return null
 
   return (
@@ -34,8 +80,8 @@ export function InsightCards({ insights }: { insights: Insight[] }) {
             className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium ${s.bg} ${s.border} ${s.text}`}
           >
             <Icon className="size-3.5 shrink-0" />
-            <span className="text-zinc-300">{insight.label}</span>
-            <span className={`font-semibold ${s.text}`}>{insight.value}</span>
+            <span className="text-zinc-300">{translateInsightLabel(insight.label, t)}</span>
+            <span className={`font-semibold ${s.text}`}>{translateInsightValue(insight.value, t)}</span>
           </div>
         )
       })}
@@ -45,13 +91,14 @@ export function InsightCards({ insights }: { insights: Insight[] }) {
 
 /** Renders the persistent memory strip showing current weight, goal, last session, and last weigh-in. */
 export function MemoryStrip({ memory }: { memory: InsightMemory }) {
+  const { locale, t } = useLocale()
   type MemoryItem = { icon: LucideIcon; label: string; value: string }
   const items: MemoryItem[] = [
-    memory.currentWeight   ? { icon: Scale,        label: 'Poids actuel',    value: `${memory.currentWeight} kg` } : null,
-    memory.targetWeight    ? { icon: Target,        label: 'Objectif',        value: `${memory.targetWeight} kg` } : null,
-    memory.currentGoal     ? { icon: TrendingDown,  label: 'Programme',       value: GOAL_LABELS[memory.currentGoal] ?? memory.currentGoal } : null,
-    memory.lastSessionDate ? { icon: Dumbbell,      label: 'Dernière séance', value: memory.lastSessionDate + (memory.lastSessionMuscles.length ? ` · ${memory.lastSessionMuscles.join('+')}` : '') } : null,
-    memory.lastWeighinDate ? { icon: Scale,         label: 'Dernière pesée',  value: memory.lastWeighinDate } : null,
+    memory.currentWeight   ? { icon: Scale,        label: t('coachMembers.overview.currentWeight'), value: `${memory.currentWeight} kg` } : null,
+    memory.targetWeight    ? { icon: Target,        label: t('coachMembers.overview.goal'), value: `${memory.targetWeight} kg` } : null,
+    memory.currentGoal     ? { icon: TrendingDown,  label: t('aiAssistant.memory.program'), value: GOAL_LABEL_KEYS[memory.currentGoal] ? t(GOAL_LABEL_KEYS[memory.currentGoal]) : memory.currentGoal } : null,
+    memory.lastSessionDate ? { icon: Dumbbell,      label: t('aiAssistant.memory.lastSession'), value: formatMemoryDate(memory.lastSessionDate, locale) + (memory.lastSessionMuscles.length ? ` · ${memory.lastSessionMuscles.map(group => translateMuscleGroup(group, t)).join('+')}` : '') } : null,
+    memory.lastWeighinDate ? { icon: Scale,         label: t('aiAssistant.memory.lastWeighIn'), value: formatMemoryDate(memory.lastWeighinDate, locale) } : null,
   ].filter((x): x is MemoryItem => x !== null)
 
   if (!items.length) return null

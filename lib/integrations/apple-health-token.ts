@@ -32,7 +32,7 @@ export async function getOrCreateAppleHealthToken(userId: string): Promise<strin
 /** Verifies the Shortcut token against the stable DB token, with legacy HMAC fallback. */
 export async function verifyAppleHealthToken(raw: string): Promise<string | null> {
   const clean = raw.trim()
-  // Format: "{userId}:{hmac}"  — find LAST colon to be safe
+  // Format: "{userId}:{hmac}" - find LAST colon to be safe.
   const colonIdx = clean.lastIndexOf(':')
   if (colonIdx === -1) return null
   const userId        = clean.substring(0, colonIdx).trim()

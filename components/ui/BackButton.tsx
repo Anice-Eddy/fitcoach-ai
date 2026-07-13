@@ -3,14 +3,16 @@
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { ChevronLeft } from 'lucide-react'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface Props {
   label?: string
   className?: string
 }
 
-export function BackButton({ label = 'Retour', className }: Props) {
+export function BackButton({ label, className }: Props) {
   const router  = useRouter()
+  const { t } = useLocale()
   const { status } = useSession()
 
   const handleBack = () => {
@@ -28,7 +30,7 @@ export function BackButton({ label = 'Retour', className }: Props) {
       className={className ?? 'inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors'}
     >
       <ChevronLeft className="size-4" />
-      {label}
+      {label ?? t('common.back')}
     </button>
   )
 }

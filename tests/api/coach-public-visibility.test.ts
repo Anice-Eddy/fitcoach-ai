@@ -60,7 +60,7 @@ describe('coach public visibility settings', () => {
     vi.resetAllMocks()
   })
 
-  it('masque les informations désactivées dans la liste publique des coachs', async () => {
+  it('hides disabled information in the public coach list', async () => {
     ;(prisma.user.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([{
       id: 'coach-user-1',
       name: 'Coach Alex',
@@ -77,7 +77,7 @@ describe('coach public visibility settings', () => {
     expect(json[0].coachProfile._count.coachMembers).toBeNull()
   })
 
-  it('masque les informations désactivées sur le détail public du coach', async () => {
+  it('hides disabled information on the public coach detail', async () => {
     ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 'coach-user-1',
       name: 'Coach Alex',
@@ -97,7 +97,7 @@ describe('coach public visibility settings', () => {
     expect(json.coachProfile._count.appointments).toBe(5)
   })
 
-  it('enregistre les réglages de visibilité du coach', async () => {
+  it('saves coach visibility settings', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'coach-user-1' } })
     ;(prisma.coachProfile.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'coach-profile-1' })
     ;(prisma.coachProfile.update as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'coach-profile-1' })
@@ -128,7 +128,7 @@ describe('coach public visibility settings', () => {
     }))
   })
 
-  it('accepte la durée de l’entretien découverte envoyée depuis un champ texte', async () => {
+  it('accepts the discovery call duration sent from a text field', async () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'coach-user-1' } })
     ;(prisma.coachProfile.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'coach-profile-1' })
     ;(prisma.coachProfile.update as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'coach-profile-1' })
@@ -145,7 +145,7 @@ describe('coach public visibility settings', () => {
     }))
   })
 
-  it('crée un compte coach avec les nouveaux champs publics', async () => {
+  it('creates a coach account with the new public fields', async () => {
     ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     ;(prisma.user.create as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'coach-user-1' })
 

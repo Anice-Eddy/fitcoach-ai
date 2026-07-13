@@ -7,13 +7,13 @@ import { prisma } from '@/lib/prisma/client'
 import { analyzeCoachDocument } from '@/lib/coach/verification'
 
 const coachProfileSchema = z.object({
-  firstName:       z.string().min(1, 'Le prénom est requis'),
-  lastName:        z.string().min(1, 'Le nom de famille est requis'),
-  birthDate:       z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La date de naissance est requise'),
-  specialty:       z.string().min(1, 'La spécialité est requise'),
+  firstName:       z.string().min(1, 'First name is required'),
+  lastName:        z.string().min(1, 'Last name is required'),
+  birthDate:       z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Birth date is required'),
+  specialty:       z.string().min(1, 'Specialty is required'),
   experience:      z.preprocess((value) => Number(value), z.number().int().min(0).max(60)),
-  certifications:  z.string().min(1, 'Ajoutez au moins une certification'),
-  description:     z.string().min(30, 'La description professionnelle doit faire au moins 30 caractères'),
+  certifications:  z.string().min(1, 'Add at least one certification'),
+  description:     z.string().min(30, 'Professional description must be at least 30 characters'),
   showYearsExperience: z.preprocess((value) => value === 'true', z.boolean()).default(true),
   showMemberCount: z.preprocess((value) => value === 'true', z.boolean()).default(true),
   publicRating: z.preprocess(
@@ -23,7 +23,7 @@ const coachProfileSchema = z.object({
   publicRatingCount: z.preprocess((value) => Number(value || 0), z.number().int().min(0).max(100000)),
   showPublicRating: z.preprocess((value) => value === 'true', z.boolean()).default(false),
   discoveryCallEnabled: z.preprocess((value) => value === 'true', z.boolean()).default(true),
-  discoveryCallTitle: z.string().min(2).max(80).default('Entretien découverte'),
+  discoveryCallTitle: z.string().min(2).max(80).default('Discovery call'),
   discoveryCallDuration: z.preprocess((value) => Number(value || 30), z.number().int().min(5).max(180)),
   showDiscoveryCall: z.preprocess((value) => value === 'true', z.boolean()).default(true),
 })
@@ -65,7 +65,7 @@ async function getCoachProfile(userId: string) {
 /** Returns the coach profile for the authenticated user, or null if not found. */
 export async function GET() {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const profile = await prisma.coachProfile.findUnique({
     where: { userId: session.user.id },
@@ -76,7 +76,7 @@ export async function GET() {
 /** Creates the authenticated user's coach space without duplicating the account email. */
 export async function POST(_req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // The upsert keeps this action idempotent if the button is clicked twice.
   const profile = await getCoachProfile(session.user.id)
@@ -86,7 +86,7 @@ export async function POST(_req: Request) {
 /** Updates the coach profile from a multipart form; analyzes any uploaded certification document and sets the verification status accordingly. */
 export async function PATCH(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const formData = await req.formData()
   const parsed = coachProfileSchema.safeParse({
@@ -103,7 +103,7 @@ export async function PATCH(req: Request) {
     publicRatingCount: formData.get('publicRatingCount') ?? '0',
     showPublicRating: formData.get('showPublicRating') ?? 'false',
     discoveryCallEnabled: formData.get('discoveryCallEnabled') ?? 'true',
-    discoveryCallTitle: formData.get('discoveryCallTitle') ?? 'Entretien découverte',
+    discoveryCallTitle: formData.get('discoveryCallTitle') ?? 'Discovery call',
     discoveryCallDuration: formData.get('discoveryCallDuration') ?? '30',
     showDiscoveryCall: formData.get('showDiscoveryCall') ?? 'true',
   })

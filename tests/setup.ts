@@ -1,15 +1,15 @@
-// Setup global de Vitest — matchers Jest DOM
+// Global Vitest setup with Jest DOM matchers.
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
 
-// Mock next/navigation pour les composants qui utilisent useRouter/usePathname
+// Mock next/navigation for components that use useRouter/usePathname.
 vi.mock('next/navigation', () => ({
   useRouter:   () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
   usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
 }))
 
-// Mock next/image (rendu simplifié en test)
+// Mock next/image with a simplified test render.
 vi.mock('next/image', () => ({
   default: ({ src, alt }: { src: string; alt: string }) => {
     const React = require('react')
@@ -17,7 +17,7 @@ vi.mock('next/image', () => ({
   },
 }))
 
-// Mock sonner (toasts)
+// Mock sonner toasts.
 vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),

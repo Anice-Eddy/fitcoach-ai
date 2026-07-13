@@ -41,7 +41,7 @@ export async function GET(
   })
 
   if (!coach?.coachProfile) {
-    return NextResponse.json({ error: 'Coach introuvable' }, { status: 404 })
+    return NextResponse.json({ error: 'Coach not found' }, { status: 404 })
   }
 
   const profile = coach.coachProfile

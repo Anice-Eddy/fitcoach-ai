@@ -1,4 +1,4 @@
-// Root layout — providers globaux : SessionProvider, Sonner
+// Root layout: global providers for SessionProvider, Sonner, locale, and store hydration.
 
 import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono }   from 'next/font/google'
@@ -6,6 +6,7 @@ import { SessionProvider }          from 'next-auth/react'
 import { Toaster }                  from 'sonner'
 import { LocaleProvider }           from '@/contexts/LocaleContext'
 import { StoreHydrator }            from '@/components/StoreHydrator'
+import { getServerLocale, getServerTranslations } from '@/lib/i18n/server'
 import './globals.css'
 
 const inter = Inter({
@@ -18,18 +19,22 @@ const jetbrainsMono = JetBrains_Mono({
   subsets:  ['latin'],
 })
 
-export const metadata: Metadata = {
-  title:       { default: 'BodyOps', template: '%s · BodyOps' },
-  description: 'Votre coach fitness personnalisé alimenté par l\'IA — programmes, nutrition, progression.',
-  keywords:    ['fitness', 'coach', 'IA', 'nutrition', 'musculation', 'entraînement'],
-  manifest:    '/manifest.json',
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'BodyOps' },
-  openGraph: {
-    title:       'BodyOps',
-    description: 'Votre coach fitness personnalisé alimenté par l\'IA',
-    type:        'website',
-    locale:      'fr_FR',
-  },
+export function generateMetadata(): Metadata {
+  const { locale, t } = getServerTranslations()
+
+  return {
+    title:       { default: 'BodyOps', template: '%s - BodyOps' },
+    description: t('appMeta.description'),
+    keywords:    t('appMeta.keywords').split(','),
+    manifest:    '/manifest.json',
+    appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'BodyOps' },
+    openGraph: {
+      title:       'BodyOps',
+      description: t('appMeta.shortDescription'),
+      type:        'website',
+      locale:      locale === 'fr' ? 'fr_FR' : 'en_US',
+    },
+  }
 }
 
 export const viewport: Viewport = {
@@ -41,11 +46,13 @@ export const viewport: Viewport = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = getServerLocale()
+
   return (
-    <html lang="fr" className="dark">
+    <html lang={locale} className="dark">
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
         <SessionProvider>
-          <LocaleProvider>
+          <LocaleProvider initialLocale={locale}>
             <StoreHydrator />
             {children}
             <Toaster

@@ -14,48 +14,74 @@ import type { InjuryEntry } from '@/utils/validators'
 import { DeleteAccountModal } from '@/components/ui/DeleteAccountModal'
 import { useMyCoach } from '@/lib/coach/use-my-coach'
 import { signOutAndClear } from '@/lib/auth/client-session'
+import { useLocale } from '@/contexts/LocaleContext'
+import { GOAL_LABEL_KEYS } from '@/lib/i18n/profile-label-keys'
 
-// ─── constantes (mirrors onboarding steps) ──────────────────────────────────
+// Shared settings constants that mirror onboarding steps; stored values stay stable while labels are localized at render time.
 
 const TRAINING_PLACES = [
-  { id: 'home_bw',   label: 'À la maison',   sub: 'Sans matériel',                    icon: Home,      equipment: ['BODYWEIGHT'] },
-  { id: 'home_gear', label: 'À la maison',   sub: 'Avec matériel (haltères, bandes…)', icon: Dumbbell,  equipment: ['BODYWEIGHT', 'DUMBBELL', 'KETTLEBELL', 'RESISTANCE_BAND', 'PULL_UP_BAR'] },
-  { id: 'gym',       label: 'En salle',      sub: "Accès à tout l'équipement",         icon: Building2, equipment: ['BARBELL', 'DUMBBELL', 'KETTLEBELL', 'BENCH', 'CABLE_MACHINE', 'SMITH_MACHINE', 'CARDIO_MACHINE', 'PULL_UP_BAR', 'BODYWEIGHT'] },
-  { id: 'outdoor',   label: 'En extérieur',  sub: 'Parcs, calisthenics, course',       icon: TreePine,  equipment: ['BODYWEIGHT', 'PULL_UP_BAR', 'RESISTANCE_BAND'] },
+  { id: 'home_bw',   icon: Home,      equipment: ['BODYWEIGHT'] },
+  { id: 'home_gear', icon: Dumbbell,  equipment: ['BODYWEIGHT', 'DUMBBELL', 'KETTLEBELL', 'RESISTANCE_BAND', 'PULL_UP_BAR'] },
+  { id: 'gym',       icon: Building2, equipment: ['BARBELL', 'DUMBBELL', 'KETTLEBELL', 'BENCH', 'CABLE_MACHINE', 'SMITH_MACHINE', 'CARDIO_MACHINE', 'PULL_UP_BAR', 'BODYWEIGHT'] },
+  { id: 'outdoor',   icon: TreePine,  equipment: ['BODYWEIGHT', 'PULL_UP_BAR', 'RESISTANCE_BAND'] },
 ]
 
 const ACTIVITY_OPTIONS = [
-  { value: 'SEDENTARY',         label: 'Sédentaire',        desc: "Bureau, peu ou pas d'exercice" },
-  { value: 'LIGHTLY_ACTIVE',    label: 'Légèrement actif',  desc: 'Sport 1–3 j/semaine' },
-  { value: 'MODERATELY_ACTIVE', label: 'Modérément actif',  desc: 'Sport 3–5 j/semaine' },
-  { value: 'VERY_ACTIVE',       label: 'Très actif',        desc: 'Sport intensif 6–7 j/semaine' },
-  { value: 'EXTREMELY_ACTIVE',  label: 'Extrêmement actif', desc: 'Athlète, 2×/jour' },
+  { value: 'SEDENTARY' },
+  { value: 'LIGHTLY_ACTIVE' },
+  { value: 'MODERATELY_ACTIVE' },
+  { value: 'VERY_ACTIVE' },
+  { value: 'EXTREMELY_ACTIVE' },
 ]
 
-const GOAL_OPTIONS: { value: string; icon: LucideIcon; label: string; desc: string }[] = [
-  { value: 'WEIGHT_LOSS',     icon: Flame,    label: 'Perte de poids',      desc: 'Déficit de 500 kcal/jour' },
-  { value: 'MUSCLE_GAIN',     icon: Dumbbell, label: 'Prise de masse',       desc: 'Surplus de 300 kcal/jour' },
-  { value: 'MAINTENANCE',     icon: Scale,    label: 'Maintien',             desc: 'Calories de stabilité' },
-  { value: 'ENDURANCE',       icon: Activity, label: 'Endurance',            desc: 'Performance cardio' },
-  { value: 'GENERAL_FITNESS', icon: Target,   label: 'Forme générale',       desc: 'Santé et bien-être' },
-  { value: 'FLEXIBILITY',     icon: Leaf,     label: 'Souplesse / Mobilité', desc: 'Yoga, étirements' },
+const GOAL_OPTIONS: { value: string; icon: LucideIcon }[] = [
+  { value: 'WEIGHT_LOSS',     icon: Flame },
+  { value: 'MUSCLE_GAIN',     icon: Dumbbell },
+  { value: 'MAINTENANCE',     icon: Scale },
+  { value: 'ENDURANCE',       icon: Activity },
+  { value: 'GENERAL_FITNESS', icon: Target },
+  { value: 'FLEXIBILITY',     icon: Leaf },
 ]
 
 const LEVEL_OPTIONS = [
-  { value: 'BEGINNER',     label: 'Débutant',      desc: '< 6 mois' },
-  { value: 'INTERMEDIATE', label: 'Intermédiaire',  desc: '6 mois – 2 ans' },
-  { value: 'ADVANCED',     label: 'Avancé',         desc: '2 – 5 ans' },
-  { value: 'ATHLETE',      label: 'Athlète',        desc: '5 ans+' },
+  { value: 'BEGINNER' },
+  { value: 'INTERMEDIATE' },
+  { value: 'ADVANCED' },
+  { value: 'ATHLETE' },
 ]
 
 const GENDER_OPTIONS = [
-  { value: 'MALE',   label: 'Homme' },
-  { value: 'FEMALE', label: 'Femme' },
+  { value: 'MALE' },
+  { value: 'FEMALE' },
 ]
 
+// These values are persisted in existing profiles; translate only their display labels through the *_I18N maps.
 const RESTRICTIONS = ['Végétarien', 'Végan', 'Sans gluten', 'Sans lactose', 'Halal', 'Casher', 'Sans noix', 'Sans porc']
 const PREFERENCES  = ['Viande blanche', 'Poisson', 'Œufs', 'Légumineuses', 'Riz', 'Pâtes', 'Pommes de terre', 'Légumes verts', 'Fruits', 'Produits laitiers']
+const RESTRICTION_I18N: Record<string, string> = {
+  Végétarien:    'vegetarian',
+  Végan:         'vegan',
+  'Sans gluten': 'glutenFree',
+  'Sans lactose': 'lactoseFree',
+  Halal:         'halal',
+  Casher:        'kosher',
+  'Sans noix':   'nutFree',
+  'Sans porc':   'porkFree',
+}
+const PREFERENCE_I18N: Record<string, string> = {
+  'Viande blanche':   'whiteMeat',
+  Poisson:            'fish',
+  Œufs:               'eggs',
+  Légumineuses:       'legumes',
+  Riz:                'rice',
+  Pâtes:              'pasta',
+  'Pommes de terre':  'potatoes',
+  'Légumes verts':    'greenVegetables',
+  Fruits:             'fruits',
+  'Produits laitiers': 'dairy',
+}
 
+// Injury body-part values are also stored as user data, so keep them stable and localize labels at render time.
 const BODY_PARTS = [
   'Cou / Nuque', 'Épaule gauche', 'Épaule droite', 'Coude gauche', 'Coude droit',
   'Poignet gauche', 'Poignet droit', 'Dos haut', 'Dos bas / Lombaires',
@@ -63,10 +89,71 @@ const BODY_PARTS = [
   'Cheville gauche', 'Cheville droite', 'Quadriceps gauche', 'Quadriceps droit',
   'Ischio-jambiers gauche', 'Ischio-jambiers droit', 'Mollet gauche', 'Mollet droit',
 ]
-const SEVERITY_LABELS: Record<string, { label: string; color: string }> = {
-  MILD:     { label: 'Légère',  color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
-  MODERATE: { label: 'Modérée', color: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
-  SEVERE:   { label: 'Grave',   color: 'text-red-400 bg-red-400/10 border-red-400/20' },
+const BODY_PART_I18N: Record<string, string> = {
+  'Cou / Nuque':                 'neck',
+  'Épaule gauche':               'leftShoulder',
+  'Épaule droite':               'rightShoulder',
+  'Coude gauche':                'leftElbow',
+  'Coude droit':                 'rightElbow',
+  'Poignet gauche':              'leftWrist',
+  'Poignet droit':               'rightWrist',
+  'Dos haut':                    'upperBack',
+  'Dos bas / Lombaires':         'lowerBack',
+  'Hanche gauche':               'leftHip',
+  'Hanche droite':               'rightHip',
+  'Genou gauche':                'leftKnee',
+  'Genou droit':                 'rightKnee',
+  'Cheville gauche':             'leftAnkle',
+  'Cheville droite':             'rightAnkle',
+  'Quadriceps gauche':           'leftQuadriceps',
+  'Quadriceps droit':            'rightQuadriceps',
+  'Ischio-jambiers gauche':      'leftHamstring',
+  'Ischio-jambiers droit':       'rightHamstring',
+  'Mollet gauche':               'leftCalf',
+  'Mollet droit':                'rightCalf',
+}
+const SEVERITY_LABELS: Record<string, { color: string }> = {
+  MILD:     { color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
+  MODERATE: { color: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
+  SEVERE:   { color: 'text-red-400 bg-red-400/10 border-red-400/20' },
+}
+const PLACE_I18N: Record<string, string> = {
+  home_bw:   'homeBodyweight',
+  home_gear: 'homeGear',
+  gym:       'gym',
+  outdoor:   'outdoor',
+}
+const ACTIVITY_I18N: Record<string, string> = {
+  SEDENTARY:         'sedentary',
+  LIGHTLY_ACTIVE:    'light',
+  MODERATELY_ACTIVE: 'moderate',
+  VERY_ACTIVE:       'very',
+  EXTREMELY_ACTIVE:  'extreme',
+}
+const GOAL_I18N: Record<string, string> = {
+  WEIGHT_LOSS:     'weightLoss',
+  MUSCLE_GAIN:     'muscleGain',
+  MAINTENANCE:     'maintenance',
+  ENDURANCE:       'endurance',
+  GENERAL_FITNESS: 'generalFitness',
+  FLEXIBILITY:     'flexibility',
+}
+const LEVEL_I18N: Record<string, string> = {
+  BEGINNER:     'beginner',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED:     'advanced',
+  ATHLETE:      'athlete',
+}
+
+function bodyPartLabel(t: (key: string) => string, value: string) {
+  const key = BODY_PART_I18N[value]
+  return key ? t(`onboarding.health.bodyParts.${key}`) : value
+}
+
+function profileGoalLabel(t: (key: string) => string, value?: string | null) {
+  if (!value) return null
+  const key = GOAL_LABEL_KEYS[value]
+  return key ? t(key) : value
 }
 
 function placeIdsFromEquipment(eq?: string[]): string[] {
@@ -94,6 +181,7 @@ function Section({ title, children, className = '' }: { title: string; children:
 
 /** Member settings hub: profile info, physical measurements, training preferences, equipment, and plan/subscription section. */
 export default function SettingsPage() {
+  const { locale, t } = useLocale()
   const { data: session }       = useSession()
   const { profile, setProfile } = useUserStore()
   const { hasCoach, coachName, nextAppointment, loading: coachLoading } = useMyCoach()
@@ -102,16 +190,16 @@ export default function SettingsPage() {
   const [showDel, setShowDel] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  // ── units
+  // Units
   const [weightUnit, setWeightUnit] = useState<'KG' | 'LB'>(profile?.weightUnit ?? 'KG')
   const [heightUnit, setHeightUnit] = useState<'CM' | 'FT_IN'>(profile?.heightUnit ?? 'CM')
 
-  // ── personal
+  // Personal info
   const [firstName, setFirstName] = useState(profile?.firstName ?? '')
   const [age,       setAge]       = useState(String(profile?.age ?? ''))
   const [gender,    setGender]    = useState(profile?.gender ?? '')
 
-  // ── measurements (always stored in kg / cm internally)
+  // Measurements are always stored in kg/cm internally.
   const [weightKg, setWeightKg] = useState(String(profile?.weightKg ?? ''))
   const [heightCm, setHeightCm] = useState(String(profile?.heightCm ?? ''))
   const [waistCm,  setWaistCm]  = useState(String(profile?.waistCm  ?? ''))
@@ -125,10 +213,10 @@ export default function SettingsPage() {
     return { feet: String(feet), inches: String(inches) }
   })
 
-  // ── activity
+  // Activity
   const [placeIds,     setPlaceIds]     = useState<string[]>(() => placeIdsFromEquipment(profile?.availableEquipment as string[]))
   const [activityLevel, setActivityLevel] = useState(profile?.activityLevel ?? '')
-  // ── injuries
+  // Injuries
   const [injuries,     setInjuries]     = useState<InjuryEntry[]>(() => {
     const raw = (profile as Record<string, unknown> | null)?.injuries
     return Array.isArray(raw) ? (raw as InjuryEntry[]) : []
@@ -136,12 +224,12 @@ export default function SettingsPage() {
   const [injuryForm,   setInjuryForm]   = useState<{ bodyPart: string; severity: InjuryEntry['severity']; description: string }>({ bodyPart: BODY_PARTS[0], severity: 'MILD', description: '' })
   const [trainingDays,  setTrainingDays]  = useState(profile?.trainingDaysPerWeek ?? 3)
 
-  // ── goals
+  // Goals
   const [fitnessGoal,   setFitnessGoal]   = useState(profile?.fitnessGoal ?? '')
   const [targetWeight,  setTargetWeight]  = useState(String(profile?.targetWeightKg ?? ''))
   const [fitnessLevel,  setFitnessLevel]  = useState(profile?.fitnessLevel ?? '')
 
-  // ── diet
+  // Diet
   const [restrictions, setRestrictions] = useState<string[]>(profile?.dietaryRestrictions ?? [])
   const [foodPrefs,    setFoodPrefs]    = useState<string[]>(profile?.foodPreferences ?? [])
 
@@ -224,9 +312,9 @@ export default function SettingsPage() {
       if (!res.ok) throw new Error()
       const updated = await res.json()
       setProfile(updated)
-      toast.success('Profil mis à jour ✓')
+      toast.success(t('settings.profileUpdated'))
     } catch {
-      toast.error('Erreur lors de la sauvegarde')
+      toast.error(t('settings.profileSaveError'))
     } finally {
       setSaving(false)
     }
@@ -242,7 +330,7 @@ export default function SettingsPage() {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data.error ?? 'Erreur lors de la suppression')
+        throw new Error(data.error ?? t('settings.deleteError'))
       }
       await signOutAndClear('/')
     } catch (e) {
@@ -251,11 +339,11 @@ export default function SettingsPage() {
     }
   }
 
-  // ─── render ────────────────────────────────────────────────────────────────
+  // Render
 
   return (
     <>
-      <Header title="Paramètres" />
+      <Header titleKey="settings.title" />
       <PageWrapper>
         {showDel && (
           <DeleteAccountModal
@@ -269,10 +357,10 @@ export default function SettingsPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#C8F135]">Espace personnel</p>
-            <h1 className="mt-1 text-3xl font-bold text-white">Paramètres</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#C8F135]">{t('settings.personalSpace')}</p>
+            <h1 className="mt-1 text-3xl font-bold text-white">{t('settings.title')}</h1>
             <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-              Ajuste ton profil, tes mensurations et tes préférences pour garder ton coaching précis.
+              {t('settings.settingsDescription')}
             </p>
           </div>
           <button
@@ -281,7 +369,7 @@ export default function SettingsPage() {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 py-3 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] disabled:opacity-60 sm:w-auto"
           >
             <Save className="size-4" />
-            {saving ? 'Sauvegarde…' : 'Enregistrer'}
+            {saving ? t('settings.saving') : t('common.save')}
           </button>
         </div>
 
@@ -290,7 +378,7 @@ export default function SettingsPage() {
             {/* Compte */}
             <section className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
               <div className="px-5 py-4 border-b border-zinc-800">
-                <h2 className="text-sm font-semibold text-zinc-300">Compte</h2>
+                <h2 className="text-sm font-semibold text-zinc-300">{t('settings.account')}</h2>
               </div>
               <div className="p-5 space-y-5">
                 <div className="flex items-center gap-4">
@@ -303,25 +391,25 @@ export default function SettingsPage() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <div className="truncate font-medium text-white">{session?.user?.name ?? profile?.firstName ?? 'Utilisateur'}</div>
+                    <div className="truncate font-medium text-white">{session?.user?.name ?? profile?.firstName ?? t('settings.userFallback')}</div>
                     <div className="truncate text-sm text-zinc-400">{session?.user?.email ?? '—'}</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3">
                     <Scale className="mb-2 size-4 text-[#C8F135]" />
-                    <p className="text-[11px] text-zinc-500">Poids</p>
+                    <p className="text-[11px] text-zinc-500">{t('settings.weightShort')}</p>
                     <p className="truncate text-sm font-semibold text-white">{profile?.weightKg ? `${profile.weightKg} kg` : '—'}</p>
                   </div>
                   <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3">
                     <Target className="mb-2 size-4 text-[#C8F135]" />
-                    <p className="text-[11px] text-zinc-500">Objectif</p>
+                    <p className="text-[11px] text-zinc-500">{t('settings.objective')}</p>
                     <p className="truncate text-sm font-semibold text-white">{profile?.targetWeightKg ? `${profile.targetWeightKg} kg` : '—'}</p>
                   </div>
                   <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3">
                     <CalendarDays className="mb-2 size-4 text-[#C8F135]" />
-                    <p className="text-[11px] text-zinc-500">Sem.</p>
-                    <p className="truncate text-sm font-semibold text-white">{profile?.trainingDaysPerWeek ?? trainingDays} j</p>
+                    <p className="text-[11px] text-zinc-500">{t('settings.weekShort')}</p>
+                    <p className="truncate text-sm font-semibold text-white">{profile?.trainingDaysPerWeek ?? trainingDays} {t('settings.dayShort')}</p>
                   </div>
                 </div>
               </div>
@@ -330,9 +418,9 @@ export default function SettingsPage() {
             {/* Mon accompagnement */}
             <section className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
               <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-zinc-300">Mon accompagnement</h2>
+                <h2 className="text-sm font-semibold text-zinc-300">{t('settings.myCoaching')}</h2>
                 <span className="rounded-full bg-[#C8F135]/10 px-2.5 py-1 text-xs font-medium text-[#C8F135]">
-                    {hasCoach ? 'Coach réel' : 'IA'}
+                    {hasCoach ? t('settings.realCoach') : t('settings.ai')}
                 </span>
               </div>
               <div className="p-5 space-y-4">
@@ -343,15 +431,15 @@ export default function SettingsPage() {
                   <div>
                     {hasCoach ? (
                       <>
-                        <p className="text-sm font-medium text-white">{coachLoading ? 'Synchronisation...' : coachName ?? 'Coach à confirmer'}</p>
+                        <p className="text-sm font-medium text-white">{coachLoading ? t('settings.syncing') : coachName ?? t('settings.coachToConfirm')}</p>
                         <p className="text-xs text-zinc-500">
-                          Prochaine séance : {nextAppointment ? new Date(nextAppointment.scheduledAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'à planifier'}
+                          {t('settings.nextAppointment')} : {nextAppointment ? new Date(nextAppointment.scheduledAt).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : t('settings.toPlan').toLowerCase()}
                         </p>
                       </>
                     ) : (
                       <>
-                        <p className="text-sm font-medium text-white">Programme IA en cours</p>
-                        <p className="text-xs text-zinc-500">{profile?.fitnessGoal ?? 'Objectif à finaliser'}</p>
+                        <p className="text-sm font-medium text-white">{t('settings.programAiActive')}</p>
+                        <p className="text-xs text-zinc-500">{profileGoalLabel(t, profile?.fitnessGoal) ?? t('settings.goalToFinalize')}</p>
                       </>
                     )}
                   </div>
@@ -361,13 +449,13 @@ export default function SettingsPage() {
                     href="/choose?returnTo=/settings"
                     className="flex items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 py-2.5 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d]"
                   >
-                    Changer de mode <ArrowRight className="size-4" />
+                    {t('settings.changeMode')} <ArrowRight className="size-4" />
                   </Link>
                   <Link
                     href={hasCoach ? '/choose?returnTo=/settings' : '/coaches?returnTo=/settings'}
                     className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white"
                   >
-                    {hasCoach ? 'Changer de coach' : 'Passer à un coach réel'}
+                    {hasCoach ? t('settings.changeCoach') : t('settings.switchToRealCoach')}
                   </Link>
                 </div>
               </div>
@@ -376,10 +464,10 @@ export default function SettingsPage() {
 
           <div className="grid min-w-0 gap-6 xl:grid-cols-2">
 
-        {/* Unités */}
-        <Section title="Unités de mesure">
+        {/* Units */}
+        <Section title={t('settings.measurementUnits')}>
           <div>
-            <p className="text-xs text-zinc-500 mb-2">Poids</p>
+            <p className="text-xs text-zinc-500 mb-2">{t('settings.weight')}</p>
             <div className="grid grid-cols-2 gap-3">
               {(['KG', 'LB'] as const).map((u) => (
                 <button key={u} type="button" onClick={() => setWeightUnit(u)}
@@ -387,13 +475,13 @@ export default function SettingsPage() {
                     weightUnit === u ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]' : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600'
                   }`}
                 >
-                  {u === 'KG' ? 'Kilogrammes (kg)' : 'Livres (lb)'}
+                  {u === 'KG' ? t('settings.kilograms') : t('settings.pounds')}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <p className="text-xs text-zinc-500 mb-2">Taille</p>
+            <p className="text-xs text-zinc-500 mb-2">{t('settings.height')}</p>
             <div className="grid grid-cols-2 gap-3">
               {(['CM', 'FT_IN'] as const).map((u) => (
                 <button key={u} type="button" onClick={() => setHeightUnit(u)}
@@ -401,7 +489,7 @@ export default function SettingsPage() {
                     heightUnit === u ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]' : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600'
                   }`}
                 >
-                  {u === 'CM' ? 'Centimètres (cm)' : 'Pieds / Pouces'}
+                  {u === 'CM' ? t('settings.centimeters') : t('settings.feetInches')}
                 </button>
               ))}
             </div>
@@ -409,23 +497,23 @@ export default function SettingsPage() {
         </Section>
 
         {/* Informations personnelles */}
-        <Section title="Informations personnelles">
+        <Section title={t('settings.myProfile')}>
           <div>
-            <label className="block text-xs text-zinc-500 mb-1.5">Prénom</label>
+            <label className="block text-xs text-zinc-500 mb-1.5">{t('settings.firstName')}</label>
             <input value={firstName} onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Ton prénom"
+              placeholder={t('onboarding.identity.firstNamePlaceholder')}
               className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors"
             />
           </div>
           <div>
-            <label className="block text-xs text-zinc-500 mb-1.5">Âge</label>
+            <label className="block text-xs text-zinc-500 mb-1.5">{t('settings.age')}</label>
             <input value={age} onChange={(e) => setAge(e.target.value)}
               type="number" min={13} max={100} placeholder="25"
               className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors"
             />
           </div>
           <div>
-            <label className="block text-xs text-zinc-500 mb-2">Sexe</label>
+            <label className="block text-xs text-zinc-500 mb-2">{t('settings.gender')}</label>
             <div className="grid grid-cols-3 gap-3">
               {GENDER_OPTIONS.map((opt) => (
                 <button key={opt.value} type="button"
@@ -434,7 +522,7 @@ export default function SettingsPage() {
                     gender === opt.value ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]' : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600'
                   }`}
                 >
-                  {opt.label}
+                  {opt.value === 'MALE' ? t('onboarding.identity.male') : t('onboarding.identity.female')}
                 </button>
               ))}
             </div>
@@ -442,11 +530,11 @@ export default function SettingsPage() {
         </Section>
 
         {/* Mensurations */}
-        <Section title="Mensurations">
-          {/* Poids */}
+        <Section title={t('settings.bodyInfo')}>
+          {/* Weight */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs text-zinc-500">Poids</label>
+              <label className="text-xs text-zinc-500">{t('settings.weight')}</label>
               <span className="text-xs text-zinc-600 bg-zinc-800 px-2 py-0.5 rounded">
                 {weightUnit === 'KG' ? 'kg' : 'lb'}
               </span>
@@ -470,10 +558,10 @@ export default function SettingsPage() {
             )}
           </div>
 
-          {/* Taille */}
+          {/* Height */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs text-zinc-500">Taille</label>
+              <label className="text-xs text-zinc-500">{t('settings.height')}</label>
               <span className="text-xs text-zinc-600 bg-zinc-800 px-2 py-0.5 rounded">
                 {heightUnit === 'CM' ? 'cm' : 'ft / in'}
               </span>
@@ -481,7 +569,7 @@ export default function SettingsPage() {
             {heightUnit === 'CM' ? (
               <input value={heightCm}
                 onChange={(e) => setHeightCm(e.target.value)}
-                type="number" placeholder="175"
+                type="number" placeholder={t('settings.placeholders.heightCm')}
                 className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-[#C8F135] transition-colors"
               />
             ) : (
@@ -493,10 +581,10 @@ export default function SettingsPage() {
                       setFtDisplay(f)
                       setHeightCm(String(ftInToCm(parseFloat(f.feet) || 0, parseFloat(f.inches) || 0)))
                     }}
-                    type="number" placeholder="5 ft"
+                    type="number" placeholder={t('settings.placeholders.feet')}
                     className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-[#C8F135] transition-colors"
                   />
-                  <p className="text-xs text-zinc-500 mt-1 text-center">pieds</p>
+                  <p className="text-xs text-zinc-500 mt-1 text-center">{t('onboarding.measurements.feet')}</p>
                 </div>
                 <div className="flex-1">
                   <input value={ftDisplay.inches}
@@ -505,42 +593,42 @@ export default function SettingsPage() {
                       setFtDisplay(f)
                       setHeightCm(String(ftInToCm(parseFloat(f.feet) || 0, parseFloat(f.inches) || 0)))
                     }}
-                    type="number" placeholder="11 in"
+                    type="number" placeholder={t('settings.placeholders.inches')}
                     className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-[#C8F135] transition-colors"
                   />
-                  <p className="text-xs text-zinc-500 mt-1 text-center">pouces</p>
+                  <p className="text-xs text-zinc-500 mt-1 text-center">{t('onboarding.measurements.inches')}</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Tour de taille + hanches */}
+          {/* Waist and hips */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-zinc-500 mb-1.5">
-                Tour de taille <span className="text-zinc-600">optionnel</span>
+                {t('settings.waist')} <span className="text-zinc-600">{t('settings.optional')}</span>
               </label>
               <input value={waistCm} onChange={(e) => setWaistCm(e.target.value)}
-                type="number" placeholder="80 cm"
+                type="number" placeholder={t('settings.placeholders.waistCm')}
                 className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-[#C8F135] transition-colors"
               />
             </div>
             <div>
               <label className="block text-xs text-zinc-500 mb-1.5">
-                Tour de hanches <span className="text-zinc-600">optionnel</span>
+                {t('settings.hips')} <span className="text-zinc-600">{t('settings.optional')}</span>
               </label>
               <input value={hipsCm} onChange={(e) => setHipsCm(e.target.value)}
-                type="number" placeholder="95 cm"
+                type="number" placeholder={t('settings.placeholders.hipsCm')}
                 className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-[#C8F135] transition-colors"
               />
             </div>
           </div>
         </Section>
 
-        {/* Entraînement */}
-        <Section title="Entraînement" className="xl:col-span-2">
+        {/* Training */}
+        <Section title={t('settings.training')} className="xl:col-span-2">
           <div>
-            <p className="text-xs text-zinc-500 mb-2">Où t'entraînes-tu ?</p>
+            <p className="text-xs text-zinc-500 mb-2">{t('onboarding.activityStep.trainingPlace')}</p>
             <div className="grid grid-cols-2 gap-3">
               {TRAINING_PLACES.map((place) => {
                 const Icon   = place.icon
@@ -558,8 +646,8 @@ export default function SettingsPage() {
                         {active && <svg className="size-2.5 text-zinc-950" fill="none" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                       </div>
                     </div>
-                    <p className={`text-sm font-semibold ${active ? 'text-[#C8F135]' : 'text-white'}`}>{place.label}</p>
-                    <p className="text-xs text-zinc-400 mt-0.5 leading-snug">{place.sub}</p>
+                    <p className={`text-sm font-semibold ${active ? 'text-[#C8F135]' : 'text-white'}`}>{t(`onboarding.activityStep.places.${PLACE_I18N[place.id]}.label`)}</p>
+                    <p className="text-xs text-zinc-400 mt-0.5 leading-snug">{t(`onboarding.activityStep.places.${PLACE_I18N[place.id]}.description`)}</p>
                   </button>
                 )
               })}
@@ -567,7 +655,7 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <p className="text-xs text-zinc-500 mb-2">Niveau d'activité</p>
+            <p className="text-xs text-zinc-500 mb-2">{t('onboarding.activityStep.activityLevel')}</p>
             <div className="space-y-2">
               {ACTIVITY_OPTIONS.map((opt) => (
                 <button key={opt.value} type="button"
@@ -580,8 +668,8 @@ export default function SettingsPage() {
                     activityLevel === opt.value ? 'border-[#C8F135] bg-[#C8F135]' : 'border-zinc-600'
                   }`} />
                   <div>
-                    <p className={`text-sm font-medium ${activityLevel === opt.value ? 'text-[#C8F135]' : 'text-white'}`}>{opt.label}</p>
-                    <p className="text-xs text-zinc-400">{opt.desc}</p>
+                    <p className={`text-sm font-medium ${activityLevel === opt.value ? 'text-[#C8F135]' : 'text-white'}`}>{t(`onboarding.activityStep.levels.${ACTIVITY_I18N[opt.value]}.label`)}</p>
+                    <p className="text-xs text-zinc-400">{t(`onboarding.activityStep.levels.${ACTIVITY_I18N[opt.value]}.description`)}</p>
                   </div>
                 </button>
               ))}
@@ -590,8 +678,8 @@ export default function SettingsPage() {
 
           <div>
             <p className="text-xs text-zinc-500 mb-2">
-              Jours d'entraînement par semaine :{' '}
-              <span className="text-[#C8F135] font-bold">{trainingDays} jour{trainingDays > 1 ? 's' : ''}</span>
+              {t('onboarding.activityStep.trainingDays')}{' '}
+              <span className="text-[#C8F135] font-bold">{trainingDays} {trainingDays > 1 ? t('onboarding.activityStep.days') : t('onboarding.activityStep.day')}</span>
             </p>
             <input type="range" min={1} max={7} value={trainingDays}
               onChange={(e) => setTrainingDays(Number(e.target.value))}
@@ -605,8 +693,8 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        {/* Santé & Blessures */}
-        <Section title="Santé & Blessures" className="xl:col-span-2">
+        {/* Health & injuries */}
+        <Section title={t('settings.healthInjuries')} className="xl:col-span-2">
           {injuries.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-1">
               {injuries.map((inj, i) => {
@@ -614,8 +702,8 @@ export default function SettingsPage() {
                 return (
                   <div key={i} className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs ${sev.color}`}>
                     <AlertTriangle className="size-3 shrink-0" />
-                    <span className="font-semibold">{inj.bodyPart}</span>
-                    <span className="opacity-70">— {sev.label}</span>
+                    <span className="font-semibold">{bodyPartLabel(t, inj.bodyPart)}</span>
+                    <span className="opacity-70">— {t(`onboarding.health.severityLabels.${inj.severity.toLowerCase()}`)}</span>
                     {inj.description && <span className="opacity-60 italic">· {inj.description}</span>}
                     <button onClick={() => setInjuries(prev => prev.filter((_, j) => j !== i))} className="ml-1 opacity-60 hover:opacity-100 hover:text-red-400">
                       <X className="size-3" />
@@ -626,28 +714,28 @@ export default function SettingsPage() {
             </div>
           )}
           <div className="rounded-xl border border-zinc-700 bg-zinc-800/40 p-4 space-y-3">
-            <p className="text-xs font-medium text-zinc-400">Ajouter une blessure / zone sensible</p>
+            <p className="text-xs font-medium text-zinc-400">{t('settings.addInjury')}</p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <div>
-                <label className="block text-[11px] text-zinc-500 mb-1">Zone du corps</label>
+                <label className="block text-[11px] text-zinc-500 mb-1">{t('settings.bodyArea')}</label>
                 <select value={injuryForm.bodyPart} onChange={e => setInjuryForm(f => ({ ...f, bodyPart: e.target.value }))}
                   className="w-full px-2.5 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135]">
-                  {BODY_PARTS.map(bp => <option key={bp} value={bp}>{bp}</option>)}
+                  {BODY_PARTS.map(bp => <option key={bp} value={bp}>{bodyPartLabel(t, bp)}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] text-zinc-500 mb-1">Sévérité</label>
+                <label className="block text-[11px] text-zinc-500 mb-1">{t('settings.severity')}</label>
                 <select value={injuryForm.severity} onChange={e => setInjuryForm(f => ({ ...f, severity: e.target.value as InjuryEntry['severity'] }))}
                   className="w-full px-2.5 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135]">
-                  <option value="MILD">Légère (gêne)</option>
-                  <option value="MODERATE">Modérée (douleur)</option>
-                  <option value="SEVERE">Grave (impossible)</option>
+                  <option value="MILD">{t('onboarding.health.severityLabels.mild')}</option>
+                  <option value="MODERATE">{t('onboarding.health.severityLabels.moderate')}</option>
+                  <option value="SEVERE">{t('onboarding.health.severityLabels.severe')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] text-zinc-500 mb-1">Détail <span className="text-zinc-600">(optionnel)</span></label>
+                <label className="block text-[11px] text-zinc-500 mb-1">{t('settings.details')} <span className="text-zinc-600">({t('settings.optional')})</span></label>
                 <input type="text" value={injuryForm.description} onChange={e => setInjuryForm(f => ({ ...f, description: e.target.value }))}
-                  placeholder="ex: tendinite, ancienne op…"
+                  placeholder={t('settings.injuryPlaceholder')}
                   className="w-full px-2.5 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]" />
               </div>
             </div>
@@ -658,18 +746,18 @@ export default function SettingsPage() {
               }}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#C8F135]/10 text-[#C8F135] text-xs font-semibold hover:bg-[#C8F135]/20 transition-colors"
             >
-              <Plus className="size-3.5" /> Ajouter
+              <Plus className="size-3.5" /> {t('common.add')}
             </button>
           </div>
           {injuries.length === 0 && (
-            <p className="text-xs text-zinc-600">Aucune blessure enregistrée. Ces informations permettent à l'IA de personnaliser tes programmes.</p>
+            <p className="text-xs text-zinc-600">{t('settings.noInjuryDescription')}</p>
           )}
         </Section>
 
-        {/* Objectifs */}
-        <Section title="Objectifs">
+        {/* Goals */}
+        <Section title={t('settings.goals')}>
           <div>
-            <p className="text-xs text-zinc-500 mb-2">Objectif principal</p>
+            <p className="text-xs text-zinc-500 mb-2">{t('progress.primaryGoal')}</p>
             <div className="grid grid-cols-2 gap-2">
               {GOAL_OPTIONS.map((opt) => {
                 const Icon     = opt.icon
@@ -684,8 +772,8 @@ export default function SettingsPage() {
                     <div className="mb-1.5">
                       <Icon className={`size-5 ${isActive ? 'text-[#C8F135]' : 'text-zinc-400'}`} />
                     </div>
-                    <p className={`text-xs font-semibold ${isActive ? 'text-[#C8F135]' : 'text-white'}`}>{opt.label}</p>
-                    <p className="text-xs text-zinc-500">{opt.desc}</p>
+                    <p className={`text-xs font-semibold ${isActive ? 'text-[#C8F135]' : 'text-white'}`}>{t(`onboarding.goalsStep.goals.${GOAL_I18N[opt.value]}.label`)}</p>
+                    <p className="text-xs text-zinc-500">{t(`onboarding.goalsStep.goals.${GOAL_I18N[opt.value]}.description`)}</p>
                   </button>
                 )
               })}
@@ -695,7 +783,7 @@ export default function SettingsPage() {
           {(fitnessGoal === 'WEIGHT_LOSS' || fitnessGoal === 'MUSCLE_GAIN') && (
             <div>
               <label className="block text-xs text-zinc-500 mb-1.5">
-                Poids cible <span className="text-zinc-600">optionnel, en kg</span>
+                {t('settings.targetWeight')} <span className="text-zinc-600">{t('onboarding.goalsStep.targetWeightOptional')}</span>
               </label>
               <input value={targetWeight} onChange={(e) => setTargetWeight(e.target.value)}
                 type="number" step="0.5" placeholder="65"
@@ -705,7 +793,7 @@ export default function SettingsPage() {
           )}
 
           <div>
-            <p className="text-xs text-zinc-500 mb-2">Niveau sportif</p>
+            <p className="text-xs text-zinc-500 mb-2">{t('settings.fitnessLevel')}</p>
             <div className="grid grid-cols-2 gap-2">
               {LEVEL_OPTIONS.map((opt) => (
                 <button key={opt.value} type="button"
@@ -714,8 +802,8 @@ export default function SettingsPage() {
                     fitnessLevel === opt.value ? 'border-[#C8F135] bg-[#C8F135]/10' : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
                   }`}
                 >
-                  <p className={`text-sm font-semibold ${fitnessLevel === opt.value ? 'text-[#C8F135]' : 'text-white'}`}>{opt.label}</p>
-                  <p className="text-xs text-zinc-500">{opt.desc}</p>
+                  <p className={`text-sm font-semibold ${fitnessLevel === opt.value ? 'text-[#C8F135]' : 'text-white'}`}>{t(`onboarding.goalsStep.levels.${LEVEL_I18N[opt.value]}.label`)}</p>
+                  <p className="text-xs text-zinc-500">{t(`onboarding.goalsStep.levels.${LEVEL_I18N[opt.value]}.description`)}</p>
                 </button>
               ))}
             </div>
@@ -723,9 +811,9 @@ export default function SettingsPage() {
         </Section>
 
         {/* Alimentation */}
-        <Section title="Alimentation">
+        <Section title={t('settings.nutrition')}>
           <div>
-            <p className="text-xs text-zinc-500 mb-2">Restrictions alimentaires <span className="text-zinc-600">optionnel</span></p>
+            <p className="text-xs text-zinc-500 mb-2">{t('settings.dietaryRestrictions')} <span className="text-zinc-600">{t('settings.optional')}</span></p>
             <div className="flex flex-wrap gap-2">
               {RESTRICTIONS.map((r) => {
                 const active = restrictions.includes(r)
@@ -735,13 +823,13 @@ export default function SettingsPage() {
                     className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
                       active ? 'border-red-400 bg-red-400/10 text-red-400' : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600'
                     }`}
-                  >{r}</button>
+                  >{t(`onboarding.diet.restrictionsOptions.${RESTRICTION_I18N[r]}`)}</button>
                 )
               })}
             </div>
           </div>
           <div>
-            <p className="text-xs text-zinc-500 mb-2">Aliments que tu aimes <span className="text-zinc-600">optionnel</span></p>
+            <p className="text-xs text-zinc-500 mb-2">{t('settings.foodsYouLike')} <span className="text-zinc-600">{t('settings.optional')}</span></p>
             <div className="flex flex-wrap gap-2">
               {PREFERENCES.map((p) => {
                 const active = foodPrefs.includes(p)
@@ -751,7 +839,7 @@ export default function SettingsPage() {
                     className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
                       active ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]' : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600'
                     }`}
-                  >{p}</button>
+                  >{t(`onboarding.diet.preferencesOptions.${PREFERENCE_I18N[p]}`)}</button>
                 )
               })}
             </div>
@@ -761,21 +849,21 @@ export default function SettingsPage() {
         {/* Account actions */}
         <section className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden xl:col-span-2">
           <div className="px-5 py-4 border-b border-zinc-800">
-            <h2 className="text-sm font-semibold text-zinc-300">Compte et sécurité</h2>
+            <h2 className="text-sm font-semibold text-zinc-300">{t('settings.accountSecurity')}</h2>
           </div>
           <button
             onClick={() => signOutAndClear('/')}
             className="flex items-center gap-3 w-full px-5 py-3.5 border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors text-left"
           >
             <LogOut className="size-4 text-zinc-400" />
-            <span className="text-sm text-zinc-300">Se déconnecter</span>
+            <span className="text-sm text-zinc-300">{t('auth.signOut')}</span>
           </button>
           <button
             onClick={() => setShowDel(true)}
             className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-red-500/5 transition-colors text-left"
           >
             <Trash2 className="size-4 text-red-400" />
-            <span className="text-sm text-red-400">Supprimer mon compte</span>
+            <span className="text-sm text-red-400">{t('settings.deleteMyAccount')}</span>
           </button>
         </section>
 

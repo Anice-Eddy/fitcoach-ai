@@ -13,14 +13,14 @@ export async function PATCH(
 ) {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
   }
 
   const appointment = await prisma.coachAppointment.findUnique({
     where: { id: params.id },
   })
   if (!appointment || appointment.memberId !== session.user.id) {
-    return NextResponse.json({ error: 'Rendez-vous introuvable' }, { status: 404 })
+    return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
   }
 
   const { memberNote } = await req.json()
@@ -42,8 +42,8 @@ export async function PATCH(
         coachId:         appointment.coachId,
         recipientUserId: null,
         type:            'MESSAGE',
-        title:           'Note d\'un membre',
-        message:         `Un membre a ajouté une note à votre rendez-vous "${appointment.title}".`,
+        title:           'Appointment note from member',
+        message:         `A member added a note to your appointment "${appointment.title}".`,
         relatedId:       params.id,
       },
     }).catch(() => {})

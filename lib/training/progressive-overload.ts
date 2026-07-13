@@ -1,5 +1,5 @@
-// Logique de surcharge progressive — calcule la charge de la semaine suivante
-// Règle : si toutes les séries sont complétées → +2.5 kg (compound) ou +1.25 kg (isolation)
+// Progressive overload rules for calculating the next session's load.
+// Rule: if all sets are completed, increase by 2.5 kg for compound lifts or 1.25 kg for isolation work.
 
 interface ExerciseForOverload {
   weightKg:    number | null
@@ -28,7 +28,7 @@ export function calculateNextWeight(
   }
 
   const increment   = isCompound ? 2.5 : 1.25
-  const nextWeight  = Math.round((weightKg + increment) * 4) / 4 // arrondi au 0.25 kg
+  const nextWeight  = Math.round((weightKg + increment) * 4) / 4 // Round to the nearest 0.25 kg.
   return { nextWeightKg: nextWeight, progressed: true }
 }
 
@@ -39,7 +39,7 @@ export function getProgressionMessage(
   nextWeight:    number,
 ): string {
   if (!progressed) {
-    return `Maintien à ${previousWeight} kg — continue comme ça !`
+    return `Hold at ${previousWeight} kg — keep going.`
   }
   const delta = Math.round((nextWeight - previousWeight) * 100) / 100
   return `Progression : ${previousWeight} kg → ${nextWeight} kg (+${delta} kg)`

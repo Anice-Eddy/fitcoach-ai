@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell, X, CheckCheck } from 'lucide-react'
 import { notificationHref } from '@/lib/notifications/notification-links'
+import { notificationDisplay } from '@/lib/notifications/display'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface Notification {
   id:        string
@@ -17,6 +19,7 @@ interface Notification {
 
 /** Member notification bell with dropdown panel; fetches unread count on mount, marks items read on click, and navigates to the relevant page. */
 export function NotificationPanel() {
+  const { locale, t } = useLocale()
   const router                          = useRouter()
   const [open, setOpen]                 = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -91,7 +94,7 @@ export function NotificationPanel() {
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        aria-label="Notifications"
+        aria-label={t('notifications.title')}
         className="relative rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white"
       >
         <Bell className="size-5" />
@@ -105,7 +108,7 @@ export function NotificationPanel() {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl z-50">
           <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
-            <span className="text-sm font-semibold text-white">Notifications</span>
+            <span className="text-sm font-semibold text-white">{t('notifications.title')}</span>
             <div className="flex items-center gap-2">
               {unread > 0 && (
                 <button
@@ -113,13 +116,13 @@ export function NotificationPanel() {
                   onClick={markAllRead}
                   className="text-xs text-zinc-500 hover:text-white flex items-center gap-1"
                 >
-                  <CheckCheck className="size-3" /> Tout lire
+                  <CheckCheck className="size-3" /> {t('notifications.markAllRead')}
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Fermer"
+                aria-label={t('common.close')}
                 className="text-zinc-600 hover:text-white"
               >
                 <X className="size-4" />
@@ -129,32 +132,35 @@ export function NotificationPanel() {
 
           <div className="max-h-80 overflow-y-auto">
             {loading ? (
-              <div className="px-4 py-6 text-center text-sm text-zinc-500">Chargement…</div>
+              <div className="px-4 py-6 text-center text-sm text-zinc-500">{t('common.loading')}</div>
             ) : notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <Bell className="size-8 text-zinc-700 mx-auto mb-2" />
-                <p className="text-sm text-zinc-500">Aucune notification</p>
+                <p className="text-sm text-zinc-500">{t('notifications.empty')}</p>
               </div>
             ) : (
-              notifications.map(n => (
-                <button
-                  key={n.id}
-                  type="button"
-                  onClick={() => handleClick(n)}
-                  className={`w-full text-left px-4 py-3 border-b border-zinc-800/50 last:border-0 transition-colors hover:bg-zinc-900 ${n.isRead ? '' : 'bg-zinc-900/60'}`}
-                >
-                  <div className="flex items-start gap-2">
-                    {!n.isRead && <div className="size-1.5 rounded-full bg-[#C8F135] mt-1.5 shrink-0" />}
-                    <div className={!n.isRead ? '' : 'pl-3.5'}>
-                      <p className="text-xs font-medium text-white">{n.title}</p>
-                      <p className="text-xs text-zinc-400 mt-0.5">{n.message}</p>
-                      <p className="text-[10px] text-zinc-600 mt-1">
-                        {new Date(n.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                      </p>
+              notifications.map(n => {
+                const display = notificationDisplay(n, t, locale)
+                return (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => handleClick(n)}
+                    className={`w-full text-left px-4 py-3 border-b border-zinc-800/50 last:border-0 transition-colors hover:bg-zinc-900 ${n.isRead ? '' : 'bg-zinc-900/60'}`}
+                  >
+                    <div className="flex items-start gap-2">
+                      {!n.isRead && <div className="size-1.5 rounded-full bg-[#C8F135] mt-1.5 shrink-0" />}
+                      <div className={!n.isRead ? '' : 'pl-3.5'}>
+                        <p className="text-xs font-medium text-white">{display.title}</p>
+                        <p className="text-xs text-zinc-400 mt-0.5">{display.message}</p>
+                        <p className="text-[10px] text-zinc-600 mt-1">
+                          {new Date(n.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </button>
-              ))
+                  </button>
+                )
+              })
             )}
           </div>
         </div>

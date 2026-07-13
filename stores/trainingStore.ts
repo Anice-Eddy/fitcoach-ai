@@ -1,4 +1,4 @@
-// Store entraînement : programme actif, séance en cours, logs
+// Training store: active program, current session, and logs.
 // deps: npm install zustand
 
 import { create } from 'zustand'

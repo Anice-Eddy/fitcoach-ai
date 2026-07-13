@@ -1,4 +1,4 @@
-// Store utilisateur : profil, métriques, mode stockage
+// User store: profile, metrics, and storage mode.
 // deps: npm install zustand
 
 import { create } from 'zustand'

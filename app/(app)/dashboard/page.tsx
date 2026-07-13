@@ -5,14 +5,19 @@ import { Header } from '@/components/layout/Header'
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { DashboardClient } from './DashboardClient'
 import { PageSkeleton } from '@/components/ui/LoadingSkeleton'
+import { getServerTranslations } from '@/lib/i18n/server'
 
-export const metadata: Metadata = { title: 'Tableau de bord — BodyOps' }
+export function generateMetadata(): Metadata {
+  const { t } = getServerTranslations()
+
+  return { title: `${t('dashboard.title')} — BodyOps` }
+}
 
 /** Server component wrapping the member dashboard with a Suspense skeleton fallback. */
 export default function DashboardPage() {
   return (
     <>
-      <Header title="Tableau de bord" />
+      <Header titleKey="dashboard.title" />
       <PageWrapper>
         <Suspense fallback={<PageSkeleton />}>
           <DashboardClient />

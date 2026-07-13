@@ -10,12 +10,12 @@ export const runtime = 'nodejs'
 export async function GET() {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
   }
 
   const userId = session.user.id
 
-  // ── Self-healing sync ──────────────────────────────────────────────────────
+  // Self-healing sync
   // Any appointment this member has triggers a CoachMember record if missing.
   const memberAppointments = await prisma.coachAppointment.findMany({
     where:    { memberId: userId },
@@ -30,7 +30,7 @@ export async function GET() {
     }).catch((err) => console.error('[my-coach sync]', err))
   }
 
-  // ── Fetch all coach-member relations for this user ─────────────────────────
+  // Fetch all coach-member relations for this user.
   const relations = await prisma.coachMember.findMany({
     where: { memberId: userId },
     include: {
@@ -54,7 +54,7 @@ export async function GET() {
     return NextResponse.json({ coaches: [] })
   }
 
-  // ── Enrich with upcoming appointment & counts ──────────────────────────────
+  // Enrich with upcoming appointment and counts.
   const now = new Date()
   const chatRows = await prisma.coachChat.findMany({
     where: { memberId: userId, coachId: { in: relations.map(rel => rel.coachId) } },

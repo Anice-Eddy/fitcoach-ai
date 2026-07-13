@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   const body   = await req.json()
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Email invalide' }, { status: 422 })
+    return NextResponse.json({ error: 'Invalid email' }, { status: 422 })
   }
 
   const { email, intent } = parsed.data
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       {
         ok: false,
         reason: 'EMAIL_NOT_FOUND',
-        message: "Aucun compte n'existe avec cette adresse email.",
+        message: "No account exists for this email address.",
       },
       { status: 404 },
     )
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         ok: false,
         reason: 'SOCIAL_PROVIDER',
         provider: socialProvider,
-        message: `Vous êtes connecté avec ${socialProvider}. Veuillez modifier votre mot de passe depuis votre compte ${socialProvider}.`,
+        message: `You are signed in with ${socialProvider}. Please update your password from your ${socialProvider} account.`,
       },
       { status: 409 },
     )
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     {
       ok: false,
       reason: 'FIREBASE_ONLY',
-      message: 'La réinitialisation du mot de passe est maintenant gérée par Firebase.',
+      message: 'Password reset is now handled by Firebase.',
     },
     { status: 410 },
   )

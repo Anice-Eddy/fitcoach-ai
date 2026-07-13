@@ -8,10 +8,10 @@ export const AFFILIATE_CATEGORIES: {
   icon:        LucideIcon
   description: string
 }[] = [
-  { id: 'SUPPLEMENTS', label: 'Suppléments', icon: FlaskConical, description: 'Protéines, créatine, vitamines…' },
-  { id: 'EQUIPMENT',   label: 'Équipement',  icon: Dumbbell,     description: 'Haltères, kettlebells, bancs…' },
-  { id: 'CLOTHING',    label: 'Vêtements',   icon: Shirt,        description: 'Tenues, chaussures, accessoires…' },
-  { id: 'BOOKS',       label: 'Livres',      icon: BookOpen,     description: 'Guides nutrition, musculation…' },
+  { id: 'SUPPLEMENTS', label: 'Supplements', icon: FlaskConical, description: 'Protein, creatine, vitamins...' },
+  { id: 'EQUIPMENT',   label: 'Equipment',   icon: Dumbbell,     description: 'Dumbbells, kettlebells, benches...' },
+  { id: 'CLOTHING',    label: 'Clothing',    icon: Shirt,        description: 'Outfits, shoes, accessories...' },
+  { id: 'BOOKS',       label: 'Books',       icon: BookOpen,     description: 'Nutrition and training guides...' },
 ]
 
 export function getCategoryMeta(id: AffiliateCategory) {

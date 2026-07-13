@@ -17,13 +17,13 @@ export async function GET(
   { params }: { params: { noteId: string } },
 ) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
   // Verify member owns access to this note
   const note = await prisma.coachNote.findFirst({
     where: { id: params.noteId, memberId: session.user.id, isSharedWithMember: true },
   })
-  if (!note) return NextResponse.json({ error: 'Note introuvable' }, { status: 404 })
+  if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
   const replies = await getNormalizedCoachNoteReplies(params.noteId)
 
@@ -36,12 +36,12 @@ export async function POST(
   { params }: { params: { noteId: string } },
 ) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
   const note = await prisma.coachNote.findFirst({
     where: { id: params.noteId, memberId: session.user.id, isSharedWithMember: true },
   })
-  if (!note) return NextResponse.json({ error: 'Note introuvable' }, { status: 404 })
+  if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
   const parsed = replySchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
@@ -64,8 +64,8 @@ export async function POST(
       coachId:         note.coachId,
       recipientUserId: null,
       type:            'MESSAGE',
-      title:           'Réponse à votre note',
-      message:         `Un membre a répondu à votre note "${note.title}"`,
+      title:           'Reply to your note',
+      message:         `A member replied to your note "${note.title}"`,
       relatedId:       note.id,
     },
   }).catch(() => {})
@@ -79,15 +79,15 @@ export async function DELETE(
   { params }: { params: { noteId: string } },
 ) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
   const { replyId } = await req.json()
-  if (!replyId) return NextResponse.json({ error: 'replyId manquant' }, { status: 400 })
+  if (!replyId) return NextResponse.json({ error: 'Missing replyId' }, { status: 400 })
 
   const reply = await prisma.coachNoteReply.findFirst({
     where: { id: replyId, noteId: params.noteId, memberId: session.user.id },
   })
-  if (!reply) return NextResponse.json({ error: 'Réponse introuvable' }, { status: 404 })
+  if (!reply) return NextResponse.json({ error: 'Reply not found' }, { status: 404 })
 
   await prisma.coachNoteReply.delete({ where: { id: replyId } })
   return NextResponse.json({ ok: true })

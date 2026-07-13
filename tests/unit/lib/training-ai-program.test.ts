@@ -18,14 +18,14 @@ const profile = {
 }
 
 describe('parseAIWorkoutProgram', () => {
-  it('extrait un JSON même quand il est entouré de markdown', () => {
+  it('extracts JSON even when it is wrapped in markdown', () => {
     const parsed = parseAIWorkoutProgram('```json\n{"name":"Plan IA","sessions":[]}\n```')
     expect(parsed?.name).toBe('Plan IA')
   })
 })
 
 describe('generateAIEnhancedProgram', () => {
-  it('retombe sur le générateur local si aucun provider IA n’est configuré', async () => {
+  it('falls back to the local generator when no AI provider is configured', async () => {
     vi.stubEnv('GEMINI_API_KEY', '')
     vi.stubEnv('GROQ_API_KEY', '')
 

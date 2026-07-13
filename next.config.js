@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 
-// Validation des variables d'environnement — uniquement pendant next build, pas pendant lint/test
+// Validate required environment variables only during production builds, not lint/tests.
 if (process.env.NEXT_PHASE === 'phase-production-build') {
   const REQUIRED = [
     'DATABASE_URL',
@@ -9,9 +9,9 @@ if (process.env.NEXT_PHASE === 'phase-production-build') {
   ]
   const missing = REQUIRED.filter((k) => !process.env[k])
   if (missing.length > 0) {
-    console.error('\n❌ Variables d\'environnement manquantes — build annulé :')
+    console.error('\nMissing environment variables - build cancelled:')
     missing.forEach((k) => console.error(`   ✗  ${k}`))
-    console.error('\nAjoute-les dans Vercel → Settings → Environment Variables\n')
+    console.error('\nAdd them in Vercel -> Settings -> Environment Variables.\n')
     process.exit(1)
   }
 }
@@ -38,7 +38,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'www.nutrimuscle.com' },
     ],
   },
-  // Headers CORS pour les webhooks Stripe (route /api/stripe/webhook)
+  // CORS headers for Stripe webhooks at /api/stripe/webhook.
   async headers() {
     return [
       {

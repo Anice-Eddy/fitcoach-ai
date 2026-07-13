@@ -6,13 +6,19 @@ import { ExternalLink, Tag } from 'lucide-react'
 import type { AffiliateProduct } from '@/types'
 import { trackAffiliateClick } from '@/lib/affiliates/tracking'
 import { getCategoryMeta } from '@/lib/affiliates/categories'
+import { affiliateProductDescription, affiliateProductName, affiliateProductTags } from '@/lib/affiliates/display'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface Props { product: AffiliateProduct }
 
 /** Renders an affiliate product card with image (with fallback emoji), tags, and an Amazon external link that fires a tracking event on click. */
 export function ProductCard({ product }: Props) {
+  const { locale, t } = useLocale()
   const meta = getCategoryMeta(product.category)
   const [imgError, setImgError] = useState(false)
+  const productName = affiliateProductName(product, locale)
+  const description = affiliateProductDescription(product, locale)
+  const tags = affiliateProductTags(product, locale)
 
   return (
     <div className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden flex flex-col hover:border-zinc-600 transition-colors group">
@@ -22,7 +28,7 @@ export function ProductCard({ product }: Props) {
         {product.imageUrl && !imgError ? (
           <Image
             src={product.imageUrl}
-            alt={product.name}
+            alt={productName}
             fill
             sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -34,21 +40,21 @@ export function ProductCard({ product }: Props) {
         {/* Category chip */}
         <span className="absolute top-2 right-2 flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-zinc-900/80 text-zinc-300 backdrop-blur-sm">
           {meta && <meta.icon className="size-3" />}
-          {meta?.label}
+          {t(`shop.categories.${product.category.toLowerCase()}`)}
         </span>
       </div>
 
       <div className="p-4 flex flex-col flex-1">
         <div className="mb-2 flex-1">
-          <h3 className="text-sm font-semibold text-white leading-tight">{product.name}</h3>
-          {product.description && (
-            <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{product.description}</p>
+          <h3 className="text-sm font-semibold text-white leading-tight">{productName}</h3>
+          {description && (
+            <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{description}</p>
           )}
         </div>
 
-        {product.tags.length > 0 && (
+        {tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
-            {product.tags.slice(0, 3).map((tag) => (
+            {tags.slice(0, 3).map((tag) => (
               <span key={tag} className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
                 <Tag className="size-2.5" />{tag}
               </span>
@@ -56,9 +62,9 @@ export function ProductCard({ product }: Props) {
           </div>
         )}
 
-        <p className="text-xs text-zinc-500 mb-3">Voir le prix sur Amazon</p>
+        <p className="text-xs text-zinc-500 mb-3">{t('shop.viewPriceAmazon')}</p>
 
-        {/* <a> tag — never blocked by popup blockers, works on all devices */}
+        {/* Link tag: not blocked by popup blockers and works on all devices. */}
         <a
           href={product.affiliateUrl}
           target="_blank"
@@ -66,7 +72,7 @@ export function ProductCard({ product }: Props) {
           onClick={() => trackAffiliateClick(product.id)}
           className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold bg-[#C8F135] text-zinc-900 hover:bg-[#d4f54d] transition-colors"
         >
-          <ExternalLink className="size-4" /> Voir sur Amazon
+          <ExternalLink className="size-4" /> {t('shop.viewOnAmazon')}
         </a>
       </div>
     </div>

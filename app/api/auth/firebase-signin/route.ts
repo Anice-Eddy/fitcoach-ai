@@ -32,19 +32,19 @@ export async function POST(req: NextRequest) {
 
   if (!hasFirebaseAdminConfig()) {
     return NextResponse.json({
-      error: 'Le service de connexion n’est pas configuré côté serveur.',
+      error: 'The sign-in service is not configured server-side.',
     }, { status: 503 })
   }
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Requête invalide.' }, { status: 422 })
+    return NextResponse.json({ error: 'Invalid request.' }, { status: 422 })
   }
 
   try {
     const decoded = await verifyFirebaseToken(parsed.data.firebaseToken)
     if (!decoded || !firebaseProviderMatches(parsed.data.provider, decoded.firebase?.sign_in_provider)) {
-      return NextResponse.json({ error: 'Connexion invalide ou expirée.' }, { status: 401 })
+      return NextResponse.json({ error: 'Invalid or expired sign-in.' }, { status: 401 })
     }
 
     const user = await findOrCreateUserFromFirebase(decoded)
@@ -73,6 +73,6 @@ export async function POST(req: NextRequest) {
     })
   } catch (error) {
     console.error('[firebase-signin] unexpected error:', error)
-    return NextResponse.json({ error: 'Connexion impossible côté serveur.' }, { status: 500 })
+    return NextResponse.json({ error: 'Server-side sign-in failed.' }, { status: 500 })
   }
 }

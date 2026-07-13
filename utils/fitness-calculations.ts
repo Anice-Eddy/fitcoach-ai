@@ -1,8 +1,9 @@
-// Calculs fitness validés : IMC OMS, BMR Mifflin-St Jeor (1990),
-// TDEE avec multiplicateurs Harris-Benedict révisés, macros par objectif.
+// Validated fitness calculations: WHO BMI, Mifflin-St Jeor (1990) BMR,
+// TDEE with revised Harris-Benedict multipliers, and goal-based macros.
 
 import type { ActivityLevel, FitnessGoal, Gender } from '@prisma/client'
 import { z } from 'zod'
+import type { Locale } from '@/lib/i18n'
 
 const anthropometricsSchema = z.object({
   weightKg: z.number().min(30, 'Poids hors limites : 30 à 300 kg').max(300, 'Poids hors limites : 30 à 300 kg'),
@@ -61,11 +62,25 @@ export function calculateBMI(weightKg: number, heightCm: number): number {
 }
 
 /** Returns the WHO BMI category label, color, and range string for the given BMI value. */
-export function getBMICategory(bmi: number): BMICategory {
-  if (bmi < 18.5) return { label: 'Insuffisance pondérale', color: '#60a5fa', range: '< 18.5' }
-  if (bmi < 25) return { label: 'Poids normal', color: '#4ade80', range: '18.5 à 24.9' }
-  if (bmi < 30) return { label: 'Surpoids', color: '#facc15', range: '25 à 29.9' }
-  return { label: 'Obésité', color: '#f87171', range: '≥ 30' }
+export function getBMICategory(bmi: number, locale: Locale = 'en'): BMICategory {
+  const labels = locale === 'fr'
+    ? {
+        underweight: 'Insuffisance pondérale',
+        normal:      'Poids normal',
+        overweight:  'Surpoids',
+        obesity:     'Obésité',
+      }
+    : {
+        underweight: 'Underweight',
+        normal:      'Normal weight',
+        overweight:  'Overweight',
+        obesity:     'Obesity',
+      }
+
+  if (bmi < 18.5) return { label: labels.underweight, color: '#60a5fa', range: '< 18.5' }
+  if (bmi < 25) return { label: labels.normal, color: '#4ade80', range: '18.5-24.9' }
+  if (bmi < 30) return { label: labels.overweight, color: '#facc15', range: '25-29.9' }
+  return { label: labels.obesity, color: '#f87171', range: '≥ 30' }
 }
 
 /** Calculates basal metabolic rate using the Mifflin-St Jeor (1990) equation for male and female. */
@@ -152,7 +167,7 @@ export function calculateProgressiveOverload(params: {
   const value = assertValid(schema, params)
   if (!value.completedAllSets) return { weightKg: value.previousWeightKg, reps: value.previousReps }
 
-  // Surcharge progressive : +2.5 à 5% de charge OU +1 à 2 reps, jamais les deux simultanément.
+  // Progressive overload: add 2.5-5% load OR 1-2 reps, never both at the same time.
   if (value.preference === 'reps') {
     return { weightKg: value.previousWeightKg, reps: value.previousReps + 1 }
   }

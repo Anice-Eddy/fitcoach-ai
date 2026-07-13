@@ -43,34 +43,34 @@ export function analyzeCoachDocument(input: CoachVerificationInput) {
   if (!input.documentName) {
     issues.push({
       field:   'document',
-      message: 'Un diplôme, une certification ou un document officiel doit être envoyé.',
+      message: 'A diploma, certification, or official document must be uploaded.',
     })
   }
 
   if (!input.firstName.trim()) {
-    issues.push({ field: 'firstName', message: 'Le prénom du profil est manquant.' })
+    issues.push({ field: 'firstName', message: 'The profile first name is missing.' })
   } else if (!hasReadableText || !normalizedDocument.includes(normalize(input.firstName))) {
     issues.push({
       field:   'firstName',
-      message: 'Le prénom du document ne correspond pas au prénom du profil.',
+      message: 'The document first name does not match the profile first name.',
     })
   }
 
   if (!input.lastName.trim()) {
-    issues.push({ field: 'lastName', message: 'Le nom de famille du profil est manquant.' })
+    issues.push({ field: 'lastName', message: 'The profile last name is missing.' })
   } else if (!hasReadableText || !normalizedDocument.includes(normalize(input.lastName))) {
     issues.push({
       field:   'lastName',
-      message: 'Le nom de famille ne correspond pas.',
+      message: 'The document last name does not match.',
     })
   }
 
   if (!input.birthDate) {
-    issues.push({ field: 'birthDate', message: 'La date de naissance du profil est manquante.' })
+    issues.push({ field: 'birthDate', message: 'The profile birth date is missing.' })
   } else if (!dateVariants(input.birthDate).some((variant) => normalizedDocument.includes(normalize(variant)))) {
     issues.push({
       field:   'birthDate',
-      message: 'La date de naissance est manquante sur le document.',
+      message: 'The birth date is missing from the document.',
     })
   }
 

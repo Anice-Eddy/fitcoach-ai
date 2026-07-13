@@ -1,4 +1,4 @@
-// Store UI : thème, langue, sidebar, toasts, états globaux
+// UI store: theme, language, sidebar, toasts, and global state.
 // deps: npm install zustand
 
 import { create } from 'zustand'

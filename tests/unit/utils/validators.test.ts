@@ -12,23 +12,23 @@ import {
 describe('identitySchema', () => {
   const valid = { firstName: 'Alice', age: 28, gender: 'FEMALE' }
 
-  it('valide un objet correct', () => {
+  it('validates a correct object', () => {
     expect(() => identitySchema.parse(valid)).not.toThrow()
   })
 
-  it('rejette un prénom vide', () => {
+  it('rejects an empty first name', () => {
     expect(() => identitySchema.parse({ ...valid, firstName: '' })).toThrow()
   })
 
-  it('rejette un âge < 10', () => {
+  it('rejects age below 10', () => {
     expect(() => identitySchema.parse({ ...valid, age: 9 })).toThrow()
   })
 
-  it('rejette un âge > 100', () => {
+  it('rejects age above 100', () => {
     expect(() => identitySchema.parse({ ...valid, age: 101 })).toThrow()
   })
 
-  it('rejette un genre invalide', () => {
+  it('rejects an invalid gender', () => {
     expect(() => identitySchema.parse({ ...valid, gender: 'UNKNOWN' })).toThrow()
   })
 })
@@ -36,19 +36,19 @@ describe('identitySchema', () => {
 describe('measurementsSchema', () => {
   const valid = { weightKg: 70, heightCm: 175, weightUnit: 'KG', heightUnit: 'CM' }
 
-  it('valide des mensurations correctes', () => {
+  it('validates correct measurements', () => {
     expect(() => measurementsSchema.parse(valid)).not.toThrow()
   })
 
-  it('rejette un poids négatif', () => {
+  it('rejects negative weight', () => {
     expect(() => measurementsSchema.parse({ ...valid, weightKg: -1 })).toThrow()
   })
 
-  it('rejette une taille de 0', () => {
+  it('rejects zero height', () => {
     expect(() => measurementsSchema.parse({ ...valid, heightCm: 0 })).toThrow()
   })
 
-  it('accepte les champs optionnels (tour de taille, hanches)', () => {
+  it('accepts optional waist and hip fields', () => {
     expect(() => measurementsSchema.parse({ ...valid, waistCm: 80, hipsCm: 95 })).not.toThrow()
   })
 })
@@ -60,19 +60,19 @@ describe('activitySchema', () => {
     trainingDaysPerWeek: 4,
   }
 
-  it('valide un objet correct', () => {
+  it('validates a correct object', () => {
     expect(() => activitySchema.parse(valid)).not.toThrow()
   })
 
-  it('rejette trainingDaysPerWeek < 1', () => {
+  it('rejects trainingDaysPerWeek below 1', () => {
     expect(() => activitySchema.parse({ ...valid, trainingDaysPerWeek: 0 })).toThrow()
   })
 
-  it('rejette trainingDaysPerWeek > 7', () => {
+  it('rejects trainingDaysPerWeek above 7', () => {
     expect(() => activitySchema.parse({ ...valid, trainingDaysPerWeek: 8 })).toThrow()
   })
 
-  it('rejette une liste d\'équipement vide (min 1)', () => {
+  it('rejects an empty equipment list', () => {
     expect(() => activitySchema.parse({ ...valid, availableEquipment: [] })).toThrow()
   })
 })
@@ -80,53 +80,53 @@ describe('activitySchema', () => {
 describe('goalsSchema', () => {
   const valid = { fitnessGoal: 'MUSCLE_GAIN', fitnessLevel: 'INTERMEDIATE' }
 
-  it('valide un objectif correct', () => {
+  it('validates a correct goal', () => {
     expect(() => goalsSchema.parse(valid)).not.toThrow()
   })
 
-  it('rejette un objectif inconnu', () => {
+  it('rejects an unknown goal', () => {
     expect(() => goalsSchema.parse({ ...valid, fitnessGoal: 'FLY_TO_THE_MOON' })).toThrow()
   })
 
-  it('rejette un niveau inconnu', () => {
+  it('rejects an unknown level', () => {
     expect(() => goalsSchema.parse({ ...valid, fitnessLevel: 'SUPERHERO' })).toThrow()
   })
 
-  it('accepte un poids cible optionnel', () => {
+  it('accepts an optional target weight', () => {
     expect(() => goalsSchema.parse({ ...valid, targetWeightKg: 68 })).not.toThrow()
   })
 })
 
 describe('dietSchema', () => {
-  it('valide des préférences vides', () => {
+  it('validates empty preferences', () => {
     expect(() => dietSchema.parse({ dietaryRestrictions: [], foodPreferences: [] })).not.toThrow()
   })
 
-  it('valide des restrictions non vides', () => {
+  it('validates non-empty restrictions', () => {
     expect(() => dietSchema.parse({ dietaryRestrictions: ['VEGETARIAN'], foodPreferences: ['HIGH_PROTEIN'] })).not.toThrow()
   })
 })
 
 describe('bodyMetricSchema', () => {
-  it('valide une métrique correcte', () => {
+  it('validates a correct metric', () => {
     expect(() => bodyMetricSchema.parse({ weightKg: 70.5, date: '2025-01-01' })).not.toThrow()
   })
 
-  it('rejette un poids négatif', () => {
+  it('rejects negative weight', () => {
     expect(() => bodyMetricSchema.parse({ weightKg: -1, date: '2025-01-01' })).toThrow()
   })
 
-  it('accepte les champs optionnels', () => {
+  it('accepts optional fields', () => {
     expect(() => bodyMetricSchema.parse({ weightKg: 70, date: '2025-01-01', bodyFatPct: 15, muscleMassKg: 40 })).not.toThrow()
   })
 })
 
 describe('affiliateClickSchema', () => {
-  it('valide un clic affilié correct', () => {
+  it('validates a correct affiliate click', () => {
     expect(() => affiliateClickSchema.parse({ productId: 'aff-whey-optimum' })).not.toThrow()
   })
 
-  it('rejette un productId vide', () => {
+  it('rejects an empty productId', () => {
     expect(() => affiliateClickSchema.parse({ productId: '' })).toThrow()
   })
 })

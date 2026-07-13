@@ -17,25 +17,24 @@ Implemented:
 - `POST /api/auth/firebase/session`
 - `GET /api/auth/firebase/me`
 - `AUTH_PROVIDER=firebase|nextauth|hybrid`
-- `firebase-handoff` NextAuth provider for creating the current app session after backend Firebase verification
+- `firebase-handoff` NextAuth provider for creating the internal app session after backend Firebase verification
 - Login/register Firebase buttons on existing auth pages
 
-Not changed yet:
-- Existing NextAuth email/password pages remain active.
-- Existing Google NextAuth login remains active.
-- Existing middleware still uses NextAuth cookies.
-- NextAuth is still kept as the active session layer while Firebase is rolled out.
+Current default:
+- Firebase is the user-facing identity provider.
+- NextAuth is still kept as the internal session/cookie layer for existing routes and middleware.
+- The legacy `nextauth` and `hybrid` modes remain available for rollback and migration troubleshooting.
 
 ## Feature Flag
 
 Set:
-- `AUTH_PROVIDER=hybrid`
-- `NEXT_PUBLIC_AUTH_PROVIDER=hybrid`
+- `AUTH_PROVIDER=firebase`
+- `NEXT_PUBLIC_AUTH_PROVIDER=firebase`
 
 Modes:
 - `nextauth`: only existing NextAuth options are shown.
 - `firebase`: only Firebase options are shown.
-- `hybrid`: old NextAuth login stays active and Firebase login/register options are available.
+- `hybrid`: legacy NextAuth login stays active and Firebase login/register options are available.
 - Business data, dashboards, coach/member roles, and payments are untouched.
 
 ## Required Environment Variables
@@ -52,6 +51,11 @@ Admin, choose one option:
 - `FIREBASE_SERVICE_ACCOUNT_JSON`
 
 or:
+- `FIREBASE_ADMIN_PROJECT_ID`
+- `FIREBASE_ADMIN_CLIENT_EMAIL`
+- `FIREBASE_ADMIN_PRIVATE_KEY`
+
+Legacy-compatible names are still accepted during migration:
 - `FIREBASE_PROJECT_ID`
 - `FIREBASE_CLIENT_EMAIL`
 - `FIREBASE_PRIVATE_KEY`
@@ -78,21 +82,22 @@ Never expose Admin SDK secrets with `NEXT_PUBLIC_`.
 
 ## Manual Test Checklist
 
-- Existing email/password login still works.
-- Existing Google login still works.
+- Firebase email/password login works.
+- Firebase Google login works.
+- Firebase Facebook login works when the Facebook app is configured.
 - Existing user can sign in with Firebase using the same email and gets linked.
 - New Firebase user creates a new BodyOps user.
 - `/api/auth/firebase/session` rejects missing token.
 - `/api/auth/firebase/session` rejects expired/invalid token.
 - `/api/auth/firebase/me` returns the BodyOps user for a valid token.
-- Coach/member routes continue to work with existing NextAuth sessions.
+- Coach/member routes continue to work with the internal app session.
 - No user row is overwritten or deleted.
 
 ## Rollback
 
 Safe rollback options:
-- Stop using Firebase client flow and keep NextAuth pages active.
-- Remove Firebase environment variables.
+- Temporarily set `AUTH_PROVIDER=hybrid` or `AUTH_PROVIDER=nextauth`.
+- Stop using Firebase client flow.
 - Do not call `/api/auth/firebase/session`.
 
 Database rollback, only if necessary and after backup:

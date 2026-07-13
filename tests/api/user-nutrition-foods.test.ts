@@ -15,7 +15,7 @@ vi.mock('@/lib/prisma/client', () => ({
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { GET, POST } from '@/app/api/user/nutrition/foods/route'
-import { DELETE } from '@/app/api/user/nutrition/foods/[foodId]/route'
+import { DELETE, PATCH } from '@/app/api/user/nutrition/foods/[foodId]/route'
 
 const session = { user: { id: 'user-1' } }
 
@@ -32,6 +32,8 @@ function food(overrides: Record<string, unknown> = {}) {
     id:              'food-1',
     createdByUserId: 'user-1',
     name:            'Riz maison',
+    nameFr:          'Riz maison',
+    nameEn:          'Homemade rice',
     brand:           null,
     category:        'carb',
     visibility:      'PUBLIC',
@@ -54,7 +56,7 @@ describe('/api/user/nutrition/foods', () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(session)
   })
 
-  it('retourne les aliments publics et indique ceux supprimables par le créateur', async () => {
+  it('returns public foods and marks which ones the creator can delete', async () => {
     ;(prisma.foodLibraryItem.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([
       food(),
       food({ id: 'food-2', createdByUserId: 'other-user', name: 'Poulet partagé' }),
@@ -71,11 +73,35 @@ describe('/api/user/nutrition/foods', () => {
     }))
   })
 
-  it('crée un aliment visible par tous par défaut', async () => {
+  it('returns localized food names for English users', async () => {
+    ;(prisma.foodLibraryItem.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([
+      food(),
+    ])
+
+    const res = await GET(request('GET', undefined, '/api/user/nutrition/foods?locale=en&q=rice'))
+    const json = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(json.foods[0].displayName).toBe('Homemade rice')
+    expect(prisma.foodLibraryItem.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        AND: expect.arrayContaining([
+          expect.objectContaining({
+            OR: expect.arrayContaining([
+              { nameEn: { contains: 'rice', mode: 'insensitive' } },
+            ]),
+          }),
+        ]),
+      }),
+    }))
+  })
+
+  it('creates a food that is public by default', async () => {
     ;(prisma.foodLibraryItem.create as ReturnType<typeof vi.fn>).mockResolvedValue(food())
 
     const res = await POST(request('POST', {
-      name:            'Riz maison',
+      nameFr:          'Riz maison',
+      nameEn:          'Homemade rice',
       category:        'carb',
       caloriesPer100g: 130,
       proteinPer100g:  2.7,
@@ -87,13 +113,16 @@ describe('/api/user/nutrition/foods', () => {
     expect(prisma.foodLibraryItem.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
         createdByUserId: 'user-1',
+        name:            'Riz maison',
+        nameFr:          'Riz maison',
+        nameEn:          'Homemade rice',
         visibility:      'PUBLIC',
         source:          'USER',
       }),
     }))
   })
 
-  it('refuse de supprimer un aliment créé par un autre utilisateur', async () => {
+  it('refuses to delete a food created by another user', async () => {
     ;(prisma.foodLibraryItem.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(food({ createdByUserId: 'other-user' }))
 
     const res = await DELETE(request('DELETE', undefined, '/api/user/nutrition/foods/food-1'), { params: { foodId: 'food-1' } })
@@ -102,7 +131,7 @@ describe('/api/user/nutrition/foods', () => {
     expect(prisma.foodLibraryItem.update).not.toHaveBeenCalled()
   })
 
-  it('soft-delete un aliment créé par l’utilisateur connecté', async () => {
+  it('soft-deletes a food created by the signed-in user', async () => {
     ;(prisma.foodLibraryItem.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(food())
     ;(prisma.foodLibraryItem.update as ReturnType<typeof vi.fn>).mockResolvedValue(food())
 
@@ -113,5 +142,21 @@ describe('/api/user/nutrition/foods', () => {
       where: { id: 'food-1' },
       data:  { deletedAt: expect.any(Date) },
     })
+  })
+
+  it('updates localized names only for the food creator', async () => {
+    ;(prisma.foodLibraryItem.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(food())
+    ;(prisma.foodLibraryItem.update as ReturnType<typeof vi.fn>).mockResolvedValue(food({ nameEn: 'Updated rice' }))
+
+    const res = await PATCH(request('PATCH', { nameEn: 'Updated rice' }, '/api/user/nutrition/foods/food-1'), { params: { foodId: 'food-1' } })
+
+    expect(res.status).toBe(200)
+    expect(prisma.foodLibraryItem.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'food-1' },
+      data: expect.objectContaining({
+        name:   'Updated rice',
+        nameEn: 'Updated rice',
+      }),
+    }))
   })
 })

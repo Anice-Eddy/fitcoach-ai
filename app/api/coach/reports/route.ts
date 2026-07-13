@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server'
 export async function GET() {
   const session = await auth()
   if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
   }
 
   const user = await prisma.user.findUnique({
@@ -17,7 +17,7 @@ export async function GET() {
     include: { coachProfile: true },
   })
   if (!user?.coachProfile) {
-    return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
   const coachId = user.coachProfile.id

@@ -1,9 +1,9 @@
 // ============================================================
-// Types TypeScript centralisés — BodyOps AI
-// Tous les types partagés entre composants, stores et API
+// Centralized TypeScript types - BodyOps AI
+// Shared types used by components, stores, and API routes
 // ============================================================
 
-// --- Enums miroir (évite d'importer @prisma/client côté client) ---
+// --- Mirror enums (avoid importing @prisma/client on the client side) ---
 
 export type Gender         = 'MALE' | 'FEMALE'
 export type ActivityLevel  = 'SEDENTARY' | 'LIGHTLY_ACTIVE' | 'MODERATELY_ACTIVE' | 'VERY_ACTIVE' | 'EXTREMELY_ACTIVE'
@@ -47,13 +47,16 @@ export interface Macros {
   fatG:     number
 }
 
-// --- Exercices ---
+// --- Exercises ---
 
 export interface Exercise {
   id:           string
   name:         string
+  nameEn?:      string
   description?: string
+  descriptionEn?: string
   instructions: string[]
+  instructionsEn?: string[]
   muscleGroups: MuscleGroup[]
   equipment:    Equipment[]
   imageUrl?:    string
@@ -80,11 +83,21 @@ export interface SessionExercise extends Exercise {
   tempo?:           string
   rpe?:             number
   isCompleted:      boolean
-  // Champs spécifiques aux exercices cardio
+  // Cardio-specific exercise fields
   durationMinutes?: number
   distanceKm?:      number
   speedKmH?:        number
   inclinePct?:      number
+  velocityPeakMps?: number
+  velocityAvgMps?:  number
+  barPathDeviationCm?: number
+  barPathPoints?:   BarPathPoint[]
+}
+
+export interface BarPathPoint {
+  x: number
+  y: number
+  t: number
 }
 
 export interface WorkoutSession {
@@ -161,7 +174,7 @@ export interface ShoppingItem {
   affiliateUrl?: string
 }
 
-// --- Messagerie coach / membre ---
+// --- Coach/member messaging ---
 
 export interface Message {
   id: string
@@ -200,13 +213,15 @@ export interface Conversation {
   lastMessageAt: Date
 }
 
-// --- Affiliation ---
+// --- Affiliates ---
 
 export interface AffiliateProduct {
   id:               string
   name:             string
+  nameEn?:          string
   brand?:           string
   description?:     string
+  descriptionEn?:   string
   category:         AffiliateCategory
   affiliateUrl:     string
   imageUrl?:        string
@@ -215,9 +230,10 @@ export interface AffiliateProduct {
   commissionRateMax: number
   fitnessGoals:     FitnessGoal[]
   tags:             string[]
+  tagsEn?:          string[]
 }
 
-// --- Intégrations ---
+// --- Integrations ---
 
 export interface IntegrationStatus {
   id:          string

@@ -1,12 +1,11 @@
-// Logique de traitement des webhooks Stripe
-// Appelée depuis /api/stripe/webhook/route.ts
+// Stripe webhook processing logic.
+// Called from /api/stripe/webhook/route.ts
 
 import type Stripe from 'stripe'
 import { prisma } from '@/lib/prisma/client'
 import { getPlanByPriceId } from './plans'
 import type { SubscriptionPlan, SubscriptionStatus } from '@prisma/client'
 
-// Mappe les statuts Stripe → enum Prisma
 // Maps a Stripe subscription status string to the corresponding Prisma SubscriptionStatus enum value.
 function mapStatus(status: Stripe.Subscription.Status): SubscriptionStatus {
   const map: Record<string, SubscriptionStatus> = {

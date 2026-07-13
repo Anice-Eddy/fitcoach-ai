@@ -3,49 +3,51 @@
 import { useEffect, useState } from 'react'
 import { Copy, Check, ChevronDown, ChevronUp, Smartphone } from 'lucide-react'
 import Image from 'next/image'
+import { useLocale } from '@/contexts/LocaleContext'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://bodyops.app'
 const WEBHOOK_URL = `${APP_URL}/api/user/metrics/apple-health`
 
-const STEPS = [
-  {
-    title: '1. Copie ton token personnel',
-    desc:  'Ce token identifie ta requête de façon sécurisée. Ne le partage jamais.',
-  },
-  {
-    title: '2. Ouvre l\'app Raccourcis sur iPhone',
-    desc:  'Appuie sur + (en haut à droite) pour créer un nouveau Raccourci. Nomme-le "BodyOps Sync".',
-  },
-  {
-    title: '3. Ajoute ces actions dans l\'ordre',
-    desc:  'Chaque action "Rechercher les données de santé" récupère une métrique différente.',
-    actions: [
-      { label: 'Rechercher les données de santé', detail: 'Type : Masse corporelle · Limite : 1 · Trié par : Date (décroissant)' },
-      { label: 'Rechercher les données de santé', detail: 'Type : Pourcentage de graisse corporelle · Limite : 1 · Trié par : Date (décroissant)' },
-      { label: 'Rechercher les données de santé', detail: 'Type : Masse musculaire · Limite : 1 · Trié par : Date (décroissant)' },
-      { label: 'Rechercher les données de santé', detail: 'Type : Nombre de pas · Plage de dates : Hier · Agréger : Somme' },
-      { label: 'Rechercher les données de santé', detail: 'Type : Énergie active brûlée · Plage de dates : Hier · Agréger : Somme' },
-      { label: 'Rechercher les données de santé', detail: 'Type : Analyse du sommeil · Plage de dates : Hier' },
-      { label: 'Rechercher les données de santé', detail: 'Type : Fréquence cardiaque · Plage de dates : Hier · Agréger : Moyenne' },
-      { label: 'Rechercher les données de santé', detail: 'Type : Fréquence cardiaque au repos · Limite : 1 · Trié par : Date (décroissant)' },
-      { label: '(Apple Watch) Rechercher les données de santé', detail: 'Type : VO2 max · Limite : 1 · Trié par : Date (décroissant)' },
-      { label: '(Apple Watch) Rechercher les données de santé', detail: 'Type : Variabilité de la fréquence cardiaque · Limite : 1 · Trié par : Date (décroissant)' },
-      { label: '(Apple Watch S6+) Rechercher les données de santé', detail: 'Type : Saturation en oxygène · Limite : 1 · Trié par : Date (décroissant)' },
-      { label: 'Créer un dictionnaire', detail: 'weightKg · bodyFatPct · muscleMassKg · steps (Somme) · caloriesActive (Somme) · sleepHours (Durée/3600) · heartRateAvg · restingHeartRate · vo2Max · hrv · spo2' },
-      { label: 'Obtenir le contenu de l\'URL', detail: `URL : ${WEBHOOK_URL}\nMéthode : POST\nEn-têtes : Authorization → Bearer [colle ton token]\nCorps : JSON → dictionnaire ci-dessus` },
-    ],
-  },
-  {
-    title: '4. Automatise (recommandé)',
-    desc:  'Raccourcis → Automatisation → + → Heure de la journée → Chaque jour à 7h → sélectionne "BodyOps Sync".',
-  },
-]
-
 export function AppleHealthShortcut() {
+  const { t } = useLocale()
   const [token,   setToken]   = useState<string | null>(null)
   const [copied,  setCopied]  = useState(false)
   const [open,    setOpen]    = useState(false)
   const [loading, setLoading] = useState(false)
+
+  const steps = [
+    {
+      title: t('integrations.appleHealth.steps.copyToken.title'),
+      desc:  t('integrations.appleHealth.steps.copyToken.description'),
+    },
+    {
+      title: t('integrations.appleHealth.steps.openShortcuts.title'),
+      desc:  t('integrations.appleHealth.steps.openShortcuts.description'),
+    },
+    {
+      title: t('integrations.appleHealth.steps.addActions.title'),
+      desc:  t('integrations.appleHealth.steps.addActions.description'),
+      actions: [
+        { label: t('integrations.appleHealth.actions.findHealthData'), detail: t('integrations.appleHealth.actions.weight') },
+        { label: t('integrations.appleHealth.actions.findHealthData'), detail: t('integrations.appleHealth.actions.bodyFat') },
+        { label: t('integrations.appleHealth.actions.findHealthData'), detail: t('integrations.appleHealth.actions.muscleMass') },
+        { label: t('integrations.appleHealth.actions.findHealthData'), detail: t('integrations.appleHealth.actions.steps') },
+        { label: t('integrations.appleHealth.actions.findHealthData'), detail: t('integrations.appleHealth.actions.activeEnergy') },
+        { label: t('integrations.appleHealth.actions.findHealthData'), detail: t('integrations.appleHealth.actions.sleep') },
+        { label: t('integrations.appleHealth.actions.findHealthData'), detail: t('integrations.appleHealth.actions.heartRate') },
+        { label: t('integrations.appleHealth.actions.findHealthData'), detail: t('integrations.appleHealth.actions.restingHeartRate') },
+        { label: t('integrations.appleHealth.actions.findHealthDataAppleWatch'), detail: t('integrations.appleHealth.actions.vo2Max') },
+        { label: t('integrations.appleHealth.actions.findHealthDataAppleWatch'), detail: t('integrations.appleHealth.actions.hrv') },
+        { label: t('integrations.appleHealth.actions.findHealthDataAppleWatchS6'), detail: t('integrations.appleHealth.actions.spo2') },
+        { label: t('integrations.appleHealth.actions.createDictionary'), detail: t('integrations.appleHealth.actions.dictionaryDetail') },
+        { label: t('integrations.appleHealth.actions.getUrlContent'), detail: `${t('integrations.appleHealth.actions.url')} : ${WEBHOOK_URL}\n${t('integrations.appleHealth.actions.method')} : POST\n${t('integrations.appleHealth.actions.headers')} : Authorization -> Bearer [${t('integrations.appleHealth.actions.pasteToken')}]\n${t('integrations.appleHealth.actions.body')} : JSON -> ${t('integrations.appleHealth.actions.dictionaryAbove')}` },
+      ],
+    },
+    {
+      title: t('integrations.appleHealth.steps.automate.title'),
+      desc:  t('integrations.appleHealth.steps.automate.description'),
+    },
+  ]
 
   useEffect(() => {
     setLoading(true)
@@ -71,17 +73,17 @@ export function AppleHealthShortcut() {
         </div>
         <div className="flex-1">
           <h3 className="text-sm font-semibold text-white">Apple Health</h3>
-          <p className="text-xs text-zinc-400">Synchronisation via Raccourci iOS</p>
+          <p className="text-xs text-zinc-400">{t('integrations.appleHealth.subtitle')}</p>
         </div>
-        <span className="text-xs px-2 py-0.5 rounded-full bg-[#C8F135]/10 text-[#C8F135] font-medium">Actif</span>
+        <span className="text-xs px-2 py-0.5 rounded-full bg-[#C8F135]/10 text-[#C8F135] font-medium">{t('integrations.appleHealth.active')}</span>
       </div>
 
       {/* Token */}
       <div>
-        <p className="text-xs text-zinc-500 mb-2">Ton token personnel</p>
+        <p className="text-xs text-zinc-500 mb-2">{t('integrations.appleHealth.personalToken')}</p>
         <div className="flex items-center gap-2 rounded-xl bg-zinc-800 border border-zinc-700 px-3 py-2.5">
           <code className="flex-1 text-xs text-zinc-300 font-mono truncate">
-            {loading ? 'Chargement…' : (token ?? 'Erreur')}
+            {loading ? t('common.loading') : (token ?? t('common.error'))}
           </code>
           <button
             type="button"
@@ -92,7 +94,7 @@ export function AppleHealthShortcut() {
             {copied ? <Check className="size-4 text-[#C8F135]" /> : <Copy className="size-4" />}
           </button>
         </div>
-        <p className="text-xs text-zinc-600 mt-1.5">Ne partage jamais ce token — il donne accès à tes données.</p>
+        <p className="text-xs text-zinc-600 mt-1.5">{t('integrations.appleHealth.tokenWarning')}</p>
       </div>
 
       {/* Instructions toggle */}
@@ -102,13 +104,13 @@ export function AppleHealthShortcut() {
         className="flex items-center gap-2 text-sm text-[#C8F135] hover:text-[#d4f54d] transition-colors"
       >
         <Smartphone className="size-4" />
-        {open ? 'Masquer' : 'Voir'} les instructions de configuration
+        {open ? t('integrations.appleHealth.hide') : t('integrations.appleHealth.show')} {t('integrations.appleHealth.setupInstructions')}
         {open ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
       </button>
 
       {open && (
         <ol className="space-y-4 border-t border-zinc-800 pt-4">
-          {STEPS.map((step, i) => (
+          {steps.map((step, i) => (
             <li key={i} className="space-y-1.5">
               <p className="text-xs font-semibold text-white">{step.title}</p>
               {step.desc && <p className="text-xs text-zinc-400">{step.desc}</p>}
@@ -125,12 +127,20 @@ export function AppleHealthShortcut() {
             </li>
           ))}
           <li>
-            <p className="text-xs font-semibold text-white">5. Données synchronisées</p>
+            <p className="text-xs font-semibold text-white">{t('integrations.appleHealth.syncedData')}</p>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
               {[
-                'Poids', 'Masse grasse %', 'Masse musculaire',
-                'Pas', 'Calories actives', 'Sommeil',
-                'FC moy.', 'FC repos (Watch)', 'VO₂ max (Watch)', 'VFC / HRV (Watch)', 'SpO₂ (Watch)',
+                t('integrations.appleHealth.data.weight'),
+                t('integrations.appleHealth.data.bodyFat'),
+                t('integrations.appleHealth.data.muscleMass'),
+                t('integrations.appleHealth.data.steps'),
+                t('integrations.appleHealth.data.activeCalories'),
+                t('integrations.appleHealth.data.sleep'),
+                t('integrations.appleHealth.data.avgHeartRate'),
+                t('integrations.appleHealth.data.restingHeartRate'),
+                t('integrations.appleHealth.data.vo2Max'),
+                t('integrations.appleHealth.data.hrv'),
+                t('integrations.appleHealth.data.spo2'),
               ].map(d => (
                 <span key={d} className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">{d}</span>
               ))}

@@ -1,0 +1,64 @@
+name: Production Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-db-migrations
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Migrate database and deploy
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Check production secrets
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "Missing GitHub secret: PRODUCTION_DATABASE_URL"
+            exit 1
+          fi
+          if [ -z "$VERCEL_DEPLOY_HOOK_URL" ]; then
+            echo "Missing GitHub secret: VERCEL_DEPLOY_HOOK_URL"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Show migration status
+        run: npx prisma migrate status
+        continue-on-error: true
+
+      - name: Apply pending migrations
+        run: npm run db:migrate:deploy
+
+      - name: Confirm migration status
+        run: npx prisma migrate status
+
+      - name: Trigger Vercel production deployment
+        run: curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL"

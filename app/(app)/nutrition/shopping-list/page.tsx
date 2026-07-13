@@ -1,5 +1,5 @@
 'use client'
-// Page liste de courses — générée depuis le plan nutritionnel, groupée par catégorie
+// Shopping list page generated from the nutrition plan and grouped by category.
 import { useEffect, useState } from 'react'
 import { Header }         from '@/components/layout/Header'
 import { PageWrapper }    from '@/components/layout/PageWrapper'
@@ -8,6 +8,7 @@ import { useUserStore }   from '@/stores/userStore'
 import { generateMealPlan }        from '@/lib/nutrition/generate-meal-plan'
 import { generateShoppingList, groupShoppingList } from '@/lib/nutrition/shopping-list'
 import type { GroupedShoppingList } from '@/lib/nutrition/shopping-list'
+import { useLocale } from '@/contexts/LocaleContext'
 
 type ActiveNutritionTarget = {
   targetCalories: number
@@ -18,11 +19,12 @@ type ActiveNutritionTarget = {
 
 /** Shopping list page: aggregates ingredients from the active weekly meal plan, groups by category. */
 export default function ShoppingListPage() {
+  const { t, locale } = useLocale()
   const { profile } = useUserStore()
   const [coachTarget, setCoachTarget] = useState<ActiveNutritionTarget | null>(null)
   const [grouped, setGrouped] = useState<GroupedShoppingList>({
-    'Protéines': [], 'Glucides': [], 'Lipides': [],
-    'Légumes': [], 'Fruits': [], 'Produits laitiers': [], 'Autres': [],
+    protein: [], carb: [], fat: [],
+    vegetable: [], fruit: [], dairy: [], other: [],
   })
 
   useEffect(() => {
@@ -55,13 +57,14 @@ export default function ShoppingListPage() {
       targetFatG:          target.targetFatG,
       fitnessGoal:         profile.fitnessGoal,
       dietaryRestrictions: profile.dietaryRestrictions,
+      locale,
     })
     setGrouped(groupShoppingList(generateShoppingList(plan.meals)))
-  }, [profile, coachTarget])
+  }, [profile, coachTarget, locale])
 
   return (
     <>
-      <Header title="Liste de courses" />
+      <Header title={t('nutrition.shoppingList')} />
       <PageWrapper>
         <ShoppingList grouped={grouped} />
       </PageWrapper>

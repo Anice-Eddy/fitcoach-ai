@@ -1,6 +1,8 @@
 'use client'
-// Anneau de macros SVG — protéines / glucides / lipides
-// Affiché dans le dashboard et la page nutrition
+// SVG macro ring: protein, carbs, and fat.
+// Displayed in the dashboard and nutrition page.
+
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface MacroRingProps {
   proteinG:  number
@@ -18,6 +20,7 @@ const COLORS = {
 
 /** SVG donut ring showing the calorie share of protein, carbs, and fat with a total kcal label in the center. */
 export function MacroRing({ proteinG, carbsG, fatG, targetCalories, size = 120 }: MacroRingProps) {
+  const { t } = useLocale()
   const total = proteinG * 4 + carbsG * 4 + fatG * 9
   const radius = (size - 16) / 2
   const circumference = 2 * Math.PI * radius
@@ -25,9 +28,9 @@ export function MacroRing({ proteinG, carbsG, fatG, targetCalories, size = 120 }
   const cy = size / 2
 
   const segments = [
-    { key: 'protein', value: total ? (proteinG * 4) / total : 0, color: COLORS.protein, label: 'Protéines', g: proteinG },
-    { key: 'carbs',   value: total ? (carbsG * 4) / total : 0,   color: COLORS.carbs,   label: 'Glucides',  g: carbsG },
-    { key: 'fat',     value: total ? (fatG * 9) / total : 0,      color: COLORS.fat,     label: 'Lipides',   g: fatG },
+    { key: 'protein', value: total ? (proteinG * 4) / total : 0, color: COLORS.protein, label: t('nutrition.protein'), g: proteinG },
+    { key: 'carbs',   value: total ? (carbsG * 4) / total : 0,   color: COLORS.carbs,   label: t('nutrition.carbs'),   g: carbsG },
+    { key: 'fat',     value: total ? (fatG * 9) / total : 0,     color: COLORS.fat,     label: t('nutrition.fat'),     g: fatG },
   ]
 
   let offset = 0
@@ -70,7 +73,7 @@ export function MacroRing({ proteinG, carbsG, fatG, targetCalories, size = 120 }
         </div>
       </div>
 
-      {/* Légende */}
+      {/* Legend */}
       <div className="space-y-2">
         {segments.map((seg) => (
           <div key={seg.key} className="flex items-center gap-2">
@@ -81,7 +84,7 @@ export function MacroRing({ proteinG, carbsG, fatG, targetCalories, size = 120 }
         ))}
         {targetCalories && (
           <div className="pt-1 border-t border-zinc-800">
-            <span className="text-xs text-zinc-500">Objectif : {targetCalories} kcal</span>
+            <span className="text-xs text-zinc-500">{t('macroRing.target')}: {targetCalories} kcal</span>
           </div>
         )}
       </div>

@@ -6,11 +6,11 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma/client'
 
 const schema = z.object({
-  name:            z.string().min(2, 'Le nom doit faire au moins 2 caractères'),
-  email:           z.string().email('Email invalide'),
-  password:        z.string().min(8, 'Le mot de passe doit faire au moins 8 caractères'),
-  bio:             z.string().min(20, 'La bio doit faire au moins 20 caractères').max(1000),
-  specialties:     z.array(z.string()).min(1, 'Sélectionnez au moins une spécialité').max(5),
+  name:            z.string().min(2, 'Name must be at least 2 characters'),
+  email:           z.string().email('Invalid email'),
+  password:        z.string().min(8, 'Password must be at least 8 characters'),
+  bio:             z.string().min(20, 'Bio must be at least 20 characters').max(1000),
+  specialties:     z.array(z.string()).min(1, 'Select at least one specialty').max(5),
   certifications:  z.array(z.string()).default([]),
   yearsExperience: z.number().int().min(0).max(50).optional(),
   city:            z.string().max(100).optional(),
@@ -22,7 +22,7 @@ const schema = z.object({
   publicRatingCount: z.number().int().min(0).max(100000).default(0),
   showPublicRating: z.boolean().default(false),
   discoveryCallEnabled: z.boolean().default(true),
-  discoveryCallTitle: z.string().min(2).max(80).default('Entretien découverte'),
+  discoveryCallTitle: z.string().min(2).max(80).default('Discovery call'),
   discoveryCallDuration: z.number().int().min(5).max(180).default(30),
   showDiscoveryCall: z.boolean().default(true),
 })
@@ -66,8 +66,8 @@ export async function POST(req: Request) {
 
   if (existing) {
     const msg = existing.coachProfile
-      ? 'Un compte coach existe déjà avec cet email. Connectez-vous directement.'
-      : 'Cet email est déjà utilisé pour un compte membre. Connectez-vous pour créer un espace coach depuis votre profil.'
+      ? 'A coach account already exists with this email. Sign in directly.'
+      : 'This email is already used by a member account. Sign in to create a coach space from your profile.'
     return NextResponse.json({ error: { email: [msg] } }, { status: 409 })
   }
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Calendar, CheckCircle, Clock, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { ListSkeleton } from '@/components/ui/LoadingSkeleton'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface Appointment {
   id: string
@@ -19,12 +20,12 @@ interface Appointment {
   }
 }
 
-const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  PENDING:    { label: 'En attente',         color: 'text-amber-400 bg-amber-400/10' },
-  CONFIRMED:  { label: 'Confirmé',           color: 'text-emerald-400 bg-emerald-400/10' },
-  COMPLETED:  { label: 'Terminé',            color: 'text-zinc-400 bg-zinc-800' },
-  CANCELLED:  { label: 'Annulé',             color: 'text-red-400 bg-red-400/10' },
-  NO_SHOW:    { label: 'Absent',             color: 'text-red-400 bg-red-400/10' },
+const STATUS_LABEL: Record<string, { labelKey: string; color: string }> = {
+  PENDING:    { labelKey: 'coaching.pending', color: 'text-amber-400 bg-amber-400/10' },
+  CONFIRMED:  { labelKey: 'coaching.confirmed', color: 'text-emerald-400 bg-emerald-400/10' },
+  COMPLETED:  { labelKey: 'coaching.completed', color: 'text-zinc-400 bg-zinc-800' },
+  CANCELLED:  { labelKey: 'coaching.cancelled', color: 'text-red-400 bg-red-400/10' },
+  NO_SHOW:    { labelKey: 'coaching.noShow', color: 'text-red-400 bg-red-400/10' },
 }
 
 function addToGoogle(appt: Appointment) {
@@ -61,6 +62,7 @@ function downloadICS(appt: Appointment) {
 
 /** Shows the member's coaching status: assigned coaches, upcoming appointments, and a link to find a coach. */
 export default function CoachingStatusPage() {
+  const { locale, t } = useLocale()
   const router = useRouter()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading]           = useState(true)
@@ -98,13 +100,13 @@ export default function CoachingStatusPage() {
               <Calendar className="size-8 text-zinc-500" />
             </div>
           </div>
-          <h1 className="text-2xl font-medium">Aucun rendez-vous</h1>
-          <p className="text-zinc-400 text-sm">Tu n&apos;as pas encore de rendez-vous planifié.</p>
+          <h1 className="text-2xl font-medium">{t('coaching.noAppointment')}</h1>
+          <p className="text-zinc-400 text-sm">{t('coaching.noAppointmentDescription')}</p>
           <Link
             href="/coaches"
             className="inline-flex items-center gap-2 rounded-xl bg-[#C8F135] px-6 py-3 text-sm font-medium text-black hover:bg-[#d4f54d] transition-colors"
           >
-            Trouver un coach →
+            {t('coaching.findCoach')}
           </Link>
         </div>
       </div>
@@ -128,23 +130,23 @@ export default function CoachingStatusPage() {
 
             <div className="text-center space-y-2">
               <h1 className="text-2xl font-medium">
-                {next.status === 'PENDING' ? 'Demande envoyée !' : 'Rendez-vous confirmé'}
+                {next.status === 'PENDING' ? t('coaching.requestSent') : t('coaching.appointmentConfirmed')}
               </h1>
               <p className="text-zinc-400 text-sm">
                 {next.status === 'PENDING'
-                  ? `${next.coachProfile.user.name ?? 'Votre coach'} a reçu ta demande et confirmera sous 48h.`
-                  : `Ton rendez-vous avec ${next.coachProfile.user.name ?? 'ton coach'} est confirmé.`}
+                  ? `${next.coachProfile.user.name ?? t('coaching.coach')} ${t('coaching.requestReceived')}`
+                  : `${t('coaching.appointmentWithConfirmed')} ${next.coachProfile.user.name ?? t('coaching.coach')} ${t('coaching.isConfirmed')}`}
               </p>
             </div>
 
             <div className="overflow-hidden rounded-xl border border-zinc-700 bg-[#1a1d17]">
               {[
-                { label: 'Coach',  value: next.coachProfile.user.name ?? '—' },
-                { label: 'Séance', value: next.title },
-                { label: 'Date',   value: new Date(next.scheduledAt).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) },
-                { label: 'Heure',  value: new Date(next.scheduledAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) },
-                { label: 'Durée',  value: `${next.duration} min` },
-                { label: 'Statut', value: STATUS_LABEL[next.status]?.label ?? next.status, colorClass: STATUS_LABEL[next.status]?.color },
+                { label: t('coaching.coach'),  value: next.coachProfile.user.name ?? '—' },
+                { label: t('coaching.session'), value: next.title },
+                { label: t('coaching.date'),   value: new Date(next.scheduledAt).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' }) },
+                { label: t('coaching.time'),  value: new Date(next.scheduledAt).toLocaleTimeString(locale === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' }) },
+                { label: t('coaching.duration'),  value: `${next.duration} min` },
+                { label: t('coaching.status'), value: STATUS_LABEL[next.status]?.labelKey ? t(STATUS_LABEL[next.status].labelKey) : next.status, colorClass: STATUS_LABEL[next.status]?.color },
               ].map(r => (
                 <div key={r.label} className="flex items-center justify-between px-6 py-2.5 border-b border-zinc-800 last:border-0">
                   <span className="text-sm text-zinc-500 w-20 shrink-0">{r.label}</span>
@@ -157,10 +159,10 @@ export default function CoachingStatusPage() {
               ))}
               {next.meetLink && (
                 <div className="flex items-center justify-between px-6 py-2.5">
-                  <span className="text-sm text-zinc-500 w-20 shrink-0">Lien</span>
+                  <span className="text-sm text-zinc-500 w-20 shrink-0">{t('coaching.link')}</span>
                   <a href={next.meetLink} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1 text-sm text-[#C8F135] hover:underline">
-                    Rejoindre <ExternalLink className="size-3" />
+                    {t('coaching.join')} <ExternalLink className="size-3" />
                   </a>
                 </div>
               )}
@@ -169,11 +171,11 @@ export default function CoachingStatusPage() {
             <div className="grid grid-cols-2 gap-3">
               <button type="button" onClick={() => addToGoogle(next)}
                 className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-[#1a1d17] py-3 text-xs text-zinc-400 hover:border-zinc-600 hover:text-white transition-colors">
-                <Calendar className="size-4" /> Google Calendar
+                <Calendar className="size-4" /> {t('coaching.addGoogleCalendar')}
               </button>
               <button type="button" onClick={() => downloadICS(next)}
                 className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-[#1a1d17] py-3 text-xs text-zinc-400 hover:border-zinc-600 hover:text-white transition-colors">
-                <Calendar className="size-4" /> Apple / .ics
+                <Calendar className="size-4" /> {t('coaching.downloadIcs')}
               </button>
             </div>
           </>
@@ -183,7 +185,7 @@ export default function CoachingStatusPage() {
         {appointments.length > 1 && (
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">
-              Tous les rendez-vous ({appointments.length})
+              {t('coaching.allAppointments')} ({appointments.length})
             </p>
             <div className="space-y-2">
               {appointments.map(appt => {
@@ -195,11 +197,11 @@ export default function CoachingStatusPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-white font-medium truncate">{appt.title}</p>
                       <p className="text-xs text-zinc-500">
-                        {new Date(appt.scheduledAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} à {new Date(appt.scheduledAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · {appt.coachProfile.user.name}
+                        {new Date(appt.scheduledAt).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' })} {t('common.at')} {new Date(appt.scheduledAt).toLocaleTimeString(locale === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' })} · {appt.coachProfile.user.name}
                       </p>
                     </div>
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${st?.color ?? 'text-zinc-400 bg-zinc-800'}`}>
-                      {st?.label ?? appt.status}
+                      {st?.labelKey ? t(st.labelKey) : appt.status}
                     </span>
                   </div>
                 )
@@ -213,7 +215,7 @@ export default function CoachingStatusPage() {
           onClick={() => router.push('/dashboard')}
           className="w-full rounded-xl bg-[#C8F135] py-4 text-base font-medium text-black hover:bg-[#d4f54d] transition-colors"
         >
-          Aller sur mon dashboard →
+          {t('coaching.goDashboard')}
         </button>
       </section>
     </div>

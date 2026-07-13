@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Save, Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface Note { id: string; title: string; content: string; category?: string | null; createdAt: string }
 
@@ -13,6 +14,7 @@ interface Props {
 
 /** Inline coach-note editor: lists existing notes and provides a form to add new notes for the given member. */
 export function NotesEditor({ memberId, initialNotes }: Props) {
+  const { locale, t } = useLocale()
   const [notes, setNotes]   = useState<Note[]>(initialNotes)
   const [adding, setAdding] = useState(false)
   const [form, setForm]     = useState({ title: '', content: '', category: 'PROGRESS' })
@@ -32,18 +34,18 @@ export function NotesEditor({ memberId, initialNotes }: Props) {
       setNotes(prev => [note, ...prev])
       setForm({ title: '', content: '', category: 'PROGRESS' })
       setAdding(false)
-      toast.success('Note enregistrée')
+      toast.success(t('coachMemberNotes.saved'))
     } catch {
-      toast.error('Erreur lors de la sauvegarde')
+      toast.error(t('coachMemberNotes.saveError'))
     } finally {
       setSaving(false)
     }
   }
 
   const categories = ['PROGRESS', 'FEEDBACK', 'WORKOUT', 'NUTRITION', 'OTHER']
-  const categoryLabel: Record<string, string> = {
-    PROGRESS: 'Progression', FEEDBACK: 'Feedback', WORKOUT: 'Entraînement',
-    NUTRITION: 'Nutrition', OTHER: 'Autre',
+  const categoryLabelKey: Record<string, string> = {
+    PROGRESS: 'notes.categories.progress', FEEDBACK: 'coachMemberNotes.categories.feedback', WORKOUT: 'notes.categories.training',
+    NUTRITION: 'notes.categories.nutrition', OTHER: 'notes.categories.other',
   }
   const categoryColor: Record<string, string> = {
     PROGRESS: 'text-[#C8F135] bg-[#C8F135]/10', FEEDBACK: 'text-blue-400 bg-blue-400/10',
@@ -54,14 +56,14 @@ export function NotesEditor({ memberId, initialNotes }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Notes coach (privées)</p>
+        <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">{t('coachMemberNotes.title')}</p>
         {!adding && (
           <button
             type="button"
             onClick={() => setAdding(true)}
             className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-white transition-colors"
           >
-            <Plus className="size-3" /> Ajouter
+            <Plus className="size-3" /> {t('common.add')}
           </button>
         )}
       </div>
@@ -71,7 +73,7 @@ export function NotesEditor({ memberId, initialNotes }: Props) {
           <input
             value={form.title}
             onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-            placeholder="Titre"
+            placeholder={t('coachMemberNotes.titlePlaceholder')}
             className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135] transition-colors"
           />
           <select
@@ -80,14 +82,14 @@ export function NotesEditor({ memberId, initialNotes }: Props) {
             className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135]"
           >
             {categories.map(c => (
-              <option key={c} value={c}>{categoryLabel[c]}</option>
+              <option key={c} value={c}>{t(categoryLabelKey[c])}</option>
             ))}
           </select>
           <textarea
             value={form.content}
             onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
             rows={3}
-            placeholder="Contenu de la note…"
+            placeholder={t('coachMemberNotes.contentPlaceholder')}
             className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs focus:outline-none focus:border-[#C8F135] resize-none transition-colors"
           />
           <div className="flex gap-2">
@@ -97,14 +99,14 @@ export function NotesEditor({ memberId, initialNotes }: Props) {
               disabled={saving}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#C8F135] text-zinc-900 text-[10px] font-medium disabled:opacity-50"
             >
-              <Save className="size-3" /> Enregistrer
+              <Save className="size-3" /> {t('common.save')}
             </button>
             <button
               type="button"
               onClick={() => { setAdding(false); setForm({ title: '', content: '', category: 'PROGRESS' }) }}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-400 text-[10px] hover:text-white"
             >
-              <X className="size-3" /> Annuler
+              <X className="size-3" /> {t('common.cancel')}
             </button>
           </div>
         </div>
@@ -112,16 +114,16 @@ export function NotesEditor({ memberId, initialNotes }: Props) {
 
       <div className="space-y-2">
         {notes.length === 0 && !adding && (
-          <p className="text-xs text-zinc-600 italic">Aucune note pour ce membre.</p>
+          <p className="text-xs text-zinc-600 italic">{t('coachMemberNotes.empty')}</p>
         )}
         {notes.map(note => (
           <div key={note.id} className="rounded-lg bg-[#0b0d09] border border-zinc-800 p-3">
             <div className="flex items-center gap-2 mb-1">
               <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${categoryColor[note.category ?? 'OTHER'] ?? 'text-zinc-400 bg-zinc-800'}`}>
-                {categoryLabel[note.category ?? 'OTHER'] ?? note.category}
+                {t(categoryLabelKey[note.category ?? 'OTHER'] ?? '') || note.category}
               </span>
               <span className="text-[10px] text-zinc-600">
-                {new Date(note.createdAt).toLocaleDateString('fr-FR')}
+                {new Date(note.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR')}
               </span>
             </div>
             <p className="text-xs font-medium text-white mb-0.5">{note.title}</p>

@@ -1,5 +1,5 @@
 'use client'
-// Résumé nutrition du dashboard — anneaux + barres de progression macros
+// Dashboard nutrition summary: macro rings and progress bars.
 
 import { MacroRing } from '@/components/ui/MacroRing'
 import { ProgressBar } from '@/components/ui/ProgressBar'
@@ -7,6 +7,7 @@ import { useNutritionStore } from '@/stores/nutritionStore'
 import { useUserStore } from '@/stores/userStore'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { useLocale } from '@/contexts/LocaleContext'
 
 type ActiveNutritionTarget = {
   targetCalories: number
@@ -17,6 +18,7 @@ type ActiveNutritionTarget = {
 
 /** Displays today's macro consumption as a ring chart and three progress bars compared to the user's daily targets. */
 export function NutritionSummary() {
+  const { t } = useLocale()
   const { ensureTodayLog, getTodayTotals, setTodayMeals } = useNutritionStore()
   const { profile }        = useUserStore()
   const [coachTarget, setCoachTarget] = useState<ActiveNutritionTarget | null>(null)
@@ -69,10 +71,10 @@ export function NutritionSummary() {
     <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-white">Nutrition du jour</h3>
-          {coachTarget ? <p className="text-[11px] text-zinc-500">Objectif coach actif</p> : null}
+          <h3 className="text-sm font-semibold text-white">{t('dashboard.nutritionToday')}</h3>
+          {coachTarget ? <p className="text-[11px] text-zinc-500">{t('dashboard.activeCoachTarget')}</p> : null}
         </div>
-        <Link href="/nutrition" className="text-xs text-[#C8F135] hover:underline">Voir tout</Link>
+        <Link href="/nutrition" className="text-xs text-[#C8F135] hover:underline">{t('dashboard.viewAll')}</Link>
       </div>
 
       <MacroRing
@@ -83,9 +85,9 @@ export function NutritionSummary() {
       />
 
       <div className="space-y-3 mt-4">
-        <ProgressBar value={totals.proteinG} max={target.proteinG} label="Protéines" sublabel={`${totals.proteinG}/${Math.round(target.proteinG)}g`} color="#C8F135" size="sm" />
-        <ProgressBar value={totals.carbsG}   max={target.carbsG}   label="Glucides"  sublabel={`${totals.carbsG}/${Math.round(target.carbsG)}g`}   color="#38bdf8" size="sm" />
-        <ProgressBar value={totals.fatG}     max={target.fatG}     label="Lipides"   sublabel={`${totals.fatG}/${Math.round(target.fatG)}g`}     color="#f472b6" size="sm" />
+        <ProgressBar value={totals.proteinG} max={target.proteinG} label={t('nutrition.protein')} sublabel={`${totals.proteinG}/${Math.round(target.proteinG)}g`} color="#C8F135" size="sm" />
+        <ProgressBar value={totals.carbsG}   max={target.carbsG}   label={t('nutrition.carbs')}  sublabel={`${totals.carbsG}/${Math.round(target.carbsG)}g`}   color="#38bdf8" size="sm" />
+        <ProgressBar value={totals.fatG}     max={target.fatG}     label={t('nutrition.fat')}   sublabel={`${totals.fatG}/${Math.round(target.fatG)}g`}     color="#f472b6" size="sm" />
       </div>
     </div>
   )

@@ -11,13 +11,13 @@ const accountUpdateSchema = z.object({
   name: z.string().min(2).max(80).optional(),
   email: z.string().email().optional(),
   image: z.string().url().or(z.literal('')).nullable().optional(),
-  password: z.string().min(8, 'Mot de passe minimum : 8 caractères').optional(),
+  password: z.string().min(8, 'Password must be at least 8 characters').optional(),
 })
 
 /** Updates the authenticated user's name, email, avatar image, or password; returns the updated user record. */
 export async function PATCH(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const parsed = accountUpdateSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
@@ -40,7 +40,7 @@ export async function PATCH(req: Request) {
 /** Permanently deletes the authenticated user account; requires password confirmation for credential-based accounts. */
 export async function DELETE(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let password: string | undefined
   try {
@@ -52,15 +52,15 @@ export async function DELETE(req: Request) {
     where: { id: session.user.id },
     select: { password: true, firebaseUid: true },
   })
-  if (!user) return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 })
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
   if (user.password) {
     if (!password) {
-      return NextResponse.json({ error: 'Mot de passe requis pour confirmer la suppression.' }, { status: 422 })
+      return NextResponse.json({ error: 'Password is required to confirm deletion.' }, { status: 422 })
     }
     const valid = await compare(password, user.password)
     if (!valid) {
-      return NextResponse.json({ error: 'Mot de passe incorrect.' }, { status: 403 })
+      return NextResponse.json({ error: 'Incorrect password.' }, { status: 403 })
     }
   }
 
@@ -70,7 +70,7 @@ export async function DELETE(req: Request) {
     } catch (error) {
       console.error('[account-delete] external auth deletion failed:', error)
       return NextResponse.json({
-        error: "La suppression du compte n'a pas pu être finalisée. Réessaie dans quelques instants.",
+        error: "Account deletion could not be completed. Try again in a few moments.",
       }, { status: 503 })
     }
   }

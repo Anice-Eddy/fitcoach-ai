@@ -13,20 +13,22 @@ const nutritionTargetsSchema = z.object({
   targetFatG:     z.coerce.number().min(10).max(400),
 })
 
+const COACH_NUTRITION_TARGET_NAME = 'Coach nutrition target'
+
 async function authorizeCoach(memberId: string) {
   const session = await auth()
-  if (!session?.user?.email) return { error: NextResponse.json({ error: 'Non authentifié' }, { status: 401 }) }
+  if (!session?.user?.email) return { error: NextResponse.json({ error: 'Unauthenticated' }, { status: 401 }) }
 
   const coach = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: { coachProfile: true },
   })
-  if (!coach?.coachProfile) return { error: NextResponse.json({ error: 'Non autorisé' }, { status: 403 }) }
+  if (!coach?.coachProfile) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 403 }) }
 
   const membership = await prisma.coachMember.findUnique({
     where: { coachId_memberId: { coachId: coach.coachProfile.id, memberId } },
   })
-  if (!membership) return { error: NextResponse.json({ error: 'Membre introuvable' }, { status: 404 }) }
+  if (!membership) return { error: NextResponse.json({ error: 'Member not found' }, { status: 404 }) }
 
   return { coachProfileId: coach.coachProfile.id, userId: coach.id }
 }
@@ -50,12 +52,12 @@ export async function PATCH(
   const plan = existing
     ? await prisma.nutritionPlan.update({
         where: { id: existing.id },
-        data:  { name: 'Objectif nutrition coach', ...parsed.data },
+        data:  { name: COACH_NUTRITION_TARGET_NAME, ...parsed.data },
       })
     : await prisma.nutritionPlan.create({
         data: {
           userId: params.memberId,
-          name:   'Objectif nutrition coach',
+          name:   COACH_NUTRITION_TARGET_NAME,
           ...parsed.data,
           weekStartDate: new Date(),
           isActive: true,

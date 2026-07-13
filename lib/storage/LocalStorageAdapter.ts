@@ -1,5 +1,5 @@
-// Stockage local : localStorage (profil/settings) + IndexedDB (métriques volumineuses)
-// Fonctionne sans compte — badge "offline" affiché dans le header
+// Local storage: localStorage for profile/settings and IndexedDB for larger metric history.
+// Works without an account; the header shows an offline badge.
 // deps: npm install idb
 
 import { openDB, type IDBPDatabase } from 'idb'
@@ -55,7 +55,7 @@ export class LocalStorageAdapter implements StorageAdapter {
     return updated
   }
 
-  // --- Métriques corporelles (IndexedDB) ---
+  // --- Body metrics (IndexedDB) ---
 
   /** Retrieves the most recent body metrics from IndexedDB, sorted descending by date, up to the given limit. */
   async getBodyMetrics(limit = 90): Promise<BodyMetricInput[]> {

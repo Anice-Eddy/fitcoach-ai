@@ -1,7 +1,7 @@
 const REQUIRED_ENV_VARS = [
-  { key: 'DATABASE_URL',      desc: 'Connexion PostgreSQL' },
-  { key: 'AUTH_SECRET',       desc: 'Secret next-auth (sessions & JWT)' },
-  { key: 'NEXT_PUBLIC_APP_URL',  desc: 'URL publique de l\'app' },
+  { key: 'DATABASE_URL',      desc: 'PostgreSQL connection' },
+  { key: 'AUTH_SECRET',       desc: 'NextAuth secret for sessions and JWT' },
+  { key: 'NEXT_PUBLIC_APP_URL',  desc: 'Public app URL' },
 ] as const
 
 /** Throws a descriptive error listing all required environment variables that are currently missing. */
@@ -11,8 +11,8 @@ export function validateEnv() {
   if (missing.length > 0) {
     const lines = missing.map(({ key, desc }) => `  ✗ ${key}  →  ${desc}`)
     throw new Error(
-      `\n\n❌ Variables d'environnement manquantes :\n${lines.join('\n')}\n\n` +
-      `Ajoute-les dans Vercel → Settings → Environment Variables\n`,
+      `\n\nMissing environment variables:\n${lines.join('\n')}\n\n` +
+      `Add them in Vercel -> Settings -> Environment Variables\n`,
     )
   }
 }

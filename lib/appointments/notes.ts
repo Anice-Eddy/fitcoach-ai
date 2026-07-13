@@ -1,11 +1,11 @@
-export function appendAppointmentNote(currentNote: string | null | undefined, nextNote: string, authorLabel: string) {
+export function appendAppointmentNote(currentNote: string | null | undefined, nextNote: string, authorLabel: string, locale: 'fr' | 'en' = 'fr') {
   const next = nextNote.trim()
   const current = currentNote?.trim() ?? ''
   if (!next) return current
   if (!current) return next
 
-  // Les rendez-vous ont un champ texte unique : on ajoute donc la nouvelle note sous l'ancienne.
-  const date = new Date().toLocaleString('fr-FR', {
+  // Appointments currently store notes in one text field, so append the new note below the previous one.
+  const date = new Date().toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-US', {
     day:    '2-digit',
     month:  '2-digit',
     year:   'numeric',
@@ -61,7 +61,7 @@ export function updateAppointmentNoteAt(note: string | null | undefined, index: 
   const entries = parseAppointmentNotes(note)
   if (!entries[index]) return note?.trim() ?? ''
 
-  // Le stockage actuel est un seul champ texte : on modifie uniquement le segment choisi puis on re-sérialise.
+  // Current storage is a single text field: edit only the selected segment, then serialize it again.
   entries[index] = { ...entries[index], content }
   return serializeAppointmentNotes(entries)
 }

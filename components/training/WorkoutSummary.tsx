@@ -1,10 +1,11 @@
 'use client'
-// Résumé de fin de séance — stats, progression, actions
+// End-of-workout summary: stats, progress, and actions.
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { CheckCircle2, Clock, Dumbbell, Flame, Trophy } from 'lucide-react'
 import type { ActiveSession } from '@/stores/trainingStore'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface Props {
   session:   ActiveSession
@@ -13,6 +14,7 @@ interface Props {
 
 /** Post-workout summary card showing completed sets, total volume, duration, and a link to the progress page. */
 export function WorkoutSummary({ session, onClose }: Props) {
+  const { t } = useLocale()
   const completed   = session.exercises.filter((e) => e.isCompleted).length
   const totalSets   = session.exercises.reduce((acc, e) => acc + e.sets, 0)
   const totalVolume = session.exercises.reduce((acc, e) => acc + (e.weightKg ?? 0) * e.reps * e.sets, 0)
@@ -25,23 +27,23 @@ export function WorkoutSummary({ session, onClose }: Props) {
         animate={{ scale: 1, opacity: 1 }}
         className="w-full max-w-sm rounded-3xl bg-zinc-900 border border-zinc-700 p-6"
       >
-        {/* Trophée */}
+        {/* Trophy */}
         <div className="flex justify-center mb-5">
           <div className="size-16 rounded-2xl bg-[#C8F135]/15 flex items-center justify-center">
             <Trophy className="size-8 text-[#C8F135]" />
           </div>
         </div>
 
-        <h2 className="text-xl font-bold text-white text-center mb-1">Séance terminée !</h2>
+        <h2 className="text-xl font-bold text-white text-center mb-1">{t('workoutSummary.title')}</h2>
         <p className="text-sm text-zinc-400 text-center mb-6">{session.name}</p>
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           {[
-            { icon: Clock,         label: 'Durée',     value: `${duration} min`,    color: '#60a5fa' },
-            { icon: CheckCircle2,  label: 'Exercices', value: `${completed}/${session.exercises.length}`, color: '#C8F135' },
-            { icon: Dumbbell,      label: 'Séries',    value: totalSets,             color: '#a78bfa' },
-            { icon: Flame,         label: 'Volume',    value: `${Math.round(totalVolume)} kg`, color: '#fb923c' },
+            { icon: Clock,         label: t('workoutSummary.duration'),  value: `${duration} min`,    color: '#60a5fa' },
+            { icon: CheckCircle2,  label: t('workoutSummary.exercises'), value: `${completed}/${session.exercises.length}`, color: '#C8F135' },
+            { icon: Dumbbell,      label: t('workoutSummary.sets'),      value: totalSets,             color: '#a78bfa' },
+            { icon: Flame,         label: t('workoutSummary.volume'),    value: `${Math.round(totalVolume)} kg`, color: '#fb923c' },
           ].map(({ icon: Icon, label, value, color }) => (
             <div key={label} className="rounded-xl bg-zinc-800 p-3 flex items-center gap-2">
               <Icon className="size-4 shrink-0" style={{ color }} />
@@ -58,13 +60,13 @@ export function WorkoutSummary({ session, onClose }: Props) {
             onClick={onClose}
             className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-bold hover:bg-[#d4f54d] transition-colors"
           >
-            Terminer
+            {t('common.finish')}
           </button>
           <Link
             href="/progress"
             className="block w-full py-3 rounded-xl bg-zinc-800 text-white text-center font-medium hover:bg-zinc-700 transition-colors"
           >
-            Voir la progression
+            {t('workoutSummary.viewProgress')}
           </Link>
         </div>
       </motion.div>

@@ -1,8 +1,11 @@
-// Base de données alimentaire — macros réels pour 100g (source : CIQUAL / USDA FoodData Central)
+// Food database: real macros per 100g, sourced from CIQUAL / USDA FoodData Central.
+
+import type { Locale } from '@/lib/i18n'
 
 export interface FoodDB {
   id:       string
   name:     string
+  nameEn?:  string
   brand?:   string
   calories: number  // kcal/100g
   proteinG: number
@@ -10,13 +13,87 @@ export interface FoodDB {
   fatG:     number
   fiberG:   number
   category: 'protein' | 'carb' | 'fat' | 'vegetable' | 'fruit' | 'dairy'
-  // Tags pour filtrer selon les restrictions alimentaires
+  // Tags used to filter foods by dietary restrictions.
   tags?: ('gluten-free' | 'dairy-free' | 'vegetarian' | 'vegan' | 'nut-free')[]
+}
+
+const FOOD_NAME_EN: Record<string, string> = {
+  'chicken-breast':   'Chicken breast',
+  'chicken-thigh':    'Chicken thigh',
+  'turkey-breast':    'Turkey breast cutlet',
+  'beef-steak':       'Beef — 5% ground steak',
+  salmon:             'Salmon',
+  'tuna-can':         'Canned tuna',
+  'tuna-fresh':       'Fresh tuna',
+  sardines:           'Sardines in oil',
+  'sardines-water':   'Sardines in water',
+  mackerel:           'Mackerel',
+  'mackerel-can':     'Canned mackerel',
+  shrimp:             'Shrimp',
+  cod:                'Cod',
+  eggs:               'Whole eggs',
+  'egg-whites':       'Egg whites',
+  whey:               'Whey protein',
+  'tofu-firm':        'Firm tofu',
+  tempeh:             'Tempeh',
+  'lentils-cooked':   'Cooked lentils',
+  'chickpeas-cooked': 'Cooked chickpeas',
+  'black-beans':      'Cooked black beans',
+  edamame:            'Edamame',
+  'rice-white':       'Cooked white rice',
+  'rice-brown':       'Cooked brown rice',
+  oats:               'Rolled oats',
+  'pasta-cooked':     'Cooked pasta',
+  'pasta-whole':      'Cooked whole-wheat pasta',
+  potato:             'Cooked potato',
+  'sweet-potato':     'Cooked sweet potato',
+  quinoa:             'Cooked quinoa',
+  bulgur:             'Cooked bulgur',
+  couscous:           'Cooked couscous',
+  'bread-whole':      'Whole-grain bread',
+  'bread-white':      'White bread',
+  'tortilla-wheat':   'Wheat tortilla',
+  'olive-oil':        'Olive oil',
+  'coconut-oil':      'Coconut oil',
+  'rapeseed-oil':     'Rapeseed oil',
+  almonds:            'Almonds',
+  walnuts:            'Walnuts',
+  cashews:            'Cashews',
+  'peanut-butter':    'Peanut butter',
+  avocado:            'Avocado',
+  broccoli:           'Cooked broccoli',
+  spinach:            'Spinach',
+  tomato:             'Tomato',
+  cucumber:           'Cucumber',
+  carrot:             'Carrots',
+  'bell-pepper-red':  'Red bell pepper',
+  zucchini:           'Zucchini',
+  'green-beans':      'Cooked green beans',
+  asparagus:          'Asparagus',
+  cauliflower:        'Cooked cauliflower',
+  mushrooms:          'Mushrooms',
+  onion:              'Onion',
+  lettuce:            'Lettuce / green salad',
+  kale:               'Kale',
+  banana:             'Banana',
+  apple:              'Apple',
+  orange:             'Orange',
+  strawberry:         'Strawberries',
+  blueberry:          'Blueberries',
+  kiwi:               'Kiwi',
+  mango:              'Mango',
+  pear:               'Pear',
+  grapes:             'Grapes',
+  'greek-yogurt':     'Greek yogurt (0%)',
+  'cottage-cheese':   'Cottage cheese (0%)',
+  milk:               'Semi-skimmed milk',
+  mozzarella:         'Mozzarella',
+  skyr:               'Skyr',
 }
 
 export const FOOD_DATABASE: FoodDB[] = [
 
-  // ── PROTÉINES ANIMALES ────────────────────────────────────────────────────
+  // --- ANIMAL PROTEINS ------------------------------------------------------
   { id: 'chicken-breast',    name: 'Blanc de poulet',          calories: 165, proteinG: 31,  carbsG: 0,   fatG: 3.6, fiberG: 0,   category: 'protein', tags: ['gluten-free','dairy-free','nut-free'] },
   { id: 'chicken-thigh',     name: 'Cuisse de poulet',         calories: 209, proteinG: 26,  carbsG: 0,   fatG: 11,  fiberG: 0,   category: 'protein', tags: ['gluten-free','dairy-free','nut-free'] },
   { id: 'turkey-breast',     name: 'Escalope de dinde',        calories: 135, proteinG: 29,  carbsG: 0,   fatG: 1.6, fiberG: 0,   category: 'protein', tags: ['gluten-free','dairy-free','nut-free'] },
@@ -34,7 +111,7 @@ export const FOOD_DATABASE: FoodDB[] = [
   { id: 'egg-whites',        name: 'Blancs d\'œufs',          calories: 52,  proteinG: 11,  carbsG: 0.7, fatG: 0.2, fiberG: 0,   category: 'protein', tags: ['gluten-free','dairy-free','nut-free','vegetarian'] },
   { id: 'whey',              name: 'Whey protéine',            calories: 380, proteinG: 80,  carbsG: 5,   fatG: 5,   fiberG: 0,   category: 'protein', brand: 'Générique', tags: ['gluten-free','nut-free'] },
 
-  // ── PROTÉINES VÉGÉTALES ───────────────────────────────────────────────────
+  // --- PLANT PROTEINS -------------------------------------------------------
   { id: 'tofu-firm',         name: 'Tofu ferme',               calories: 144, proteinG: 17,  carbsG: 3,   fatG: 9,   fiberG: 0.3, category: 'protein', tags: ['gluten-free','dairy-free','vegan','vegetarian','nut-free'] },
   { id: 'tempeh',            name: 'Tempeh',                   calories: 195, proteinG: 19,  carbsG: 9,   fatG: 11,  fiberG: 1.8, category: 'protein', tags: ['dairy-free','vegan','vegetarian','nut-free'] },
   { id: 'lentils-cooked',    name: 'Lentilles cuites',         calories: 116, proteinG: 9,   carbsG: 20,  fatG: 0.4, fiberG: 8,   category: 'protein', tags: ['gluten-free','dairy-free','vegan','vegetarian','nut-free'] },
@@ -67,7 +144,7 @@ export const FOOD_DATABASE: FoodDB[] = [
   { id: 'peanut-butter',     name: 'Beurre de cacahuète',      calories: 588, proteinG: 25,  carbsG: 20,  fatG: 50,  fiberG: 6,   category: 'fat', tags: ['gluten-free','dairy-free','vegan','vegetarian'] },
   { id: 'avocado',           name: 'Avocat',                   calories: 160, proteinG: 2,   carbsG: 9,   fatG: 15,  fiberG: 7,   category: 'fat', tags: ['gluten-free','dairy-free','vegan','vegetarian','nut-free'] },
 
-  // ── LÉGUMES ───────────────────────────────────────────────────────────────
+  // --- VEGETABLES -----------------------------------------------------------
   { id: 'broccoli',          name: 'Brocoli cuit',             calories: 35,  proteinG: 2.4, carbsG: 7,   fatG: 0.4, fiberG: 2.6, category: 'vegetable', tags: ['gluten-free','dairy-free','vegan','nut-free'] },
   { id: 'spinach',           name: 'Épinards',                 calories: 23,  proteinG: 2.9, carbsG: 3.6, fatG: 0.4, fiberG: 2.2, category: 'vegetable', tags: ['gluten-free','dairy-free','vegan','nut-free'] },
   { id: 'tomato',            name: 'Tomate',                   calories: 18,  proteinG: 0.9, carbsG: 3.9, fatG: 0.2, fiberG: 1.2, category: 'vegetable', tags: ['gluten-free','dairy-free','vegan','nut-free'] },
@@ -102,13 +179,33 @@ export const FOOD_DATABASE: FoodDB[] = [
   { id: 'skyr',              name: 'Skyr',                     calories: 63,  proteinG: 11,  carbsG: 4,   fatG: 0.2, fiberG: 0,   category: 'dairy', tags: ['gluten-free','vegetarian','nut-free'] },
 ]
 
-/** Calcule les macros d'un aliment pour une quantité donnée en grammes. */
-export function calculateFoodMacros(foodId: string, grams: number) {
+/** Returns a localized display name without changing the legacy food name stored in plans/logs. */
+export function foodDisplayName(foodOrName: FoodDB | string, locale: Locale = 'fr'): string {
+  const food = typeof foodOrName === 'string'
+    ? findFoodByAnyName(foodOrName)
+    : foodOrName
+  if (!food) return String(foodOrName)
+  return locale === 'en' ? (food.nameEn ?? FOOD_NAME_EN[food.id] ?? food.name) : food.name
+}
+
+/** Finds a food by stable id, French name, or English display name. */
+export function findFoodByAnyName(value: string): FoodDB | undefined {
+  const normalized = value.trim().toLowerCase()
+  return FOOD_DATABASE.find((item) => {
+    const englishName = item.nameEn ?? FOOD_NAME_EN[item.id]
+    return item.id.toLowerCase() === normalized ||
+      item.name.toLowerCase() === normalized ||
+      englishName?.toLowerCase() === normalized
+  })
+}
+
+/** Calculates food macros for a given quantity in grams and returns the display name for the requested locale. */
+export function calculateFoodMacros(foodId: string, grams: number, locale: Locale = 'fr') {
   const food = FOOD_DATABASE.find((f) => f.id === foodId)
   if (!food) return null
   const factor = grams / 100
   return {
-    name:     food.name,
+    name:     foodDisplayName(food, locale),
     grams,
     calories: Math.round(food.calories * factor),
     proteinG: Math.round(food.proteinG * factor * 10) / 10,
@@ -118,7 +215,7 @@ export function calculateFoodMacros(foodId: string, grams: number) {
   }
 }
 
-/** Filtre la base selon les restrictions alimentaires de l'utilisateur. */
+/** Filters the database according to the user's dietary restrictions. */
 export function filterFoodsByRestrictions(restrictions: string[]): FoodDB[] {
   if (!restrictions || restrictions.length === 0) return FOOD_DATABASE
   return FOOD_DATABASE.filter(food => {

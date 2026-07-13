@@ -8,6 +8,7 @@ import { Logo } from '@/components/ui/Logo'
 import { PageBackground } from '@/components/landing/PageBackground'
 import { publicAuthProviderMode } from '@/lib/auth/provider-mode'
 import { firebaseForgotPassword } from '@/lib/firebase/client'
+import { useLocale } from '@/contexts/LocaleContext'
 
 type FirebaseResetError = { code?: string; message?: string }
 
@@ -26,6 +27,7 @@ function isTemporaryResetServiceError(err: unknown) {
 
 /** Forgot-password page: collects an email and calls /api/auth/forgot-password to send a reset link. */
 export default function ForgotPasswordPage() {
+  const { t } = useLocale()
   const [email,   setEmail]   = useState('')
   const [loading, setLoading] = useState(false)
   const [sent,    setSent]    = useState(false)
@@ -42,7 +44,7 @@ export default function ForgotPasswordPage() {
     })
     const data = await res.json().catch(() => null)
     if (!res.ok) {
-      setError(data?.message ?? data?.error ?? "Impossible d'envoyer le lien de réinitialisation.")
+      setError(data?.message ?? data?.error ?? t('auth.passwordReset.sendError'))
       return false
     }
     return true
@@ -56,7 +58,7 @@ export default function ForgotPasswordPage() {
     })
     const data = await res.json().catch(() => null)
     if (!res.ok) {
-      setError(data?.message ?? data?.error ?? "Impossible d'envoyer le lien de réinitialisation.")
+      setError(data?.message ?? data?.error ?? t('auth.passwordReset.sendError'))
       return false
     }
 
@@ -67,18 +69,18 @@ export default function ForgotPasswordPage() {
       const code = (err as FirebaseResetError | null)?.code
       if (code === 'auth/user-not-found' || code === 'auth/invalid-email') return true
       if (code === 'auth/too-many-requests') {
-        setError('Trop de demandes. Réessaie dans quelques minutes.')
+        setError(t('auth.errors.tooManyRequests'))
         return false
       }
       if (code === 'auth/configuration-not-found' || code === 'auth/operation-not-allowed') {
-        setError('La réinitialisation par email n’est pas encore activée.')
+        setError(t('auth.passwordReset.notEnabled'))
         return false
       }
       if (isTemporaryResetServiceError(err)) {
-        setError('Le service de réinitialisation est temporairement indisponible. Réessaie dans quelques minutes.')
+        setError(t('auth.passwordReset.temporarilyUnavailable'))
         return false
       }
-      setError("Impossible d'envoyer le lien pour le moment.")
+      setError(t('auth.passwordReset.sendError'))
       return false
     }
   }
@@ -96,7 +98,7 @@ export default function ForgotPasswordPage() {
       if (!ok) submitLockRef.current = false
     } catch {
       submitLockRef.current = false
-      toast.error('Erreur réseau, réessaie.')
+      toast.error(t('auth.errors.networkRetry'))
     } finally {
       setLoading(false)
     }
@@ -110,9 +112,9 @@ export default function ForgotPasswordPage() {
           <div className="mb-6 flex justify-center">
             <Logo href="/" size="lg" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Mot de passe oublié</h1>
+          <h1 className="text-2xl font-bold text-white">{t('auth.passwordReset.forgotTitle')}</h1>
           <p className="text-sm text-zinc-400 mt-1">
-            Entre ton email pour recevoir un lien de réinitialisation
+            {t('auth.passwordReset.forgotDescription')}
           </p>
         </div>
 
@@ -121,12 +123,12 @@ export default function ForgotPasswordPage() {
             <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl border border-[#C8F135]/35 bg-zinc-950/80 text-[#C8F135] shadow-[0_0_28px_rgba(200,241,53,0.22)]">
               <MailCheck className="size-7" aria-hidden="true" />
             </div>
-            <p className="text-white font-semibold mb-1">Email envoyé !</p>
+            <p className="text-white font-semibold mb-1">{t('auth.passwordReset.emailSent')}</p>
             <p className="text-zinc-400 text-sm">
-              Si un compte existe pour <span className="text-white">{email}</span>,
-              tu recevras un lien valable <strong className="text-white">1 heure</strong>.
+              {t('auth.passwordReset.ifAccountExists')} <span className="text-white">{email}</span>,
+              {t('auth.passwordReset.youWillReceive')} <strong className="text-white">{t('auth.passwordReset.oneHour')}</strong>.
             </p>
-            <p className="text-zinc-500 text-xs mt-3">Pense à vérifier tes spams.</p>
+            <p className="text-zinc-500 text-xs mt-3">{t('auth.passwordReset.checkSpam')}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -138,7 +140,7 @@ export default function ForgotPasswordPage() {
 
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-                Adresse email
+                {t('auth.email')}
               </label>
               <input
                 type="email"
@@ -147,7 +149,7 @@ export default function ForgotPasswordPage() {
                   setEmail(e.target.value)
                   setError('')
                 }}
-                placeholder="jean@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 required
                 autoComplete="email"
                 className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm"
@@ -161,7 +163,7 @@ export default function ForgotPasswordPage() {
             >
               {loading
                 ? <span className="size-5 rounded-full border-2 border-zinc-600 border-t-zinc-900 animate-spin" />
-                : 'Envoyer le lien'}
+                : t('auth.passwordReset.sendLink')}
             </button>
           </form>
         )}
@@ -170,7 +172,7 @@ export default function ForgotPasswordPage() {
           href="/auth/signin"
           className="flex items-center justify-center gap-1.5 mt-6 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
         >
-          <ArrowLeft className="size-3.5" /> Retour à la connexion
+          <ArrowLeft className="size-3.5" /> {t('auth.backToSignIn')}
         </Link>
       </div>
     </div>

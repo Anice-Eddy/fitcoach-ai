@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { detectLocale, getMessages, translate, type Locale, type Messages } from '@/lib/i18n'
+import { useUIStore } from '@/stores/uiStore'
 
 interface LocaleContextValue {
   locale:    Locale
@@ -15,37 +16,59 @@ const LocaleContext = createContext<LocaleContextValue>({
   t:         (key) => key,
 })
 
+function persistLocale(locale: Locale) {
+  try {
+    localStorage.setItem('bodyops:locale', locale)
+  } catch {
+    // Cookies keep language persistence working when localStorage is unavailable.
+  }
+  document.cookie = `bodyops:locale=${locale}; path=/; max-age=31536000; SameSite=Lax`
+}
+
 /** Provides locale state and the t() translation function to the component tree; syncs with localStorage after hydration. */
-export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale,   setLocaleState] = useState<Locale>('fr')
-  const [messages, setMessages]    = useState<Messages>(getMessages('fr'))
-  const [mounted,  setMounted]     = useState(false)
+export function LocaleProvider({ children, initialLocale = 'fr' }: { children: ReactNode; initialLocale?: Locale }) {
+  const [locale,   setLocaleState] = useState<Locale>(initialLocale)
+  const [messages, setMessages]    = useState<Messages>(getMessages(initialLocale))
+  const setUILanguage = useUIStore(state => state.setLanguage)
 
   useEffect(() => {
-    const detected = detectLocale()
+    const detected = detectLocale(initialLocale)
     setLocaleState(detected)
     setMessages(getMessages(detected))
-    setMounted(true)
-  }, [])
+    setUILanguage(detected)
+    document.documentElement.lang = detected
+    persistLocale(detected)
+  }, [initialLocale, setUILanguage])
 
-  if (!mounted) return <>{children}</> // Render children while hydrating
+  useEffect(() => {
+    document.documentElement.lang = locale
+  }, [locale])
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== 'bodyops:locale') return
+      const nextLocale = event.newValue
+      if (nextLocale !== 'fr' && nextLocale !== 'en') return
+      setLocaleState(nextLocale)
+      setMessages(getMessages(nextLocale))
+      setUILanguage(nextLocale)
+      document.documentElement.lang = nextLocale
+      persistLocale(nextLocale)
+    }
+
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [setUILanguage])
 
   const setLocale = (l: Locale) => {
-    localStorage.setItem('bodyops:locale', l)
+    persistLocale(l)
     setLocaleState(l)
     setMessages(getMessages(l))
+    setUILanguage(l)
+    document.documentElement.lang = l
   }
 
   const t = (key: string) => translate(messages, key)
-
-  // Only render children after hydration to avoid mismatch
-  if (!mounted) {
-    return (
-      <LocaleContext.Provider value={{ locale: 'fr', setLocale, t: (key) => key }}>
-        {children}
-      </LocaleContext.Provider>
-    )
-  }
 
   return (
     <LocaleContext.Provider value={{ locale, setLocale, t }}>

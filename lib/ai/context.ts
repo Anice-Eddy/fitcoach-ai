@@ -10,11 +10,11 @@ export function sanitizeContextForAI(text: string): string {
     // Email addresses
     .replace(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g, '[email]')
     // French mobile/landline (+33..., 06..., 07..., 01-05...)
-    .replace(/(?:\+33\s?|0)[1-9](?:[\s.\-]?\d{2}){4}/g, '[tél]')
+    .replace(/(?:\+33\s?|0)[1-9](?:[\s.\-]?\d{2}){4}/g, '[phone]')
     // International phone patterns (general)
-    .replace(/\+\d{1,3}[\s\-]?\(?\d{1,4}\)?[\s\-]?\d{3,4}[\s\-]?\d{3,4}/g, '[tél]')
-    // Full name patterns (Prénom Nom format in context lines)
-    .replace(/(name|nom|prénom):\s*["']?[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜ][a-zàâäéèêëîïôùûü]{1,}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜ][a-zàâäéèêëîïôùûü]{1,}["']?/gi, '$1: [anonyme]')
+    .replace(/\+\d{1,3}[\s\-]?\(?\d{1,4}\)?[\s\-]?\d{3,4}[\s\-]?\d{3,4}/g, '[phone]')
+    // Full name patterns (First name Last name format in context lines)
+    .replace(/(name|nom|prénom):\s*["']?[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜ][a-zàâäéèêëîïôùûü]{1,}\s+[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜ][a-zàâäéèêëîïôùûü]{1,}["']?/gi, '$1: [anonymous]')
 }
 
 type ProfileLike = {
@@ -65,13 +65,13 @@ function buildProgressHistory(metrics: Array<{
   return metrics
     .slice(0, 6)
     .map(metric => {
-      const date = metric.date instanceof Date ? metric.date.toISOString().slice(0, 10) : 'date inconnue'
+      const date = metric.date instanceof Date ? metric.date.toISOString().slice(0, 10) : 'unknown date'
       if (!metric.weightKg) return null
       const signals = [
-        metric.steps != null ? `${metric.steps} pas` : null,
-        metric.sleepHours != null ? `${metric.sleepHours}h sommeil` : null,
-        metric.waterLiters != null ? `${metric.waterLiters}L eau` : null,
-        metric.energyLevel != null ? `énergie ${metric.energyLevel}/5` : null,
+        metric.steps != null ? `${metric.steps} steps` : null,
+        metric.sleepHours != null ? `${metric.sleepHours}h sleep` : null,
+        metric.waterLiters != null ? `${metric.waterLiters}L water` : null,
+        metric.energyLevel != null ? `energy ${metric.energyLevel}/5` : null,
         metric.stressLevel != null ? `stress ${metric.stressLevel}/5` : null,
       ].filter(Boolean)
       return signals.length > 0
@@ -234,7 +234,7 @@ export async function getMemberAIContext(memberId: string, coachId?: string | nu
         : []
       if (structured.length > 0) {
         return structured.map(i => {
-          const sev = i.severity === 'SEVERE' ? 'grave' : i.severity === 'MODERATE' ? 'modérée' : 'légère'
+          const sev = i.severity === 'SEVERE' ? 'severe' : i.severity === 'MODERATE' ? 'moderate' : 'mild'
           return `${i.bodyPart} (${sev})${i.description ? ': ' + i.description : ''}`
         })
       }
@@ -243,30 +243,30 @@ export async function getMemberAIContext(memberId: string, coachId?: string | nu
   }
   const missingData = {
     workoutPlan: listMissing([
-      ['poids actuel', userFacts.currentWeightKg],
-      ['objectif de poids', userFacts.targetWeightKg],
-      ['objectif principal', userFacts.primaryGoal],
-      ['niveau sportif', userFacts.fitnessLevel],
-      ['nombre de séances possibles par semaine', userFacts.trainingDaysPerWeek],
-      ['matériel disponible', userFacts.availableEquipment],
-      ['blessures éventuelles', userFacts.injuryOrRestrictionSignals.length ? userFacts.injuryOrRestrictionSignals : null],
+      ['current weight', userFacts.currentWeightKg],
+      ['target weight', userFacts.targetWeightKg],
+      ['primary goal', userFacts.primaryGoal],
+      ['fitness level', userFacts.fitnessLevel],
+      ['available sessions per week', userFacts.trainingDaysPerWeek],
+      ['available equipment', userFacts.availableEquipment],
+      ['possible injuries', userFacts.injuryOrRestrictionSignals.length ? userFacts.injuryOrRestrictionSignals : null],
     ]),
     nutritionPlan: listMissing([
-      ['poids actuel', userFacts.currentWeightKg],
-      ['taille', userFacts.heightCm],
-      ['âge', userFacts.age],
-      ['sexe', userFacts.gender],
-      ['objectif principal', userFacts.primaryGoal],
-      ['objectif de poids', userFacts.targetWeightKg],
-      ['préférences alimentaires', userFacts.foodPreferences],
-      ['restrictions alimentaires', userFacts.dietaryRestrictions],
+      ['current weight', userFacts.currentWeightKg],
+      ['height', userFacts.heightCm],
+      ['age', userFacts.age],
+      ['sex', userFacts.gender],
+      ['primary goal', userFacts.primaryGoal],
+      ['target weight', userFacts.targetWeightKg],
+      ['food preferences', userFacts.foodPreferences],
+      ['dietary restrictions', userFacts.dietaryRestrictions],
     ]),
     actionPlan: listMissing([
-      ['poids actuel', userFacts.currentWeightKg],
-      ['objectif principal', userFacts.primaryGoal],
-      ['niveau sportif', userFacts.fitnessLevel],
-      ['fréquence d’entraînement', userFacts.trainingDaysPerWeek],
-      ['historique de progression', userFacts.progressHistory],
+      ['current weight', userFacts.currentWeightKg],
+      ['primary goal', userFacts.primaryGoal],
+      ['fitness level', userFacts.fitnessLevel],
+      ['training frequency', userFacts.trainingDaysPerWeek],
+      ['progress history', userFacts.progressHistory],
     ]),
   }
 
@@ -312,45 +312,45 @@ export function serializeContext(context: MemberAIContext) {
   }, 2)
 }
 
-/** Builds a compact, coach-readable text summary of the member context — replaces raw JSON for AI prompts. */
+/** Builds a compact, coach-readable text summary of the member context, replacing raw JSON for AI prompts. */
 export function serializeContextCompact(context: MemberAIContext): string {
   const { userFacts, missingData, workoutSessions, nutritionPlans, nutritionLogs } = context
   const lines: string[] = []
 
-  // --- Profil ---
+  // --- Profile ---
   const profile: string[] = []
-  if (userFacts.currentWeightKg) profile.push(`poids ${userFacts.currentWeightKg} kg`)
-  if (userFacts.targetWeightKg)  profile.push(`objectif ${userFacts.targetWeightKg} kg`)
+  if (userFacts.currentWeightKg) profile.push(`weight ${userFacts.currentWeightKg} kg`)
+  if (userFacts.targetWeightKg)  profile.push(`target ${userFacts.targetWeightKg} kg`)
   if (userFacts.heightCm && userFacts.currentWeightKg) {
     const bmi = (userFacts.currentWeightKg / Math.pow(userFacts.heightCm / 100, 2)).toFixed(1)
-    profile.push(`IMC ${bmi}`)
+    profile.push(`BMI ${bmi}`)
   }
-  if (userFacts.age)    profile.push(`${userFacts.age} ans`)
+  if (userFacts.age)    profile.push(`${userFacts.age} years old`)
   if (userFacts.gender) profile.push(userFacts.gender)
-  if (userFacts.primaryGoal)        profile.push(`objectif: ${userFacts.primaryGoal}`)
-  if (userFacts.fitnessLevel)       profile.push(`niveau: ${userFacts.fitnessLevel}`)
-  if (userFacts.trainingDaysPerWeek) profile.push(`${userFacts.trainingDaysPerWeek} séances/semaine`)
-  if (userFacts.currentProgram)     profile.push(`programme: ${userFacts.currentProgram}`)
-  if (userFacts.availableEquipment.length) profile.push(`équipement: ${userFacts.availableEquipment.join(', ')}`)
+  if (userFacts.primaryGoal)        profile.push(`goal: ${userFacts.primaryGoal}`)
+  if (userFacts.fitnessLevel)       profile.push(`level: ${userFacts.fitnessLevel}`)
+  if (userFacts.trainingDaysPerWeek) profile.push(`${userFacts.trainingDaysPerWeek} sessions/week`)
+  if (userFacts.currentProgram)     profile.push(`program: ${userFacts.currentProgram}`)
+  if (userFacts.availableEquipment.length) profile.push(`equipment: ${userFacts.availableEquipment.join(', ')}`)
   if (userFacts.dietaryRestrictions.length) profile.push(`restrictions: ${userFacts.dietaryRestrictions.join(', ')}`)
   if (userFacts.bodyFocus) profile.push(`focus: ${userFacts.bodyFocus}`)
-  if (profile.length) lines.push(`PROFIL: ${profile.join(' | ')}`)
+  if (profile.length) lines.push(`PROFILE: ${profile.join(' | ')}`)
 
-  // --- Progression poids ---
+  // --- Weight progress ---
   if (userFacts.progressHistory.length) {
-    lines.push(`ÉVOLUTION POIDS: ${userFacts.progressHistory.join(' → ')}`)
+    lines.push(`WEIGHT TREND: ${userFacts.progressHistory.join(' -> ')}`)
   }
 
-  // --- Séances ---
+  // --- Sessions ---
   const sessions = workoutSessions as Array<Record<string, unknown>>
   const completedSessions = sessions.filter(s => s['status'] === 'COMPLETED')
-  lines.push(`SÉANCES: ${completedSessions.length} complétées sur ${sessions.length} récupérées`)
+  lines.push(`SESSIONS: ${completedSessions.length} completed out of ${sessions.length} retrieved`)
 
   const recent = completedSessions.slice(0, 6)
   if (recent.length) {
     const summaries = recent.map(s => {
       const raw = (s['completedAt'] ?? s['scheduledAt']) as string | Date | undefined
-      const date = raw ? new Date(raw).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '?'
+      const date = raw ? new Date(raw).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit' }) : '?'
       const logs = s['exerciseLogs'] as Array<Record<string, unknown>> | undefined
       const muscles = Array.from(new Set(
         (logs ?? []).flatMap(l => {
@@ -361,39 +361,39 @@ export function serializeContextCompact(context: MemberAIContext): string {
       const exCount = logs?.length ?? 0
       return `${date}(${exCount}ex${muscles ? ' '+muscles : ''})`
     })
-    lines.push(`DERNIÈRES SÉANCES: ${summaries.join(' | ')}`)
+    lines.push(`LATEST SESSIONS: ${summaries.join(' | ')}`)
   }
 
   // --- Nutrition ---
   if (nutritionPlans.length) {
     const plan = nutritionPlans[0] as Record<string, unknown>
     const meals = plan['meals'] as unknown[] | undefined
-    lines.push(`NUTRITION: plan "${String(plan['name'] ?? 'actif')}" — ${meals?.length ?? 0} repas configurés`)
+    lines.push(`NUTRITION: plan "${String(plan['name'] ?? 'active')}" - ${meals?.length ?? 0} meals configured`)
   } else {
-    lines.push('NUTRITION: aucun plan actif')
+    lines.push('NUTRITION: no active plan')
   }
 
   const logs = nutritionLogs as Array<Record<string, unknown>>
   if (logs.length) {
-    // Résume les vrais repas consommés sans envoyer tout le détail au provider IA.
+    // Summarize real consumed meals without sending every detail to the AI provider.
     const recentLogs = logs.slice(0, 8).map(log => {
       const date = String(log['date'] ?? '?')
       const calories = Math.round(Number(log['calories'] ?? 0))
       const protein = Math.round(Number(log['proteinG'] ?? 0))
-      return `${date}:${String(log['name'] ?? 'repas')}(${calories}kcal,P${protein}g)`
+      return `${date}:${String(log['name'] ?? 'meal')}(${calories}kcal,P${protein}g)`
     })
-    lines.push(`JOURNAL NUTRITION RÉEL: ${recentLogs.join(' | ')}`)
+    lines.push(`REAL NUTRITION LOG: ${recentLogs.join(' | ')}`)
   }
 
-  // --- Blessures/restrictions ---
+  // --- Injuries/restrictions ---
   if (userFacts.injuryOrRestrictionSignals.length) {
-    lines.push(`SIGNAUX BLESSURE/RESTRICTION: ${userFacts.injuryOrRestrictionSignals.join('; ')}`)
+    lines.push(`INJURY/RESTRICTION SIGNALS: ${userFacts.injuryOrRestrictionSignals.join('; ')}`)
   }
 
-  // --- Données manquantes ---
+  // --- Missing data ---
   const allMissing = [...new Set([...missingData.workoutPlan, ...missingData.nutritionPlan])]
   if (allMissing.length) {
-    lines.push(`DONNÉES MANQUANTES: ${allMissing.join(', ')}`)
+    lines.push(`MISSING DATA: ${allMissing.join(', ')}`)
   }
 
   return sanitizeContextForAI(lines.join('\n'))

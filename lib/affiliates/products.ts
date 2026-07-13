@@ -1,12 +1,12 @@
 import type { AffiliateMarket, AffiliateProduct } from '@/types'
 import { CANADA_AFFILIATE_PRODUCTS } from './products-ca'
 
-// Produits Amazon réels — titres et images récupérés directement depuis les pages Amazon.
-// Prix gérés par Amazon → afficher "Voir le prix sur Amazon" côté UI.
+// Real Amazon products: titles and images retrieved directly from Amazon pages.
+// Prices are managed by Amazon; show "See price on Amazon" in the UI.
 // Images : Amazon CDN (m.media-amazon.com), format _SL400_ (400px).
 export const AFFILIATE_PRODUCTS: AffiliateProduct[] = [
 
-  // ── SUPPLÉMENTS ─────────────────────────────────────────────────────────────
+  // --- SUPPLEMENTS ----------------------------------------------------------
 
   {
     id:   'aff-s1',
@@ -81,7 +81,7 @@ export const AFFILIATE_PRODUCTS: AffiliateProduct[] = [
     tags: ['vitamines', 'minéraux', 'immunité'],
   },
 
-  // ── ÉQUIPEMENT ───────────────────────────────────────────────────────────────
+  // --- EQUIPMENT ------------------------------------------------------------
 
   {
     id:   'aff-e1',
@@ -144,7 +144,7 @@ export const AFFILIATE_PRODUCTS: AffiliateProduct[] = [
     tags: ['élastiques', 'résistance', 'fitness', 'crossfit'],
   },
 
-  // ── VÊTEMENTS ────────────────────────────────────────────────────────────────
+  // --- CLOTHING -------------------------------------------------------------
 
   {
     id:   'aff-c1',
@@ -282,7 +282,7 @@ export const AFFILIATE_PRODUCTS: AffiliateProduct[] = [
     tags: ['perte de gras', 'composition corporelle', 'guide'],
   },
 
-  // ── SUPPLÉMENTS (nouveaux) ───────────────────────────────────────────────────
+  // --- SUPPLEMENTS (new) ----------------------------------------------------
 
   {
     id:   'aff-s7',
@@ -300,7 +300,7 @@ export const AFFILIATE_PRODUCTS: AffiliateProduct[] = [
     id:   'aff-s8',
     name: 'Bulk Pure Whey Protéine en Poudre Vanille – 1 kg',
     brand: 'Bulk',
-    description: '23g protéines par portion, 5g BCAA, faible en sucre. Favorise la croissance et la récupération musculaires, mélange facile.',
+    description: '23g protein par portion, 5g BCAA, faible en sucre. Favorise la croissance et la récupération musculaires, mélange facile.',
     category: 'SUPPLEMENTS',
     affiliateUrl: 'https://amzn.to/3Q03d5I',
     imageUrl: 'https://m.media-amazon.com/images/I/61O9tALJqBL._SL400_.jpg',
@@ -324,7 +324,7 @@ export const AFFILIATE_PRODUCTS: AffiliateProduct[] = [
     id:   'aff-s10',
     name: 'Nutripure Pure Gainer Prise de Masse Sèche – 1,2 kg',
     brand: 'Nutripure',
-    description: 'Whey Native, Collagène & Farine d\'Avoine. 28g protéines, 35g glucides. Sans gluten & OGM. Made in France.',
+    description: 'Whey Native, Collagène & Farine d\'Avoine. 28g protein, 35g glucides. Sans gluten & OGM. Made in France.',
     category: 'SUPPLEMENTS',
     affiliateUrl: 'https://amzn.to/3PMl7ZE',
     imageUrl: 'https://m.media-amazon.com/images/I/51mkGp4TtWL._SL400_.jpg',
@@ -405,7 +405,7 @@ export const AFFILIATE_PRODUCTS: AffiliateProduct[] = [
     tags: ['créatine', 'monohydrate', 'poudre', 'force'],
   },
 
-  // ── ÉQUIPEMENT (nouveaux) ────────────────────────────────────────────────────
+  // --- EQUIPMENT (new) ------------------------------------------------------
 
   {
     id:   'aff-e6',
@@ -582,7 +582,7 @@ export const AFFILIATE_PRODUCTS: AffiliateProduct[] = [
     id:   'aff-bt6',
     name: 'BioTechUSA EAA Capsules – 3200mg – 9 Acides Aminés Essentiels',
     brand: 'BioTechUSA',
-    description: '3200mg des 9 acides aminés essentiels par portion en gélules. Ratio OMS recommandé. Vegan, sans sucre, sans gluten. Récupération et maintien musculaire.',
+    description: '3200mg des 9 acides aminés essentiels par portion en gélules. Ratio OMS recommandé. Vegan, sans sucre, sans gluten. Recovery et maintien musculaire.',
     category: 'SUPPLEMENTS',
     affiliateUrl: 'https://amzn.to/4wT9TDh',
     imageUrl: 'https://m.media-amazon.com/images/I/61UgJJLxbjL._AC_SL400_.jpg',

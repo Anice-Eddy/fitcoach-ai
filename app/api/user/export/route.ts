@@ -8,7 +8,7 @@ import { prisma } from '@/lib/prisma/client'
 /** Full user data export for portability. Excludes auth secrets, provider tokens and payment ids. */
 export async function GET() {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const userId = session.user.id
 
@@ -54,7 +54,7 @@ export async function GET() {
     },
   })
 
-  if (!user) return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 })
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
   const coachId = user.coachProfile?.id
 

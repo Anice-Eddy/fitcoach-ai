@@ -47,12 +47,12 @@ export function extractMemorySignals(userMessage: string) {
   const preferences: string[] = []
 
   const topicMatchers: Array<[string, string[]]> = [
-    ['entraînement', ['entrainement', 'entraînement', 'séance', 'seance', 'programme', 'exercice', 'muscu']],
+    ['training', ['entrainement', 'entraînement', 'training', 'session', 'séance', 'seance', 'programme', 'program', 'exercice', 'exercise', 'muscu']],
     ['nutrition', ['nutrition', 'calorie', 'macro', 'protéine', 'proteine', 'repas', 'diète', 'diete']],
     ['progression', ['progression', 'stagnation', 'poids', 'performance', 'charge', 'évolution', 'evolution']],
-    ['récupération', ['récupération', 'recuperation', 'sommeil', 'fatigue', 'repos']],
+    ['recovery', ['récupération', 'recuperation', 'recovery', 'sommeil', 'sleep', 'fatigue', 'repos', 'rest']],
     ['motivation', ['motivation', 'discipline', 'objectif', 'habitude', 'mental']],
-    ['douleur/blessure', ['douleur', 'blessure', 'gêne', 'gene', 'mal au', 'tendinite']],
+    ['pain/injury', ['douleur', 'pain', 'blessure', 'injury', 'gêne', 'gene', 'mal au', 'tendinite', 'tendonitis']],
   ]
 
   for (const [topic, words] of topicMatchers) {
@@ -84,18 +84,18 @@ export function buildMemoryInstruction(params: {
 }) {
   const hasHistory = !!params.memory?.summary || params.recentMessages.length > 0
   const lines = [
-    'Règles conversationnelles:',
-    '- Réponds comme dans une conversation continue, pas comme une première rencontre.',
-    '- Ne dis pas "Bonjour", "ravi de te rencontrer", ni une autre intro automatique, sauf si l’utilisateur vient clairement de saluer.',
-    '- Ne répète pas le prénom sauf si cela rend la phrase plus naturelle; maximum une fois dans la réponse.',
-    '- Réponds directement quand le contexte est déjà connu.',
-    '- Style: naturel, court, utile immédiatement. Évite les longues réponses génériques.',
-    '- Donne 1 à 4 actions concrètes, sauf si l’utilisateur demande un plan détaillé.',
-    params.firstName ? `Prénom mémorisé: ${params.firstName}.` : null,
-    params.memory?.summary ? `Résumé mémoire: ${params.memory.summary}` : null,
-    params.memory?.preferences.length ? `Préférences mémorisées: ${params.memory.preferences.join('; ')}` : null,
-    params.memory?.topics.length ? `Derniers sujets récurrents: ${params.memory.topics.join(', ')}` : null,
-    hasHistory ? null : 'Première interaction connue: tu peux être accueillant, mais reste bref.',
+    'Conversation rules:',
+    '- Reply like an ongoing conversation, not like a first meeting.',
+    '- Do not say "Hello", "nice to meet you", or any automatic intro unless the user clearly greeted first.',
+    '- Do not repeat the first name unless it makes the sentence more natural; maximum once per reply.',
+    '- Reply directly when the context is already known.',
+    '- Style: natural, short, immediately useful. Avoid long generic replies.',
+    '- Give 1 to 4 concrete actions unless the user asks for a detailed plan.',
+    params.firstName ? `Remembered first name: ${params.firstName}.` : null,
+    params.memory?.summary ? `Memory summary: ${params.memory.summary}` : null,
+    params.memory?.preferences.length ? `Remembered preferences: ${params.memory.preferences.join('; ')}` : null,
+    params.memory?.topics.length ? `Recent recurring topics: ${params.memory.topics.join(', ')}` : null,
+    hasHistory ? null : 'First known interaction: you may be welcoming, but stay brief.',
   ]
 
   return lines.filter(Boolean).join('\n')
@@ -144,7 +144,7 @@ export async function updateAIMemory(params: {
   const preferences = unique([...(params.previousMemory?.preferences ?? []), ...signals.preferences])
   const topics = unique([...signals.topics, ...(params.previousMemory?.topics ?? [])])
   const lastExchange = compact(
-    `Dernier échange: utilisateur="${params.userMessage}" assistant="${params.assistantResponse}"`,
+    `Last exchange: user="${params.userMessage}" assistant="${params.assistantResponse}"`,
     420,
   )
   const summary = compact([params.previousMemory?.summary, lastExchange].filter(Boolean).join(' | '))

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
     if (!session?.user?.email) {
       return NextResponse.json(
-        { error: 'Non authentifié' },
+        { error: 'Unauthenticated' },
         { status: 401 }
       )
     }
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
     if (!coach?.coachProfile) {
       return NextResponse.json(
-        { error: 'Vous n\'êtes pas un coach' },
+        { error: 'Coach access required' },
         { status: 403 }
       )
     }
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('GET /api/coach/notifications:', error)
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Server error' },
       { status: 500 }
     )
   }
@@ -73,7 +73,7 @@ export async function PUT(req: NextRequest) {
 
     if (!session?.user?.email) {
       return NextResponse.json(
-        { error: 'Non authentifié' },
+        { error: 'Unauthenticated' },
         { status: 401 }
       )
     }
@@ -87,14 +87,14 @@ export async function PUT(req: NextRequest) {
 
     if (!coach?.coachProfile) {
       return NextResponse.json(
-        { error: 'Vous n\'êtes pas un coach' },
+        { error: 'Coach access required' },
         { status: 403 }
       )
     }
 
     if (!notificationId) {
       return NextResponse.json(
-        { error: 'notificationId manquant' },
+        { error: 'Missing notificationId' },
         { status: 400 }
       )
     }
@@ -109,7 +109,7 @@ export async function PUT(req: NextRequest) {
 
     if (!notification) {
       return NextResponse.json(
-        { error: 'Notification introuvable' },
+        { error: 'Notification not found' },
         { status: 404 }
       )
     }
@@ -123,7 +123,7 @@ export async function PUT(req: NextRequest) {
   } catch (error) {
     console.error('PUT /api/coach/notifications:', error)
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Server error' },
       { status: 500 }
     )
   }

@@ -33,7 +33,7 @@ function firstNonEmpty(...values: Array<string | undefined>) {
   return values.find((value) => value && value.trim().length > 0)
 }
 
-// Ce fichier ne doit jamais être importé depuis un composant React ou une page client.
+// This file must never be imported from a React component or client page.
 function firebaseAdminApp(): App {
   if (getApps().length > 0) return getApps()[0]
 

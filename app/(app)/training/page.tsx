@@ -1,16 +1,21 @@
-// Page Training — programme + séance du jour
+// Training page: program + today's session.
 import type { Metadata } from 'next'
 import { Header }      from '@/components/layout/Header'
 import { PageWrapper } from '@/components/layout/PageWrapper'
+import { getServerTranslations } from '@/lib/i18n/server'
 import { TrainingClient } from './TrainingClient'
 
-export const metadata: Metadata = { title: 'Entraînement — BodyOps' }
+export function generateMetadata(): Metadata {
+  const { t } = getServerTranslations()
+
+  return { title: `${t('training.title')} — BodyOps` }
+}
 
 /** Server component shell for the training page; renders the interactive TrainingClient. */
 export default function TrainingPage() {
   return (
     <>
-      <Header title="Entraînement" />
+      <Header titleKey="training.title" />
       <PageWrapper>
         <TrainingClient />
       </PageWrapper>

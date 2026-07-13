@@ -1,5 +1,5 @@
-// Définition des plans tarifaires — source unique de vérité
-// Utilisé par /pricing, les webhooks et le middleware premium
+// Pricing plan definitions: single source of truth.
+// Used by /pricing, webhooks, and premium middleware.
 
 import type { PricingPlan } from '@/types'
 
@@ -10,14 +10,14 @@ export const PLANS: PricingPlan[] = [
     plan:         'FREE',
     monthlyPrice: 0,
     yearlyPrice:  0,
-    description:  'Pour découvrir BodyOps sans engagement',
+    description:  'Explore BodyOps with no commitment',
     highlighted:  false,
     features: [
-      'Profil complet (IMC, calories, macros)',
-      '1 programme d\'entraînement basique',
-      'Plan nutritionnel 3 jours',
-      'Stockage local uniquement',
-      '1 intégration externe',
+      'Complete profile (BMI, calories, macros)',
+      '1 basic workout program',
+      '3-day nutrition plan',
+      'Local storage only',
+      '1 external integration',
     ],
   },
   {
@@ -26,17 +26,17 @@ export const PLANS: PricingPlan[] = [
     plan:         'PRO',
     monthlyPrice: 9.99,
     yearlyPrice:  79,
-    description:  'Pour les sportifs sérieux qui veulent progresser',
+    description:  'For serious athletes who want steady progress',
     highlighted:  true,
     stripePriceIdMonthly: process.env.STRIPE_PRO_MONTHLY_ID ?? 'price_pro_monthly',
     stripePriceIdYearly:  process.env.STRIPE_PRO_YEARLY_ID ?? 'price_pro_yearly',
     features: [
-      'Programmes illimités',
-      'Plan nutritionnel 7 jours + liste de courses',
-      'Synchronisation cloud multi-device',
-      'Export PDF illimité',
-      'Toutes les intégrations (Strava, Fitbit, Garmin…)',
-      'Suivi avancé + graphiques',
+      'Unlimited programs',
+      '7-day nutrition plan + shopping list',
+      'Multi-device cloud sync',
+      'Unlimited PDF exports',
+      'All integrations (Strava, Fitbit, Garmin...)',
+      'Advanced tracking + charts',
     ],
   },
   {
@@ -45,32 +45,32 @@ export const PLANS: PricingPlan[] = [
     plan:         'ELITE',
     monthlyPrice: 19.99,
     yearlyPrice:  159,
-    description:  'Pour les membres qui veulent la performance maximale',
+    description:  'For members who want maximum performance',
     highlighted:  false,
     stripePriceIdMonthly: process.env.STRIPE_ELITE_MONTHLY_ID ?? 'price_elite_monthly',
     stripePriceIdYearly:  process.env.STRIPE_ELITE_YEARLY_ID ?? 'price_elite_yearly',
     features: [
-      'Tout le plan Pro',
-      'Ajustements IA automatiques du programme',
-      'Accès anticipé aux nouvelles fonctionnalités',
-      'Support prioritaire',
+      'Everything in Pro',
+      'Automatic AI program adjustments',
+      'Early access to new features',
+      'Priority support',
     ],
   },
   {
     id:           'business',
-    name:         'Entreprise',
+    name:         'Business',
     plan:         'BUSINESS',
     monthlyPrice: 199,
     yearlyPrice:  1990,
-    description:  'Pour les coachs et les salles de sport (bientôt disponible)',
+    description:  'For coaches and gyms, coming soon',
     highlighted:  false,
     stripePriceIdMonthly: process.env.STRIPE_BUSINESS_ID ?? 'price_business',
     features: [
-      'Tout le plan Elite',
-      'Tableau de bord coach avec suivi des membres',
-      'Programmes personnalisés par membre',
-      'Rapports et analytics avancés',
-      'API d\'intégration',
+      'Everything in Elite',
+      'Coach dashboard with member tracking',
+      'Personalized programs per member',
+      'Advanced reports and analytics',
+      'Integration API',
     ],
   },
 ]

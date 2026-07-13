@@ -7,7 +7,7 @@ import { sendHeartbeat, subscribeToUserEvents } from '@/lib/messaging/sse-manage
 /** SSE stream for authenticated users; pushes chat events and keeps the connection alive with heartbeats. */
 export async function GET() {
   const session = await auth()
-  if (!session?.user?.id) return new Response('Non autorisé', { status: 401 })
+  if (!session?.user?.id) return new Response('Unauthorized', { status: 401 })
 
   const userId = session.user.id
   let cleanup = () => {}

@@ -1,5 +1,5 @@
 'use client'
-// Carte métrique réutilisable — loading / error / empty states inclus
+// Reusable metric card with loading, error, and empty states.
 
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -10,7 +10,7 @@ interface MetricCardProps {
   value:      string | number
   unit?:      string
   subtitle?:  string
-  trend?:     number       // positif = hausse, négatif = baisse
+  trend?:     number       // positive means increase, negative means decrease
   trendLabel?: string
   icon?:      React.ReactNode
   isLoading?: boolean

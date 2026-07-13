@@ -7,6 +7,7 @@ import { ArrowLeft, CheckCircle2, Eye, EyeOff, MailCheck, RotateCcw } from 'luci
 import { toast } from 'sonner'
 import { Logo } from '@/components/ui/Logo'
 import { PageBackground } from '@/components/landing/PageBackground'
+import { useLocale } from '@/contexts/LocaleContext'
 import {
   firebaseApplyActionCode,
   firebaseCheckActionCode,
@@ -31,6 +32,7 @@ export default function FirebaseActionPage() {
 }
 
 function FirebaseActionForm() {
+  const { t } = useLocale()
   const params = useSearchParams()
   const mode = params?.get('mode') as ActionMode | null
   const oobCode = params?.get('oobCode') ?? ''
@@ -74,7 +76,7 @@ function FirebaseActionForm() {
     async function run() {
       if (!mode || !oobCode || !['resetPassword', 'recoverEmail', 'verifyEmail'].includes(mode)) {
         setStatus('error')
-        setMessage('Lien invalide ou incomplet.')
+        setMessage(t('auth.emailAction.invalidIncompleteLink'))
         return
       }
 
@@ -93,7 +95,7 @@ function FirebaseActionForm() {
           await syncCurrentFirebaseUser()
           if (cancelled) return
           setEmail(info.data.email ?? '')
-          setMessage('Adresse email restaurée. Si tu n’es pas à l’origine de cette action, change ton mot de passe.')
+          setMessage(t('auth.emailAction.emailRestored'))
           setStatus('done')
           return
         }
@@ -101,37 +103,37 @@ function FirebaseActionForm() {
         await firebaseApplyActionCode(oobCode)
         await syncCurrentFirebaseUser()
         if (cancelled) return
-        setMessage('Adresse email vérifiée. Tu peux continuer sur BodyOps.')
+        setMessage(t('auth.emailAction.emailVerified'))
         setStatus('done')
       } catch {
         if (cancelled) return
         setStatus('error')
-        setMessage('Ce lien est invalide ou expiré. Demande un nouveau lien depuis BodyOps.')
+        setMessage(t('auth.emailAction.invalidExpiredLink'))
       }
     }
     run()
     return () => { cancelled = true }
-  }, [mode, oobCode])
+  }, [mode, oobCode, t])
 
   const submitReset = async (e: React.FormEvent) => {
     e.preventDefault()
     if (password.length < 8) {
-      toast.error('Minimum 8 caractères.')
+      toast.error(t('auth.passwordReset.minLength'))
       return
     }
     if (password !== confirm) {
-      toast.error('Les mots de passe ne correspondent pas.')
+      toast.error(t('auth.passwordReset.passwordMismatch'))
       return
     }
 
     setStatus('loading')
     try {
       await firebaseConfirmPasswordReset(oobCode, password)
-      setMessage('Mot de passe mis à jour. Tu peux te connecter avec ton nouveau mot de passe.')
+      setMessage(t('auth.emailAction.passwordUpdated'))
       setStatus('done')
     } catch {
       setStatus('error')
-      setMessage('Impossible de mettre à jour le mot de passe. Demande un nouveau lien.')
+      setMessage(t('auth.emailAction.passwordUpdateError'))
     }
   }
 
@@ -143,27 +145,27 @@ function FirebaseActionForm() {
             <Logo href="/" size="lg" />
           </div>
           <h1 className="text-2xl font-bold text-white">
-            {isReset ? 'Nouveau mot de passe' : 'Validation du compte'}
+            {isReset ? t('auth.passwordReset.newPasswordTitle') : t('auth.emailAction.accountValidation')}
           </h1>
           <p className="mt-1 text-sm text-zinc-400">
-            BodyOps sécurise ton compte par email.
+            {t('auth.emailAction.secureByEmail')}
           </p>
         </div>
 
         {status === 'loading' && (
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center">
             <span className="mx-auto block size-7 rounded-full border-2 border-zinc-700 border-t-[#C8F135] animate-spin" />
-            <p className="mt-4 text-sm text-zinc-400">Vérification du lien...</p>
+            <p className="mt-4 text-sm text-zinc-400">{t('auth.emailAction.checkingLink')}</p>
           </div>
         )}
 
         {status === 'ready' && isReset && (
           <form onSubmit={submitReset} className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
             <div className="rounded-xl border border-[#C8F135]/25 bg-[#C8F135]/10 px-4 py-3 text-xs text-[#C8F135]">
-              Réinitialisation pour {email}
+              {t('auth.emailAction.resetFor')} {email}
             </div>
             <label className="grid gap-1.5">
-              <span className="text-sm font-medium text-zinc-300">Nouveau mot de passe</span>
+              <span className="text-sm font-medium text-zinc-300">{t('auth.passwordReset.newPassword')}</span>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -178,7 +180,7 @@ function FirebaseActionForm() {
               </div>
             </label>
             <label className="grid gap-1.5">
-              <span className="text-sm font-medium text-zinc-300">Confirmer</span>
+              <span className="text-sm font-medium text-zinc-300">{t('auth.passwordReset.confirm')}</span>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={confirm}
@@ -188,7 +190,7 @@ function FirebaseActionForm() {
               />
             </label>
             <button type="submit" className="w-full rounded-xl bg-[#C8F135] px-4 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-[#d4f54d]">
-              Mettre à jour
+              {t('auth.passwordReset.update')}
             </button>
           </form>
         )}
@@ -204,7 +206,7 @@ function FirebaseActionForm() {
             )}
             <p className="text-sm font-semibold text-white">{message}</p>
             <button type="button" onClick={continueToBodyOps} className="mt-5 inline-flex rounded-xl bg-[#C8F135] px-4 py-2.5 text-sm font-bold text-zinc-950">
-              Continuer
+              {t('common.continue')}
             </button>
           </div>
         )}
@@ -213,13 +215,13 @@ function FirebaseActionForm() {
           <div className="rounded-2xl border border-red-500/25 bg-red-500/10 p-6 text-center">
             <p className="text-sm font-semibold text-red-200">{message}</p>
             <Link href="/auth/forgot-password" className="mt-5 inline-flex rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-semibold text-zinc-200">
-              Demander un nouveau lien
+              {t('auth.passwordReset.requestNewLink')}
             </Link>
           </div>
         )}
 
         <Link href="/auth/signin" className="mt-6 flex items-center justify-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300">
-          <ArrowLeft className="size-3.5" /> Retour à la connexion
+          <ArrowLeft className="size-3.5" /> {t('auth.backToSignIn')}
         </Link>
       </div>
     </div>

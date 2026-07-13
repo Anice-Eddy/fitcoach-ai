@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth/auth'
+import { auth } from '@/lib/auth/edge-auth'
 import { NextResponse } from 'next/server'
 import type { NextAuthRequest } from 'next-auth'
 
@@ -72,7 +72,7 @@ export default auth((req: NextAuthRequest) => {
 
     if (isCoach && !hasMemberProfile && isMemberRoute && !isMemberBootstrap) {
       if (pathname.startsWith('/api/')) {
-        return NextResponse.json({ error: 'Accès réservé aux membres.' }, { status: 403 })
+        return NextResponse.json({ error: 'Member access required.' }, { status: 403 })
       }
       return NextResponse.redirect(new URL('/coach/dashboard', req.url))
     }

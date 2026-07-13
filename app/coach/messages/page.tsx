@@ -6,6 +6,7 @@ import { MessageInput } from '@/components/messaging/MessageInput'
 import { MessageThread } from '@/components/messaging/MessageThread'
 import { useSSE } from '@/hooks/useSSE'
 import { CoachPageHeader } from '@/components/coach/CoachPageHeader'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface MemberItem {
   member: {
@@ -34,6 +35,7 @@ function memberName(item: MemberItem) {
 
 /** Coach messaging page: dedicated inbox separated from member management. */
 export default function CoachMessagesPage() {
+  const { t } = useLocale()
   const [members, setMembers] = useState<MemberItem[]>([])
   const [selected, setSelected] = useState<MemberItem | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -101,16 +103,16 @@ export default function CoachMessagesPage() {
   return (
     <div className="space-y-8">
       <CoachPageHeader
-        title="Messages"
-        description="Échangez avec vos membres et retrouvez rapidement les conversations en cours."
+        title={t('messagesPage.title')}
+        description={t('messagesPage.coachSubtitle')}
       />
 
       <div className="grid h-[calc(100dvh-15rem)] min-h-[420px] grid-rows-[minmax(160px,32%)_1fr] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 lg:grid-cols-[320px_1fr] lg:grid-rows-none">
         <ConversationList
-          title="Conversations"
-          description="Messages rapides avec vos membres."
+          title={t('messagesPage.conversations')}
+          description={t('messagesPage.coachListDescription')}
           loading={loading}
-          emptyLabel="Aucun membre suivi."
+          emptyLabel={t('messagesPage.noTrackedMember')}
           items={conversationItems}
           activeId={selected?.member.id ?? null}
           onSelect={(id) => setSelected(members.find(item => item.member.id === id) ?? null)}
@@ -119,23 +121,23 @@ export default function CoachMessagesPage() {
         <section className="flex min-h-0 flex-col">
           <div className="border-b border-zinc-800 px-4 py-3">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm font-semibold text-white">{selected ? memberName(selected) : 'Messages'}</p>
+              <p className="text-sm font-semibold text-white">{selected ? memberName(selected) : t('messagesPage.title')}</p>
               <span className="rounded-full border border-[#C8F135]/30 bg-[#C8F135]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#C8F135]">
-                Espace coach
+                {t('messagesPage.coachSpace')}
               </span>
             </div>
-            <p className="mt-0.5 text-xs text-zinc-500">Pour le suivi durable, gardez les décisions importantes dans les notes.</p>
+            <p className="mt-0.5 text-xs text-zinc-500">{t('messagesPage.coachThreadDescription')}</p>
           </div>
 
           <div className="min-h-0 flex-1">
             <MessageThread
               loading={threadLoading}
               hasSelection={Boolean(selected)}
-              emptyLabel="Aucun message pour le moment."
-              noSelectionLabel="Sélectionnez un membre pour démarrer."
+              emptyLabel={t('messagesPage.noMessage')}
+              noSelectionLabel={t('messagesPage.selectMember')}
               messages={messages}
               isMine={(message) => Boolean(selected && message.senderUserId !== selected.member.id)}
-              labelFor={(message, mine) => mine ? 'Vous · Coach' : `Membre · ${message.sender.name ?? (selected ? memberName(selected) : 'Membre')}`}
+              labelFor={(message, mine) => mine ? `${t('messagesPage.you')} · ${t('messagesPage.coach')}` : `${t('messagesPage.member')} · ${message.sender.name ?? (selected ? memberName(selected) : t('messagesPage.member'))}`}
             />
           </div>
 
@@ -145,7 +147,7 @@ export default function CoachMessagesPage() {
             onSend={sendMessage}
             sending={sending}
             disabled={!selected}
-            placeholder={selected ? 'Écrire au membre…' : 'Sélectionnez un membre…'}
+            placeholder={selected ? t('messagesPage.writeMember') : t('messagesPage.selectMemberPlaceholder')}
           />
         </section>
       </div>

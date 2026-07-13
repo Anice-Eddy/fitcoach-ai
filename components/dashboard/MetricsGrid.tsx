@@ -1,11 +1,12 @@
 'use client'
-// Grille des métriques principales du dashboard
+// Grid of the main dashboard metrics.
 
 import { MetricCard } from '@/components/ui/MetricCard'
 import { Scale, Flame, Dumbbell, Zap, Droplets } from 'lucide-react'
 import type { UserProfile } from '@/lib/storage/StorageAdapter'
 import { useNutritionStore } from '@/stores/nutritionStore'
 import { useEffect } from 'react'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface Props {
   profile:    UserProfile | null
@@ -17,6 +18,7 @@ interface Props {
 
 /** Renders the four main dashboard metric cards: current weight, today's calories, workout status, and consecutive-day streak. */
 export function MetricsGrid({ profile, lastWeight, lastWaterLiters, streak, isLoading }: Props) {
+  const { t } = useLocale()
   const { ensureTodayLog, getTodayTotals } = useNutritionStore()
 
   useEffect(() => { ensureTodayLog() }, [ensureTodayLog])
@@ -30,17 +32,17 @@ export function MetricsGrid({ profile, lastWeight, lastWaterLiters, streak, isLo
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
       <MetricCard
-        title="Poids actuel"
+        title={t('dashboard.currentWeight')}
         value={lastWeight ?? '—'}
         unit="kg"
-        subtitle={profile?.targetWeightKg ? `Objectif : ${profile.targetWeightKg} kg` : undefined}
+        subtitle={profile?.targetWeightKg ? `${t('dashboard.target')} : ${profile.targetWeightKg} kg` : undefined}
         trend={weightDelta}
-        trendLabel="vs objectif"
+        trendLabel={t('dashboard.vsTarget')}
         icon={<Scale className="size-4" />}
         isLoading={isLoading}
       />
       <MetricCard
-        title="Calories du jour"
+        title={t('dashboard.todayCalories')}
         value={totals.calories}
         unit="kcal"
         subtitle={profile?.recommendedCalories ? `/ ${Math.round(profile.recommendedCalories)} kcal` : undefined}
@@ -48,26 +50,26 @@ export function MetricsGrid({ profile, lastWeight, lastWaterLiters, streak, isLo
         isLoading={isLoading}
       />
       <MetricCard
-        title="Séance du jour"
-        value="À faire"
-        subtitle="Programme actif"
+        title={t('dashboard.todayWorkout')}
+        value={t('dashboard.toDo')}
+        subtitle={t('dashboard.activeProgram')}
         icon={<Dumbbell className="size-4" />}
         isLoading={isLoading}
       />
       <MetricCard
-        title="Litres d'eau"
+        title={t('dashboard.waterLiters')}
         value={lastWaterLiters ?? '—'}
         unit={lastWaterLiters ? 'L' : ''}
-        subtitle="Dernière mesure"
+        subtitle={t('dashboard.lastMeasure')}
         icon={<Droplets className="size-4" />}
         accentColor="#22d3ee"
         isLoading={isLoading}
       />
       <MetricCard
-        title="Streak"
+        title={t('dashboard.streakLabel')}
         value={streak}
-        unit="jours"
-        subtitle="Jours consécutifs"
+        unit={t('dashboard.daysUnit')}
+        subtitle={t('dashboard.consecutiveDays')}
         icon={<Zap className="size-4" />}
         accentColor="#f59e0b"
         isLoading={isLoading}

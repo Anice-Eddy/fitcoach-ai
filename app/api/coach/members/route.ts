@@ -73,12 +73,12 @@ export async function GET() {
 
     if (!session?.user?.email) {
       return NextResponse.json(
-        { error: 'Non authentifié' },
+        { error: 'Unauthenticated' },
         { status: 401 }
       )
     }
 
-    // Récupérer le coach et ses membres
+    // Fetch the coach and their members
     const coach = await prisma.user.findUnique({
       where: { email: session.user.email },
       include: {
@@ -104,7 +104,7 @@ export async function GET() {
 
     if (!coach?.coachProfile) {
       return NextResponse.json(
-        { error: 'Vous n\'êtes pas un coach' },
+        { error: 'Coach access required' },
         { status: 403 }
       )
     }
@@ -154,7 +154,7 @@ export async function GET() {
   } catch (error) {
     console.error('GET /api/coach/members:', error)
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Server error' },
       { status: 500 }
     )
   }
@@ -167,7 +167,7 @@ export async function POST(req: Request) {
 
     if (!session?.user?.email) {
       return NextResponse.json(
-        { error: 'Non authentifié' },
+        { error: 'Unauthenticated' },
         { status: 401 }
       )
     }
@@ -185,7 +185,7 @@ export async function POST(req: Request) {
 
       if (!coach?.coachProfile) {
         return NextResponse.json(
-          { error: 'Vous n\'êtes pas un coach' },
+          { error: 'Coach access required' },
           { status: 403 }
         )
       }
@@ -196,7 +196,7 @@ export async function POST(req: Request) {
       })
 
       if (existing?.coachMembers.length) {
-        return NextResponse.json({ error: 'Ce client est déjà dans votre liste.' }, { status: 409 })
+        return NextResponse.json({ error: 'This client is already in your list.' }, { status: 409 })
       }
       if (existing) {
         const coachMember = await prisma.coachMember.create({
@@ -288,8 +288,8 @@ export async function POST(req: Request) {
             coachId: coach.coachProfile!.id,
             recipientUserId: null,
             type: 'NEW_MEMBER',
-            title: `Nouveau client: ${fullName}`,
-            message: `${fullName} a été créé et ajouté à vos membres suivis.`,
+            title: `New client: ${fullName}`,
+            message: `${fullName} was created and added to your tracked members.`,
             relatedId: member.id,
           },
         })
@@ -304,12 +304,12 @@ export async function POST(req: Request) {
 
     if (!memberId) {
       return NextResponse.json(
-        { error: createParsed.error.flatten().fieldErrors ?? 'memberId manquant' },
+        { error: createParsed.error.flatten().fieldErrors ?? 'Missing memberId' },
         { status: 422 }
       )
     }
 
-    // Vérifier que le coach existe
+    // Verify that the coach exists
     const coach = await prisma.user.findUnique({
       where: { email: session.user.email },
       include: { coachProfile: true },
@@ -317,12 +317,12 @@ export async function POST(req: Request) {
 
     if (!coach?.coachProfile) {
       return NextResponse.json(
-        { error: 'Vous n\'êtes pas un coach' },
+        { error: 'Coach access required' },
         { status: 403 }
       )
     }
 
-    // Ajouter le membre
+    // Add the member to the coach's tracked list.
     const coachMember = await prisma.coachMember.create({
       data: {
         coachId: coach.coachProfile.id,
@@ -335,14 +335,14 @@ export async function POST(req: Request) {
       },
     })
 
-    // Créer une notification
+    // Create a notification
     await prisma.notification.create({
       data: {
         coachId:         coach.coachProfile.id,
         recipientUserId: null,
         type:            'NEW_MEMBER',
-        title:           `Nouveau membre: ${coachMember.member.name}`,
-        message:         `${coachMember.member.name} a été ajouté à vos membres suivis.`,
+        title:           `New member: ${coachMember.member.name}`,
+        message:         `${coachMember.member.name} was added to your tracked members.`,
         relatedId:       memberId,
       },
     })
@@ -351,7 +351,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('POST /api/coach/members:', error)
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Server error' },
       { status: 500 }
     )
   }

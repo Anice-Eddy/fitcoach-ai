@@ -36,7 +36,7 @@ export type MyCoachRelation = {
 
 function coachDisplayName(relation: MyCoachRelation | null) {
   if (!relation) return null
-  // Préfère le nom public du compte, puis le profil coach, puis l'email en dernier recours.
+  // Prefer the public account name, then the coach profile, then email as a fallback.
   const fullName = [relation.coach.firstName, relation.coach.lastName].filter(Boolean).join(' ')
   return relation.coach.name ?? (fullName || relation.coach.email)
 }

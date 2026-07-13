@@ -49,7 +49,7 @@ function totals(logs: Array<{ calories: number; proteinG: number; carbsG: number
 /** Returns the authenticated user's nutrition logs for a YYYY-MM-DD day plus daily macro totals. */
 export async function GET(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const url = new URL(req.url)
   const date = dateSchema.safeParse(url.searchParams.get('date') ?? localDateKey())
@@ -66,7 +66,7 @@ export async function GET(req: Request) {
 /** Upserts one consumed meal for the day, so repeated taps cannot create duplicates. */
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const parsed = logSchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
 /** Removes one logged meal for the day when the user unticks it. */
 export async function DELETE(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const parsed = deleteSchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AlertTriangle, Trash2, X } from 'lucide-react'
+import { useLocale } from '@/contexts/LocaleContext'
 
 const CONFIRM_WORD = 'SUPPRIMER'
 
@@ -13,6 +14,7 @@ interface Props {
 
 /** Confirmation modal that requires the user to type 'SUPPRIMER' before calling onConfirm with an optional password. */
 export function DeleteAccountModal({ onConfirm, onCancel, deleting }: Props) {
+  const { t } = useLocale()
   const [confirmWord, setConfirmWord] = useState('')
   const [password,    setPassword]    = useState('')
   const [error,       setError]       = useState<string | null>(null)
@@ -25,7 +27,7 @@ export function DeleteAccountModal({ onConfirm, onCancel, deleting }: Props) {
     try {
       await onConfirm(password || undefined)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Erreur inattendue.')
+      setError(e instanceof Error ? e.message : t('deleteAccount.unexpectedError'))
     }
   }
 
@@ -39,7 +41,7 @@ export function DeleteAccountModal({ onConfirm, onCancel, deleting }: Props) {
             <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-red-500/15">
               <AlertTriangle className="size-5 text-red-400" />
             </div>
-            <h3 className="text-base font-bold text-white">Supprimer le compte</h3>
+            <h3 className="text-base font-bold text-white">{t('deleteAccount.title')}</h3>
           </div>
           <button
             onClick={onCancel}
@@ -51,12 +53,12 @@ export function DeleteAccountModal({ onConfirm, onCancel, deleting }: Props) {
 
         {/* Consequences */}
         <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-4 space-y-2">
-          <p className="text-sm font-semibold text-red-300">Cette action est irréversible.</p>
+          <p className="text-sm font-semibold text-red-300">{t('deleteAccount.irreversible')}</p>
           <ul className="text-xs text-red-200/70 space-y-1 list-disc list-inside">
-            <li>Toutes vos données personnelles seront supprimées</li>
-            <li>Votre historique de séances et nutrition sera perdu</li>
-            <li>Vos relations coach/membres seront rompues</li>
-            <li>Il sera impossible de récupérer votre compte</li>
+            <li>{t('deleteAccount.consequences.personalData')}</li>
+            <li>{t('deleteAccount.consequences.history')}</li>
+            <li>{t('deleteAccount.consequences.relationships')}</li>
+            <li>{t('deleteAccount.consequences.noRecovery')}</li>
           </ul>
         </div>
 
@@ -64,7 +66,9 @@ export function DeleteAccountModal({ onConfirm, onCancel, deleting }: Props) {
         <div className="space-y-3">
           <div>
             <label className="block text-xs text-zinc-400 mb-1.5">
-              Tapez <span className="font-bold text-white font-mono">{CONFIRM_WORD}</span> pour confirmer
+              {t('deleteAccount.typeToConfirmPrefix')}{' '}
+              <span className="font-bold text-white font-mono">{CONFIRM_WORD}</span>{' '}
+              {t('deleteAccount.typeToConfirmSuffix')}
             </label>
             <input
               value={confirmWord}
@@ -77,8 +81,8 @@ export function DeleteAccountModal({ onConfirm, onCancel, deleting }: Props) {
 
           <div>
             <label className="block text-xs text-zinc-400 mb-1.5">
-              Mot de passe{' '}
-              <span className="text-zinc-600">(laissez vide si connexion via Google)</span>
+              {t('deleteAccount.password')}{' '}
+              <span className="text-zinc-600">{t('deleteAccount.passwordHint')}</span>
             </label>
             <input
               type="password"
@@ -103,7 +107,7 @@ export function DeleteAccountModal({ onConfirm, onCancel, deleting }: Props) {
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Trash2 className="size-4" />
-          {deleting ? 'Suppression en cours…' : 'Supprimer définitivement'}
+          {deleting ? t('deleteAccount.deleting') : t('deleteAccount.deleteForever')}
         </button>
       </div>
     </div>

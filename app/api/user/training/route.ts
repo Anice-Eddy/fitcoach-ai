@@ -24,6 +24,7 @@ function profileToTrainingInput(profile: NonNullable<Awaited<ReturnType<typeof p
     trainingDaysPerWeek: profile.trainingDaysPerWeek,
     availableEquipment:  profile.availableEquipment as string[],
     injuries:            profile.injuries,
+    language:            profile.language,
   }
 }
 
@@ -94,7 +95,7 @@ async function persistProgram(userId: string, generated: Awaited<GeneratedProgra
 /** Returns the user's active workout program; generates and persists a new program from the user's profile if none is active. */
 export async function GET() {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const userId = session.user.id
 
@@ -115,9 +116,9 @@ export async function GET() {
 
   if (existing) return NextResponse.json(existing)
 
-  // No active program → generate from user profile
+  // No active program: generate one from the user profile.
   const profile = await prisma.profile.findUnique({ where: { userId } })
-  if (!profile) return NextResponse.json({ error: 'Profil manquant' }, { status: 404 })
+  if (!profile) return NextResponse.json({ error: 'Missing profile' }, { status: 404 })
 
   const result = await generateAIEnhancedProgram(profileToTrainingInput(profile))
   const program = await persistProgram(userId, result.program, profile)
@@ -133,11 +134,11 @@ export async function GET() {
 /** Regenerates a fresh active workout program, using AI when configured and falling back to BodyOps local logic. */
 export async function POST() {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const userId = session.user.id
   const profile = await prisma.profile.findUnique({ where: { userId } })
-  if (!profile) return NextResponse.json({ error: 'Profil manquant' }, { status: 404 })
+  if (!profile) return NextResponse.json({ error: 'Missing profile' }, { status: 404 })
 
   const result = await generateAIEnhancedProgram(profileToTrainingInput(profile))
 
@@ -159,7 +160,7 @@ export async function POST() {
 /** Deactivates all active workout programs for the user, allowing a fresh program to be generated on next GET. */
 export async function DELETE() {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   await prisma.workoutProgram.updateMany({
     where: { userId: session.user.id, isActive: true },

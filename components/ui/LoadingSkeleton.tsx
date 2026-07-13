@@ -1,4 +1,4 @@
-// Skeleton de chargement générique et variantes spécialisées
+// Generic loading skeleton and specialized variants.
 
 import { cn } from '@/lib/utils'
 

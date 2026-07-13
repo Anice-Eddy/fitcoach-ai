@@ -1,7 +1,8 @@
 import type { Meal } from '@/types'
-import { FOOD_DATABASE } from './food-database'
+import type { Locale } from '@/lib/i18n'
+import { findFoodByAnyName, foodDisplayName } from './food-database'
 
-export type FoodCategory = 'Protéines' | 'Glucides' | 'Lipides' | 'Légumes' | 'Fruits' | 'Produits laitiers' | 'Autres'
+export type FoodCategory = 'protein' | 'carb' | 'fat' | 'vegetable' | 'fruit' | 'dairy' | 'other'
 
 export interface ShoppingItem {
   name:       string
@@ -12,17 +13,43 @@ export interface ShoppingItem {
 export type GroupedShoppingList = Record<FoodCategory, ShoppingItem[]>
 
 const CATEGORY_MAP: Record<string, FoodCategory> = {
-  protein:   'Protéines',
-  carb:      'Glucides',
-  fat:       'Lipides',
-  vegetable: 'Légumes',
-  fruit:     'Fruits',
-  dairy:     'Produits laitiers',
+  protein:   'protein',
+  carb:      'carb',
+  fat:       'fat',
+  vegetable: 'vegetable',
+  fruit:     'fruit',
+  dairy:     'dairy',
 }
 
 const CATEGORY_ORDER: FoodCategory[] = [
-  'Protéines', 'Glucides', 'Produits laitiers', 'Légumes', 'Fruits', 'Lipides', 'Autres',
+  'protein', 'carb', 'dairy', 'vegetable', 'fruit', 'fat', 'other',
 ]
+
+const CATEGORY_LABELS: Record<Locale, Record<FoodCategory, string>> = {
+  fr: {
+    protein:   'Protéines',
+    carb:      'Glucides',
+    fat:       'Lipides',
+    vegetable: 'Légumes',
+    fruit:     'Fruits',
+    dairy:     'Produits laitiers',
+    other:     'Autres',
+  },
+  en: {
+    protein:   'Protein',
+    carb:      'Carbs',
+    fat:       'Fats',
+    vegetable: 'Vegetables',
+    fruit:     'Fruits',
+    dairy:     'Dairy',
+    other:     'Other',
+  },
+}
+
+/** Keeps stable category keys while exposing localized labels for user-facing exports. */
+export function foodCategoryLabel(category: FoodCategory, locale: Locale = 'en'): string {
+  return CATEGORY_LABELS[locale]?.[category] ?? category
+}
 
 /** Aggregates food items from meals into a flat map, looking up categories from the food database. */
 export function generateShoppingList(meals: Meal[]): Record<string, ShoppingItem> {
@@ -30,8 +57,8 @@ export function generateShoppingList(meals: Meal[]): Record<string, ShoppingItem
 
   for (const meal of meals) {
     for (const item of meal.foodItems) {
-      const dbEntry = FOOD_DATABASE.find(f => f.name === item.name)
-      const category: FoodCategory = dbEntry ? (CATEGORY_MAP[dbEntry.category] ?? 'Autres') : 'Autres'
+      const dbEntry = findFoodByAnyName(item.name)
+      const category: FoodCategory = dbEntry ? (CATEGORY_MAP[dbEntry.category] ?? 'other') : 'other'
 
       if (list[item.name]) {
         list[item.name].totalGrams += item.gramsAmount
@@ -50,7 +77,7 @@ export function groupShoppingList(items: Record<string, ShoppingItem>): GroupedS
   for (const cat of CATEGORY_ORDER) grouped[cat] = []
 
   for (const item of Object.values(items)) {
-    const cat = item.category ?? 'Autres'
+    const cat = item.category ?? 'other'
     if (!grouped[cat]) grouped[cat] = []
     grouped[cat].push(item)
   }
@@ -64,13 +91,15 @@ export function groupShoppingList(items: Record<string, ShoppingItem>): GroupedS
 }
 
 /** Formats the grouped shopping list as a plain-text string suitable for copy/download. */
-export function shoppingListToText(grouped: GroupedShoppingList, weekOf?: string): string {
-  const header = weekOf ? `Liste de courses — semaine du ${weekOf}\n${'='.repeat(40)}\n` : `Liste de courses\n${'='.repeat(40)}\n`
+export function shoppingListToText(grouped: GroupedShoppingList, weekOf?: string, locale: Locale = 'en'): string {
+  const title = locale === 'fr' ? 'Liste de courses' : 'Shopping list'
+  const weekLabel = locale === 'fr' ? 'semaine du' : 'week of'
+  const header = weekOf ? `${title} - ${weekLabel} ${weekOf}\n${'='.repeat(40)}\n` : `${title}\n${'='.repeat(40)}\n`
   const body = CATEGORY_ORDER
     .filter(cat => grouped[cat]?.length > 0)
     .map(cat => {
-      const lines = grouped[cat].map(i => `  - ${i.name} (${Math.round(i.totalGrams)} g)`)
-      return `${cat}:\n${lines.join('\n')}`
+      const lines = grouped[cat].map(i => `  - ${foodDisplayName(i.name, locale)} (${Math.round(i.totalGrams)} g)`)
+      return `${foodCategoryLabel(cat, locale)}:\n${lines.join('\n')}`
     })
     .join('\n\n')
 

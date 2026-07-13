@@ -1,5 +1,5 @@
 'use client'
-// État vide réutilisable avec icône, titre, description et action optionnelle
+// Reusable empty state with icon, title, description, and optional action.
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'

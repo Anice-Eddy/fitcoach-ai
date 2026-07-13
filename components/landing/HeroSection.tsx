@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import Link from 'next/link'
 import { Zap, ArrowRight, Check } from 'lucide-react'
+import { useLocale } from '@/contexts/LocaleContext'
 
 /**
  * Hero section — content only (badge, title, subtitle, CTA, trust line).
@@ -11,11 +12,12 @@ import { Zap, ArrowRight, Check } from 'lucide-react'
  */
 export function HeroSection() {
   const reduced = useReducedMotion() ?? false
+  const { t } = useLocale()
 
   return (
     <section className="relative w-full overflow-hidden">
 
-      {/* Hero-specific neon halo — tighter, centred behind the title */}
+      {/* Hero-specific neon halo, tighter and centered behind the title */}
       <div
         className="absolute pointer-events-none"
         aria-hidden
@@ -39,14 +41,14 @@ export function HeroSection() {
         }
       `}</style>
 
-      {/* Bottom blend — softens the transition into the features section */}
+      {/* Bottom blend that softens the transition into the features section */}
       <div
         className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
         aria-hidden
         style={{ background: 'linear-gradient(to bottom, transparent, rgba(9,9,11,0.5))' }}
       />
 
-      {/* ── Content ── */}
+      {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto text-center px-6 py-24">
 
         {/* AI badge with dual pulse rings */}
@@ -79,7 +81,7 @@ export function HeroSection() {
             aria-hidden
           />
           <Zap className="size-3.5" />
-          Propulsé par l&apos;intelligence artificielle
+          {t('landing.hero.badge')}
         </motion.div>
 
         {/* Title */}
@@ -89,7 +91,7 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.75, delay: 0.07, ease: [0.22, 1, 0.36, 1] }}
         >
-          Votre coach fitness<br />
+          {t('landing.hero.titleStart')}<br />
           <span
             className="text-[#C8F135]"
             style={{
@@ -98,9 +100,9 @@ export function HeroSection() {
                 : '0 0 36px rgba(200,241,53,0.38), 0 0 72px rgba(200,241,53,0.14)',
             }}
           >
-            personnalisé
+            {t('landing.hero.titleHighlight')}
           </span>
-          , 24h/24
+          {t('landing.hero.titleEnd')}
         </motion.h1>
 
         {/* Subtitle */}
@@ -110,8 +112,7 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
         >
-          Programmes d&apos;entraînement, nutrition adaptée et suivi de progression — tout en un.{' '}
-          Commencez gratuitement, sans carte de crédit.
+          {t('landing.hero.subtitle')}
         </motion.p>
 
         {/* CTA */}
@@ -134,7 +135,7 @@ export function HeroSection() {
                 aria-hidden
               />
             )}
-            Commencer gratuitement <ArrowRight className="size-5" />
+            {t('landing.hero.cta')} <ArrowRight className="size-5" />
           </Link>
         </motion.div>
 
@@ -145,11 +146,11 @@ export function HeroSection() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.44 }}
         >
-          <Check className="inline size-3.5 text-[#C8F135] mr-1" />Aucune CB requise
+          <Check className="inline size-3.5 text-[#C8F135] mr-1" />{t('landing.hero.trust.noCard')}
           <span className="mx-3">·</span>
-          <Check className="inline size-3.5 text-[#C8F135] mr-1" />Gratuit pour commencer
+          <Check className="inline size-3.5 text-[#C8F135] mr-1" />{t('landing.hero.trust.freeStart')}
           <span className="mx-3">·</span>
-          <Check className="inline size-3.5 text-[#C8F135] mr-1" />Coaching IA ou humain
+          <Check className="inline size-3.5 text-[#C8F135] mr-1" />{t('landing.hero.trust.aiOrHuman')}
         </motion.p>
       </div>
     </section>

@@ -25,7 +25,7 @@ export default defineConfig({
     },
   ],
 
-  // Démarre le serveur Next.js avant les tests E2E
+  // Starts the Next.js server before E2E tests.
   webServer: {
     command: process.env.CI ? 'npx next start -H 127.0.0.1' : 'mise exec -- npx next dev -H 127.0.0.1',
     url:     'http://127.0.0.1:3000',

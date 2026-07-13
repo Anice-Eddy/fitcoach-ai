@@ -1,7 +1,7 @@
 import type { AIMessageInput, AIProviderResult } from '@/lib/ai/types'
 import type { AITool } from '@/lib/ai/tools'
 
-// Gemini model fallback chain: premium → standard → lite
+// Gemini model fallback chain: premium -> standard -> lite.
 const GEMINI_MODELS = [
   'gemini-2.5-pro',
   'gemini-2.5-flash',
@@ -10,11 +10,11 @@ const GEMINI_MODELS = [
 
 type GeminiModelId = typeof GEMINI_MODELS[number]
 
-// llama-3.3-70b-versatile supports 128k context — avoids HTTP 413 on large fitness contexts
-const GROQ_MODEL   = 'llama-3.3-70b-versatile'
+// Keep Groq configurable because model availability changes over time; GPT OSS 120B is the current production fallback.
+const GROQ_MODEL   = process.env.GROQ_MODEL ?? 'openai/gpt-oss-120b'
 const MAX_TOOL_CALLS = 3
 
-// Module-level cooldown map — shared across all instances, persists across requests in the same process
+// Module-level cooldown map shared across all instances in the same process.
 const _cooldownUntil = new Map<string, number>()
 
 // Gemini multi-turn content format
@@ -39,9 +39,9 @@ function toGeminiContents(messages: AIMessageInput[]): GeminiContent[] {
     }))
 }
 
-/** Calls AI providers with automatic fallback: Gemini 2.5-pro → 2.5-flash → 2.5-flash-lite → Groq. */
+/** Calls AI providers with automatic fallback: Gemini 2.5-pro -> 2.5-flash -> 2.5-flash-lite -> Groq. */
 export class AIProviderService {
-  /** Instance-level cooldowns — isolated per instance so tests can reset by creating a new instance. */
+  /** Instance-level cooldowns, isolated so tests can reset by creating a new instance. */
   private cooldowns = _cooldownUntil
 
   private onCooldown(key: string): boolean {
@@ -76,7 +76,7 @@ export class AIProviderService {
           const text = await this.generateWithGemini(messages, model, tools)
           return { provider: 'GEMINI', text }
         } catch (error) {
-          const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+          const msg = error instanceof Error ? error.message : 'Unknown error'
           console.error(`[ai] Gemini (${model}) failed:`, msg)
           if (msg.includes('429'))      this.setCooldown(key, 60_000)
           else if (msg.includes('503')) this.setCooldown(key, 30_000)
@@ -95,7 +95,7 @@ export class AIProviderService {
           const text = await this.generateWithGroq(messages)
           return { provider: 'GROQ', text }
         } catch (error) {
-          const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+          const msg = error instanceof Error ? error.message : 'Unknown error'
           console.error('[ai] Groq failed:', msg)
           if (msg.includes('429'))      this.setCooldown('groq', 30_000)
           else if (msg.includes('503')) this.setCooldown('groq', 20_000)
@@ -105,7 +105,7 @@ export class AIProviderService {
       }
     }
 
-    throw new Error(errors.length > 0 ? errors.join(' | ') : 'Aucun provider IA configuré')
+    throw new Error(errors.length > 0 ? errors.join(' | ') : 'No AI provider configured')
   }
 
   /** Calls one Gemini model with optional function calling loop (budget: MAX_TOOL_CALLS). */
@@ -160,7 +160,7 @@ export class AIProviderService {
         const tool   = tools?.find(t => t.name === name)
         const result = tool
           ? await tool.handler(args ?? {}).catch((e: unknown) => ({ error: String(e) }))
-          : { error: `Outil inconnu: ${name}` }
+          : { error: `Unknown tool: ${name}` }
 
         contents.push({ role: 'model', parts: [{ functionCall: { name, args: args ?? {} } }] })
         contents.push({ role: 'user',  parts: [{ functionResponse: { name, response: result } }] })
@@ -169,7 +169,7 @@ export class AIProviderService {
       }
 
       const text = parts.filter(p => p.text).map(p => p.text).join('\n').trim()
-      if (!text) throw new Error('Réponse Gemini vide')
+      if (!text) throw new Error('Empty Gemini response')
       return text
     }
   }
@@ -188,7 +188,7 @@ export class AIProviderService {
     }
     const data = await res.json()
     const text: string = data?.choices?.[0]?.message?.content
-    if (!text) throw new Error('Réponse Groq vide')
+    if (!text) throw new Error('Empty Groq response')
     return text
   }
 }

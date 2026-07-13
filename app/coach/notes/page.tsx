@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AlertCircle, CalendarClock, CheckCircle2, ChevronDown, Clock3, Filter, Lock, MessageSquareText, Pencil, Pin, Plus, Search, Send, Share2, Trash2, X } from 'lucide-react'
 import { format, isBefore, isToday } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { enUS, fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { CoachPageHeader } from '@/components/coach/CoachPageHeader'
+import { useLocale } from '@/contexts/LocaleContext'
 
 type NoteStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE'
 type NotePriority = 'LOW' | 'MEDIUM' | 'HIGH'
@@ -45,23 +46,23 @@ interface CoachMember {
 }
 
 const CATEGORIES = [
-  { value: 'FEEDBACK', label: 'Retours' },
-  { value: 'WORKOUT', label: 'Entraînement' },
-  { value: 'NUTRITION', label: 'Nutrition' },
-  { value: 'PROGRESS', label: 'Progression' },
-  { value: 'OTHER', label: 'Autre' },
+  { value: 'FEEDBACK', labelKey: 'coachNotes.categories.feedback' },
+  { value: 'WORKOUT', labelKey: 'coachNotes.categories.workout' },
+  { value: 'NUTRITION', labelKey: 'coachNotes.categories.nutrition' },
+  { value: 'PROGRESS', labelKey: 'coachNotes.categories.progress' },
+  { value: 'OTHER', labelKey: 'coachNotes.categories.other' },
 ]
 
-const STATUS_META: Record<NoteStatus, { label: string; className: string }> = {
-  OPEN: { label: 'À traiter', className: 'border-sky-500/30 bg-sky-500/10 text-sky-200' },
-  IN_PROGRESS: { label: 'En cours', className: 'border-amber-500/30 bg-amber-500/10 text-amber-200' },
-  DONE: { label: 'Terminé', className: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' },
+const STATUS_META: Record<NoteStatus, { labelKey: string; className: string }> = {
+  OPEN: { labelKey: 'coachNotes.status.open', className: 'border-sky-500/30 bg-sky-500/10 text-sky-200' },
+  IN_PROGRESS: { labelKey: 'coachNotes.status.inProgress', className: 'border-amber-500/30 bg-amber-500/10 text-amber-200' },
+  DONE: { labelKey: 'coachNotes.status.done', className: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' },
 }
 
-const PRIORITY_META: Record<NotePriority, { label: string; className: string }> = {
-  LOW: { label: 'Basse', className: 'text-zinc-400' },
-  MEDIUM: { label: 'Normale', className: 'text-[#C8F135]' },
-  HIGH: { label: 'Haute', className: 'text-red-300' },
+const PRIORITY_META: Record<NotePriority, { labelKey: string; className: string }> = {
+  LOW: { labelKey: 'coachNotes.priorities.low', className: 'text-zinc-400' },
+  MEDIUM: { labelKey: 'coachNotes.priorities.medium', className: 'text-[#C8F135]' },
+  HIGH: { labelKey: 'coachNotes.priorities.high', className: 'text-red-300' },
 }
 
 const EMPTY_FORM = {
@@ -84,12 +85,16 @@ function initials(name?: string | null, email?: string) {
   return source.split(/\s|@/).filter(Boolean).map((part) => part[0]).join('').slice(0, 2).toUpperCase()
 }
 
-// Formats a followUpAt date string as "Aujourd'hui" or a French short date.
-function formatFollowUp(value: string | null) {
+// Formats a follow-up date with the active BodyOps locale.
+function formatFollowUp(value: string | null, locale: string, t: (key: string) => string) {
   if (!value) return null
   const date = new Date(value)
-  if (isToday(date)) return "Aujourd'hui"
-  return format(date, 'd MMM yyyy', { locale: fr })
+  if (isToday(date)) return t('coachNotes.today')
+  return format(date, 'd MMM yyyy', { locale: locale === 'fr' ? fr : enUS })
+}
+
+function formatDateTime(value: string, locale: string) {
+  return format(new Date(value), locale === 'fr' ? 'd MMM yyyy à HH:mm' : 'MMM d, yyyy h:mm a', { locale: locale === 'fr' ? fr : enUS })
 }
 
 function targetNoteIdFromUrl() {
@@ -104,6 +109,7 @@ function isLate(value: string | null) {
 
 /** Coach notes management page: select a member, create/edit/delete notes with status, priority, tags, and optional member sharing. */
 export default function NotesPage() {
+  const { t } = useLocale()
   const [members, setMembers] = useState<CoachMember[]>([])
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null)
   const [notes, setNotes] = useState<CoachNote[]>([])
@@ -233,8 +239,8 @@ export default function NotesPage() {
   return (
     <div className="space-y-8">
       <CoachPageHeader
-        title="Journal coach"
-        description="Centralisez les observations, actions à faire et points sensibles pour chaque membre suivi."
+        title={t('coachNotes.title')}
+        description={t('coachNotes.description')}
         actions={
         <button
           type="button"
@@ -243,7 +249,7 @@ export default function NotesPage() {
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#C8F135] px-4 py-3 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] disabled:opacity-50"
         >
           <Plus className="size-4" />
-          Nouvelle note
+          {t('coachNotes.newNote')}
         </button>
         }
       />
@@ -251,7 +257,7 @@ export default function NotesPage() {
       <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
         <aside className="self-start rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Membres suivis</h2>
+            <h2 className="text-sm font-semibold text-white">{t('coachNotes.trackedMembers')}</h2>
             <span className="rounded-full bg-zinc-800 px-2 py-1 text-xs text-zinc-400">{members.length}</span>
           </div>
           {isLoading ? (
@@ -260,7 +266,7 @@ export default function NotesPage() {
             </div>
           ) : members.length === 0 ? (
             <div className="rounded-xl border border-dashed border-zinc-700 p-5 text-center text-sm text-zinc-500">
-              Aucun membre suivi
+              {t('coachNotes.noTrackedMembers')}
             </div>
           ) : (
             <div className="space-y-2">
@@ -295,16 +301,16 @@ export default function NotesPage() {
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.5px] text-zinc-500">Dossier membre</p>
+                <p className="text-xs uppercase tracking-[0.5px] text-zinc-500">{t('coachNotes.memberFile')}</p>
                 <h2 className="mt-1 text-xl font-semibold text-white">
-                  {selectedMember ? selectedMember.member.name ?? selectedMember.member.email : 'Sélectionnez un membre'}
+                  {selectedMember ? selectedMember.member.name ?? selectedMember.member.email : t('coachNotes.selectMember')}
                 </h2>
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <Stat label="Notes" value={stats.total} />
-                <Stat label="Ouvertes" value={stats.open} />
-                <Stat label="Suivis" value={stats.due} />
-                <Stat label="Partagées" value={stats.shared} />
+                <Stat label={t('coachNotes.stats.notes')} value={stats.total} />
+                <Stat label={t('coachNotes.stats.open')} value={stats.open} />
+                <Stat label={t('coachNotes.stats.followUps')} value={stats.due} />
+                <Stat label={t('coachNotes.stats.shared')} value={stats.shared} />
               </div>
             </div>
           </section>
@@ -317,7 +323,7 @@ export default function NotesPage() {
                   <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Rechercher une note, un tag, une observation..."
+                    placeholder={t('coachNotes.searchPlaceholder')}
                     className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-3 pl-10 pr-4 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-[#C8F135]"
                   />
                 </label>
@@ -332,7 +338,7 @@ export default function NotesPage() {
                         statusFilter === status ? 'bg-[#C8F135] text-zinc-950' : 'bg-zinc-800 text-zinc-400 hover:text-white'
                       }`}
                     >
-                      {status === 'ALL' ? 'Tout' : STATUS_META[status].label}
+                      {status === 'ALL' ? t('coachNotes.all') : t(STATUS_META[status].labelKey)}
                     </button>
                   ))}
                 </div>
@@ -344,8 +350,8 @@ export default function NotesPage() {
             <section className="rounded-2xl border border-[#C8F135]/30 bg-zinc-900 p-5">
               <div className="mb-5 flex items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-white">Nouvelle note de suivi</h3>
-                  <p className="mt-1 text-sm text-zinc-500">Ajoutez une observation actionnable pour ce membre.</p>
+                  <h3 className="text-lg font-semibold text-white">{t('coachNotes.newFollowUpNote')}</h3>
+                  <p className="mt-1 text-sm text-zinc-500">{t('coachNotes.newFollowUpDescription')}</p>
                 </div>
                 <button type="button" onClick={() => setShowForm(false)} className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800 hover:text-white">
                   <X className="size-5" />
@@ -357,19 +363,19 @@ export default function NotesPage() {
                 onChange={setFormData}
                 onSubmit={saveNote}
                 isSaving={isSaving}
-                submitLabel="Ajouter la note"
-                savingLabel="Enregistrement..."
+                submitLabel={t('coachNotes.addNote')}
+                savingLabel={t('coachNotes.saving')}
               />
             </section>
           )}
 
           <section className="space-y-3">
             {!selectedMemberId ? (
-              <EmptyState title="Aucun membre sélectionné" description="Choisissez un membre à gauche pour ouvrir son journal de suivi." />
+              <EmptyState title={t('coachNotes.noMemberSelected')} description={t('coachNotes.chooseMemberDescription')} />
             ) : notesLoading ? (
               [0, 1, 2].map((item) => <div key={item} className="h-36 animate-pulse rounded-2xl bg-zinc-900" />)
             ) : visibleNotes.length === 0 ? (
-              <EmptyState title="Aucune note trouvée" description="Ajoutez une note ou changez vos filtres de recherche." />
+              <EmptyState title={t('coachNotes.noNoteFound')} description={t('coachNotes.noNoteDescription')} />
             ) : (
               visibleNotes.map((note) => (
                 <NoteCard
@@ -444,38 +450,40 @@ function CoachNoteForm({
   error?: string | null
   onCancel?: () => void
 }) {
+  const { t } = useLocale()
+
   return (
     <form onSubmit={onSubmit} className="grid gap-4 lg:grid-cols-2">
-      <Field label="Titre" className="lg:col-span-2">
+      <Field label={t('coachNotes.form.title')} className="lg:col-span-2">
         <input
           required
           value={form.title}
           onChange={(e) => onChange({ ...form, title: e.target.value })}
-          placeholder="Ex: Charge deadlift à surveiller"
+          placeholder={t('coachNotes.form.titlePlaceholder')}
           className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-[#C8F135]"
         />
       </Field>
-      <Field label="Catégorie">
+      <Field label={t('coachNotes.form.category')}>
         <select
           value={form.category}
           onChange={(e) => onChange({ ...form, category: e.target.value })}
           className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]"
         >
-          {CATEGORIES.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
+          {CATEGORIES.map((category) => <option key={category.value} value={category.value}>{t(category.labelKey)}</option>)}
         </select>
       </Field>
-      <Field label="Priorité">
+      <Field label={t('coachNotes.form.priority')}>
         <select
           value={form.priority}
           onChange={(e) => onChange({ ...form, priority: e.target.value as NotePriority })}
           className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]"
         >
-          <option value="LOW">Basse</option>
-          <option value="MEDIUM">Normale</option>
-          <option value="HIGH">Haute</option>
+          <option value="LOW">{t(PRIORITY_META.LOW.labelKey)}</option>
+          <option value="MEDIUM">{t(PRIORITY_META.MEDIUM.labelKey)}</option>
+          <option value="HIGH">{t(PRIORITY_META.HIGH.labelKey)}</option>
         </select>
       </Field>
-      <Field label="Date de suivi">
+      <Field label={t('coachNotes.form.followUpDate')}>
         <input
           type="date"
           value={form.followUpAt}
@@ -483,20 +491,20 @@ function CoachNoteForm({
           className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-[#C8F135]"
         />
       </Field>
-      <Field label="Tags (séparés par des virgules)" className="lg:col-span-2">
+      <Field label={t('coachNotes.form.tags')} className="lg:col-span-2">
         <input
           value={form.tags}
           onChange={(e) => onChange({ ...form, tags: e.target.value })}
-          placeholder="mobilité, squat, sommeil"
+          placeholder={t('coachNotes.form.tagsPlaceholder')}
           className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-[#C8F135]"
         />
       </Field>
-      <Field label="Contenu" className="lg:col-span-2">
+      <Field label={t('coachNotes.form.content')} className="lg:col-span-2">
         <textarea
           required
           value={form.content}
           onChange={(e) => onChange({ ...form, content: e.target.value })}
-          placeholder="Observation, décision, prochaine action..."
+          placeholder={t('coachNotes.form.contentPlaceholder')}
           rows={5}
           className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-[#C8F135]"
         />
@@ -510,7 +518,7 @@ function CoachNoteForm({
             form.isPinned ? 'border-[#C8F135]/50 bg-[#C8F135]/10 text-[#C8F135]' : 'border-zinc-800 text-zinc-400 hover:text-white',
           )}
         >
-          <Pin className="size-4" /> Épingler
+          <Pin className="size-4" /> {t('coachNotes.pin')}
         </button>
         <button
           type="button"
@@ -520,13 +528,13 @@ function CoachNoteForm({
             form.isSharedWithMember ? 'border-[#C8F135]/50 bg-[#C8F135]/10 text-[#C8F135]' : 'border-zinc-800 text-zinc-400 hover:text-white',
           )}
         >
-          <Share2 className="size-4" /> Partager
+          <Share2 className="size-4" /> {t('coachNotes.share')}
         </button>
         {error && <p className="text-xs text-red-400">{error}</p>}
         <div className="flex gap-3 lg:ml-auto">
           {onCancel && (
             <button type="button" onClick={onCancel} className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-400 transition-colors hover:text-white">
-              Annuler
+              {t('common.cancel')}
             </button>
           )}
           <button
@@ -550,7 +558,8 @@ function NoteCard({
   onPatch: (patch: Partial<CoachNote>) => Promise<{ ok: boolean; error?: string }>
   onDelete: () => void
 }) {
-  const followUp = formatFollowUp(note.followUpAt)
+  const { locale, t } = useLocale()
+  const followUp = formatFollowUp(note.followUpAt, locale, t)
   const late = isLate(note.followUpAt)
   const canEdit = note.status !== 'DONE'
 
@@ -616,7 +625,7 @@ function NoteCard({
     if (result.ok) {
       setEditing(false)
     } else {
-      setEditError(result.error ?? 'Erreur lors de la sauvegarde.')
+      setEditError(result.error ?? t('coachNotes.saveError'))
     }
   }
 
@@ -664,8 +673,8 @@ function NoteCard({
       <article className="rounded-2xl border border-[#C8F135]/30 bg-zinc-900 p-5">
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-white">Modifier la note de suivi</h3>
-            <p className="mt-1 text-sm text-zinc-500">Gardez le même format que la création pour modifier rapidement cette note.</p>
+            <h3 className="text-lg font-semibold text-white">{t('coachNotes.editFollowUpNote')}</h3>
+            <p className="mt-1 text-sm text-zinc-500">{t('coachNotes.editFollowUpDescription')}</p>
           </div>
           <button type="button" onClick={cancelEdit} className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800 hover:text-white">
             <X className="size-5" />
@@ -676,8 +685,8 @@ function NoteCard({
           onChange={setEditForm}
           onSubmit={handleSave}
           isSaving={isSaving}
-          submitLabel="Sauvegarder"
-          savingLabel="Sauvegarde..."
+          submitLabel={t('coachNotes.saveChanges')}
+          savingLabel={t('coachNotes.savingChanges')}
           error={editError}
           onCancel={cancelEdit}
         />
@@ -693,28 +702,28 @@ function NoteCard({
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             {note.isPinned && <Pin className="size-4 fill-[#C8F135] text-[#C8F135]" />}
-            <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${STATUS_META[note.status].className}`}>{STATUS_META[note.status].label}</span>
-            <span className={`text-xs font-semibold ${PRIORITY_META[note.priority].className}`}>Priorité {PRIORITY_META[note.priority].label.toLowerCase()}</span>
+            <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${STATUS_META[note.status].className}`}>{t(STATUS_META[note.status].labelKey)}</span>
+            <span className={`text-xs font-semibold ${PRIORITY_META[note.priority].className}`}>{t('coachNotes.priorityLabel')} {t(PRIORITY_META[note.priority].labelKey).toLowerCase()}</span>
             {note.isSharedWithMember ? <Share2 className="size-4 text-zinc-400" /> : <Lock className="size-4 text-zinc-600" />}
           </div>
           <h3 className="text-lg font-semibold text-white">{note.title}</h3>
           <p className="mt-1 text-xs text-zinc-500">
-            {format(new Date(note.createdAt), 'd MMM yyyy à HH:mm', { locale: fr })}
+            {formatDateTime(note.createdAt, locale)}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {canEdit && (
-            <button type="button" onClick={openEdit} className="rounded-lg bg-zinc-800 p-2 text-zinc-400 hover:text-[#C8F135]" aria-label="Modifier la note">
+            <button type="button" onClick={openEdit} className="rounded-lg bg-zinc-800 p-2 text-zinc-400 hover:text-[#C8F135]" aria-label={t('coachNotes.editNoteAria')}>
               <Pencil className="size-4" />
             </button>
           )}
-          <button type="button" onClick={() => onPatch({ isPinned: !note.isPinned })} className="rounded-lg bg-zinc-800 p-2 text-zinc-400 hover:text-[#C8F135]" aria-label="Épingler la note">
+          <button type="button" onClick={() => onPatch({ isPinned: !note.isPinned })} className="rounded-lg bg-zinc-800 p-2 text-zinc-400 hover:text-[#C8F135]" aria-label={t('coachNotes.pinNoteAria')}>
             <Pin className="size-4" />
           </button>
-          <button type="button" onClick={() => onPatch({ status: note.status === 'DONE' ? 'OPEN' : 'DONE' })} className="rounded-lg bg-zinc-800 p-2 text-zinc-400 hover:text-emerald-300" aria-label="Changer le statut">
+          <button type="button" onClick={() => onPatch({ status: note.status === 'DONE' ? 'OPEN' : 'DONE' })} className="rounded-lg bg-zinc-800 p-2 text-zinc-400 hover:text-emerald-300" aria-label={t('coachNotes.changeStatusAria')}>
             {note.status === 'DONE' ? <Clock3 className="size-4" /> : <CheckCircle2 className="size-4" />}
           </button>
-          <button type="button" onClick={onDelete} className="rounded-lg bg-zinc-800 p-2 text-zinc-400 hover:text-red-300" aria-label="Supprimer la note">
+          <button type="button" onClick={onDelete} className="rounded-lg bg-zinc-800 p-2 text-zinc-400 hover:text-red-300" aria-label={t('coachNotes.deleteNoteAria')}>
             <Trash2 className="size-4" />
           </button>
         </div>
@@ -723,12 +732,12 @@ function NoteCard({
       <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-zinc-300">{note.content}</p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        {note.category && <span className="rounded-lg bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300">{CATEGORIES.find((item) => item.value === note.category)?.label ?? note.category}</span>}
+        {note.category && <span className="rounded-lg bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300">{CATEGORIES.find((item) => item.value === note.category)?.labelKey ? t(CATEGORIES.find((item) => item.value === note.category)!.labelKey) : note.category}</span>}
         {note.tags.map((tag) => <span key={tag} className="rounded-lg bg-zinc-950 px-2.5 py-1 text-xs text-zinc-500">#{tag}</span>)}
         {followUp && (
           <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs ${late ? 'bg-red-500/10 text-red-200' : 'bg-zinc-800 text-zinc-300'}`}>
             {late ? <AlertCircle className="size-3.5" /> : <CalendarClock className="size-3.5" />}
-            Suivi: {followUp}
+            {t('coachNotes.followUp')}: {followUp}
           </span>
         )}
       </div>
@@ -741,24 +750,24 @@ function NoteCard({
             className="flex items-center gap-2 text-sm font-semibold text-zinc-400 hover:text-white transition-colors"
           >
             <ChevronDown className={`size-4 transition-transform ${showReplies ? 'rotate-180' : ''}`} />
-            {replies.length > 0 ? `${replies.length} réponse${replies.length !== 1 ? 's' : ''}` : 'Aucune réponse'}
+            {replies.length > 0 ? `${replies.length} ${replies.length !== 1 ? t('coachNotes.replies') : t('coachNotes.reply')}` : t('coachNotes.noReply')}
           </button>
 
           {showReplies && (
             <div className="mt-3 space-y-2">
               {loadingReplies ? (
-                <div className="px-3 py-2 text-xs text-zinc-500">Chargement…</div>
+                <div className="px-3 py-2 text-xs text-zinc-500">{t('common.loading')}</div>
               ) : replies.length === 0 ? (
-                <div className="px-3 py-2 text-xs text-zinc-500">Aucune réponse pour le moment</div>
+                <div className="px-3 py-2 text-xs text-zinc-500">{t('coachNotes.noReplyYet')}</div>
               ) : (
                 replies.map((reply) => (
                   <div key={reply.id} className="rounded-lg bg-zinc-800/50 p-3 text-sm">
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <p className="font-semibold text-zinc-200">
-                        {reply.authorRole === 'COACH' ? 'Coach' : reply.member?.name ?? 'Membre'}
+                        {reply.authorRole === 'COACH' ? t('messagesPage.coach') : reply.member?.name ?? t('messagesPage.member')}
                       </p>
                       <p className="text-xs text-zinc-500">
-                        {format(new Date(reply.createdAt), "d MMM 'à' HH:mm", { locale: fr })}
+                        {format(new Date(reply.createdAt), locale === 'fr' ? "d MMM 'à' HH:mm" : 'MMM d, h:mm a', { locale: locale === 'fr' ? fr : enUS })}
                       </p>
                     </div>
                     <p className="text-zinc-300 whitespace-pre-wrap">{reply.content}</p>
@@ -769,7 +778,7 @@ function NoteCard({
                 <textarea
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Répondre au membre..."
+                  placeholder={t('coachNotes.replyPlaceholder')}
                   rows={2}
                   className="min-h-11 flex-1 resize-none rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-[#C8F135]"
                 />
@@ -777,7 +786,7 @@ function NoteCard({
                   type="submit"
                   disabled={sendingReply || !replyText.trim()}
                   className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#C8F135] text-zinc-950 transition-colors hover:bg-[#d4f54d] disabled:opacity-50"
-                  aria-label="Répondre"
+                  aria-label={t('coachNotes.replyAria')}
                 >
                   <Send className="size-4" />
                 </button>

@@ -5,6 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { activitySchema, type ActivityData } from '@/utils/validators'
 import { useState } from 'react'
 import { Home, Dumbbell, Building2, TreePine } from 'lucide-react'
+import { useLocale } from '@/contexts/LocaleContext'
+import { translateOnboardingError } from '../validation-errors'
 
 interface Props {
   defaultValues?: Partial<ActivityData>
@@ -13,40 +15,40 @@ interface Props {
 }
 
 const ACTIVITY_OPTIONS = [
-  { value: 'SEDENTARY',         label: 'Sédentaire',        desc: 'Bureau, peu ou pas d\'exercice' },
-  { value: 'LIGHTLY_ACTIVE',    label: 'Légèrement actif',  desc: 'Sport 1–3 j/semaine' },
-  { value: 'MODERATELY_ACTIVE', label: 'Modérément actif',  desc: 'Sport 3–5 j/semaine' },
-  { value: 'VERY_ACTIVE',       label: 'Très actif',        desc: 'Sport intensif 6–7 j/semaine' },
-  { value: 'EXTREMELY_ACTIVE',  label: 'Extrêmement actif', desc: 'Athlète, 2×/jour' },
+  { value: 'SEDENTARY',         labelKey: 'onboarding.activityStep.levels.sedentary.label', descKey: 'onboarding.activityStep.levels.sedentary.description' },
+  { value: 'LIGHTLY_ACTIVE',    labelKey: 'onboarding.activityStep.levels.light.label',     descKey: 'onboarding.activityStep.levels.light.description' },
+  { value: 'MODERATELY_ACTIVE', labelKey: 'onboarding.activityStep.levels.moderate.label',  descKey: 'onboarding.activityStep.levels.moderate.description' },
+  { value: 'VERY_ACTIVE',       labelKey: 'onboarding.activityStep.levels.very.label',      descKey: 'onboarding.activityStep.levels.very.description' },
+  { value: 'EXTREMELY_ACTIVE',  labelKey: 'onboarding.activityStep.levels.extreme.label',   descKey: 'onboarding.activityStep.levels.extreme.description' },
 ]
 
-// Lieu d'entraînement → équipement déduit automatiquement
+// Training location -> equipment inferred automatically.
 const TRAINING_PLACES = [
   {
     id:        'home_bw',
-    label:     'À la maison',
-    sub:       'Sans matériel',
+    labelKey:  'onboarding.activityStep.places.homeBodyweight.label',
+    subKey:    'onboarding.activityStep.places.homeBodyweight.description',
     icon:      Home,
     equipment: ['BODYWEIGHT'],
   },
   {
     id:        'home_gear',
-    label:     'À la maison',
-    sub:       'Avec matériel (haltères, bandes…)',
+    labelKey:  'onboarding.activityStep.places.homeGear.label',
+    subKey:    'onboarding.activityStep.places.homeGear.description',
     icon:      Dumbbell,
     equipment: ['BODYWEIGHT', 'DUMBBELL', 'KETTLEBELL', 'RESISTANCE_BAND', 'PULL_UP_BAR'],
   },
   {
     id:        'gym',
-    label:     'En salle de sport',
-    sub:       'Accès à tout l\'équipement',
+    labelKey:  'onboarding.activityStep.places.gym.label',
+    subKey:    'onboarding.activityStep.places.gym.description',
     icon:      Building2,
     equipment: ['BARBELL', 'DUMBBELL', 'KETTLEBELL', 'BENCH', 'CABLE_MACHINE', 'SMITH_MACHINE', 'CARDIO_MACHINE', 'PULL_UP_BAR', 'BODYWEIGHT'],
   },
   {
     id:        'outdoor',
-    label:     'En extérieur',
-    sub:       'Parcs, calisthenics, course',
+    labelKey:  'onboarding.activityStep.places.outdoor.label',
+    subKey:    'onboarding.activityStep.places.outdoor.description',
     icon:      TreePine,
     equipment: ['BODYWEIGHT', 'PULL_UP_BAR', 'RESISTANCE_BAND'],
   },
@@ -54,6 +56,7 @@ const TRAINING_PLACES = [
 
 /** Onboarding step for selecting activity level, training place (auto-fills equipment), and training days per week. */
 export function ActivityStep({ defaultValues, onNext, onBack }: Props) {
+  const { t } = useLocale()
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ActivityData>({
     resolver:      zodResolver(activitySchema),
     defaultValues: defaultValues ?? { trainingDaysPerWeek: 3, availableEquipment: ['BODYWEIGHT'] },
@@ -61,8 +64,9 @@ export function ActivityStep({ defaultValues, onNext, onBack }: Props) {
 
   const activity = watch('activityLevel')
   const days     = watch('trainingDaysPerWeek')
+  const dayLabel = t(days > 1 ? 'onboarding.activityStep.days' : 'onboarding.activityStep.day')
 
-  // Plusieurs lieux peuvent être cochés; on reconstruit l'état UI depuis les équipements sauvegardés.
+  // Multiple locations can be selected; rebuild UI state from saved equipment.
   const [placeIds, setPlaceIds] = useState<string[]>(() => {
     const eq = (defaultValues?.availableEquipment ?? []) as string[]
     const ids: string[] = []
@@ -73,7 +77,7 @@ export function ActivityStep({ defaultValues, onNext, onBack }: Props) {
     return ids
   })
 
-  // Chaque lieu apporte une liste d'équipements; on fusionne sans doublons avant de valider le formulaire.
+  // Each location contributes equipment; merge without duplicates before validating the form.
   const togglePlace = (place: typeof TRAINING_PLACES[number]) => {
     const newIds = placeIds.includes(place.id)
       ? placeIds.filter(id => id !== place.id)
@@ -89,10 +93,10 @@ export function ActivityStep({ defaultValues, onNext, onBack }: Props) {
   return (
     <form onSubmit={handleSubmit(onNext)} className="space-y-6">
 
-      {/* Lieu d'entraînement */}
+      {/* Training location */}
       <div>
         <label className="block text-sm font-semibold text-zinc-300 mb-3">
-          Où t'entraînes-tu ?
+          {t('onboarding.activityStep.trainingPlace')}
         </label>
         <div className="grid grid-cols-2 gap-3">
           {TRAINING_PLACES.map((place) => {
@@ -116,22 +120,22 @@ export function ActivityStep({ defaultValues, onNext, onBack }: Props) {
                   </div>
                 </div>
                 <p className={`text-sm font-semibold ${active ? 'text-[#C8F135]' : 'text-white'}`}>
-                  {place.label}
+                  {t(place.labelKey)}
                 </p>
-                <p className="text-xs text-zinc-400 mt-0.5 leading-snug">{place.sub}</p>
+                <p className="text-xs text-zinc-400 mt-0.5 leading-snug">{t(place.subKey)}</p>
               </button>
             )
           })}
         </div>
         {errors.availableEquipment && (
-          <p className="mt-1.5 text-xs text-red-400">Choisis un lieu d'entraînement</p>
+          <p className="mt-1.5 text-xs text-red-400">{t('onboarding.activityStep.placeRequired')}</p>
         )}
       </div>
 
-      {/* Niveau d'activité */}
+      {/* Activity level */}
       <div>
         <label className="block text-sm font-semibold text-zinc-300 mb-3">
-          Ton niveau d'activité actuel
+          {t('onboarding.activityStep.activityLevel')}
         </label>
         <div className="space-y-2">
           {ACTIVITY_OPTIONS.map((opt) => (
@@ -150,23 +154,23 @@ export function ActivityStep({ defaultValues, onNext, onBack }: Props) {
               }`} />
               <div>
                 <p className={`text-sm font-medium ${activity === opt.value ? 'text-[#C8F135]' : 'text-white'}`}>
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </p>
-                <p className="text-xs text-zinc-400">{opt.desc}</p>
+                <p className="text-xs text-zinc-400">{t(opt.descKey)}</p>
               </div>
             </button>
           ))}
         </div>
         {errors.activityLevel && (
-          <p className="mt-1.5 text-xs text-red-400">{errors.activityLevel.message}</p>
+          <p className="mt-1.5 text-xs text-red-400">{translateOnboardingError(errors.activityLevel.message, t)}</p>
         )}
       </div>
 
-      {/* Jours par semaine */}
+      {/* Weekly training days */}
       <div>
         <label className="block text-sm font-semibold text-zinc-300 mb-3">
-          Jours d'entraînement par semaine :{' '}
-          <span className="text-[#C8F135] font-bold">{days} jour{days > 1 ? 's' : ''}</span>
+          {t('onboarding.activityStep.trainingDays')}{' '}
+          <span className="text-[#C8F135] font-bold">{days} {dayLabel}</span>
         </label>
         <input
           {...register('trainingDaysPerWeek', { valueAsNumber: true })}
@@ -183,11 +187,11 @@ export function ActivityStep({ defaultValues, onNext, onBack }: Props) {
       <div className="flex gap-3 pt-1">
         <button type="button" onClick={onBack}
           className="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-300 font-medium hover:bg-zinc-800 transition-colors">
-          ← Retour
+          {t('onboarding.back')}
         </button>
         <button type="submit"
           className="flex-1 py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-bold hover:bg-[#d4f54d] transition-colors">
-          Continuer →
+          {t('onboarding.continue')}
         </button>
       </div>
     </form>

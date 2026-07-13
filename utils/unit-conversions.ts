@@ -1,6 +1,6 @@
 // ============================================================
-// Conversions d'unités : poids (kg ↔ lb) et taille (cm ↔ ft/pouces)
-// Toutes les fonctions sont pures et sans effets de bord
+// Unit conversions: weight (kg ↔ lb) and height (cm ↔ ft/in).
+// All functions are pure and side-effect free.
 // ============================================================
 
 const KG_TO_LB = 2.20462
@@ -9,7 +9,7 @@ const CM_TO_IN = 0.393701
 const IN_TO_CM = 2.54
 const INCHES_PER_FOOT = 12
 
-// --- Poids ---
+// --- Weight ---
 
 /** Converts kilograms to pounds, rounded to one decimal place. */
 export function kgToLb(kg: number): number {
@@ -21,7 +21,7 @@ export function lbToKg(lb: number): number {
   return Math.round(lb * LB_TO_KG * 10) / 10
 }
 
-// --- Taille ---
+// --- Height ---
 
 export type FeetInches = { feet: number; inches: number }
 
@@ -30,7 +30,7 @@ export function cmToFtIn(cm: number): FeetInches {
   const totalInches = cm * CM_TO_IN
   const feet = Math.floor(totalInches / INCHES_PER_FOOT)
   const inches = Math.round(totalInches % INCHES_PER_FOOT)
-  // Gestion du cas 12 pouces → 1 pied supplémentaire
+  // Handle the 12-inch boundary by carrying one extra foot.
   if (inches === INCHES_PER_FOOT) return { feet: feet + 1, inches: 0 }
   return { feet, inches }
 }
@@ -41,7 +41,7 @@ export function ftInToCm(feet: number, inches: number): number {
   return Math.round(totalInches * IN_TO_CM * 10) / 10
 }
 
-// --- Formatage affichage ---
+// --- Display formatting ---
 
 /** Formats a weight in kg as a display string, converting to lb with suffix when unit is 'LB'. */
 export function formatWeight(kg: number, unit: 'KG' | 'LB'): string {

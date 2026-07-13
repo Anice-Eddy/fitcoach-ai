@@ -9,6 +9,7 @@ import { ListSkeleton } from '@/components/ui/LoadingSkeleton'
 import { cn } from '@/lib/utils'
 import { appendAppointmentNote } from '@/lib/appointments/notes'
 import { AppointmentNotesList } from '@/components/appointments/AppointmentNotesList'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface Appointment {
   id:          string
@@ -25,13 +26,13 @@ interface Appointment {
   }
 }
 
-const STATUS_STYLE: Record<string, { label: string; color: string }> = {
-  PENDING:   { label: 'En attente de votre coach', color: 'text-amber-400  bg-amber-400/10' },
-  PROPOSED:  { label: 'Date proposée par le coach', color: 'text-blue-400   bg-blue-400/10' },
-  CONFIRMED: { label: 'Confirmé',                   color: 'text-emerald-400 bg-emerald-400/10' },
-  COMPLETED: { label: 'Terminé',                    color: 'text-zinc-400    bg-zinc-800' },
-  CANCELLED: { label: 'Annulé',                     color: 'text-red-400     bg-red-400/10' },
-  NO_SHOW:   { label: 'Absent',                     color: 'text-red-400     bg-red-400/10' },
+const STATUS_STYLE: Record<string, { labelKey: string; color: string }> = {
+  PENDING:   { labelKey: 'appointments.status.pending', color: 'text-amber-400  bg-amber-400/10' },
+  PROPOSED:  { labelKey: 'appointments.status.proposed', color: 'text-blue-400   bg-blue-400/10' },
+  CONFIRMED: { labelKey: 'appointments.status.confirmed', color: 'text-emerald-400 bg-emerald-400/10' },
+  COMPLETED: { labelKey: 'appointments.status.completed', color: 'text-zinc-400    bg-zinc-800' },
+  CANCELLED: { labelKey: 'appointments.status.cancelled', color: 'text-red-400     bg-red-400/10' },
+  NO_SHOW:   { labelKey: 'appointments.status.noShow', color: 'text-red-400     bg-red-400/10' },
 }
 
 function targetAppointmentIdFromUrl() {
@@ -41,6 +42,7 @@ function targetAppointmentIdFromUrl() {
 
 /** Member appointments page: fetches and displays upcoming and past appointments, with inline note editing. */
 export default function AppointmentsPage() {
+  const { t } = useLocale()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading]           = useState(true)
   const [now, setNow]                   = useState<Date | null>(null)
@@ -77,18 +79,18 @@ export default function AppointmentsPage() {
 
   return (
     <>
-      <Header title="Mes rendez-vous" />
+      <Header titleKey="appointments.title" />
       <PageWrapper>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-lg font-bold text-white">Mes rendez-vous</h1>
-            <p className="text-xs text-zinc-400 mt-0.5">Suivi de vos séances avec votre coach</p>
+            <h1 className="text-lg font-bold text-white">{t('appointments.title')}</h1>
+            <p className="text-xs text-zinc-400 mt-0.5">{t('appointments.subtitle')}</p>
           </div>
           <Link
             href="/coaches"
             className="flex items-center gap-1.5 rounded-xl bg-[#C8F135] px-4 py-2 text-xs font-medium text-black hover:bg-[#d4f54d] transition-colors"
           >
-            <Plus className="size-3.5" /> Réserver
+            <Plus className="size-3.5" /> {t('appointments.book')}
           </Link>
         </div>
 
@@ -99,12 +101,12 @@ export default function AppointmentsPage() {
         ) : (
           <div className="space-y-8">
 
-            {/* Contre-propositions du coach — à voir en priorité */}
+            {/* Coach counter-proposals: show first */}
             {proposed.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <p className="text-xs font-semibold uppercase tracking-widest text-blue-400">
-                    Proposition de votre coach
+                    {t('appointments.coachProposal')}
                   </p>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-400/15 text-blue-400">
                     {proposed.length}
@@ -128,7 +130,7 @@ export default function AppointmentsPage() {
             {upcoming.length > 0 && (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">
-                  À venir ({upcoming.length})
+                  {t('appointments.upcoming')} ({upcoming.length})
                 </p>
                 <div className="space-y-3">
                   {upcoming.map(appt => (
@@ -147,7 +149,7 @@ export default function AppointmentsPage() {
             {past.length > 0 && (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">
-                  Historique ({past.length})
+                  {t('appointments.history')} ({past.length})
                 </p>
                 <div className="space-y-3 opacity-60">
                   {past.map(appt => (
@@ -170,10 +172,11 @@ export default function AppointmentsPage() {
   )
 }
 
-// ─── Empty state ─────────────────────────────────────────────────────────────
+// Empty state
 
 // Renders a CTA to find a coach when no appointments exist.
 function EmptyState() {
+  const { t } = useLocale()
   return (
     <div className="text-center py-16 space-y-4">
       <div className="flex justify-center">
@@ -182,14 +185,14 @@ function EmptyState() {
         </div>
       </div>
       <div>
-        <p className="text-white font-semibold">Aucun rendez-vous</p>
-        <p className="text-sm text-zinc-400 mt-1">Réservez une séance avec un coach certifié.</p>
+        <p className="text-white font-semibold">{t('appointments.emptyTitle')}</p>
+        <p className="text-sm text-zinc-400 mt-1">{t('appointments.emptyDescription')}</p>
       </div>
       <Link
         href="/coaches"
         className="inline-flex items-center gap-2 rounded-xl bg-[#C8F135] px-5 py-2.5 text-sm font-medium text-black hover:bg-[#d4f54d] transition-colors"
       >
-        Trouver un coach →
+        {t('appointments.findCoach')}
       </Link>
     </div>
   )
@@ -211,10 +214,12 @@ function AppointmentCard({
   selected?: boolean
   aptRef?: (node: HTMLDivElement | null) => void
 }) {
+  const { locale, t } = useLocale()
   const st      = STATUS_STYLE[appt.status]
   const date    = new Date(appt.scheduledAt)
-  const dayStr  = date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
-  const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-US'
+  const dayStr  = date.toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })
+  const timeStr = date.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })
 
   const [showNote, setShowNote] = useState(false)
   const [note, setNote]         = useState(appt.memberNote ?? '')
@@ -223,7 +228,7 @@ function AppointmentCard({
 
   const saveNote = async () => {
     const memberNote = noteMode === 'append'
-      ? appendAppointmentNote(appt.memberNote, note, 'Membre')
+      ? appendAppointmentNote(appt.memberNote, note, t('appointments.memberAuthor'), locale)
       : note
     setSaving(true)
     await fetch(`/api/user/appointments/${appt.id}`, {
@@ -245,7 +250,7 @@ function AppointmentCard({
         <div className="px-4 py-2 bg-blue-500/10 border-b border-blue-400/20 flex items-center gap-2">
           <div className="size-1.5 rounded-full bg-blue-400 animate-pulse" />
           <p className="text-xs font-medium text-blue-400">
-            Votre coach a proposé une nouvelle date — ajoutez une note si besoin
+            {t('appointments.coachProposedDate')}
           </p>
         </div>
       )}
@@ -254,10 +259,10 @@ function AppointmentCard({
         <div className="flex items-start gap-3 justify-between mb-3">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white truncate">{appt.title}</p>
-            <p className="text-xs text-zinc-500 mt-0.5">{appt.coachProfile.user.name ?? 'Coach'}</p>
+            <p className="text-xs text-zinc-500 mt-0.5">{appt.coachProfile.user.name ?? t('appointments.coachFallback')}</p>
           </div>
           <span className={cn('text-[10px] font-semibold px-2.5 py-1 rounded-full shrink-0', st?.color ?? 'text-zinc-400 bg-zinc-800')}>
-            {st?.label ?? appt.status}
+            {st?.labelKey ? t(st.labelKey) : appt.status}
           </span>
         </div>
 
@@ -274,7 +279,7 @@ function AppointmentCard({
           {appt.meetLink && !past && (
             <a href={appt.meetLink} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-1 text-[#C8F135] hover:underline ml-auto">
-              Rejoindre <ExternalLink className="size-3" />
+              {t('appointments.join')} <ExternalLink className="size-3" />
             </a>
           )}
         </div>
@@ -288,7 +293,7 @@ function AppointmentCard({
         <div className="mx-4 mb-3">
           <AppointmentNotesList
             note={appt.coachNote}
-            title="Notes de votre coach"
+            title={t('appointments.coachNotes')}
             accent={highlight ? 'blue' : 'lime'}
             compact
           />
@@ -297,18 +302,18 @@ function AppointmentCard({
 
       {past && appt.memberNote && (
         <div className="mx-4 mb-3">
-          <AppointmentNotesList note={appt.memberNote} title="Vos notes" compact />
+          <AppointmentNotesList note={appt.memberNote} title={t('appointments.yourNotes')} compact />
         </div>
       )}
 
-      {/* Member note — show / add (available on PENDING, PROPOSED, CONFIRMED) */}
+      {/* Member note: show or add on pending, proposed, and confirmed appointments. */}
       {!past && (
         <div className="border-t border-zinc-800/60 px-4 py-3">
           {appt.memberNote && !showNote ? (
             <div className="space-y-2">
               <AppointmentNotesList
                 note={appt.memberNote}
-                title="Vos notes"
+                title={t('appointments.yourNotes')}
                 canEdit
                 compact
                 onSave={async (memberNote) => {
@@ -323,7 +328,7 @@ function AppointmentCard({
               <button onClick={() => { setNote(''); setNoteMode('append'); setShowNote(true) }}
                 className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-[#C8F135] transition-colors">
                 <MessageSquare className="size-3.5" />
-                Ajouter une note
+                {t('appointments.addNote')}
                 <ChevronDown className="size-3" />
               </button>
             </div>
@@ -331,14 +336,14 @@ function AppointmentCard({
             <button onClick={() => { setNote(''); setNoteMode('append'); setShowNote(true) }}
               className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-[#C8F135] transition-colors">
               <MessageSquare className="size-3.5" />
-              Ajouter une note pour le coach
+              {t('appointments.addNoteForCoach')}
               <ChevronDown className="size-3" />
             </button>
           ) : (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-zinc-400">
-                  {noteMode === 'append' && appt.memberNote ? 'Ajouter une note' : 'Votre note'}
+                  {noteMode === 'append' && appt.memberNote ? t('appointments.addNote') : t('appointments.yourNote')}
                 </p>
                 <button onClick={() => setShowNote(false)} className="text-zinc-600 hover:text-zinc-400">
                   <ChevronUp className="size-3.5" />
@@ -348,17 +353,17 @@ function AppointmentCard({
                 value={note}
                 onChange={e => setNote(e.target.value)}
                 rows={3}
-                placeholder="Questions, remarques pour votre coach…"
+                placeholder={t('appointments.notePlaceholder')}
                 className="w-full px-3 py-2 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135] resize-none"
               />
               <div className="flex gap-2 justify-end">
                 <button onClick={() => setShowNote(false)}
                   className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">
-                  Annuler
+                  {t('common.cancel')}
                 </button>
                 <button onClick={saveNote} disabled={saving}
                   className="px-3 py-1.5 text-xs rounded-lg bg-[#C8F135] text-zinc-900 font-semibold hover:bg-[#d4f54d] disabled:opacity-50">
-                  {saving ? 'Enregistrement…' : 'Envoyer'}
+                  {saving ? t('appointments.saving') : t('appointments.send')}
                 </button>
               </div>
             </div>

@@ -6,7 +6,7 @@ import { PageWrapper } from '@/components/layout/PageWrapper'
 export default function MemberAIPage() {
   return (
     <>
-      <Header title="Assistant IA" />
+      <Header titleKey="nav.ai" />
       <PageWrapper>
         <AIAssistantClient mode="member" />
       </PageWrapper>

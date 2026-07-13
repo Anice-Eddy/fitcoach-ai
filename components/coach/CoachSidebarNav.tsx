@@ -6,25 +6,27 @@ import { BarChart2, Bot, Calendar, LayoutDashboard, MessageSquare, Users } from 
 import { NavNotificationBadge } from '@/components/navigation/NavNotificationBadge'
 import { unreadCountForRoute } from '@/lib/notifications/unread-communication'
 import { useUnreadCoachCommunicationCounts } from '@/lib/notifications/use-unread-message-count'
+import { useLocale } from '@/contexts/LocaleContext'
 
 const NAV = [
-  { href: '/coach/dashboard',    label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/coach/members',      label: 'Membres',         icon: Users },
-  { href: '/coach/appointments', label: 'Agenda',          icon: Calendar },
-  { href: '/coach/notes',        label: 'Notes',           icon: MessageSquare },
-  { href: '/coach/messages',     label: 'Messages',        icon: MessageSquare },
-  { href: '/coach/ai',           label: 'Assistant IA',    icon: Bot },
-  { href: '/coach/reports',      label: 'Rapports',        icon: BarChart2 },
+  { href: '/coach/dashboard',    labelKey: 'coachNavigation.dashboard', icon: LayoutDashboard },
+  { href: '/coach/members',      labelKey: 'coachNavigation.members', icon: Users },
+  { href: '/coach/appointments', labelKey: 'coachNavigation.appointments', icon: Calendar },
+  { href: '/coach/notes',        labelKey: 'coachNavigation.notes', icon: MessageSquare },
+  { href: '/coach/messages',     labelKey: 'coachNavigation.messages', icon: MessageSquare },
+  { href: '/coach/ai',           labelKey: 'coachNavigation.ai', icon: Bot },
+  { href: '/coach/reports',      labelKey: 'coachNavigation.reports', icon: BarChart2 },
 ]
 
 /** Coach sidebar navigation with live unread badges for Notes and Messages. */
 export function CoachSidebarNav() {
   const pathname = usePathname() ?? ''
   const unreadCounts = useUnreadCoachCommunicationCounts()
+  const { t } = useLocale()
 
   return (
     <>
-      {NAV.map(({ href, label, icon: Icon }) => {
+      {NAV.map(({ href, labelKey, icon: Icon }) => {
         const active = pathname.startsWith(href)
         const badgeCount = unreadCountForRoute(href, unreadCounts)
 
@@ -42,7 +44,7 @@ export function CoachSidebarNav() {
             ].join(' ')}
           >
             <Icon className="size-4" />
-            <span className="min-w-0 flex-1 truncate">{label}</span>
+            <span className="min-w-0 flex-1 truncate">{t(labelKey)}</span>
             <NavNotificationBadge count={badgeCount} />
           </Link>
         )

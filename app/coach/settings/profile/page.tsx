@@ -7,6 +7,38 @@ import { UserCircle, Save, Camera, LogOut, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { DeleteAccountModal } from '@/components/ui/DeleteAccountModal'
 import { signOutAndClear } from '@/lib/auth/client-session'
+import { useLocale } from '@/contexts/LocaleContext'
+
+const COUNTRY_OPTIONS = [
+  'France','Canada','Belgique','Suisse','Luxembourg','Maroc','Algérie',
+  'Tunisie','Sénégal','Côte d\'Ivoire','Madagascar','Cameroun',
+  'États-Unis','Royaume-Uni','Espagne','Italie','Allemagne','Portugal',
+  'Pays-Bas','Australie','Nouvelle-Zélande','Autre',
+]
+const COUNTRY_I18N: Record<string, string> = {
+  France: 'france',
+  Canada: 'canada',
+  Belgique: 'belgium',
+  Suisse: 'switzerland',
+  Luxembourg: 'luxembourg',
+  Maroc: 'morocco',
+  Algérie: 'algeria',
+  Tunisie: 'tunisia',
+  Sénégal: 'senegal',
+  'Côte d\'Ivoire': 'ivoryCoast',
+  Madagascar: 'madagascar',
+  Cameroun: 'cameroon',
+  'États-Unis': 'unitedStates',
+  'Royaume-Uni': 'unitedKingdom',
+  Espagne: 'spain',
+  Italie: 'italy',
+  Allemagne: 'germany',
+  Portugal: 'portugal',
+  'Pays-Bas': 'netherlands',
+  Australie: 'australia',
+  'Nouvelle-Zélande': 'newZealand',
+  Autre: 'other',
+}
 
 // Compact switch used for coach-controlled member visibility settings.
 function VisibilityToggle({ checked, onChange, label, description }: {
@@ -34,6 +66,7 @@ function VisibilityToggle({ checked, onChange, label, description }: {
 
 /** Coach profile settings page: edit bio, specialties, certifications, and upload a verification document. */
 export default function CoachSettingsProfilePage() {
+  const { t } = useLocale()
   const { data: session, update: updateSession } = useSession()
   const [loading, setLoading]   = useState(true)
   const [saving, setSaving]     = useState(false)
@@ -60,7 +93,7 @@ export default function CoachSettingsProfilePage() {
   const [publicRatingCount, setPublicRatingCount] = useState(0)
   const [showPublicRating, setShowPublicRating] = useState(false)
   const [discoveryCallEnabled, setDiscoveryCallEnabled] = useState(true)
-  const [discoveryCallTitle, setDiscoveryCallTitle] = useState('Entretien découverte')
+  const [discoveryCallTitle, setDiscoveryCallTitle] = useState(() => t('coachSettings.discovery.defaultTitle'))
   const [discoveryCallDuration, setDiscoveryCallDuration] = useState(30)
   const [showDiscoveryCall, setShowDiscoveryCall] = useState(true)
 
@@ -83,7 +116,7 @@ export default function CoachSettingsProfilePage() {
         setPublicRatingCount(p.publicRatingCount ?? 0)
         setShowPublicRating(p.showPublicRating ?? false)
         setDiscoveryCallEnabled(p.discoveryCallEnabled ?? true)
-        setDiscoveryCallTitle(p.discoveryCallTitle ?? 'Entretien découverte')
+        setDiscoveryCallTitle(p.discoveryCallTitle ?? t('coachSettings.discovery.defaultTitle'))
         setDiscoveryCallDuration(p.discoveryCallDuration ?? 30)
         setShowDiscoveryCall(p.showDiscoveryCall ?? true)
         setAvatarUrl(p.avatarUrl ?? '')
@@ -92,7 +125,7 @@ export default function CoachSettingsProfilePage() {
     })
     if (session?.user?.name)  setName(session.user.name)
     setAccountImage(session?.user?.image ?? '')
-  }, [session])
+  }, [session, t])
 
   const handleDeleteAccount = async (password?: string) => {
     setDeleting(true)
@@ -104,7 +137,7 @@ export default function CoachSettingsProfilePage() {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data.error ?? 'Erreur lors de la suppression')
+        throw new Error(data.error ?? t('coachSettings.deleteError'))
       }
       await signOutAndClear('/')
     } catch (e) {
@@ -145,7 +178,7 @@ export default function CoachSettingsProfilePage() {
         body:    JSON.stringify({ name: name.trim(), image: accountImage || null }),
       })
       if (!accountRes.ok) {
-        throw new Error(await readErrorMessage(accountRes, 'Impossible de mettre à jour le compte'))
+        throw new Error(await readErrorMessage(accountRes, t('coachSettings.accountUpdateError')))
       }
 
       // 2. Update CoachProfile fields
@@ -168,13 +201,13 @@ export default function CoachSettingsProfilePage() {
           publicRatingCount,
           showPublicRating,
           discoveryCallEnabled,
-          discoveryCallTitle: discoveryCallTitle.trim() || 'Entretien découverte',
+          discoveryCallTitle: discoveryCallTitle.trim() || t('coachSettings.discovery.defaultTitle'),
           discoveryCallDuration: safeDiscoveryDuration,
           showDiscoveryCall,
         }),
       })
       if (!profileRes.ok) {
-        throw new Error(await readErrorMessage(profileRes, 'Impossible de mettre à jour les réglages coach'))
+        throw new Error(await readErrorMessage(profileRes, t('coachSettings.profileUpdateError')))
       }
 
       const updatedProfile = await profileRes.json()
@@ -184,14 +217,14 @@ export default function CoachSettingsProfilePage() {
       setPublicRatingCount(updatedProfile.publicRatingCount ?? 0)
       setShowPublicRating(updatedProfile.showPublicRating ?? false)
       setDiscoveryCallEnabled(updatedProfile.discoveryCallEnabled ?? true)
-      setDiscoveryCallTitle(updatedProfile.discoveryCallTitle ?? 'Entretien découverte')
+      setDiscoveryCallTitle(updatedProfile.discoveryCallTitle ?? t('coachSettings.discovery.defaultTitle'))
       setDiscoveryCallDuration(updatedProfile.discoveryCallDuration ?? 30)
       setShowDiscoveryCall(updatedProfile.showDiscoveryCall ?? true)
 
       await updateSession()
-      toast.success('Profil mis à jour')
+      toast.success(t('coachSettings.updated'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erreur lors de la sauvegarde')
+      toast.error(error instanceof Error ? error.message : t('coachSettings.saveError'))
     } finally {
       setSaving(false)
     }
@@ -220,16 +253,16 @@ export default function CoachSettingsProfilePage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
           <UserCircle className="size-6 text-[#C8F135]" />
-          Mon profil coach
+          {t('coachSettings.title')}
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">Informations visibles par vos membres</p>
+        <p className="text-sm text-zinc-400 mt-1">{t('coachSettings.description')}</p>
       </div>
 
       <div className="space-y-6">
 
         {/* Photo + nom */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <h2 className="text-sm font-semibold text-white mb-5">Identité</h2>
+          <h2 className="text-sm font-semibold text-white mb-5">{t('coachSettings.identity')}</h2>
 
           <div className="flex items-center gap-5 mb-5">
             <div className="relative">
@@ -246,64 +279,64 @@ export default function CoachSettingsProfilePage() {
               </div>
             </div>
             <div className="flex-1">
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">URL de l'avatar coach</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.avatarUrl')}</label>
               <input
                 type="url"
                 value={avatarUrl}
                 onChange={e => setAvatarUrl(e.target.value)}
-                placeholder={accountImage ? 'Laissez vide pour garder la photo Google' : 'https://exemple.com/photo.jpg'}
+                placeholder={accountImage ? t('coachSettings.keepGooglePhotoPlaceholder') : 'https://example.com/photo.jpg'}
                 className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
               />
               {accountImage && !avatarUrl && (
-                <p className="mt-1 text-[10px] text-zinc-500">La photo Google reste utilisée tant qu'aucun avatar coach n'est saisi.</p>
+                <p className="mt-1 text-[10px] text-zinc-500">{t('coachSettings.googlePhotoHint')}</p>
               )}
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Nom affiché</label>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.displayName')}</label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Prénom Nom"
+              placeholder={t('coachSettings.displayNamePlaceholder')}
               className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
             />
           </div>
         </div>
 
-        {/* Bio + spécialités */}
+        {/* Bio + specialties */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <h2 className="text-sm font-semibold text-white mb-5">Présentation</h2>
+          <h2 className="text-sm font-semibold text-white mb-5">{t('coachSettings.presentation')}</h2>
           <div className="space-y-4">
             <div className="min-w-0">
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Bio / description</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.bio')}</label>
               <textarea
                 value={bio}
                 onChange={e => setBio(e.target.value)}
                 rows={5}
-                placeholder="Décrivez votre approche, votre méthode, votre philosophie…"
+                placeholder={t('coachSettings.bioPlaceholder')}
                 className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135] resize-none"
               />
-              <p className="text-[10px] text-zinc-600 mt-1">{bio.length} caractères (min. 30)</p>
+              <p className="text-[10px] text-zinc-600 mt-1">{bio.length} {t('coachSettings.charactersMin')}</p>
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Spécialités <span className="text-zinc-600">(séparées par des virgules)</span></label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.specialties')} <span className="text-zinc-600">{t('coachSettings.commaSeparated')}</span></label>
               <input
                 type="text"
                 value={specialties}
                 onChange={e => setSpecialties(e.target.value)}
-                placeholder="Musculation, Perte de poids, Nutrition sportive"
+                placeholder={t('coachSettings.specialtiesPlaceholder')}
                 className="w-full min-w-0 px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
               />
             </div>
             <div className="min-w-0">
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Certifications <span className="text-zinc-600">(séparées par des virgules)</span></label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.certifications')} <span className="text-zinc-600">{t('coachSettings.commaSeparated')}</span></label>
               <input
                 type="text"
                 value={certifications}
                 onChange={e => setCertifications(e.target.value)}
-                placeholder="BPJEPS, CQP, Coach NSCA"
+                placeholder={t('coachSettings.certificationsPlaceholder')}
                 className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
               />
             </div>
@@ -312,10 +345,10 @@ export default function CoachSettingsProfilePage() {
 
         {/* Infos pratiques */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <h2 className="text-sm font-semibold text-white mb-5">Informations pratiques</h2>
+          <h2 className="text-sm font-semibold text-white mb-5">{t('coachSettings.practicalInfo')}</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Années d'expérience</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.yearsExperience')}</label>
               <input
                 type="number" min={0} max={60}
                 value={yearsExp}
@@ -324,7 +357,7 @@ export default function CoachSettingsProfilePage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Limite de membres</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.memberLimit')}</label>
               <input
                 type="number" min={1} max={500}
                 value={memberLimit}
@@ -333,36 +366,33 @@ export default function CoachSettingsProfilePage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Ville</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.city')}</label>
               <input
                 type="text"
                 value={city}
                 onChange={e => setCity(e.target.value)}
-                placeholder="Paris"
+                placeholder={t('coachSettings.cityPlaceholder')}
                 className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Pays</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.country')}</label>
               <input
                 list="country-list"
                 type="text"
                 value={country}
                 onChange={e => setCountry(e.target.value)}
-                placeholder="France"
+                placeholder={t('coachSettings.countryPlaceholder')}
                 className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
               />
               <datalist id="country-list">
-                {[
-                  'France','Canada','Belgique','Suisse','Luxembourg','Maroc','Algérie',
-                  'Tunisie','Sénégal','Côte d\'Ivoire','Madagascar','Cameroun',
-                  'États-Unis','Royaume-Uni','Espagne','Italie','Allemagne','Portugal',
-                  'Pays-Bas','Australie','Nouvelle-Zélande','Autre',
-                ].map(c => <option key={c} value={c} />)}
+                {COUNTRY_OPTIONS.map(c => (
+                  <option key={c} value={c} label={t(`coachSettings.countries.${COUNTRY_I18N[c]}`)} />
+                ))}
               </datalist>
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Téléphone</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.phone')}</label>
               <input
                 type="tel"
                 value={phone}
@@ -374,40 +404,40 @@ export default function CoachSettingsProfilePage() {
           </div>
         </div>
 
-        {/* Visibilité membre */}
+        {/* Member visibility */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <h2 className="text-sm font-semibold text-white mb-2">Visibilité pour les membres</h2>
+          <h2 className="text-sm font-semibold text-white mb-2">{t('coachSettings.visibility.title')}</h2>
           <p className="mb-5 text-xs text-zinc-500">
-            Vous pouvez choisir quelles informations seront visibles quand un membre consulte votre profil coach.
+            {t('coachSettings.visibility.description')}
           </p>
           <div className="space-y-3">
             <VisibilityToggle
               checked={showMemberCount}
               onChange={setShowMemberCount}
-              label="Afficher le nombre de membres"
-              description="Le nombre est calculé automatiquement depuis vos membres liés."
+              label={t('coachSettings.visibility.showMemberCount')}
+              description={t('coachSettings.visibility.memberCountDescription')}
             />
             <VisibilityToggle
               checked={showYearsExperience}
               onChange={setShowYearsExperience}
-              label="Afficher les années d'expérience"
-              description="Masque ou affiche la valeur saisie dans Informations pratiques."
+              label={t('coachSettings.visibility.showYears')}
+              description={t('coachSettings.visibility.yearsDescription')}
             />
             <VisibilityToggle
               checked={showPublicRating}
               onChange={setShowPublicRating}
-              label="Afficher les étoiles"
-              description="Affiche la note publique ci-dessous sur votre profil."
+              label={t('coachSettings.visibility.showStars')}
+              description={t('coachSettings.visibility.starsDescription')}
             />
           </div>
         </div>
 
         {/* Note publique */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <h2 className="text-sm font-semibold text-white mb-5">Note affichée</h2>
+          <h2 className="text-sm font-semibold text-white mb-5">{t('coachSettings.publicRating.title')}</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Étoiles</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.publicRating.stars')}</label>
               <input
                 type="number" min={0} max={5} step={0.1}
                 value={publicRating}
@@ -417,7 +447,7 @@ export default function CoachSettingsProfilePage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Nombre d'avis affiché</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.publicRating.reviewCount')}</label>
               <input
                 type="number" min={0} max={100000}
                 value={publicRatingCount}
@@ -428,39 +458,39 @@ export default function CoachSettingsProfilePage() {
           </div>
         </div>
 
-        {/* Entretien découverte */}
+        {/* Discovery call */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <h2 className="text-sm font-semibold text-white mb-2">Entretien découverte</h2>
+          <h2 className="text-sm font-semibold text-white mb-2">{t('coachSettings.discovery.title')}</h2>
           <p className="mb-5 text-xs text-zinc-500">
-            Cette option indique aux membres qu'ils peuvent réserver un premier échange avec vous.
+            {t('coachSettings.discovery.description')}
           </p>
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <VisibilityToggle
               checked={discoveryCallEnabled}
               onChange={setDiscoveryCallEnabled}
-              label="Activer l'entretien"
-              description="Permet aux membres de voir ce type de rendez-vous."
+              label={t('coachSettings.discovery.enable')}
+              description={t('coachSettings.discovery.enableDescription')}
             />
             <VisibilityToggle
               checked={showDiscoveryCall}
               onChange={setShowDiscoveryCall}
-              label="Afficher sur le profil"
-              description="Masque ou affiche le bloc d'information côté membre."
+              label={t('coachSettings.discovery.showOnProfile')}
+              description={t('coachSettings.discovery.showDescription')}
             />
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_140px]">
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Nom affiché</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.displayName')}</label>
               <input
                 type="text"
                 value={discoveryCallTitle}
                 onChange={e => setDiscoveryCallTitle(e.target.value)}
-                placeholder="Entretien découverte"
+                placeholder={t('coachSettings.discovery.defaultTitle')}
                 className="w-full px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#C8F135]"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Durée</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">{t('coachSettings.discovery.duration')}</label>
               <input
                 type="number" min={5} max={180}
                 value={discoveryCallDuration}
@@ -478,28 +508,28 @@ export default function CoachSettingsProfilePage() {
             className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50"
           >
             <Save className="size-4" />
-            {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
+            {saving ? t('coachMembers.saving') : t('coachSettings.saveChanges')}
           </button>
         </div>
 
         {/* Account actions */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
           <div className="px-5 py-4 border-b border-zinc-800">
-            <h2 className="text-sm font-semibold text-zinc-300">Compte et sécurité</h2>
+            <h2 className="text-sm font-semibold text-zinc-300">{t('coachSettings.accountSecurity')}</h2>
           </div>
           <button
             onClick={() => signOutAndClear('/')}
             className="flex items-center gap-3 w-full px-5 py-3.5 border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors text-left"
           >
             <LogOut className="size-4 text-zinc-400" />
-            <span className="text-sm text-zinc-300">Se déconnecter</span>
+            <span className="text-sm text-zinc-300">{t('coachSettings.signOut')}</span>
           </button>
           <button
             onClick={() => setShowDel(true)}
             className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-red-500/5 transition-colors text-left"
           >
             <Trash2 className="size-4 text-red-400" />
-            <span className="text-sm text-red-400">Supprimer mon compte</span>
+            <span className="text-sm text-red-400">{t('settings.deleteAccount')}</span>
           </button>
         </div>
 

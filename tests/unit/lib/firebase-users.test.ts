@@ -30,7 +30,7 @@ describe('findOrCreateUserFromFirebase', () => {
     vi.resetAllMocks()
   })
 
-  it('lie un utilisateur existant via email sans créer de doublon', async () => {
+  it('links an existing user by email without creating a duplicate', async () => {
     ;(prisma.user.findUnique as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({
@@ -67,7 +67,7 @@ describe('findOrCreateUserFromFirebase', () => {
     }))
   })
 
-  it('crée un utilisateur BodyOps quand email et firebase_uid sont inconnus', async () => {
+  it('creates a BodyOps user when email and firebase_uid are unknown', async () => {
     ;(prisma.user.findUnique as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(null)

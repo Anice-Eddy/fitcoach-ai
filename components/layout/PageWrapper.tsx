@@ -1,4 +1,4 @@
-// Wrapper de page — padding cohérent + espacement bottom nav mobile
+// Page wrapper with consistent padding and mobile bottom-nav spacing.
 
 import { cn } from '@/lib/utils'
 
@@ -15,7 +15,7 @@ export function PageWrapper({ children, className, noPadding }: PageWrapperProps
       className={cn(
         'flex-1 overflow-y-auto',
         !noPadding && 'p-4 lg:p-6',
-        'pb-24 lg:pb-6', // espace pour la bottom nav mobile
+        'pb-24 lg:pb-6', // Space for the mobile bottom nav.
         className,
       )}
     >

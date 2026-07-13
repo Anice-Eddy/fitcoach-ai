@@ -12,29 +12,60 @@ import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons'
 import { canUseFirebaseAuth, canUseNextAuth, publicAuthProviderMode } from '@/lib/auth/provider-mode'
 import { firebaseEmailRegister } from '@/lib/firebase/client'
 import { signInBodyOpsWithFirebaseCredential } from '@/lib/firebase/bodyops-auth'
+import { useLocale } from '@/contexts/LocaleContext'
 
 const SPECIALTIES = [
+  // Stored specialty values remain stable; display labels are resolved through SPECIALTY_I18N.
   'Force & Powerlifting', 'Hypertrophie', 'Perte de poids', 'Cardio & Endurance',
   'Nutrition sportive', 'Réhabilitation', 'CrossFit', 'Course à pied',
   'Yoga & Souplesse', 'Boxe & Arts martiaux', 'Natation', 'Préparation physique',
 ]
 
 const CERTIFICATIONS = [
+  // Stored certification values remain stable; display labels are resolved through CERTIFICATION_I18N.
   'BPJEPS APT', 'BPJEPS AGFF', 'DEUG / Licence STAPS', 'DEUST MF',
   'CQP IF', 'Diplôme fédéral', 'Personal Trainer NASM', 'Personal Trainer ACE',
   'Nutrition sportive certifiée', 'CrossFit L1 / L2', 'Yoga RYT 200',
 ]
+const SPECIALTY_I18N: Record<string, string> = {
+  'Force & Powerlifting': 'strengthPowerlifting',
+  Hypertrophie: 'hypertrophy',
+  'Perte de poids': 'weightLoss',
+  'Cardio & Endurance': 'cardioEndurance',
+  'Nutrition sportive': 'sportsNutrition',
+  Réhabilitation: 'rehabilitation',
+  CrossFit: 'crossfit',
+  'Course à pied': 'running',
+  'Yoga & Souplesse': 'yogaFlexibility',
+  'Boxe & Arts martiaux': 'boxingMartialArts',
+  Natation: 'swimming',
+  'Préparation physique': 'athleticPreparation',
+}
+const CERTIFICATION_I18N: Record<string, string> = {
+  'Diplôme fédéral': 'federalDiploma',
+  'Nutrition sportive certifiée': 'certifiedSportsNutrition',
+}
 
 type Step = 1 | 2 | 3
 type FirebaseAuthError = { code?: string; message?: string }
 
-function firebaseCoachRegisterErrorMessage(error: unknown) {
+function firebaseCoachRegisterErrorMessage(error: unknown, t: (key: string) => string) {
   const code = (error as FirebaseAuthError | null)?.code
-  if (code === 'auth/email-already-in-use') return 'Cet email existe déjà. Connectez-vous avec ce compte.'
-  if (code === 'auth/weak-password') return 'Le mot de passe doit faire au moins 6 caractères.'
-  if (code === 'auth/invalid-email') return 'Email invalide.'
-  if (code === 'auth/operation-not-allowed') return 'L’inscription par email n’est pas encore activée.'
-  return 'Impossible de créer le compte coach pour le moment.'
+  if (code === 'auth/email-already-in-use') return t('auth.register.errors.emailExists')
+  if (code === 'auth/weak-password') return t('auth.register.errors.weakPassword')
+  if (code === 'auth/invalid-email') return t('auth.register.errors.invalidEmail')
+  if (code === 'auth/operation-not-allowed') return t('auth.register.errors.emailNotEnabled')
+  return t('auth.register.coach.errors.generic')
+}
+
+function coachChoiceLabel(t: (key: string) => string, namespace: string, map: Record<string, string>, value: string) {
+  const key = map[value]
+  return key ? t(`${namespace}.${key}`) : value
+}
+
+function coachChoiceSummary(t: (key: string) => string, namespace: string, map: Record<string, string>, values: string[]) {
+  if (values.length === 0) return '—'
+  return values.map((value) => coachChoiceLabel(t, namespace, map, value)).join(', ')
 }
 
 // Small registration switch for information the coach can expose to members.
@@ -59,6 +90,7 @@ function VisibilityToggle({ checked, onChange, label }: {
 
 /** Multi-step coach registration form: collects account credentials, professional profile, and certifications; posts to /api/auth/register/coach. */
 export default function CoachRegisterPage() {
+  const { t } = useLocale()
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [loading, setLoading] = useState(false)
@@ -86,7 +118,7 @@ export default function CoachRegisterPage() {
     publicRatingCount: '0',
     showPublicRating: false,
     discoveryCallEnabled: true,
-    discoveryCallTitle: 'Entretien découverte',
+    discoveryCallTitle: t('coachSettings.discovery.defaultTitle'),
     discoveryCallDuration: '30',
     showDiscoveryCall: true,
   })
@@ -112,17 +144,17 @@ export default function CoachRegisterPage() {
 
   const validateStep1 = () => {
     const errs: Record<string, string> = {}
-    if (!form.name.trim() || form.name.length < 2) errs.name = 'Le nom doit faire au moins 2 caractères'
-    if (!form.email.includes('@')) errs.email = 'Email invalide'
-    if (form.password.length < 8) errs.password = 'Le mot de passe doit faire au moins 8 caractères'
+    if (!form.name.trim() || form.name.length < 2) errs.name = t('auth.register.coach.errors.nameMin')
+    if (!form.email.includes('@')) errs.email = t('auth.register.errors.invalidEmail')
+    if (form.password.length < 8) errs.password = t('auth.register.coach.errors.passwordMin')
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
 
   const validateStep2 = () => {
     const errs: Record<string, string> = {}
-    if (form.bio.trim().length < 20) errs.bio = 'La bio doit faire au moins 20 caractères'
-    if (form.specialties.length === 0) errs.specialties = 'Sélectionnez au moins une spécialité'
+    if (form.bio.trim().length < 20) errs.bio = t('auth.register.coach.errors.bioMin')
+    if (form.specialties.length === 0) errs.specialties = t('auth.register.coach.errors.specialtyRequired')
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -136,10 +168,10 @@ export default function CoachRegisterPage() {
         form.password,
         form.name,
       )
-      toast.success('Compte créé. Vérifiez votre email puis complétez votre profil coach.')
+      toast.success(t('auth.register.coach.firebaseCreated'))
       await signInBodyOpsWithFirebaseCredential(credential, '/auth/coach/complete')
     } catch (err) {
-      setErrors({ email: firebaseCoachRegisterErrorMessage(err) })
+      setErrors({ email: firebaseCoachRegisterErrorMessage(err, t) })
       setLoading(false)
     }
   }
@@ -184,10 +216,10 @@ export default function CoachRegisterPage() {
     })
 
     if (result?.ok) {
-      toast.success('Compte coach créé ! Bienvenue sur BodyOps')
+      toast.success(t('auth.register.coach.created'))
       router.push('/coach/dashboard')
     } else {
-      toast.error('Compte créé — connectez-vous manuellement')
+      toast.error(t('auth.register.member.manualSignin'))
       router.push('/auth/signin')
     }
   }
@@ -201,8 +233,8 @@ export default function CoachRegisterPage() {
           <div className="mb-6 flex justify-center">
             <Logo href="/" size="lg" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Créer un compte coach</h1>
-          <p className="text-sm text-zinc-400 mt-1">Étape {step} sur 3</p>
+          <h1 className="text-2xl font-bold text-white">{t('auth.register.coach.title')}</h1>
+          <p className="text-sm text-zinc-400 mt-1">{t('auth.register.coach.step')} {step} {t('auth.register.coach.stepTotal')}</p>
         </div>
 
         {/* Progress */}
@@ -212,10 +244,10 @@ export default function CoachRegisterPage() {
           ))}
         </div>
 
-        {/* Step 1 — credentials */}
+        {/* Step 1: credentials */}
         {step === 1 && (
           <div className="space-y-4">
-            <h2 className="text-base font-semibold text-white">Informations de connexion</h2>
+            <h2 className="text-base font-semibold text-white">{t('auth.register.coach.connectionInfo')}</h2>
 
             {showFirebase && (
               <div className="space-y-2">
@@ -224,26 +256,26 @@ export default function CoachRegisterPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Prénom / Nom</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('auth.register.fullName')}</label>
               <input type="text" value={form.name} onChange={(e) => set('name', e.target.value)}
-                placeholder="Marie Dupont"
+                placeholder={t('auth.register.coach.namePlaceholder')}
                 className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
               {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Adresse email professionnelle</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('auth.register.coach.professionalEmail')}</label>
               <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)}
-                placeholder="coach@example.com"
+                placeholder={t('auth.register.coach.emailPlaceholder')}
                 className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
               {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Mot de passe</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('auth.password')}</label>
               <div className="relative">
                 <input type={showPassword ? 'text' : 'password'} value={form.password}
-                  onChange={(e) => set('password', e.target.value)} placeholder="8 caractères minimum"
+                  onChange={(e) => set('password', e.target.value)} placeholder={t('auth.register.passwordPlaceholder')}
                   className="w-full px-4 py-3 pr-11 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
                 <button type="button" onClick={() => setShowPassword((s) => !s)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
@@ -256,7 +288,7 @@ export default function CoachRegisterPage() {
             {showNextAuth && (
             <button type="button" onClick={() => { if (validateStep1()) setStep(2) }}
               className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors">
-              Étape suivante
+              {t('auth.register.coach.nextStep')}
             </button>
             )}
 
@@ -265,35 +297,35 @@ export default function CoachRegisterPage() {
                 className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                 {loading
                   ? <span className="size-5 rounded-full border-2 border-zinc-600 border-t-zinc-900 animate-spin" />
-                  : 'Créer mon compte coach'}
+                  : t('auth.register.coach.submit')}
               </button>
             )}
 
             {showFirebase && (
-              <p className="text-center text-xs text-zinc-500">Votre compte sera créé, puis vous pourrez compléter votre profil coach.</p>
+              <p className="text-center text-xs text-zinc-500">{t('auth.register.coach.firebaseHint')}</p>
             )}
           </div>
         )}
 
-        {/* Step 2 — coach profile */}
+        {/* Step 2: coach profile */}
         {step === 2 && (
           <form onSubmit={handleSubmit} className="space-y-5">
-            <h2 className="text-base font-semibold text-white">Votre profil coach</h2>
+            <h2 className="text-base font-semibold text-white">{t('auth.register.coach.profileTitle')}</h2>
 
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-                Bio / Présentation <span className="text-zinc-500 font-normal">(min. 20 caractères)</span>
+                {t('auth.register.coach.bioPresentation')} <span className="text-zinc-500 font-normal">{t('auth.register.coach.bioMinHint')}</span>
               </label>
               <textarea value={form.bio} onChange={(e) => set('bio', e.target.value)} rows={4}
-                placeholder="Décrivez votre approche, votre philosophie d'entraînement et ce qui vous distingue des autres coachs…"
+                placeholder={t('auth.register.coach.bioPlaceholder')}
                 className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm resize-none" />
-              <p className="mt-1 text-xs text-zinc-500">{form.bio.length} / 1000 caractères</p>
+              <p className="mt-1 text-xs text-zinc-500">{form.bio.length} / 1000 {t('auth.register.coach.characters')}</p>
               {errors.bio && <p className="text-xs text-red-400">{errors.bio}</p>}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-2">
-                Spécialités <span className="text-zinc-500 font-normal">(1–5 max)</span>
+                {t('coachSettings.specialties')} <span className="text-zinc-500 font-normal">{t('auth.register.coach.specialtiesHint')}</span>
               </label>
               <div className="flex flex-wrap gap-2">
                 {SPECIALTIES.map((s) => {
@@ -306,7 +338,8 @@ export default function CoachRegisterPage() {
                           ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]'
                           : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600 disabled:opacity-40'
                       }`}>
-                      {active && <Check className="size-3 inline mr-1" />}{s}
+                      {active && <Check className="size-3 inline mr-1" />}
+                      {coachChoiceLabel(t, 'auth.register.coach.specialtyOptions', SPECIALTY_I18N, s)}
                     </button>
                   )
                 })}
@@ -316,13 +349,13 @@ export default function CoachRegisterPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Années d&apos;expérience</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('coachSettings.yearsExperience')}</label>
                 <input type="number" min="0" max="50" value={form.yearsExperience}
                   onChange={(e) => set('yearsExperience', e.target.value)} placeholder="5"
                   className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Clients max.</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('auth.register.coach.maxClients')}</label>
                 <input type="number" min="1" max="100" value={form.memberLimit}
                   onChange={(e) => set('memberLimit', e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
@@ -330,17 +363,17 @@ export default function CoachRegisterPage() {
             </div>
 
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-              <p className="mb-3 text-xs font-medium text-zinc-300">Visibilité pour les membres</p>
+              <p className="mb-3 text-xs font-medium text-zinc-300">{t('coachSettings.visibility.title')}</p>
               <div className="space-y-2">
                 <VisibilityToggle
                   checked={form.showYearsExperience}
                   onChange={(checked) => set('showYearsExperience', checked)}
-                  label="Afficher mes années d'expérience"
+                  label={t('auth.register.coach.showMyYears')}
                 />
                 <VisibilityToggle
                   checked={form.showMemberCount}
                   onChange={(checked) => set('showMemberCount', checked)}
-                  label="Afficher mon nombre de membres"
+                  label={t('auth.register.coach.showMyMemberCount')}
                 />
               </div>
             </div>
@@ -348,25 +381,25 @@ export default function CoachRegisterPage() {
             <div className="flex gap-3">
               <button type="button" onClick={() => setStep(1)}
                 className="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-300 text-sm font-medium hover:bg-zinc-800 transition-colors">
-                Retour
+                {t('common.back')}
               </button>
               <button type="button" onClick={() => { if (validateStep2()) setStep(3) }}
                 className="flex-1 py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors">
-                Étape suivante
+                {t('auth.register.coach.nextStep')}
               </button>
             </div>
           </form>
         )}
 
-        {/* Step 3 — optional details + submit */}
+        {/* Step 3: optional details and submit */}
         {step === 3 && (
           <form onSubmit={handleSubmit} className="space-y-5">
-            <h2 className="text-base font-semibold text-white">Informations complémentaires</h2>
-            <p className="text-sm text-zinc-400">Ces informations sont optionnelles mais aident vos futurs clients à vous trouver.</p>
+            <h2 className="text-base font-semibold text-white">{t('auth.register.coach.additionalInfo')}</h2>
+            <p className="text-sm text-zinc-400">{t('auth.register.coach.additionalDescription')}</p>
 
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-2">
-                Diplômes & Certifications
+                {t('auth.register.coach.certificationsTitle')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {CERTIFICATIONS.map((c) => {
@@ -378,7 +411,8 @@ export default function CoachRegisterPage() {
                           ? 'border-[#C8F135] bg-[#C8F135]/10 text-[#C8F135]'
                           : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600'
                       }`}>
-                      {active && <Check className="size-3 inline mr-1" />}{c}
+                      {active && <Check className="size-3 inline mr-1" />}
+                      {coachChoiceLabel(t, 'auth.register.coach.certificationOptions', CERTIFICATION_I18N, c)}
                     </button>
                   )
                 })}
@@ -387,13 +421,13 @@ export default function CoachRegisterPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Ville</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('coachSettings.city')}</label>
                 <input type="text" value={form.city} onChange={(e) => set('city', e.target.value)}
-                  placeholder="Paris"
+                  placeholder={t('coachSettings.cityPlaceholder')}
                   className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Téléphone</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('coachSettings.phone')}</label>
                 <input type="tel" value={form.phone} onChange={(e) => set('phone', e.target.value)}
                   placeholder="+33 6 00 00 00 00"
                   className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
@@ -401,21 +435,21 @@ export default function CoachRegisterPage() {
             </div>
 
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-              <p className="mb-3 text-xs font-medium text-zinc-300">Étoiles affichées</p>
+              <p className="mb-3 text-xs font-medium text-zinc-300">{t('coachSettings.publicRating.title')}</p>
               <VisibilityToggle
                 checked={form.showPublicRating}
                 onChange={(checked) => set('showPublicRating', checked)}
-                label="Rendre ma note visible aux membres"
+                label={t('auth.register.coach.showRating')}
               />
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="min-w-0">
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Note</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('auth.register.coach.rating')}</label>
                   <input type="number" min="0" max="5" step="0.1" value={form.publicRating}
                     onChange={(e) => set('publicRating', e.target.value)} placeholder="4.8"
                     className="w-full min-w-0 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
                 </div>
                 <div className="min-w-0">
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Avis</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('auth.register.coach.reviews')}</label>
                   <input type="number" min="0" value={form.publicRatingCount}
                     onChange={(e) => set('publicRatingCount', e.target.value)}
                     className="w-full min-w-0 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
@@ -424,28 +458,28 @@ export default function CoachRegisterPage() {
             </div>
 
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-              <p className="mb-3 text-xs font-medium text-zinc-300">Entretien découverte</p>
+              <p className="mb-3 text-xs font-medium text-zinc-300">{t('coachSettings.discovery.title')}</p>
               <div className="space-y-2">
                 <VisibilityToggle
                   checked={form.discoveryCallEnabled}
                   onChange={(checked) => set('discoveryCallEnabled', checked)}
-                  label="Activer l'entretien découverte"
+                  label={t('coachSettings.discovery.enable')}
                 />
                 <VisibilityToggle
                   checked={form.showDiscoveryCall}
                   onChange={(checked) => set('showDiscoveryCall', checked)}
-                  label="Afficher l'entretien sur mon profil"
+                  label={t('auth.register.coach.showDiscovery')}
                 />
               </div>
               <div className="mt-3 grid grid-cols-[1fr_96px] gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Nom</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('coachSettings.displayName')}</label>
                   <input type="text" value={form.discoveryCallTitle}
                     onChange={(e) => set('discoveryCallTitle', e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Min.</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('auth.register.coach.minutes')}</label>
                   <input type="number" min="5" max="180" value={form.discoveryCallDuration}
                     onChange={(e) => set('discoveryCallDuration', e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
@@ -454,25 +488,25 @@ export default function CoachRegisterPage() {
             </div>
 
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 text-sm text-zinc-400">
-              <p className="font-medium text-zinc-300 mb-1">Récapitulatif</p>
+              <p className="font-medium text-zinc-300 mb-1">{t('auth.register.coach.summary')}</p>
               <ul className="space-y-1">
-                <li>Nom : <span className="text-white">{form.name}</span></li>
-                <li>Email : <span className="text-white">{form.email}</span></li>
-                <li>Spécialités : <span className="text-white">{form.specialties.join(', ') || '—'}</span></li>
-                <li>Expérience : <span className="text-white">{form.yearsExperience ? `${form.yearsExperience} ans` : '—'}</span></li>
+                <li>{t('auth.register.coach.nameSummary')}: <span className="text-white">{form.name}</span></li>
+                <li>{t('auth.email')} : <span className="text-white">{form.email}</span></li>
+                <li>{t('coachSettings.specialties')}: <span className="text-white">{coachChoiceSummary(t, 'auth.register.coach.specialtyOptions', SPECIALTY_I18N, form.specialties)}</span></li>
+                <li>{t('auth.register.coach.experienceSummary')}: <span className="text-white">{form.yearsExperience ? `${form.yearsExperience} ${t('auth.register.coach.years')}` : '—'}</span></li>
               </ul>
             </div>
 
             <div className="flex gap-3">
               <button type="button" onClick={() => setStep(2)}
                 className="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-300 text-sm font-medium hover:bg-zinc-800 transition-colors">
-                Retour
+                {t('common.back')}
               </button>
               <button type="submit" disabled={loading}
                 className="flex-1 py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                 {loading
                   ? <span className="size-5 rounded-full border-2 border-zinc-600 border-t-zinc-900 animate-spin" />
-                  : 'Créer mon compte coach'}
+                  : t('auth.register.coach.submit')}
               </button>
             </div>
           </form>
@@ -480,10 +514,10 @@ export default function CoachRegisterPage() {
 
         <div className="flex items-center justify-between mt-6">
           <Link href="/auth/register" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
-            <ChevronLeft className="size-3" /> Changer de profil
+            <ChevronLeft className="size-3" /> {t('auth.register.coach.changeProfile')}
           </Link>
           <Link href="/auth/signin" className="text-xs text-zinc-400 hover:text-[#C8F135] transition-colors">
-            Déjà un compte ? Connexion
+            {t('auth.register.alreadyAccount')}
           </Link>
         </div>
       </div>

@@ -1,10 +1,11 @@
 'use client'
-// Bannière contextuelle d'upgrade — affichée sur les features réservées Pro+
+// Contextual upgrade banner displayed for Pro+ features.
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Sparkles, X } from 'lucide-react'
 import { useState } from 'react'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface UpgradePromptProps {
   feature:     string
@@ -14,6 +15,7 @@ interface UpgradePromptProps {
 
 /** Dismissible upgrade banner shown on Pro-gated features; renders a compact inline variant or a full card depending on the compact prop. */
 export function UpgradePrompt({ feature, description, compact }: UpgradePromptProps) {
+  const { t } = useLocale()
   const [dismissed, setDismissed] = useState(false)
   if (dismissed) return null
 
@@ -24,7 +26,7 @@ export function UpgradePrompt({ feature, description, compact }: UpgradePromptPr
         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#C8F135]/10 border border-[#C8F135]/20 text-[#C8F135] text-xs font-medium hover:bg-[#C8F135]/20 transition-colors"
       >
         <Sparkles className="size-3" />
-        Passer à Pro
+        {t('common.upgrade')}
       </Link>
     )
   }
@@ -38,7 +40,7 @@ export function UpgradePrompt({ feature, description, compact }: UpgradePromptPr
       <button
         onClick={() => setDismissed(true)}
         className="absolute top-3 right-3 text-zinc-500 hover:text-white"
-        aria-label="Fermer"
+        aria-label={t('common.close')}
       >
         <X className="size-4" />
       </button>
@@ -49,17 +51,17 @@ export function UpgradePrompt({ feature, description, compact }: UpgradePromptPr
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white mb-0.5">
-            {feature} — fonctionnalité Pro
+            {feature} — {t('upgradePrompt.proFeature')}
           </p>
           <p className="text-xs text-zinc-400">
-            {description ?? 'Passez à Pro pour débloquer cette fonctionnalité et bien plus encore.'}
+            {description ?? t('upgradePrompt.description')}
           </p>
           <Link
             href="/pricing"
             className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#C8F135] text-zinc-900 text-xs font-bold hover:bg-[#d4f54d] transition-colors"
           >
             <Sparkles className="size-3" />
-            Voir les plans — dès 9,99$/mois
+            {t('upgradePrompt.viewPlans')}
           </Link>
         </div>
       </div>

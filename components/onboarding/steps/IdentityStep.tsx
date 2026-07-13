@@ -1,9 +1,11 @@
 'use client'
-// Étape 1 : identité — prénom, âge, sexe
+// Step 1: identity - first name, age, sex.
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { identitySchema, type IdentityData } from '@/utils/validators'
+import { useLocale } from '@/contexts/LocaleContext'
+import { translateOnboardingError } from '../validation-errors'
 
 interface Props {
   defaultValues?: Partial<IdentityData>
@@ -12,12 +14,13 @@ interface Props {
 }
 
 const GENDER_OPTIONS = [
-  { value: 'MALE',   label: 'Homme' },
-  { value: 'FEMALE', label: 'Femme' },
+  { value: 'MALE',   labelKey: 'onboarding.identity.male' },
+  { value: 'FEMALE', labelKey: 'onboarding.identity.female' },
 ]
 
 /** Onboarding step that collects the user's first name, age, and gender. */
 export function IdentityStep({ defaultValues, onNext, onBack }: Props) {
+  const { t } = useLocale()
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<IdentityData>({
     resolver:      zodResolver(identitySchema),
     defaultValues: defaultValues ?? { gender: 'MALE' },
@@ -27,27 +30,27 @@ export function IdentityStep({ defaultValues, onNext, onBack }: Props) {
   return (
     <form onSubmit={handleSubmit(onNext)} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-zinc-300 mb-2">Prénom</label>
+        <label className="block text-sm font-medium text-zinc-300 mb-2">{t('onboarding.identity.firstName')}</label>
         <input
           {...register('firstName')}
-          placeholder="Ton prénom"
+          placeholder={t('onboarding.identity.firstNamePlaceholder')}
           className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors"
         />
-        {errors.firstName && <p className="mt-1.5 text-xs text-red-400">{errors.firstName.message}</p>}
+        {errors.firstName && <p className="mt-1.5 text-xs text-red-400">{translateOnboardingError(errors.firstName.message, t)}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-zinc-300 mb-2">Âge</label>
+        <label className="block text-sm font-medium text-zinc-300 mb-2">{t('onboarding.identity.age')}</label>
         <input
           {...register('age', { valueAsNumber: true })}
           type="number" min={13} max={100} placeholder="25"
           className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors"
         />
-        {errors.age && <p className="mt-1.5 text-xs text-red-400">{errors.age.message}</p>}
+        {errors.age && <p className="mt-1.5 text-xs text-red-400">{translateOnboardingError(errors.age.message, t)}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-zinc-300 mb-3">Sexe</label>
+        <label className="block text-sm font-medium text-zinc-300 mb-3">{t('onboarding.identity.gender')}</label>
         <div className="grid grid-cols-3 gap-3">
           {GENDER_OPTIONS.map((opt) => (
             <button
@@ -60,7 +63,7 @@ export function IdentityStep({ defaultValues, onNext, onBack }: Props) {
                   : 'border-zinc-700 bg-zinc-800 text-zinc-300 hover:border-zinc-600'
               }`}
             >
-              {opt.label}
+              {t(opt.labelKey)}
             </button>
           ))}
         </div>
@@ -70,12 +73,12 @@ export function IdentityStep({ defaultValues, onNext, onBack }: Props) {
         {onBack && (
           <button type="button" onClick={onBack}
             className="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-300 font-medium hover:bg-zinc-800 transition-colors">
-            ← Retour
+            {t('onboarding.back')}
           </button>
         )}
         <button type="submit"
           className="flex-1 py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-bold hover:bg-[#d4f54d] transition-colors">
-          Continuer →
+          {t('onboarding.continue')}
         </button>
       </div>
     </form>

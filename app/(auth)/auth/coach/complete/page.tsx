@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { Logo } from '@/components/ui/Logo'
 import { CoachCompletionForm } from './CoachCompletionForm'
+import { ContinueDashboardLink } from './ContinueDashboardLink'
 
 export const dynamic = 'force-dynamic'
 
@@ -72,9 +73,7 @@ export default async function CompleteCoachProfilePage() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 flex items-center justify-between gap-4">
           <Logo href="/" size="lg" />
-          <a href="/coach/dashboard" className="text-sm text-zinc-400 transition-colors hover:text-white">
-            Continuer vers le dashboard
-          </a>
+          <ContinueDashboardLink />
         </div>
         <CoachCompletionForm
           initialProfile={{

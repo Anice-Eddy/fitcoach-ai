@@ -1,4 +1,4 @@
-// Import JSON avec validation Zod avant application des données
+// JSON import with Zod validation before applying data.
 import { z } from 'zod'
 
 const importSchema = z.object({
@@ -14,7 +14,7 @@ export type ImportPayload = z.infer<typeof importSchema>
 export function validateImport(raw: unknown): { success: true; data: ImportPayload } | { success: false; error: string } {
   const result = importSchema.safeParse(raw)
   if (!result.success) {
-    return { success: false, error: 'Fichier invalide ou version incompatible.' }
+    return { success: false, error: 'Invalid file or incompatible version.' }
   }
   return { success: true, data: result.data }
 }
@@ -23,8 +23,8 @@ export function validateImport(raw: unknown): { success: true; data: ImportPaylo
 export async function readJsonFile(file: File): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload  = (e) => { try { resolve(JSON.parse(e.target?.result as string)) } catch { reject(new Error('JSON invalide')) } }
-    reader.onerror = () => reject(new Error('Erreur de lecture'))
+    reader.onload  = (e) => { try { resolve(JSON.parse(e.target?.result as string)) } catch { reject(new Error('Invalid JSON')) } }
+    reader.onerror = () => reject(new Error('Read error'))
     reader.readAsText(file)
   })
 }

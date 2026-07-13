@@ -13,14 +13,14 @@ import {
 import { createAITools } from '@/lib/ai/tools'
 import type { AIMessageInput, MemberAccess } from '@/lib/ai/types'
 
-const DISCLAIMER = '\n\n---\n*⚠️ Les recommandations de BodyOps sont fournies à titre informatif uniquement et ne constituent pas un avis médical. Consultez un professionnel de santé avant tout changement significatif de régime alimentaire ou d\'entraînement.*'
+const DISCLAIMER = '\n\n---\n*BodyOps recommendations are informational only and do not constitute medical advice. Consult a healthcare professional before making major changes to your diet or training.*'
 
 const providerService = new AIProviderService()
 
 // Assembles the coach prompt: task + member message + compact context summary.
 function buildPrompt(task: string, contextSummary: string, message?: string) {
   return [
-    message ? `MESSAGE: ${message}` : `TÂCHE: ${task}`,
+    message ? `MESSAGE: ${message}` : `TASK: ${task}`,
     contextSummary,
   ].filter(Boolean).join('\n\n')
 }
@@ -33,7 +33,7 @@ export class AIService {
     if (!context) throw new Error('MEMBER_NOT_FOUND')
 
     const prompt = buildPrompt(
-      `Répondre comme ${AGENT_LABELS[agentType]} dans un chat IA fitness.`,
+      `Reply as ${AGENT_LABELS[agentType]} in a fitness AI chat.`,
       serializeContextCompact(context),
       message,
     )
@@ -138,7 +138,7 @@ export class AIService {
     if (!hasEnoughData) {
       return {
         insufficientData: true,
-        response: 'Données insuffisantes pour générer une analyse IA fiable.',
+        response: 'Insufficient data to generate a reliable AI analysis.',
       }
     }
 

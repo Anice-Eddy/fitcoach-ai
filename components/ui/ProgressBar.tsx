@@ -1,5 +1,5 @@
 'use client'
-// Barre de progression réutilisable avec animation et label optionnel
+// Reusable progress bar with animation and optional label.
 
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'

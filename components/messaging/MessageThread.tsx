@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, MessageSquare } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { MessageBubble, type MessageBubbleData } from './MessageBubble'
+import { useLocale } from '@/contexts/LocaleContext'
 
 type MessageThreadProps<T extends MessageBubbleData> = {
   loading: boolean
@@ -22,6 +23,7 @@ export function MessageThread<T extends MessageBubbleData>({
   isMine,
   labelFor,
 }: MessageThreadProps<T>) {
+  const { t } = useLocale()
   const scrollRef = useRef<HTMLDivElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
 
@@ -35,7 +37,7 @@ export function MessageThread<T extends MessageBubbleData>({
   if (loading) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center p-4">
-        <p className="text-center text-xs text-zinc-500">Chargement…</p>
+        <p className="text-center text-xs text-zinc-500">{t('common.loading')}</p>
       </div>
     )
   }
@@ -75,8 +77,8 @@ export function MessageThread<T extends MessageBubbleData>({
           type="button"
           onClick={scrollToTop}
           className="pointer-events-auto rounded-full border border-zinc-700 bg-zinc-950/90 p-2 text-zinc-300 shadow-lg shadow-black/20 backdrop-blur transition-colors hover:border-[#C8F135]/60 hover:text-[#C8F135]"
-          aria-label="Remonter au début de la conversation"
-          title="Remonter"
+          aria-label={t('messagesPage.scrollTopAria')}
+          title={t('messagesPage.scrollTop')}
         >
           <ArrowUp className="size-4" />
         </button>
@@ -84,8 +86,8 @@ export function MessageThread<T extends MessageBubbleData>({
           type="button"
           onClick={scrollToBottom}
           className="pointer-events-auto rounded-full border border-zinc-700 bg-zinc-950/90 p-2 text-zinc-300 shadow-lg shadow-black/20 backdrop-blur transition-colors hover:border-[#C8F135]/60 hover:text-[#C8F135]"
-          aria-label="Descendre au dernier message"
-          title="Descendre"
+          aria-label={t('messagesPage.scrollBottomAria')}
+          title={t('messagesPage.scrollBottom')}
         >
           <ArrowDown className="size-4" />
         </button>

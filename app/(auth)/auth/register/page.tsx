@@ -3,9 +3,12 @@
 import Link from 'next/link'
 import { Dumbbell, Users } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
+import { useLocale } from '@/contexts/LocaleContext'
 
 /** Registration entry page: presents a choice between member and coach account creation. */
 export default function RegisterChoicePage() {
+  const { t } = useLocale()
+
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
@@ -14,8 +17,8 @@ export default function RegisterChoicePage() {
           <div className="mb-6 flex justify-center">
             <Logo href="/" size="lg" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Créer un compte</h1>
-          <p className="text-sm text-zinc-400 mt-1">Choisissez votre profil pour commencer</p>
+          <h1 className="text-2xl font-bold text-white">{t('auth.signUp')}</h1>
+          <p className="text-sm text-zinc-400 mt-1">{t('auth.registerChoiceDescription')}</p>
         </div>
 
         <div className="grid gap-4">
@@ -28,10 +31,10 @@ export default function RegisterChoicePage() {
             </div>
             <div>
               <p className="font-semibold text-white group-hover:text-[#C8F135] transition-colors">
-                Je suis un membre
+                {t('auth.iAmMember')}
               </p>
               <p className="mt-1 text-sm text-zinc-400">
-                Suivez vos séances d&apos;entraînement, votre nutrition et vos progrès. Accès gratuit.
+                {t('auth.memberRegisterDescription')}
               </p>
             </div>
           </Link>
@@ -45,19 +48,19 @@ export default function RegisterChoicePage() {
             </div>
             <div>
               <p className="font-semibold text-white group-hover:text-[#C8F135] transition-colors">
-                Je suis un coach
+                {t('auth.iAmCoach')}
               </p>
               <p className="mt-1 text-sm text-zinc-400">
-                Gérez vos clients, créez des programmes personnalisés et suivez leurs progrès.
+                {t('auth.coachRegisterDescription')}
               </p>
             </div>
           </Link>
         </div>
 
         <p className="text-center text-sm text-zinc-400 mt-8">
-          Déjà un compte ?{' '}
+          {t('auth.hasAccount')}{' '}
           <Link href="/auth/signin" className="text-[#C8F135] hover:underline font-medium">
-            Se connecter
+            {t('auth.signIn')}
           </Link>
         </p>
       </div>

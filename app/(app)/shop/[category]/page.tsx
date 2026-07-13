@@ -12,6 +12,7 @@ import { getAffiliateProductsForMarket } from '@/lib/affiliates/products'
 import { useUserStore }        from '@/stores/userStore'
 import { ChevronLeft, ShoppingBag } from 'lucide-react'
 import type { AffiliateCategory, AffiliateMarket } from '@/types'
+import { useLocale } from '@/contexts/LocaleContext'
 
 const SLUG_TO_CAT: Record<string, AffiliateCategory> = {
   supplements: 'SUPPLEMENTS',
@@ -33,6 +34,7 @@ function detectMarket(): AffiliateMarket {
 }
 
 export default function CategoryPage() {
+  const { t } = useLocale()
   const params     = useParams()
   const router     = useRouter()
   const { profile } = useUserStore()
@@ -75,7 +77,7 @@ export default function CategoryPage() {
 
   return (
     <>
-      <Header title={meta.label} />
+      <Header title={t(`shop.categories.${categoryId.toLowerCase()}`)} />
       <PageWrapper>
         <div className="space-y-6">
 
@@ -85,15 +87,15 @@ export default function CategoryPage() {
               href="/shop"
               className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors mb-4"
             >
-              <ChevronLeft className="size-4" /> Toutes les catégories
+              <ChevronLeft className="size-4" /> {t('shop.allCategories')}
             </Link>
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-xl bg-[#C8F135]/10">
                 <Icon className="size-5 text-[#C8F135]" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">{meta.label}</h1>
-                <p className="text-xs text-zinc-500">{products.length} produits · {market === 'CA' ? 'Canada' : 'France'}</p>
+                <h1 className="text-xl font-bold text-white">{t(`shop.categories.${categoryId.toLowerCase()}`)}</h1>
+                <p className="text-xs text-zinc-500">{products.length} {products.length !== 1 ? t('shop.products') : t('shop.product')} · {market === 'CA' ? 'Canada' : 'France'}</p>
               </div>
             </div>
           </div>
@@ -120,9 +122,9 @@ export default function CategoryPage() {
           {products.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <ShoppingBag className="size-10 text-zinc-600 mb-3" />
-              <p className="text-zinc-400 font-medium">Aucun produit dans cette catégorie</p>
+              <p className="text-zinc-400 font-medium">{t('shop.noProductInCategory')}</p>
               <Link href="/shop" className="mt-3 text-sm text-[#C8F135] hover:underline">
-                Voir toutes les catégories
+                {t('shop.viewAllCategories')}
               </Link>
             </div>
           ) : (

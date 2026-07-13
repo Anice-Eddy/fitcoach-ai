@@ -1,5 +1,5 @@
-// Seed Prisma — utilisateurs demo + produits affiliés
-// Exécution : npx prisma db seed
+// Prisma seed: demo users and affiliate products.
+// Run with: npx prisma db seed
 
 import { PrismaClient, SubscriptionPlan, SubscriptionStatus, Gender, ActivityLevel, FitnessGoal, FitnessLevel, AffiliateCategory, WeightUnit, HeightUnit } from '@prisma/client'
 import { AFFILIATE_PRODUCTS } from '../lib/affiliates/products'
@@ -7,9 +7,9 @@ import { AFFILIATE_PRODUCTS } from '../lib/affiliates/products'
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('🌱 Seeding database...')
+  console.log('Seeding database...')
 
-  // --- Exercises (bibliothèque partagée) ---
+  // --- Exercises (shared library) ---
   const exerciseData = [
     { id: 'ex-bench-press',  name: 'Développé couché',    instructions: ['Allongez-vous sur le banc.', 'Saisissez la barre à largeur d\'épaules.', 'Descendez jusqu\'à la poitrine.', 'Poussez vers le haut.'],             muscleGroups: ['CHEST', 'TRICEPS', 'SHOULDERS'], equipment: ['BARBELL', 'BENCH'], isCompound: true },
     { id: 'ex-squat',        name: 'Squat barre',          instructions: ['Barre sur les trapèzes.', 'Pieds à largeur d\'épaules.', 'Descendez dos droit.', 'Remontez en poussant sur les talons.'],                     muscleGroups: ['QUADS', 'GLUTES', 'HAMSTRINGS'], equipment: ['BARBELL'],        isCompound: true },
@@ -137,7 +137,7 @@ async function main() {
     },
   })
 
-  // --- Body metrics Alice (30 jours) ---
+  // --- Alice body metrics (30 days) ---
   const today = new Date()
   for (let i = 29; i >= 0; i--) {
     const d = new Date(today)
@@ -151,7 +151,7 @@ async function main() {
     })
   }
 
-  // --- Workout program PPL pour Alice ---
+  // --- Alice PPL workout program ---
   const program = await prisma.workoutProgram.create({
     data: {
       userId:       alice.id,
@@ -225,7 +225,7 @@ async function main() {
     ],
   })
 
-  // --- Produits affiliés ---
+  // --- Affiliate products ---
   for (const p of AFFILIATE_PRODUCTS) {
     await prisma.affiliateProduct.upsert({
       where:  { id: p.id },
@@ -247,12 +247,12 @@ async function main() {
     })
   }
 
-  console.log('✅ Seed terminé')
-  console.log(`   - 10 exercices créés`)
-  console.log(`   - Users : alice (Pro), bob (Free), coach (Business)`)
-  console.log(`   - Programme PPL Alice (3 séances, 9 exerciseLogs)`)
-  console.log(`   - 30 métriques poids Alice`)
-  console.log(`   - ${AFFILIATE_PRODUCTS.length} produits affiliés`)
+  console.log('Seed completed')
+  console.log('   - 10 exercises created')
+  console.log('   - Users: alice (Pro), bob (Free), coach (Business)')
+  console.log('   - Alice PPL program (3 sessions, 9 exerciseLogs)')
+  console.log('   - 30 Alice weight metrics')
+  console.log(`   - ${AFFILIATE_PRODUCTS.length} affiliate products`)
 }
 
 main()

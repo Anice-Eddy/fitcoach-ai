@@ -1,4 +1,4 @@
-// Store abonnement : plan actif, vérification des droits d'accès
+// Subscription store: active plan and feature access checks.
 // deps: npm install zustand
 
 import { create } from 'zustand'
@@ -17,7 +17,7 @@ interface SubscriptionState {
   setPlan:    (plan: Plan, status: SubStatus, periodEnd?: string) => void
   setLoading: (loading: boolean) => void
 
-  // Helpers d'accès aux fonctionnalités
+  // Feature access helpers.
   isPro:      () => boolean
   isElite:    () => boolean
   isBusiness: () => boolean

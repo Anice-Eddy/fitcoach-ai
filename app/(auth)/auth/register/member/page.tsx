@@ -13,20 +13,22 @@ import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons'
 import { canUseFirebaseAuth, canUseNextAuth, publicAuthProviderMode } from '@/lib/auth/provider-mode'
 import { firebaseEmailRegister } from '@/lib/firebase/client'
 import { signInBodyOpsWithFirebaseCredential } from '@/lib/firebase/bodyops-auth'
+import { useLocale } from '@/contexts/LocaleContext'
 
 type FirebaseAuthError = { code?: string; message?: string }
 
-function firebaseRegisterErrorMessage(error: unknown) {
+function firebaseRegisterErrorMessage(error: unknown, t: (key: string) => string) {
   const code = (error as FirebaseAuthError | null)?.code
-  if (code === 'auth/email-already-in-use') return 'Cet email existe déjà. Connecte-toi avec ce compte.'
-  if (code === 'auth/weak-password') return 'Le mot de passe doit faire au moins 6 caractères.'
-  if (code === 'auth/invalid-email') return 'Email invalide.'
-  if (code === 'auth/operation-not-allowed') return 'L’inscription par email n’est pas encore activée.'
-  return 'Impossible de créer le compte pour le moment.'
+  if (code === 'auth/email-already-in-use') return t('auth.register.errors.emailExists')
+  if (code === 'auth/weak-password') return t('auth.register.errors.weakPassword')
+  if (code === 'auth/invalid-email') return t('auth.register.errors.invalidEmail')
+  if (code === 'auth/operation-not-allowed') return t('auth.register.errors.emailNotEnabled')
+  return t('auth.register.errors.generic')
 }
 
 /** Member registration form: collects name, email, and password; posts to /api/auth/register and redirects on success. */
 export default function MemberRegisterPage() {
+  const { t } = useLocale()
   const router = useRouter()
   const { status } = useSession()
   const [showPassword, setShowPassword] = useState(false)
@@ -60,10 +62,10 @@ export default function MemberRegisterPage() {
           form.password,
           form.name,
         )
-        toast.success('Compte créé. Vérifie ton email pour sécuriser ton compte.')
+        toast.success(t('auth.register.member.firebaseCreated'))
         await signInBodyOpsWithFirebaseCredential(credential, '/onboarding')
       } catch (err) {
-        setErrors({ email: firebaseRegisterErrorMessage(err) })
+        setErrors({ email: firebaseRegisterErrorMessage(err, t) })
         setLoading(false)
       }
       return
@@ -85,7 +87,7 @@ export default function MemberRegisterPage() {
         })
       }
       if (Object.keys(fieldErrors).length === 0) {
-        fieldErrors.email = data?.message ?? data?.error ?? 'Impossible de créer ce compte.'
+        fieldErrors.email = data?.message ?? data?.error ?? t('auth.register.errors.generic')
       }
       setErrors(fieldErrors)
       setLoading(false)
@@ -104,10 +106,10 @@ export default function MemberRegisterPage() {
     })
 
     if (result?.ok) {
-      toast.success('Compte créé ! Bienvenue sur BodyOps')
+      toast.success(t('auth.register.member.created'))
       router.push('/onboarding')
     } else {
-      toast.error('Compte créé — connectez-vous manuellement')
+      toast.error(t('auth.register.member.manualSignin'))
       router.push('/auth/signin')
     }
   }
@@ -121,8 +123,8 @@ export default function MemberRegisterPage() {
           <div className="mb-6 flex justify-center">
             <Logo href="/" size="lg" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Créer un compte membre</h1>
-          <p className="text-sm text-zinc-400 mt-1">Gratuit, sans carte bancaire</p>
+          <h1 className="text-2xl font-bold text-white">{t('auth.register.member.title')}</h1>
+          <p className="text-sm text-zinc-400 mt-1">{t('auth.register.free')}</p>
         </div>
 
         {showFirebase && (
@@ -136,32 +138,32 @@ export default function MemberRegisterPage() {
             <div className="w-full border-t border-zinc-800" />
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="bg-zinc-950 px-3 text-zinc-500">ou avec votre email</span>
+            <span className="bg-zinc-950 px-3 text-zinc-500">{t('auth.orWithEmail')}</span>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Prénom / Nom</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('auth.register.fullName')}</label>
             <input name="name" type="text" autoComplete="name" value={form.name} onChange={handleChange}
-              placeholder="Jean Dupont"
+              placeholder={t('auth.register.member.namePlaceholder')}
               className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
             {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Adresse email</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('auth.email')}</label>
             <input name="email" type="email" autoComplete="email" value={form.email} onChange={handleChange}
-              placeholder="jean@example.com"
+              placeholder={t('auth.emailPlaceholder')}
               className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
             {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Mot de passe</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">{t('auth.password')}</label>
             <div className="relative">
               <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password"
-                value={form.password} onChange={handleChange} placeholder="8 caractères minimum"
+                value={form.password} onChange={handleChange} placeholder={t('auth.register.passwordPlaceholder')}
                 className="w-full px-4 py-3 pr-11 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#C8F135] transition-colors text-sm" />
               <button type="button" onClick={() => setShowPassword((s) => !s)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
@@ -174,17 +176,17 @@ export default function MemberRegisterPage() {
           {(showFirebase || showNextAuth) && (
           <button type="submit" disabled={loading}
             className="w-full py-3 rounded-xl bg-[#C8F135] text-zinc-900 font-semibold text-sm hover:bg-[#d4f54d] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-            {loading ? <span className="size-5 rounded-full border-2 border-zinc-600 border-t-zinc-900 animate-spin" /> : 'Créer mon compte athlète'}
+            {loading ? <span className="size-5 rounded-full border-2 border-zinc-600 border-t-zinc-900 animate-spin" /> : t('auth.register.member.submit')}
           </button>
           )}
         </form>
 
         <div className="flex items-center justify-between mt-5">
           <Link href="/auth/register" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
-            <ChevronLeft className="size-3" /> Retour
+            <ChevronLeft className="size-3" /> {t('common.back')}
           </Link>
           <Link href="/auth/signin" className="text-xs text-zinc-400 hover:text-[#C8F135] transition-colors">
-            Déjà un compte ? Connexion
+            {t('auth.register.alreadyAccount')}
           </Link>
         </div>
       </div>

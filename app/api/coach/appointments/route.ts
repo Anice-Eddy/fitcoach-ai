@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
     if (!session?.user?.email) {
       return NextResponse.json(
-        { error: 'Non authentifié' },
+        { error: 'Unauthenticated' },
         { status: 401 }
       )
     }
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
     if (!coach?.coachProfile) {
       return NextResponse.json(
-        { error: 'Vous n\'êtes pas un coach' },
+        { error: 'Coach access required' },
         { status: 403 }
       )
     }
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('GET /api/coach/appointments:', error)
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Server error' },
       { status: 500 }
     )
   }
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 
     if (!session?.user?.email) {
       return NextResponse.json(
-        { error: 'Non authentifié' },
+        { error: 'Unauthenticated' },
         { status: 401 }
       )
     }
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
     if (!coach?.coachProfile) {
       return NextResponse.json(
-        { error: 'Vous n\'êtes pas un coach' },
+        { error: 'Coach access required' },
         { status: 403 }
       )
     }
@@ -105,8 +105,8 @@ export async function POST(req: NextRequest) {
         coachId:         coach.coachProfile.id,
         recipientUserId: memberId,
         type:            'APPOINTMENT',
-        title:           `Nouveau rendez-vous: ${title}`,
-        message:         `Votre coach a planifié un rendez-vous le ${new Date(scheduledAt).toLocaleDateString('fr-FR')}`,
+        title:           `New appointment: ${title}`,
+        message:         `Your coach scheduled an appointment on ${new Date(scheduledAt).toLocaleDateString('en-US')}`,
         relatedId:       appointment.id,
       },
     })
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('POST /api/coach/appointments:', error)
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Server error' },
       { status: 500 }
     )
   }

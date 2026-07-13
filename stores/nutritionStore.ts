@@ -1,4 +1,4 @@
-// Store nutrition : plan actif, repas du jour, macros consommées
+// Nutrition store: active plan, daily meals, and consumed macros.
 // deps: npm install zustand
 
 import { create } from 'zustand'
@@ -43,7 +43,7 @@ interface NutritionState {
   setLoading:     (loading: boolean) => void
   setError:       (error: string | null) => void
 
-  // Getters calculés
+  // Derived getters.
   getTodayTotals: () => { calories: number; proteinG: number; carbsG: number; fatG: number }
 }
 
@@ -61,7 +61,7 @@ export const useNutritionStore = create<NutritionState>()(
       logMeal: (meal) =>
         set((s) => {
           const today = localDateKey()
-          // Chaque nouvelle journée repart avec un journal nutrition vide.
+          // Each new day starts with an empty nutrition log.
           const baseMeals = s.currentDate === today ? s.todayMeals.filter(isLoggedToday) : []
           return { currentDate: today, todayMeals: [...baseMeals.filter((m) => m.mealId !== meal.mealId), meal] }
         }),

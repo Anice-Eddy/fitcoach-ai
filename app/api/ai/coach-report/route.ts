@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const { access, error } = await getAIAccess(parsed.data.memberId)
   if (error) return error
   if (access!.role !== 'coach') {
-    return NextResponse.json({ error: 'Réservé aux coachs pour un membre assigné.' }, { status: 403 })
+    return NextResponse.json({ error: 'Reserved for coaches with an assigned member.' }, { status: 403 })
   }
 
   try {
@@ -26,8 +26,8 @@ export async function POST(req: Request) {
       'COACH_REPORT',
       'COACH_REPORT',
       [
-        'Génère une synthèse complète pour le coach.',
-        'Inclure résumé de progression, problèmes, recommandations, priorités et prochaines actions.',
+        'Generate a complete summary for the coach.',
+        'Include progress summary, issues, recommendations, priorities, and next actions.',
       ].join(' '),
     )
     return NextResponse.json(result)

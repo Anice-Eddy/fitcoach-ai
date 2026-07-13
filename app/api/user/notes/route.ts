@@ -20,7 +20,7 @@ const updateSchema = createSchema.partial().extend({ id: z.string().min(1) })
 // Authenticates the session and returns userId, or an error response.
 async function getUser() {
   const session = await auth()
-  if (!session?.user?.id) return { error: NextResponse.json({ error: 'Non authentifié' }, { status: 401 }) }
+  if (!session?.user?.id) return { error: NextResponse.json({ error: 'Unauthenticated' }, { status: 401 }) }
   return { userId: session.user.id }
 }
 
@@ -64,7 +64,7 @@ export async function PATCH(req: NextRequest) {
 
   const existing = await prisma.userNote.findUnique({ where: { id } })
   if (!existing || existing.userId !== userId) {
-    return NextResponse.json({ error: 'Note introuvable' }, { status: 404 })
+    return NextResponse.json({ error: 'Note not found' }, { status: 404 })
   }
 
   const note = await prisma.userNote.update({ where: { id }, data })
@@ -77,11 +77,11 @@ export async function DELETE(req: NextRequest) {
   if (error) return error
 
   const { id } = await req.json()
-  if (!id) return NextResponse.json({ error: 'id manquant' }, { status: 400 })
+  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
   const existing = await prisma.userNote.findUnique({ where: { id } })
   if (!existing || existing.userId !== userId) {
-    return NextResponse.json({ error: 'Note introuvable' }, { status: 404 })
+    return NextResponse.json({ error: 'Note not found' }, { status: 404 })
   }
 
   await prisma.userNote.delete({ where: { id } })
