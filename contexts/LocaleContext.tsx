@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { detectLocale, getMessages, translate, type Locale, type Messages } from '@/lib/i18n'
+import { getMessages, translate, type Locale, type Messages } from '@/lib/i18n'
 import { useUIStore } from '@/stores/uiStore'
 
 interface LocaleContextValue {
@@ -25,19 +25,17 @@ function persistLocale(locale: Locale) {
   document.cookie = `bodyops:locale=${locale}; path=/; max-age=31536000; SameSite=Lax`
 }
 
-/** Provides locale state and the t() translation function to the component tree; syncs with localStorage after hydration. */
+/** Provides locale state and the t() translation function; the server supplies browser/cookie locale, explicit user changes persist it. */
 export function LocaleProvider({ children, initialLocale = 'fr' }: { children: ReactNode; initialLocale?: Locale }) {
   const [locale,   setLocaleState] = useState<Locale>(initialLocale)
   const [messages, setMessages]    = useState<Messages>(getMessages(initialLocale))
   const setUILanguage = useUIStore(state => state.setLanguage)
 
   useEffect(() => {
-    const detected = detectLocale(initialLocale)
-    setLocaleState(detected)
-    setMessages(getMessages(detected))
-    setUILanguage(detected)
-    document.documentElement.lang = detected
-    persistLocale(detected)
+    setLocaleState(initialLocale)
+    setMessages(getMessages(initialLocale))
+    setUILanguage(initialLocale)
+    document.documentElement.lang = initialLocale
   }, [initialLocale, setUILanguage])
 
   useEffect(() => {

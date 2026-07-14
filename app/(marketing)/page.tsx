@@ -6,10 +6,10 @@ import Link from 'next/link'
 import { BarChart2, ShoppingBag, Star, ArrowRight, Dumbbell, Zap } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { CurrentYear } from '@/components/ui/CurrentYear'
-import { LanguageToggle } from '@/components/i18n/LanguageToggle'
 import { PageBackground } from '@/components/landing/PageBackground'
 import { HeroSection } from '@/components/landing/HeroSection'
 import { useLocale } from '@/contexts/LocaleContext'
+import { formattedAppVersion } from '@/lib/app-version'
 
 const FEATURES = [
   { icon: Zap,         titleKey: 'landing.features.aiPrograms.title',        descKey: 'landing.features.aiPrograms.description' },
@@ -43,7 +43,6 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 py-5">
           <Logo href="/" size="md" />
           <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
-            <LanguageToggle compact />
             <Link href="/auth/signin" className="rounded-xl bg-zinc-800 px-3 py-2 text-xs transition-colors hover:bg-zinc-700 sm:text-sm">{t('auth.signIn')}</Link>
             <Link href="/auth/register" className="rounded-xl bg-[#C8F135] px-3 py-2 text-xs font-bold text-zinc-900 transition-colors hover:bg-[#d4f54d] sm:text-sm">{t('landing.freeTrial')}</Link>
           </div>
@@ -110,7 +109,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-zinc-800/60 px-6 py-8 text-sm text-zinc-500">
         <div className="mx-auto max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-3">
-          <span>© <CurrentYear /> BodyOps</span>
+          <span>© <CurrentYear /> BodyOps · {formattedAppVersion()}</span>
           <div className="flex items-center gap-5">
             <Link href="/terms"   className="hover:text-zinc-300 transition-colors">{t('common.terms')}</Link>
             <Link href="/privacy" className="hover:text-zinc-300 transition-colors">{t('common.privacy')}</Link>

@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { Logo } from '@/components/ui/Logo'
 import { PageBackground } from '@/components/landing/PageBackground'
 import { BackButton } from '@/components/ui/BackButton'
-import { LanguageToggle } from '@/components/i18n/LanguageToggle'
 import { useLocale } from '@/contexts/LocaleContext'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -28,7 +27,6 @@ export function PrivacyContent() {
       <header className="relative z-10 flex items-center gap-4 border-b border-zinc-800/60 px-6 py-5">
         <Logo href="/" size="md" />
         <div className="ml-auto flex items-center gap-2">
-          <LanguageToggle compact />
           <BackButton className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-white" />
         </div>
       </header>
