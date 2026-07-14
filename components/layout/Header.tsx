@@ -6,6 +6,7 @@ import { UserDropdown } from '@/components/ui/UserDropdown'
 import { NotificationPanel } from '@/components/ui/NotificationPanel'
 import { LanguageToggle } from '@/components/i18n/LanguageToggle'
 import { useLocale } from '@/contexts/LocaleContext'
+import { formattedAppVersion } from '@/lib/app-version'
 
 interface HeaderProps { title?: string; titleKey?: string }
 
@@ -30,6 +31,9 @@ export function Header({ title, titleKey }: HeaderProps) {
       )}
 
       <div className="ml-auto flex items-center gap-3">
+        <span className="hidden rounded-full border border-zinc-800 px-2 py-1 text-[11px] font-medium text-zinc-500 sm:inline-flex">
+          {formattedAppVersion()}
+        </span>
         <LanguageToggle compact />
         <NotificationPanel />
         <UserDropdown />

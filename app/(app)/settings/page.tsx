@@ -15,6 +15,7 @@ import { DeleteAccountModal } from '@/components/ui/DeleteAccountModal'
 import { useMyCoach } from '@/lib/coach/use-my-coach'
 import { signOutAndClear } from '@/lib/auth/client-session'
 import { useLocale } from '@/contexts/LocaleContext'
+import { formattedAppVersion } from '@/lib/app-version'
 import { GOAL_LABEL_KEYS } from '@/lib/i18n/profile-label-keys'
 
 // Shared settings constants that mirror onboarding steps; stored values stay stable while labels are localized at render time.
@@ -867,7 +868,7 @@ export default function SettingsPage() {
           </button>
         </section>
 
-            <p className="text-xs text-center text-zinc-600 xl:col-span-2">BodyOps v1.0</p>
+            <p className="text-xs text-center text-zinc-600 xl:col-span-2">BodyOps {formattedAppVersion()}</p>
           </div>
         </div>
         </div>

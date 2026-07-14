@@ -15,6 +15,7 @@ import { useLocale } from '@/contexts/LocaleContext'
 import { NavNotificationBadge } from '@/components/navigation/NavNotificationBadge'
 import { unreadCountForRoute } from '@/lib/notifications/unread-communication'
 import { useUnreadCommunicationCounts } from '@/lib/notifications/use-unread-message-count'
+import { formattedAppVersion } from '@/lib/app-version'
 
 const NAV_KEYS = [
   { href: '/dashboard',    key: 'nav.dashboard',    icon: LayoutDashboard },
@@ -89,7 +90,7 @@ export function Sidebar() {
         </nav>
 
         <div className="px-4 py-4 border-t border-zinc-800">
-          <p className="text-xs text-zinc-600 text-center">BodyOps · v1.0</p>
+          <p className="text-xs text-zinc-600 text-center">BodyOps · {formattedAppVersion()}</p>
         </div>
       </motion.aside>
     </>

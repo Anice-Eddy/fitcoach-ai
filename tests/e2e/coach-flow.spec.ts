@@ -115,6 +115,9 @@ test.describe('Coaching flow', () => {
         language: 'fr',
         darkMode: true,
         onboardingCompleted: true,
+        healthDataConsentAt: new Date().toISOString(),
+        healthDataConsentVersion: '2026-07-14',
+        healthDataConsentLocale: 'fr',
       }))
     })
 

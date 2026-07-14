@@ -7,41 +7,71 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: production-db-migrations
+  group: production-release-migrate-deploy
   cancel-in-progress: false
 
 jobs:
-  migrate:
-    name: Migrate database and deploy
+  release:
+    name: Create semantic release
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-latest
-    environment: Prod
     timeout-minutes: 10
+    outputs:
+      release_sha: ${{ steps.release-ref.outputs.release_sha }}
     env:
-      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-      VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+      DATABASE_URL: postgresql://release:release@localhost:5432/bodyops_release
 
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
-      - name: Check production secrets
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create semantic release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run release
+
+      - name: Resolve released ref
+        id: release-ref
+        run: |
+          git fetch origin main --depth=1
+          echo "release_sha=$(git rev-parse origin/main)" >> "$GITHUB_OUTPUT"
+
+  migrate:
+    name: Migrate production database
+    needs: release
+    runs-on: ubuntu-latest
+    environment: Prod
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.release_sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Check production database secret
         run: |
           if [ -z "$DATABASE_URL" ]; then
             echo "Missing GitHub secret: PRODUCTION_DATABASE_URL"
-            exit 1
-          fi
-          if [ -z "$VERCEL_DEPLOY_HOOK_URL" ]; then
-            echo "Missing GitHub secret: VERCEL_DEPLOY_HOOK_URL"
             exit 1
           fi
 
@@ -60,6 +90,23 @@ jobs:
 
       - name: Confirm migration status
         run: npx prisma migrate status
+
+  deploy:
+    name: Deploy Vercel production
+    needs: migrate
+    runs-on: ubuntu-latest
+    environment: Prod
+    timeout-minutes: 5
+    env:
+      VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+
+    steps:
+      - name: Check deploy hook secret
+        run: |
+          if [ -z "$VERCEL_DEPLOY_HOOK_URL" ]; then
+            echo "Missing GitHub secret: VERCEL_DEPLOY_HOOK_URL"
+            exit 1
+          fi
 
       - name: Trigger Vercel production deployment
         run: curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL"

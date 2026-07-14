@@ -17,6 +17,7 @@ if (process.env.NEXT_PHASE === 'phase-production-build') {
 }
 
 const enablePWA = process.env.ENABLE_PWA === 'true'
+const { version: packageVersion } = require('./package.json')
 
 const withPWA = require('next-pwa')({
   dest:            'public',
@@ -27,6 +28,9 @@ const withPWA = require('next-pwa')({
 })
 
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION ?? packageVersion,
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },

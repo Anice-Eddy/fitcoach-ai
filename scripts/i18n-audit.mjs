@@ -20,8 +20,6 @@ const allowedFragments = [
   'Apple Health',
   'Body',
   'BodyOps',
-  'BodyOps · v1.0',
-  'BodyOps v1.0',
   'CARDIO',
   'Ops',
   'SpO₂',
