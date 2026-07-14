@@ -167,11 +167,20 @@ describe('coach public visibility settings', () => {
       discoveryCallTitle: 'Entretien découverte',
       discoveryCallDuration: 30,
       showDiscoveryCall: true,
+      legalAcceptance: {
+        termsAccepted: true,
+        privacyAccepted: true,
+        policyVersion: '2026-07-14',
+        locale: 'fr',
+      },
     }))
 
     expect(res.status).toBe(201)
     expect(prisma.user.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
+        termsAcceptedAt: expect.any(Date),
+        privacyAcceptedAt: expect.any(Date),
+        legalPolicyVersion: '2026-07-14',
         coachProfile: {
           create: expect.objectContaining({
             showMemberCount: false,

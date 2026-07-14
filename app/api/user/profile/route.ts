@@ -10,6 +10,7 @@ import { prisma } from '@/lib/prisma/client'
 import { updateProfileSchema } from '@/utils/validators'
 import { calculateFitnessProfile } from '@/utils/fitness-calculations'
 import type { ActivityLevel, FitnessGoal, Gender } from '@prisma/client'
+import { profileHealthConsentData } from '@/lib/legal/consent'
 
 /** Returns the member's profile. A user may also own a CoachProfile; the two spaces stay separated by table. */
 export async function GET() {
@@ -31,7 +32,17 @@ export async function PATCH(req: Request) {
   const parsed = updateProfileSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
-  const data = parsed.data
+  const {
+    healthDataConsentAccepted,
+    healthDataConsentVersion,
+    healthDataConsentLocale,
+    ...data
+  } = parsed.data
+  const healthConsentData = profileHealthConsentData({
+    healthDataConsentAccepted,
+    policyVersion: healthDataConsentVersion,
+    locale: healthDataConsentLocale,
+  })
 
   // Recalculate BMI/BMR/TDEE when physical data changes
   let calculatedFields = {}
@@ -57,8 +68,8 @@ export async function PATCH(req: Request) {
 
   const profile = await prisma.profile.upsert({
     where:  { userId: session.user.id },
-    create: { userId: session.user.id, firstName: session.user.name?.split(' ')[0] ?? 'User', age: 25, gender: 'MALE', weightKg: 70, heightCm: 170, activityLevel: 'MODERATELY_ACTIVE', fitnessGoal: 'MAINTENANCE', fitnessLevel: 'BEGINNER', ...data, ...calculatedFields } as never,
-    update: { ...data, ...calculatedFields } as never,
+    create: { userId: session.user.id, firstName: session.user.name?.split(' ')[0] ?? 'User', age: 25, gender: 'MALE', weightKg: 70, heightCm: 170, activityLevel: 'MODERATELY_ACTIVE', fitnessGoal: 'MAINTENANCE', fitnessLevel: 'BEGINNER', ...data, ...calculatedFields, ...(healthConsentData ?? {}) } as never,
+    update: { ...data, ...calculatedFields, ...(healthConsentData ?? {}) } as never,
   })
 
   return NextResponse.json(profile)

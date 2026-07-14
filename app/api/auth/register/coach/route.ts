@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma/client'
+import { isLegalAcceptanceComplete, userLegalAcceptanceData } from '@/lib/legal/consent'
+import { optionalLegalAcceptanceSchema } from '@/lib/legal/validation'
 
 const schema = z.object({
   name:            z.string().min(2, 'Name must be at least 2 characters'),
@@ -25,6 +27,7 @@ const schema = z.object({
   discoveryCallTitle: z.string().min(2).max(80).default('Discovery call'),
   discoveryCallDuration: z.number().int().min(5).max(180).default(30),
   showDiscoveryCall: z.boolean().default(true),
+  legalAcceptance: optionalLegalAcceptanceSchema,
 })
 
 /** Registers a new coach-only account with full profile data (bio, specialties, certifications, etc.); hashes the password and returns 201 on success. */
@@ -36,6 +39,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 422 })
   }
 
+  if (!isLegalAcceptanceComplete(parsed.data.legalAcceptance)) {
+    return NextResponse.json({
+      error: { legal: ['Terms and privacy policy acceptance is required.'] },
+    }, { status: 422 })
+  }
 
   const {
     name,
@@ -58,6 +66,7 @@ export async function POST(req: Request) {
     discoveryCallDuration,
     showDiscoveryCall,
   } = parsed.data
+  const legalAcceptance = userLegalAcceptanceData(parsed.data.legalAcceptance)
 
   const existing = await prisma.user.findUnique({
     where:  { email },
@@ -79,6 +88,7 @@ export async function POST(req: Request) {
       email,
       password: hashed,
       provider: 'EMAIL',
+      ...(legalAcceptance ?? {}),
       coachProfile: {
         create: {
           bio,

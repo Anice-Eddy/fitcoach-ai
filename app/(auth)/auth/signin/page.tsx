@@ -13,6 +13,7 @@ import { canUseFirebaseAuth, canUseNextAuth, publicAuthProviderMode } from '@/li
 import { firebaseEmailSignIn } from '@/lib/firebase/client'
 import { createBodyOpsNextAuthSession, syncBodyOpsWithFirebaseCredential } from '@/lib/firebase/bodyops-auth'
 import { useLocale } from '@/contexts/LocaleContext'
+import { legalAcceptanceForLocale } from '@/lib/legal/consent'
 
 type FirebaseAuthError = { code?: string; message?: string }
 
@@ -39,7 +40,7 @@ export default function SignInPage() {
 }
 
 function SignInForm() {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const router       = useRouter()
   const searchParams = useSearchParams()
   const { status } = useSession()
@@ -205,8 +206,23 @@ function SignInForm() {
         </div>
 
         {showFirebase && (
-          <div className="mb-3">
-            <SocialAuthButtons callbackUrl={mode === 'coach' ? '/coach/dashboard' : '/dashboard'} disabled={loading} />
+          <div className="mb-3 space-y-2">
+            <SocialAuthButtons
+              callbackUrl={mode === 'coach' ? '/coach/dashboard' : '/dashboard'}
+              disabled={loading}
+              legalAcceptance={legalAcceptanceForLocale(locale)}
+            />
+            <p className="text-center text-[11px] leading-relaxed text-zinc-500">
+              {t('legalConsent.socialNotice.prefix')}{' '}
+              <Link href="/terms" target="_blank" className="text-zinc-400 underline-offset-4 hover:text-white hover:underline">
+                {t('common.terms')}
+              </Link>{' '}
+              {t('legalConsent.account.and')}{' '}
+              <Link href="/privacy" target="_blank" className="text-zinc-400 underline-offset-4 hover:text-white hover:underline">
+                {t('common.privacy')}
+              </Link>
+              .
+            </p>
           </div>
         )}
 

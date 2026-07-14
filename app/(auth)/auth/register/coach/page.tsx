@@ -13,6 +13,8 @@ import { canUseFirebaseAuth, canUseNextAuth, publicAuthProviderMode } from '@/li
 import { firebaseEmailRegister } from '@/lib/firebase/client'
 import { signInBodyOpsWithFirebaseCredential } from '@/lib/firebase/bodyops-auth'
 import { useLocale } from '@/contexts/LocaleContext'
+import { LegalConsentCheckbox } from '@/components/legal/LegalConsentCheckbox'
+import { legalAcceptanceForLocale } from '@/lib/legal/consent'
 
 const SPECIALTIES = [
   // Stored specialty values remain stable; display labels are resolved through SPECIALTY_I18N.
@@ -90,10 +92,11 @@ function VisibilityToggle({ checked, onChange, label }: {
 
 /** Multi-step coach registration form: collects account credentials, professional profile, and certifications; posts to /api/auth/register/coach. */
 export default function CoachRegisterPage() {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [loading, setLoading] = useState(false)
+  const [legalAccepted, setLegalAccepted] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const authMode = publicAuthProviderMode()
@@ -147,6 +150,7 @@ export default function CoachRegisterPage() {
     if (!form.name.trim() || form.name.length < 2) errs.name = t('auth.register.coach.errors.nameMin')
     if (!form.email.includes('@')) errs.email = t('auth.register.errors.invalidEmail')
     if (form.password.length < 8) errs.password = t('auth.register.coach.errors.passwordMin')
+    if (!legalAccepted) errs.legal = t('legalConsent.account.error')
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -169,7 +173,7 @@ export default function CoachRegisterPage() {
         form.name,
       )
       toast.success(t('auth.register.coach.firebaseCreated'))
-      await signInBodyOpsWithFirebaseCredential(credential, '/auth/coach/complete')
+      await signInBodyOpsWithFirebaseCredential(credential, '/auth/coach/complete', legalAcceptanceForLocale(locale))
     } catch (err) {
       setErrors({ email: firebaseCoachRegisterErrorMessage(err, t) })
       setLoading(false)
@@ -191,6 +195,7 @@ export default function CoachRegisterPage() {
         publicRating:    form.publicRating ? Number(form.publicRating) : null,
         publicRatingCount: Number(form.publicRatingCount) || 0,
         discoveryCallDuration: Number(form.discoveryCallDuration) || 30,
+        legalAcceptance: legalAcceptanceForLocale(locale),
       }),
     })
 
@@ -249,9 +254,22 @@ export default function CoachRegisterPage() {
           <div className="space-y-4">
             <h2 className="text-base font-semibold text-white">{t('auth.register.coach.connectionInfo')}</h2>
 
+            <LegalConsentCheckbox
+              checked={legalAccepted}
+              onChange={(checked) => {
+                setLegalAccepted(checked)
+                setErrors((e) => ({ ...e, legal: '' }))
+              }}
+              error={errors.legal}
+            />
+
             {showFirebase && (
               <div className="space-y-2">
-                <SocialAuthButtons callbackUrl="/auth/coach/complete" disabled={loading} />
+                <SocialAuthButtons
+                  callbackUrl="/auth/coach/complete"
+                  disabled={loading || !legalAccepted}
+                  legalAcceptance={legalAccepted ? legalAcceptanceForLocale(locale) : undefined}
+                />
               </div>
             )}
 

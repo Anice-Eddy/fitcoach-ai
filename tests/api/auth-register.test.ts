@@ -35,6 +35,12 @@ const coachPayload = {
   yearsExperience:   '6',
   city:              'Paris',
   phone:             '+33 6 12 34 56 78',
+  legalAcceptance: {
+    termsAccepted: true,
+    privacyAccepted: true,
+    policyVersion: '2026-07-14',
+    locale: 'fr',
+  },
 }
 
 describe('POST /api/auth/register', () => {
@@ -52,6 +58,19 @@ describe('POST /api/auth/register', () => {
 
     expect(res.status).toBe(409)
     expect(json.error.email[0]).toBe('This email is already in use. Sign in to access your account.')
+    expect(prisma.user.create).not.toHaveBeenCalled()
+  })
+
+  it('requires terms and privacy acceptance before creating an account', async () => {
+    const res = await POST(makeRequest({
+      name: 'Member Alex',
+      email: 'member@example.com',
+      password: 'password123',
+    }))
+    const json = await res.json()
+
+    expect(res.status).toBe(422)
+    expect(json.error.legal[0]).toBe('Terms and privacy policy acceptance is required.')
     expect(prisma.user.create).not.toHaveBeenCalled()
   })
 })

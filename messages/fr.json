@@ -127,11 +127,35 @@
   },
   "legal": {
     "lastUpdated": "Dernière mise à jour :",
-    "lastUpdatedDate": "31 mai 2026"
+    "lastUpdatedDate": "14 juillet 2026"
+  },
+  "legalConsent": {
+    "account": {
+      "title": "Protection des données",
+      "body": "Cette acceptation est enregistrée avec la version des documents afin de sécuriser ton compte et nos obligations de transparence.",
+      "checkbox": "J’ai lu et j’accepte les",
+      "and": "et la",
+      "error": "Tu dois accepter les conditions et la politique de confidentialité pour créer un compte."
+    },
+    "health": {
+      "title": "Consentement données fitness et santé",
+      "body": "BodyOps va traiter des données sensibles ou proches de la santé afin de personnaliser tes programmes, ta nutrition, ton suivi et les recommandations IA. Tu peux retirer ce consentement ou supprimer tes données depuis les paramètres.",
+      "items": {
+        "body": "Mesures corporelles, poids, taille, progression et photos si tu les ajoutes.",
+        "goals": "Objectifs sportifs, niveau, contraintes physiques et blessures déclarées.",
+        "nutrition": "Préférences alimentaires, restrictions, repas et objectifs nutritionnels.",
+        "ai": "Contexte transmis à l’IA uniquement pour générer des conseils personnalisés."
+      },
+      "linksPrefix": "Avant de continuer, consulte la",
+      "accept": "J’accepte le traitement de mes données fitness/santé"
+    },
+    "socialNotice": {
+      "prefix": "En continuant avec un fournisseur social, vous acceptez les"
+    }
   },
   "privacy": {
     "title": "Politique de confidentialité",
-    "metaDescription": "Comment BodyOps collecte, utilise et protège vos données personnelles.",
+    "metaDescription": "Comment BodyOps collecte, utilise et protège vos données personnelles selon le RGPD, la CNIL et PIPEDA.",
     "termsLink": "Conditions d'utilisation →",
     "table": {
       "category": "Catégorie",
@@ -141,74 +165,126 @@
     "rows": {
       "identity": {
         "category": "Identité",
-        "data": "Prénom, âge, genre",
-        "purpose": "Personnalisation du programme"
+        "data": "Nom, prénom, e-mail, photo de profil, langue, pays ou région si disponible.",
+        "purpose": "Créer le compte, sécuriser l’accès, personnaliser l’expérience et afficher le bon espace membre/coach."
       },
       "body": {
-        "category": "Corps",
-        "data": "Poids, taille, mensurations",
-        "purpose": "Calcul IMC, macros, progression"
+        "category": "Données corporelles",
+        "data": "Âge, genre, poids, taille, mensurations, photos de progression si ajoutées.",
+        "purpose": "Calculer les indicateurs, objectifs nutritionnels, progression et recommandations personnalisées."
       },
       "goals": {
         "category": "Objectifs",
-        "data": "Objectif fitness, niveau, focus corporel",
-        "purpose": "Génération de programmes IA"
+        "data": "Objectif fitness, niveau, disponibilité, équipement, fréquence d’entraînement et focus corporel.",
+        "purpose": "Générer et adapter des programmes d’entraînement cohérents."
       },
       "health": {
-        "category": "Santé",
-        "data": "Blessures, zones à ménager (optionnel)",
-        "purpose": "Sécurité des exercices proposés"
+        "category": "Données fitness/santé sensibles",
+        "data": "Blessures déclarées, zones à ménager, récupération, sommeil, hydratation, fréquence cardiaque ou données Apple Health si activées.",
+        "purpose": "Réduire les recommandations inadaptées, améliorer le suivi et respecter les limites déclarées."
       },
       "nutrition": {
         "category": "Alimentation",
-        "data": "Préférences, allergies, régime (optionnel)",
-        "purpose": "Plans nutritionnels adaptés"
+        "data": "Repas, aliments, calories, macros, allergies, restrictions, préférences et aliments créés par les utilisateurs.",
+        "purpose": "Suivre l’alimentation, proposer des objectifs et améliorer les plans nutritionnels."
+      },
+      "training": {
+        "category": "Entraînement",
+        "data": "Séances, exercices, charges, séries, répétitions, cardio, velocity tracking et bar path tracking si utilisés.",
+        "purpose": "Suivre la performance, l’historique, la progression et la qualité d’exécution."
+      },
+      "coach": {
+        "category": "Coaching",
+        "data": "Notes coach/membre, rendez-vous, disponibilités, messages et données visibles par le coach selon le contexte.",
+        "purpose": "Permettre l’accompagnement, la prise de rendez-vous, le suivi et la communication."
+      },
+      "ai": {
+        "category": "Assistant IA",
+        "data": "Messages, contexte sportif, objectifs, historiques utiles et paramètres d’IA activés.",
+        "purpose": "Générer des réponses, programmes, analyses, synthèses et recommandations personnalisées."
+      },
+      "payments": {
+        "category": "Paiement",
+        "data": "Identifiants client, statut d’abonnement et informations de facturation traitées par le prestataire de paiement.",
+        "purpose": "Gérer les abonnements, factures, essais et accès premium."
       },
       "login": {
         "category": "Connexion",
-        "data": "Adresse e-mail, mot de passe haché",
-        "purpose": "Authentification sécurisée"
+        "data": "Identifiant Firebase, fournisseur de connexion, e-mail vérifié, jetons de session, logs techniques de sécurité.",
+        "purpose": "Authentifier l’utilisateur, empêcher l’accès non autorisé et maintenir la sécurité du service."
       }
     },
     "sections": {
       "who": {
         "title": "1. Qui sommes-nous ?",
-        "body": "BodyOps est une application de coaching sportif en ligne. Dans le cadre du Règlement Général sur la Protection des Données (RGPD — UE 2016/679), BodyOps agit en qualité de responsable du traitement pour les données personnelles de ses utilisateurs."
+        "body": "BodyOps est une application de coaching sportif, nutrition, progression et assistant IA. Pour les données collectées dans l’application, BodyOps agit en qualité de responsable du traitement au sens du RGPD. Cette politique explique aussi nos engagements de transparence et de consentement significatif pour les utilisateurs canadiens soumis à PIPEDA."
       },
       "data": {
         "title": "2. Données collectées",
-        "intro": "Nous collectons uniquement les données nécessaires au fonctionnement du service :"
+        "intro": "Nous appliquons le principe de minimisation : les données ci-dessous sont collectées uniquement lorsqu’elles sont nécessaires au service, fournies par l’utilisateur ou activées via une intégration."
       },
       "legalBasis": {
         "title": "3. Base légale du traitement",
-        "intro": "Nos traitements reposent sur :",
-        "consent": "Votre consentement — collecté lors de l'inscription et gérable depuis les paramètres.",
-        "contract": "L'exécution du contrat — données nécessaires pour vous fournir le service.",
-        "legitimate": "Intérêt légitime — amélioration de l'algorithme IA sur la base de données agrégées anonymisées."
+        "intro": "Selon le traitement, BodyOps s’appuie sur :",
+        "consent": "Le consentement explicite — notamment pour les données fitness/santé, les intégrations connectées et certaines fonctionnalités IA.",
+        "contract": "L’exécution du service — création de compte, authentification, programmes, nutrition, messagerie, rendez-vous et suivi.",
+        "legitimate": "L’intérêt légitime — sécurité, prévention des abus, amélioration technique, statistiques agrégées et anonymisées lorsque possible."
+      },
+      "sensitive": {
+        "title": "4. Données fitness/santé",
+        "body": "Les données liées au corps, à la nutrition, aux blessures, à l’activité, à la récupération et aux objets connectés peuvent être sensibles. BodyOps les traite uniquement pour fournir le service demandé, avec un consentement explicite dans l’onboarding, et ne les utilise pas pour de la publicité ciblée."
+      },
+      "ai": {
+        "title": "5. Traitement par l’IA",
+        "body": "Lorsque vous utilisez l’assistant IA ou la génération de programmes, BodyOps peut transmettre à un fournisseur IA le minimum de contexte nécessaire : objectif, niveau, contraintes, historique utile et message envoyé. Les réponses IA sont indicatives et ne remplacent pas un professionnel de santé ou un coach qualifié."
+      },
+      "coachSharing": {
+        "title": "6. Données visibles par un coach",
+        "body": "Si vous choisissez un coach ou si un coach vous accompagne, certaines données de suivi peuvent être visibles par ce coach : profil sportif, objectifs, notes, rendez-vous, messages, progression, entraînement et nutrition. Les données sont utilisées pour l’accompagnement et ne doivent pas être réutilisées hors BodyOps sans votre accord."
+      },
+      "processors": {
+        "title": "7. Sous-traitants et services tiers",
+        "body": "BodyOps utilise des prestataires techniques pour l’authentification, l’hébergement, la base de données, les paiements, les e-mails de sécurité, les services IA et les intégrations connectées. Ces prestataires traitent les données uniquement pour fournir leurs services à BodyOps, selon leurs propres garanties de sécurité et de confidentialité."
+      },
+      "international": {
+        "title": "8. Transferts hors pays",
+        "body": "Certains prestataires peuvent traiter des données hors de votre pays de résidence, notamment aux États-Unis, au Canada ou dans l’Union européenne. Lorsque cela est nécessaire, BodyOps s’appuie sur des garanties contractuelles, des mesures de sécurité et une limitation stricte des données transférées."
       },
       "retention": {
-        "title": "4. Conservation des données",
-        "body": "Vos données sont conservées pendant la durée de vie de votre compte, puis supprimées dans un délai de 30 jours après clôture. Les données de log techniques sont supprimées après 12 mois."
+        "title": "9. Conservation des données",
+        "body": "Les données du compte sont conservées tant que le compte est actif. Après suppression du compte, BodyOps supprime ou anonymise les données personnelles dans un délai raisonnable, sauf obligation légale, sécurité, litige ou sauvegarde temporaire. Les journaux techniques sont conservés pour une durée limitée."
       },
       "sharing": {
-        "title": "5. Partage des données",
-        "body": "BodyOps ne vend ni ne loue vos données à des tiers. Certains sous-traitants interviennent pour des services techniques comme l'hébergement, la base de données et les services IA."
+        "title": "10. Partage des données",
+        "body": "BodyOps ne vend pas les données personnelles. Les données peuvent être partagées avec un coach choisi, des sous-traitants techniques, les autorités si la loi l’exige, ou un prestataire de paiement pour gérer l’abonnement. Les données ne sont pas partagées à des fins publicitaires."
       },
       "rights": {
-        "title": "6. Vos droits (RGPD)",
-        "body": "Conformément au RGPD, vous pouvez demander l'accès, la rectification, l'effacement, la portabilité, l'opposition ou le retrait du consentement depuis les paramètres de l'application."
+        "title": "11. Vos droits",
+        "body": "Vous pouvez demander l’accès, la correction, l’export, la suppression, la limitation, l’opposition ou le retrait du consentement. Les utilisateurs européens peuvent exercer les droits prévus par le RGPD. Les utilisateurs canadiens peuvent demander l’accès, la correction et des informations sur les pratiques de traitement conformément à PIPEDA."
       },
       "security": {
-        "title": "7. Sécurité",
-        "body": "Nous appliquons des mesures de sécurité techniques et organisationnelles : chiffrement HTTPS, mots de passe hachés, accès base de données restreints et journalisation des accès."
+        "title": "12. Sécurité",
+        "body": "BodyOps applique des mesures techniques et organisationnelles : HTTPS, authentification Firebase, sessions sécurisées, accès restreints, suppression de compte, limitation des secrets côté serveur et minimisation des données exposées. Aucune sécurité n’est absolue, mais les mesures sont adaptées à la sensibilité des données."
+      },
+      "breach": {
+        "title": "13. Incident de sécurité",
+        "body": "En cas d’incident impliquant des données personnelles, BodyOps évalue le risque, documente l’événement et notifie les utilisateurs ou autorités compétentes lorsque la loi l’exige, notamment en cas de risque réel de préjudice important au Canada ou de risque pour les droits et libertés en Europe."
       },
       "cookies": {
-        "title": "8. Cookies",
-        "body": "BodyOps utilise uniquement des cookies strictement nécessaires à l'authentification. Aucun cookie publicitaire ou de traçage tiers n'est déposé."
+        "title": "14. Cookies et stockage local",
+        "body": "BodyOps utilise les cookies ou stockages strictement nécessaires à l’authentification, à la sécurité, aux préférences, au thème, à la langue et au bon fonctionnement de l’application. Aucun cookie publicitaire tiers n’est utilisé sans consentement distinct."
+      },
+      "children": {
+        "title": "15. Mineurs",
+        "body": "BodyOps n’est pas destiné aux enfants. L’âge minimum renseigné dans l’application est de 13 ans. Si une autorisation parentale est requise dans votre pays, elle doit être obtenue avant l’utilisation du service."
+      },
+      "canada": {
+        "title": "16. Utilisateurs au Canada",
+        "body": "Conformément aux principes PIPEDA, BodyOps fournit des informations compréhensibles sur les données collectées, les finalités, les tiers, les choix disponibles et les conséquences raisonnablement prévisibles. Vous pouvez nous contacter pour toute question ou plainte relative à la confidentialité."
       },
       "contact": {
-        "title": "9. Contact",
-        "body": "Pour toute question relative à la protection de vos données, utilisez la page de contact accessible depuis les Paramètres de l'application."
+        "title": "17. Contact",
+        "body": "Pour toute question relative à la protection des données, utilisez les paramètres de l’application ou contactez le support BodyOps. Si vous êtes en Europe, vous pouvez également saisir votre autorité de protection des données. Au Canada, vous pouvez contacter le Commissariat à la protection de la vie privée du Canada."
       }
     }
   },

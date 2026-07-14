@@ -126,6 +126,9 @@ export const updateProfileSchema = onboardingSchema.partial().extend({
   darkMode:            z.boolean().optional(),
   onboardingCompleted: z.boolean().optional(),
   injuries:            z.array(injuryEntrySchema).optional(),
+  healthDataConsentAccepted: z.boolean().optional(),
+  healthDataConsentVersion:  z.string().optional(),
+  healthDataConsentLocale:   z.string().max(10).nullable().optional(),
 })
 
 // --- API schema: body metric creation ---

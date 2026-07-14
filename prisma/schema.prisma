@@ -190,6 +190,10 @@ model User {
   firebaseEmailVerified Boolean         @default(false) @map("email_verified")
   lastLoginAt        DateTime?          @map("last_login_at")
   authMigratedAt     DateTime?          @map("auth_migrated_at")
+  termsAcceptedAt    DateTime?          @map("terms_accepted_at")
+  privacyAcceptedAt  DateTime?          @map("privacy_accepted_at")
+  legalPolicyVersion String?            @map("legal_policy_version")
+  legalConsentLocale String?            @map("legal_consent_locale")
   stripeCustomerId   String?            @unique
   subscriptionPlan   SubscriptionPlan   @default(FREE)
   subscriptionStatus SubscriptionStatus @default(INACTIVE)
@@ -285,6 +289,9 @@ model Profile {
   language            String  @default("fr")
   darkMode            Boolean @default(true)
   onboardingCompleted Boolean @default(false)
+  healthDataConsentAt      DateTime? @map("health_data_consent_at")
+  healthDataConsentVersion String?   @map("health_data_consent_version")
+  healthDataConsentLocale  String?   @map("health_data_consent_locale")
 
   // AI settings
   aiMemoryEnabled  Boolean @default(true)

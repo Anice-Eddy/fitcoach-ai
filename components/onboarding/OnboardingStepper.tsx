@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
+import { ShieldCheck } from 'lucide-react'
 import { UnitsStep }        from './steps/UnitsStep'
 import { IdentityStep }     from './steps/IdentityStep'
 import { MeasurementsStep } from './steps/MeasurementsStep'
@@ -19,11 +21,17 @@ import type { OnboardingData } from '@/utils/validators'
 import { getInitialOnboardingStep, profileToOnboardingData } from '@/utils/onboarding-profile'
 import type { UserProfile } from '@/lib/storage/StorageAdapter'
 import { useLocale } from '@/contexts/LocaleContext'
+import { healthDataConsentForLocale } from '@/lib/legal/consent'
 
 // This component can be used both for first onboarding and profile updates.
 // It therefore hydrates its form from the current profile before showing steps.
 
 const STEP_KEYS = ['units', 'identity', 'measurements', 'activity', 'goals', 'health', 'diet', 'summary'] as const
+type OnboardingDraft = Partial<OnboardingData & {
+  weightUnit: 'KG'|'LB'
+  heightUnit: 'CM'|'FT_IN'
+  healthDataConsentAccepted: boolean
+}>
 
 const slideVariants = {
   enter:  (dir: number) => ({ x: dir > 0 ? 60 : -60, opacity: 0 }),
@@ -41,10 +49,11 @@ export function OnboardingStepper() {
   const [direction, setDir] = useState(1)
   const [saving, setSaving] = useState(false)
   const [hydrating, setHydrating] = useState(true)
-  const [data, setData]     = useState<Partial<OnboardingData & { weightUnit: 'KG'|'LB'; heightUnit: 'CM'|'FT_IN' }>>({
+  const [data, setData]     = useState<OnboardingDraft>({
     weightUnit: 'KG',
     heightUnit: 'CM',
   })
+  const [healthConsentAccepted, setHealthConsentAccepted] = useState(false)
 
   const storage = new LocalStorageAdapter()
 
@@ -64,16 +73,19 @@ export function OnboardingStepper() {
       }
 
       const source = (profile ?? cloudProfile ?? localProfile) as UserProfile | null
-      const nextData = {
+      const hasRecordedHealthConsent = Boolean(source?.healthDataConsentAt || (progress?.data as OnboardingDraft | undefined)?.healthDataConsentAccepted)
+      const nextData: OnboardingDraft = {
         weightUnit: 'KG' as const,
         heightUnit: 'CM' as const,
         ...(source ? profileToOnboardingData(source) : {}),
         ...(progress?.data ?? {}),
+        healthDataConsentAccepted: hasRecordedHealthConsent,
       }
 
       if (!mounted) return
       if (source) setProfile(source)
       setData(nextData)
+      setHealthConsentAccepted(hasRecordedHealthConsent)
       setStep(getInitialOnboardingStep({
         completed: source?.onboardingCompleted,
         savedStep: progress?.step ?? null,
@@ -100,6 +112,13 @@ export function OnboardingStepper() {
     setStep((s) => s - 1)
   }
 
+  const acceptHealthConsent = async () => {
+    const merged: OnboardingDraft = { ...data, healthDataConsentAccepted: true }
+    setData(merged)
+    setHealthConsentAccepted(true)
+    await storage.saveOnboardingProgress(step, merged as Partial<OnboardingData>)
+  }
+
   const finish = async () => {
     setSaving(true)
     try {
@@ -109,6 +128,7 @@ export function OnboardingStepper() {
         language: locale,
         darkMode: true,
         id:       crypto.randomUUID(),
+        ...healthDataConsentForLocale(locale),
       }
       let savedProfile = await storage.saveProfile(payload)
 
@@ -143,6 +163,42 @@ export function OnboardingStepper() {
     return (
       <div className="w-full max-w-lg mx-auto rounded-xl border border-zinc-800 bg-zinc-900 p-6 text-sm text-zinc-400">
         {t('onboarding.loadingProfile')}
+      </div>
+    )
+  }
+
+  if (!healthConsentAccepted) {
+    return (
+      <div className="w-full max-w-lg mx-auto rounded-2xl border border-zinc-800 bg-zinc-950/90 p-6 shadow-2xl shadow-black/30">
+        <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-[#C8F135]/10 text-[#C8F135]">
+          <ShieldCheck className="size-6" />
+        </div>
+        <h2 className="text-xl font-bold text-white">{t('legalConsent.health.title')}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-zinc-400">{t('legalConsent.health.body')}</p>
+        <ul className="mt-4 space-y-2 text-sm text-zinc-400">
+          <li>{t('legalConsent.health.items.body')}</li>
+          <li>{t('legalConsent.health.items.goals')}</li>
+          <li>{t('legalConsent.health.items.nutrition')}</li>
+          <li>{t('legalConsent.health.items.ai')}</li>
+        </ul>
+        <p className="mt-4 text-xs leading-relaxed text-zinc-500">
+          {t('legalConsent.health.linksPrefix')}{' '}
+          <Link href="/privacy" target="_blank" className="text-[#C8F135] underline-offset-4 hover:underline">
+            {t('common.privacy')}
+          </Link>{' '}
+          {t('legalConsent.account.and')}{' '}
+          <Link href="/terms" target="_blank" className="text-[#C8F135] underline-offset-4 hover:underline">
+            {t('common.terms')}
+          </Link>
+          .
+        </p>
+        <button
+          type="button"
+          onClick={acceptHealthConsent}
+          className="mt-6 w-full rounded-xl bg-[#C8F135] px-4 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-[#d4f54d]"
+        >
+          {t('legalConsent.health.accept')}
+        </button>
       </div>
     )
   }

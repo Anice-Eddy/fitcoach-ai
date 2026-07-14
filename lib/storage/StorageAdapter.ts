@@ -36,6 +36,10 @@ export interface UserProfile {
   language: string
   darkMode: boolean
   onboardingCompleted: boolean
+  healthDataConsentAccepted?: boolean
+  healthDataConsentAt?: string | Date
+  healthDataConsentVersion?: string
+  healthDataConsentLocale?: string
 }
 
 export interface StorageAdapter {

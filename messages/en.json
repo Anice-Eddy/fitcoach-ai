@@ -127,11 +127,35 @@
   },
   "legal": {
     "lastUpdated": "Last updated:",
-    "lastUpdatedDate": "May 31, 2026"
+    "lastUpdatedDate": "July 14, 2026"
+  },
+  "legalConsent": {
+    "account": {
+      "title": "Data protection",
+      "body": "This acceptance is recorded with the document version to secure your account and our transparency obligations.",
+      "checkbox": "I have read and accept the",
+      "and": "and the",
+      "error": "You must accept the terms and privacy policy to create an account."
+    },
+    "health": {
+      "title": "Fitness and health data consent",
+      "body": "BodyOps will process sensitive or health-adjacent data to personalize your programs, nutrition, progress tracking, and AI recommendations. You can withdraw this consent or delete your data from settings.",
+      "items": {
+        "body": "Body measurements, weight, height, progress, and photos if you add them.",
+        "goals": "Fitness goals, level, physical constraints, and declared injuries.",
+        "nutrition": "Food preferences, restrictions, meals, and nutrition targets.",
+        "ai": "Context sent to AI only to generate personalized guidance."
+      },
+      "linksPrefix": "Before continuing, review the",
+      "accept": "I accept the processing of my fitness/health data"
+    },
+    "socialNotice": {
+      "prefix": "By continuing with a social provider, you accept the"
+    }
   },
   "privacy": {
     "title": "Privacy policy",
-    "metaDescription": "How BodyOps collects, uses, and protects your personal data.",
+    "metaDescription": "How BodyOps collects, uses, and protects your personal data under GDPR, CNIL guidance, and PIPEDA.",
     "termsLink": "Terms of use →",
     "table": {
       "category": "Category",
@@ -141,74 +165,126 @@
     "rows": {
       "identity": {
         "category": "Identity",
-        "data": "First name, age, gender",
-        "purpose": "Program personalization"
+        "data": "Name, first name, email, profile picture, language, country or region when available.",
+        "purpose": "Create the account, secure access, personalize the experience, and display the correct member/coach space."
       },
       "body": {
-        "category": "Body",
-        "data": "Weight, height, measurements",
-        "purpose": "BMI, macros, and progress calculation"
+        "category": "Body data",
+        "data": "Age, gender, weight, height, measurements, progress photos if added.",
+        "purpose": "Calculate indicators, nutrition targets, progress, and personalized recommendations."
       },
       "goals": {
         "category": "Goals",
-        "data": "Fitness goal, level, body focus",
-        "purpose": "AI program generation"
+        "data": "Fitness goal, level, availability, equipment, training frequency, and body focus.",
+        "purpose": "Generate and adapt coherent training programs."
       },
       "health": {
-        "category": "Health",
-        "data": "Injuries, areas to protect (optional)",
-        "purpose": "Safety of suggested exercises"
+        "category": "Sensitive fitness/health data",
+        "data": "Declared injuries, areas to protect, recovery, sleep, hydration, heart rate, or Apple Health data if enabled.",
+        "purpose": "Reduce unsuitable recommendations, improve tracking, and respect declared limits."
       },
       "nutrition": {
         "category": "Nutrition",
-        "data": "Preferences, allergies, diet (optional)",
-        "purpose": "Adapted nutrition plans"
+        "data": "Meals, foods, calories, macros, allergies, restrictions, preferences, and user-created foods.",
+        "purpose": "Track nutrition, suggest targets, and improve meal planning."
+      },
+      "training": {
+        "category": "Training",
+        "data": "Sessions, exercises, loads, sets, reps, cardio, velocity tracking, and bar path tracking if used.",
+        "purpose": "Track performance, history, progress, and execution quality."
+      },
+      "coach": {
+        "category": "Coaching",
+        "data": "Coach/member notes, appointments, availability, messages, and data visible to the coach depending on context.",
+        "purpose": "Enable coaching, scheduling, follow-up, and communication."
+      },
+      "ai": {
+        "category": "AI assistant",
+        "data": "Messages, sport context, goals, useful history, and enabled AI settings.",
+        "purpose": "Generate replies, programs, analyses, summaries, and personalized recommendations."
+      },
+      "payments": {
+        "category": "Payments",
+        "data": "Customer identifiers, subscription status, and billing information processed by the payment provider.",
+        "purpose": "Manage subscriptions, invoices, trials, and premium access."
       },
       "login": {
         "category": "Sign-in",
-        "data": "Email address, hashed password",
-        "purpose": "Secure authentication"
+        "data": "Firebase identifier, sign-in provider, verified email, session tokens, technical security logs.",
+        "purpose": "Authenticate the user, prevent unauthorized access, and maintain service security."
       }
     },
     "sections": {
       "who": {
         "title": "1. Who are we?",
-        "body": "BodyOps is an online fitness coaching application. Under the General Data Protection Regulation (GDPR — EU 2016/679), BodyOps acts as data controller for its users' personal data."
+        "body": "BodyOps is a fitness coaching, nutrition, progress tracking, and AI assistant application. For data collected in the application, BodyOps acts as data controller under GDPR. This policy also explains our transparency and meaningful-consent commitments for Canadian users under PIPEDA."
       },
       "data": {
         "title": "2. Data collected",
-        "intro": "We only collect data required for the service to work:"
+        "intro": "We apply data minimization: the data below is collected only when it is necessary for the service, provided by the user, or enabled through an integration."
       },
       "legalBasis": {
         "title": "3. Legal basis",
-        "intro": "Our processing relies on:",
-        "consent": "Your consent — collected during registration and manageable from settings.",
-        "contract": "Contract performance — data required to provide the service.",
-        "legitimate": "Legitimate interest — improving the AI algorithm using aggregated anonymized data."
+        "intro": "Depending on the processing, BodyOps relies on:",
+        "consent": "Explicit consent — especially for fitness/health data, connected integrations, and some AI features.",
+        "contract": "Performance of the service — account creation, authentication, programs, nutrition, messaging, appointments, and tracking.",
+        "legitimate": "Legitimate interest — security, abuse prevention, technical improvement, and aggregated/anonymized statistics where possible."
+      },
+      "sensitive": {
+        "title": "4. Fitness/health data",
+        "body": "Data related to the body, nutrition, injuries, activity, recovery, and connected devices may be sensitive. BodyOps processes it only to provide the requested service, with explicit consent during onboarding, and does not use it for targeted advertising."
+      },
+      "ai": {
+        "title": "5. AI processing",
+        "body": "When you use the AI assistant or program generation, BodyOps may send an AI provider the minimum necessary context: goal, level, constraints, useful history, and the message you submit. AI replies are informational and do not replace a healthcare professional or qualified coach."
+      },
+      "coachSharing": {
+        "title": "6. Data visible to a coach",
+        "body": "If you choose a coach or are followed by a coach, some tracking data may be visible to that coach: sport profile, goals, notes, appointments, messages, progress, training, and nutrition. The data is used for coaching and must not be reused outside BodyOps without your agreement."
+      },
+      "processors": {
+        "title": "7. Processors and third-party services",
+        "body": "BodyOps uses technical providers for authentication, hosting, database, payments, security emails, AI services, and connected integrations. These providers process data only to provide their services to BodyOps, under their own security and privacy safeguards."
+      },
+      "international": {
+        "title": "8. Transfers outside your country",
+        "body": "Some providers may process data outside your country of residence, including the United States, Canada, or the European Union. Where needed, BodyOps relies on contractual safeguards, security measures, and strict limitation of transferred data."
       },
       "retention": {
-        "title": "4. Data retention",
-        "body": "Your data is kept for the lifetime of your account, then deleted within 30 days after closure. Technical logs are deleted after 12 months."
+        "title": "9. Data retention",
+        "body": "Account data is kept while the account is active. After account deletion, BodyOps deletes or anonymizes personal data within a reasonable period, unless required for legal obligations, security, disputes, or temporary backups. Technical logs are kept for a limited period."
       },
       "sharing": {
-        "title": "5. Data sharing",
-        "body": "BodyOps does not sell or rent your data to third parties. Some processors provide technical services such as hosting, database, and AI services."
+        "title": "10. Data sharing",
+        "body": "BodyOps does not sell personal data. Data may be shared with a selected coach, technical processors, authorities where legally required, or a payment provider to manage the subscription. Data is not shared for advertising purposes."
       },
       "rights": {
-        "title": "6. Your rights (GDPR)",
-        "body": "Under GDPR, you may request access, correction, deletion, portability, objection, or withdrawal of consent from the application settings."
+        "title": "11. Your rights",
+        "body": "You may request access, correction, export, deletion, restriction, objection, or withdrawal of consent. European users may exercise GDPR rights. Canadian users may request access, correction, and information about processing practices under PIPEDA."
       },
       "security": {
-        "title": "7. Security",
-        "body": "We apply technical and organizational security measures: HTTPS encryption, hashed passwords, restricted database access, and access logging."
+        "title": "12. Security",
+        "body": "BodyOps applies technical and organizational measures: HTTPS, Firebase authentication, secure sessions, restricted access, account deletion, server-side secret handling, and minimization of exposed data. No security is absolute, but the measures are adapted to the sensitivity of the data."
+      },
+      "breach": {
+        "title": "13. Security incident",
+        "body": "In the event of an incident involving personal data, BodyOps assesses the risk, documents the event, and notifies users or competent authorities where required by law, including in cases of real risk of significant harm in Canada or risk to rights and freedoms in Europe."
       },
       "cookies": {
-        "title": "8. Cookies",
-        "body": "BodyOps only uses cookies that are strictly required for authentication. No advertising or third-party tracking cookies are placed."
+        "title": "14. Cookies and local storage",
+        "body": "BodyOps uses cookies or storage strictly necessary for authentication, security, preferences, theme, language, and application functionality. No third-party advertising cookies are used without separate consent."
+      },
+      "children": {
+        "title": "15. Minors",
+        "body": "BodyOps is not intended for children. The minimum age entered in the application is 13. If parental authorization is required in your country, it must be obtained before using the service."
+      },
+      "canada": {
+        "title": "16. Users in Canada",
+        "body": "In line with PIPEDA principles, BodyOps provides understandable information about collected data, purposes, third parties, available choices, and reasonably foreseeable consequences. You may contact us for any privacy question or complaint."
       },
       "contact": {
-        "title": "9. Contact",
-        "body": "For any question about your data protection, use the contact page available from the application settings."
+        "title": "17. Contact",
+        "body": "For any question about data protection, use the application settings or contact BodyOps support. If you are in Europe, you may also contact your data protection authority. In Canada, you may contact the Office of the Privacy Commissioner of Canada."
       }
     }
   },

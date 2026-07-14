@@ -8,12 +8,14 @@ import { toast } from 'sonner'
 import { auth } from '@/lib/firebase/client'
 import { facebookProvider, googleProvider } from '@/lib/firebase/providers'
 import { useLocale } from '@/contexts/LocaleContext'
+import type { LegalAcceptancePayload } from '@/lib/legal/consent'
 
 type SocialProvider = 'google' | 'facebook'
 
 type SocialAuthButtonsProps = {
   callbackUrl?: string
   disabled?: boolean
+  legalAcceptance?: LegalAcceptancePayload
 }
 
 type SocialAuthError = Partial<AuthError> & {
@@ -92,7 +94,7 @@ function SocialButton({
 }
 
 /** Google/Facebook sign-in through Firebase, then BodyOps/NextAuth session handoff. */
-export function SocialAuthButtons({ callbackUrl = '/dashboard', disabled }: SocialAuthButtonsProps) {
+export function SocialAuthButtons({ callbackUrl = '/dashboard', disabled, legalAcceptance }: SocialAuthButtonsProps) {
   const { t } = useLocale()
   const [loading, setLoading] = useState<SocialProvider | null>(null)
 
@@ -101,7 +103,7 @@ export function SocialAuthButtons({ callbackUrl = '/dashboard', disabled }: Soci
     const res = await fetch('/api/auth/firebase-signin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ firebaseToken, provider }),
+      body: JSON.stringify({ firebaseToken, provider, legalAcceptance }),
     })
     if (!res.ok) {
       const payload = await res.json().catch(() => null)

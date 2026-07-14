@@ -6,10 +6,13 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma/client'
 import { verifyFirebaseToken } from '@/lib/firebase/verify-token'
 import { findOrCreateUserFromFirebase } from '@/lib/firebase/users'
+import { isLegalAcceptanceComplete, userLegalAcceptanceData } from '@/lib/legal/consent'
+import { optionalLegalAcceptanceSchema } from '@/lib/legal/validation'
 
 const bodySchema = z.object({
   firebaseToken: z.string().min(20),
   provider: z.enum(['google', 'facebook']),
+  legalAcceptance: optionalLegalAcceptanceSchema,
 })
 
 function firebaseProviderMatches(requestedProvider: 'google' | 'facebook', signInProvider?: string) {
@@ -48,8 +51,18 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await findOrCreateUserFromFirebase(decoded)
+    const legalData = isLegalAcceptanceComplete(parsed.data.legalAcceptance)
+      ? userLegalAcceptanceData(parsed.data.legalAcceptance)
+      : null
     const token = crypto.randomUUID()
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
+
+    if (legalData) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: legalData,
+      })
+    }
 
     await prisma.authHandoffToken.create({
       data: {

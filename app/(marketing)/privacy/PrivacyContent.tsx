@@ -19,7 +19,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 /** Client-rendered privacy policy so the legal page follows the selected BodyOps language. */
 export function PrivacyContent() {
   const { t } = useLocale()
-  const rows = ['identity', 'body', 'goals', 'health', 'nutrition', 'login']
+  const rows = ['identity', 'body', 'goals', 'health', 'nutrition', 'training', 'coach', 'ai', 'payments', 'login']
 
   return (
     <div className="relative min-h-screen text-white">
@@ -45,24 +45,26 @@ export function PrivacyContent() {
 
         <Section title={t('privacy.sections.data.title')}>
           <p>{t('privacy.sections.data.intro')}</p>
-          <table className="mt-4 w-full border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-zinc-700 text-left text-zinc-400">
-                <th className="pb-2 pr-4 font-semibold">{t('privacy.table.category')}</th>
-                <th className="pb-2 pr-4 font-semibold">{t('privacy.table.data')}</th>
-                <th className="pb-2 font-semibold">{t('privacy.table.purpose')}</th>
-              </tr>
-            </thead>
-            <tbody className="text-zinc-400">
-              {rows.map((row) => (
-                <tr key={row} className="border-b border-zinc-800/50">
-                  <td className="py-2 pr-4 font-medium text-white">{t(`privacy.rows.${row}.category`)}</td>
-                  <td className="py-2 pr-4">{t(`privacy.rows.${row}.data`)}</td>
-                  <td className="py-2">{t(`privacy.rows.${row}.purpose`)}</td>
+          <div className="mt-4 overflow-x-auto rounded-xl border border-zinc-800/70">
+            <table className="min-w-[720px] w-full border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-zinc-700 text-left text-zinc-400">
+                  <th className="p-3 font-semibold">{t('privacy.table.category')}</th>
+                  <th className="p-3 font-semibold">{t('privacy.table.data')}</th>
+                  <th className="p-3 font-semibold">{t('privacy.table.purpose')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="text-zinc-400">
+                {rows.map((row) => (
+                  <tr key={row} className="border-b border-zinc-800/50 last:border-0">
+                    <td className="p-3 align-top font-medium text-white">{t(`privacy.rows.${row}.category`)}</td>
+                    <td className="p-3 align-top">{t(`privacy.rows.${row}.data`)}</td>
+                    <td className="p-3 align-top">{t(`privacy.rows.${row}.purpose`)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Section>
 
         <Section title={t('privacy.sections.legalBasis.title')}>
@@ -74,7 +76,7 @@ export function PrivacyContent() {
           </ul>
         </Section>
 
-        {['retention', 'sharing', 'rights', 'security', 'cookies', 'contact'].map((section) => (
+        {['sensitive', 'ai', 'coachSharing', 'processors', 'international', 'retention', 'sharing', 'rights', 'security', 'breach', 'cookies', 'children', 'canada', 'contact'].map((section) => (
           <Section key={section} title={t(`privacy.sections.${section}.title`)}>
             <p>{t(`privacy.sections.${section}.body`)}</p>
           </Section>

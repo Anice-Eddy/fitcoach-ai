@@ -2,16 +2,24 @@
 
 import type { UserCredential } from 'firebase/auth'
 import { signIn } from 'next-auth/react'
+import type { LegalAcceptancePayload } from '@/lib/legal/consent'
 
 /** Exchanges a Firebase user credential for a BodyOps DB user via the backend token verifier. */
-export async function syncBodyOpsWithFirebaseCredential(credential: UserCredential) {
+export async function syncBodyOpsWithFirebaseCredential(
+  credential: UserCredential,
+  legalAcceptance?: LegalAcceptancePayload,
+) {
   const idToken = await credential.user.getIdToken(true)
-  return syncBodyOpsUserWithFirebaseIdToken(idToken)
+  return syncBodyOpsUserWithFirebaseIdToken(idToken, legalAcceptance)
 }
 
 /** Verifies Firebase, links the DB user, then creates the temporary NextAuth session used by current routes. */
-export async function signInBodyOpsWithFirebaseCredential(credential: UserCredential, callbackUrl = '/dashboard') {
-  const session = await syncBodyOpsWithFirebaseCredential(credential)
+export async function signInBodyOpsWithFirebaseCredential(
+  credential: UserCredential,
+  callbackUrl = '/dashboard',
+  legalAcceptance?: LegalAcceptancePayload,
+) {
+  const session = await syncBodyOpsWithFirebaseCredential(credential, legalAcceptance)
   return createBodyOpsNextAuthSession(session.firebaseSessionToken, callbackUrl)
 }
 
@@ -25,10 +33,17 @@ export async function createBodyOpsNextAuthSession(firebaseSessionToken: string,
 }
 
 /** Calls the Firebase-token backend sync endpoint without creating a NextAuth browser session. */
-export async function syncBodyOpsUserWithFirebaseIdToken(idToken: string) {
+export async function syncBodyOpsUserWithFirebaseIdToken(
+  idToken: string,
+  legalAcceptance?: LegalAcceptancePayload,
+) {
   const res = await fetch('/api/auth/firebase/session', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${idToken}` },
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ legalAcceptance }),
   })
   if (!res.ok) throw new Error('Unable to sync the account with BodyOps.')
   return res.json()

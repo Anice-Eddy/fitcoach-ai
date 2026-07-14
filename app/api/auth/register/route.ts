@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma/client'
+import { isLegalAcceptanceComplete, userLegalAcceptanceData } from '@/lib/legal/consent'
+import { optionalLegalAcceptanceSchema } from '@/lib/legal/validation'
 
 const registerSchema = z.object({
   name:              z.string().min(2, 'Name must be at least 2 characters'),
@@ -28,6 +30,7 @@ const registerSchema = z.object({
   discoveryCallTitle: z.string().min(2).max(80).default('Discovery call'),
   discoveryCallDuration: z.number().int().min(5).max(180).default(30),
   showDiscoveryCall: z.boolean().default(true),
+  legalAcceptance: optionalLegalAcceptanceSchema,
 })
 
 // Splits a comma-separated string into a trimmed, non-empty string array.
@@ -47,9 +50,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 422 })
   }
 
+  if (!isLegalAcceptanceComplete(parsed.data.legalAcceptance)) {
+    return NextResponse.json({
+      error: { legal: ['Terms and privacy policy acceptance is required.'] },
+    }, { status: 422 })
+  }
 
   const { name, email, password, accountType } = parsed.data
   const isCoach = accountType === 'COACH'
+  const legalAcceptance = userLegalAcceptanceData(parsed.data.legalAcceptance)
 
   if (isCoach) {
     const coachErrors: Record<string, string[]> = {}
@@ -93,6 +102,7 @@ export async function POST(req: Request) {
       password: hashed,
       provider: 'EMAIL',
       subscriptionPlan: isCoach ? 'BUSINESS' : 'FREE',
+      ...(legalAcceptance ?? {}),
       ...(isCoach
         ? {
             coachProfile: {

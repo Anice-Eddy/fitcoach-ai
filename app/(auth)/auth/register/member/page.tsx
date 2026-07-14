@@ -14,6 +14,8 @@ import { canUseFirebaseAuth, canUseNextAuth, publicAuthProviderMode } from '@/li
 import { firebaseEmailRegister } from '@/lib/firebase/client'
 import { signInBodyOpsWithFirebaseCredential } from '@/lib/firebase/bodyops-auth'
 import { useLocale } from '@/contexts/LocaleContext'
+import { LegalConsentCheckbox } from '@/components/legal/LegalConsentCheckbox'
+import { legalAcceptanceForLocale } from '@/lib/legal/consent'
 
 type FirebaseAuthError = { code?: string; message?: string }
 
@@ -28,11 +30,12 @@ function firebaseRegisterErrorMessage(error: unknown, t: (key: string) => string
 
 /** Member registration form: collects name, email, and password; posts to /api/auth/register and redirects on success. */
 export default function MemberRegisterPage() {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const router = useRouter()
   const { status } = useSession()
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [legalAccepted, setLegalAccepted] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const authMode = publicAuthProviderMode()
@@ -47,6 +50,10 @@ export default function MemberRegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!legalAccepted) {
+      setErrors({ legal: t('legalConsent.account.error') })
+      return
+    }
     setLoading(true)
     setErrors({})
 
@@ -63,7 +70,7 @@ export default function MemberRegisterPage() {
           form.name,
         )
         toast.success(t('auth.register.member.firebaseCreated'))
-        await signInBodyOpsWithFirebaseCredential(credential, '/onboarding')
+        await signInBodyOpsWithFirebaseCredential(credential, '/onboarding', legalAcceptanceForLocale(locale))
       } catch (err) {
         setErrors({ email: firebaseRegisterErrorMessage(err, t) })
         setLoading(false)
@@ -74,7 +81,11 @@ export default function MemberRegisterPage() {
     const res = await fetch('/api/auth/register', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ ...form, email: form.email.trim().toLowerCase() }),
+      body:    JSON.stringify({
+        ...form,
+        email: form.email.trim().toLowerCase(),
+        legalAcceptance: legalAcceptanceForLocale(locale),
+      }),
     })
 
     const data = await res.json().catch(() => null)
@@ -127,9 +138,24 @@ export default function MemberRegisterPage() {
           <p className="text-sm text-zinc-400 mt-1">{t('auth.register.free')}</p>
         </div>
 
+        <div className="mb-4">
+          <LegalConsentCheckbox
+            checked={legalAccepted}
+            onChange={(checked) => {
+              setLegalAccepted(checked)
+              setErrors((err) => ({ ...err, legal: '' }))
+            }}
+            error={errors.legal}
+          />
+        </div>
+
         {showFirebase && (
           <div className="mb-4 space-y-2">
-            <SocialAuthButtons callbackUrl="/onboarding" disabled={loading} />
+            <SocialAuthButtons
+              callbackUrl="/onboarding"
+              disabled={loading || !legalAccepted}
+              legalAcceptance={legalAccepted ? legalAcceptanceForLocale(locale) : undefined}
+            />
           </div>
         )}
 

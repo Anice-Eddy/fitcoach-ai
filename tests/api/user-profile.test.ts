@@ -115,4 +115,26 @@ describe('PATCH /api/user/profile', () => {
     expect(upsertCall.update).toHaveProperty('bmr')
     expect(upsertCall.update).toHaveProperty('tdee')
   })
+
+  it('records health data consent without storing client-only flags', async () => {
+    ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue({ user: { id: 'user-1' } })
+    ;(prisma.profile.upsert as ReturnType<typeof vi.fn>).mockResolvedValue(mockProfile)
+
+    const req = makeRequest({
+      firstName: 'Alice',
+      healthDataConsentAccepted: true,
+      healthDataConsentVersion: '2026-07-14',
+      healthDataConsentLocale: 'fr',
+    })
+
+    await PATCH(req)
+    const upsertCall = (prisma.profile.upsert as ReturnType<typeof vi.fn>).mock.calls[0][0]
+
+    expect(upsertCall.update).toEqual(expect.objectContaining({
+      healthDataConsentAt: expect.any(Date),
+      healthDataConsentVersion: '2026-07-14',
+      healthDataConsentLocale: 'fr',
+    }))
+    expect(upsertCall.update).not.toHaveProperty('healthDataConsentAccepted')
+  })
 })
