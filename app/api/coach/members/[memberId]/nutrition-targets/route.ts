@@ -36,16 +36,16 @@ async function authorizeCoach(memberId: string) {
 /** Creates or updates the active nutrition target chosen by the coach without overwriting calculated profile recommendations. */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { memberId: string } },
+  { params }: { params: Promise<{ memberId: string }> },
 ) {
-  const { error } = await authorizeCoach(params.memberId)
+  const { error } = await authorizeCoach((await params).memberId)
   if (error) return error
 
   const parsed = nutritionTargetsSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
   const existing = await prisma.nutritionPlan.findFirst({
-    where: { userId: params.memberId, isActive: true },
+    where: { userId: (await params).memberId, isActive: true },
     orderBy: { updatedAt: 'desc' },
   })
 
@@ -56,7 +56,7 @@ export async function PATCH(
       })
     : await prisma.nutritionPlan.create({
         data: {
-          userId: params.memberId,
+          userId: (await params).memberId,
           name:   COACH_NUTRITION_TARGET_NAME,
           ...parsed.data,
           weekStartDate: new Date(),

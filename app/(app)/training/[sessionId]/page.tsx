@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { Header }              from '@/components/layout/Header'
 import { PageWrapper }         from '@/components/layout/PageWrapper'
 import { FocusExerciseView }   from '@/components/training/FocusExerciseView'
@@ -18,8 +18,10 @@ import { useLocale } from '@/contexts/LocaleContext'
 interface DBSession { id: string; name: string; status: string; durationMinutes: number | null }
 
 /** Focus-mode workout session: one exercise at a time, set-by-set tracking, auto rest timer. */
-export default function SessionPage({ params }: { params: { sessionId: string } }) {
+export default function SessionPage() {
   const router      = useRouter()
+  const params      = useParams<{ sessionId: string }>()
+  const sessionId   = params?.sessionId ?? ''
   const { t, locale } = useLocale()
   const { profile } = useUserStore()
   const {
@@ -43,8 +45,8 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
 
   // Load session
   useEffect(() => {
-    if (!params.sessionId || !profile?.fitnessGoal || !profile?.fitnessLevel) return
-    if (activeSession?.sessionId === params.sessionId) return
+    if (!sessionId || !profile?.fitnessGoal || !profile?.fitnessLevel) return
+    if (activeSession?.sessionId === sessionId) return
 
     const buildProgram = () => generateProgram({
       fitnessGoal:         profile.fitnessGoal!,
@@ -54,17 +56,17 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
       locale,
     })
 
-    fetch(`/api/user/training/sessions/${params.sessionId}`)
+    fetch(`/api/user/training/sessions/${sessionId}`)
       .then(res => res.ok ? res.json() as Promise<DBSession> : null)
       .then(sess => {
         const program  = buildProgram()
         const matching = sess
           ? (program.sessions.find(s => s.name === sess.name) ?? program.sessions[0])
-          : (program.sessions.find(s => s.id === params.sessionId) ?? program.sessions[0])
+          : (program.sessions.find(s => s.id === sessionId) ?? program.sessions[0])
 
         if (matching) {
           startSession({
-            sessionId:       params.sessionId,
+            sessionId,
             name:            sess?.name ?? matching.name,
             exercises:       matching.exercises,
             currentExercise: 0,
@@ -74,7 +76,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
         }
 
         if (sess?.status === 'PLANNED') {
-          fetch(`/api/user/training/sessions/${params.sessionId}`, {
+          fetch(`/api/user/training/sessions/${sessionId}`, {
             method:  'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ status: 'IN_PROGRESS' }),
@@ -85,12 +87,12 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
         const program = buildProgram()
         const s = program.sessions[0]
         if (s) startSession({
-          sessionId: params.sessionId, name: s.name, exercises: s.exercises,
+          sessionId, name: s.name, exercises: s.exercises,
           currentExercise: 0, restTimerActive: false, restSecondsLeft: 0,
         })
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.sessionId, profile?.fitnessGoal, profile?.fitnessLevel, profile?.trainingDaysPerWeek, locale,
+  }, [sessionId, profile?.fitnessGoal, profile?.fitnessLevel, profile?.trainingDaysPerWeek, locale,
       // eslint-disable-next-line react-hooks/exhaustive-deps
       JSON.stringify(profile?.availableEquipment), activeSession?.sessionId])
 
@@ -169,7 +171,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
 
   const handleFinish = async () => {
     // 1. Mark the session as completed.
-    await fetch(`/api/user/training/sessions/${params.sessionId}`, {
+    await fetch(`/api/user/training/sessions/${sessionId}`, {
       method:  'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
@@ -204,7 +206,7 @@ export default function SessionPage({ params }: { params: { sessionId: string } 
         barPathPoints:   ex.barPathPoints,
       }))
 
-      await fetch(`/api/user/training/sessions/${params.sessionId}/logs`, {
+      await fetch(`/api/user/training/sessions/${sessionId}/logs`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ logs }),

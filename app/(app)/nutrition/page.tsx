@@ -5,8 +5,8 @@ import { PageWrapper }   from '@/components/layout/PageWrapper'
 import { NutritionClient } from './NutritionClient'
 import { getServerTranslations } from '@/lib/i18n/server'
 
-export function generateMetadata(): Metadata {
-  const { t } = getServerTranslations()
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslations()
 
   return { title: `${t('nutrition.title')} — BodyOps` }
 }

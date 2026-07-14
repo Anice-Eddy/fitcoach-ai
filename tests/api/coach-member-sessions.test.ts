@@ -59,7 +59,7 @@ describe('DELETE /api/coach/members/[memberId]/sessions', () => {
     ;(auth as ReturnType<typeof vi.fn>).mockResolvedValue(null)
 
     const res = await DELETE(deleteReq({ sessionId: 'session-1', exerciseLogId: 'log-1' }) as never, {
-      params: { memberId: 'member-1' },
+      params: Promise.resolve({ memberId: 'member-1' }),
     })
 
     expect(res.status).toBe(401)
@@ -67,7 +67,7 @@ describe('DELETE /api/coach/members/[memberId]/sessions', () => {
 
   it('deletes only an exercise that belongs to a followed member session', async () => {
     const res = await DELETE(deleteReq({ sessionId: 'session-1', exerciseLogId: 'log-1' }) as never, {
-      params: { memberId: 'member-1' },
+      params: Promise.resolve({ memberId: 'member-1' }),
     })
 
     expect(res.status).toBe(200)
@@ -85,7 +85,7 @@ describe('DELETE /api/coach/members/[memberId]/sessions', () => {
     ;(prisma.exerciseLog.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null)
 
     const res = await DELETE(deleteReq({ sessionId: 'session-1', exerciseLogId: 'log-2' }) as never, {
-      params: { memberId: 'member-1' },
+      params: Promise.resolve({ memberId: 'member-1' }),
     })
 
     expect(res.status).toBe(404)
@@ -94,7 +94,7 @@ describe('DELETE /api/coach/members/[memberId]/sessions', () => {
 
   it('deletes a complete session that belongs to the followed member', async () => {
     const res = await DELETE(deleteReq({ sessionId: 'session-1' }) as never, {
-      params: { memberId: 'member-1' },
+      params: Promise.resolve({ memberId: 'member-1' }),
     })
 
     expect(res.status).toBe(200)

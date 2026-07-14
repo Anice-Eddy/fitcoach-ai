@@ -9,7 +9,7 @@ export const runtime = 'nodejs'
 /** Updates an appointment's status, date, meetLink, description, or coachNote; auto-adds member to coach's list on CONFIRMED and notifies the member. */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await auth()
   if (!session?.user?.email) {
@@ -25,7 +25,7 @@ export async function PATCH(
   }
 
   const appointment = await prisma.coachAppointment.findUnique({
-    where: { id: params.id },
+    where: { id: (await params).id },
   })
   if (!appointment || appointment.coachId !== coach.coachProfile.id) {
     return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
@@ -35,7 +35,7 @@ export async function PATCH(
   const { status, scheduledAt, duration, meetLink, description, coachNote } = body
 
   const updated = await prisma.coachAppointment.update({
-    where: { id: params.id },
+    where: { id: (await params).id },
     data: {
       ...(status      !== undefined && { status }),
       ...(scheduledAt !== undefined && { scheduledAt: new Date(scheduledAt) }),
@@ -80,7 +80,7 @@ export async function PATCH(
         type:            'APPOINTMENT',
         title,
         message:         msg,
-        relatedId:       params.id,
+        relatedId:       (await params).id,
       },
     }).catch(() => {})
   }

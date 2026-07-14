@@ -16,16 +16,7 @@ if (process.env.NEXT_PHASE === 'phase-production-build') {
   }
 }
 
-const enablePWA = process.env.ENABLE_PWA === 'true'
 const { version: packageVersion } = require('./package.json')
-
-const withPWA = require('next-pwa')({
-  dest:            'public',
-  disable:         !enablePWA,
-  register:        true,
-  skipWaiting:     true,
-  runtimeCaching:  [],
-})
 
 const nextConfig = {
   env: {
@@ -59,4 +50,4 @@ const nextConfig = {
   },
 }
 
-module.exports = withPWA(nextConfig)
+module.exports = nextConfig

@@ -26,17 +26,17 @@ async function getCoachProfile() {
 /** Returns all replies for the note (coach view), ordered by creation date ascending. */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { noteId: string } },
+  { params }: { params: Promise<{ noteId: string }> },
 ) {
   const { coachProfile, error } = await getCoachProfile()
   if (error) return error
 
   const note = await prisma.coachNote.findFirst({
-    where: { id: params.noteId, coachId: coachProfile!.id },
+    where: { id: (await params).noteId, coachId: coachProfile!.id },
   })
   if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
-  const replies = await getNormalizedCoachNoteReplies(params.noteId)
+  const replies = await getNormalizedCoachNoteReplies((await params).noteId)
 
   return NextResponse.json(replies)
 }
@@ -44,13 +44,13 @@ export async function GET(
 /** Adds a coach reply to the note thread and notifies the member when the note is shared. */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { noteId: string } },
+  { params }: { params: Promise<{ noteId: string }> },
 ) {
   const { coachProfile, error } = await getCoachProfile()
   if (error) return error
 
   const note = await prisma.coachNote.findFirst({
-    where: { id: params.noteId, coachId: coachProfile!.id },
+    where: { id: (await params).noteId, coachId: coachProfile!.id },
   })
   if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
@@ -59,7 +59,7 @@ export async function POST(
 
   const reply = await prisma.coachNoteReply.create({
     data: {
-      noteId:   params.noteId,
+      noteId:   (await params).noteId,
       // Keep memberId populated for compatibility with dev servers using an older Prisma Client.
       memberId: note.memberId,
       content:  parsed.data.content,
@@ -89,7 +89,7 @@ export async function POST(
 /** Deletes a specific reply (by replyId in body) from the note; verifies the note belongs to this coach. */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { noteId: string } },
+  { params }: { params: Promise<{ noteId: string }> },
 ) {
   const { coachProfile, error } = await getCoachProfile()
   if (error) return error
@@ -98,12 +98,12 @@ export async function DELETE(
   if (!replyId) return NextResponse.json({ error: 'Missing replyId' }, { status: 400 })
 
   const note = await prisma.coachNote.findFirst({
-    where: { id: params.noteId, coachId: coachProfile!.id },
+    where: { id: (await params).noteId, coachId: coachProfile!.id },
   })
   if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
   await prisma.coachNoteReply.deleteMany({
-    where: { id: replyId, noteId: params.noteId },
+    where: { id: replyId, noteId: (await params).noteId },
   })
 
   return NextResponse.json({ ok: true })

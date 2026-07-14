@@ -6,10 +6,10 @@ import { NextRequest, NextResponse } from 'next/server'
 /** Returns a single coach's public profile detail by User.id, including member and appointment counts; 404 if not a coach. */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { coachId: string } },
+  { params }: { params: Promise<{ coachId: string }> },
 ) {
   const coach = await prisma.user.findUnique({
-    where: { id: params.coachId },
+    where: { id: (await params).coachId },
     select: {
       id: true,
       name: true,

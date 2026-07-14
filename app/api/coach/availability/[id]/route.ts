@@ -9,7 +9,7 @@ export const runtime = 'nodejs'
 /** Deletes a specific availability rule, verifying the rule belongs to the authenticated coach. */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await auth()
   if (!session?.user?.email) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
@@ -20,11 +20,11 @@ export async function DELETE(
   })
   if (!user?.coachProfile) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
 
-  const rule = await prisma.coachAvailability.findUnique({ where: { id: params.id } })
+  const rule = await prisma.coachAvailability.findUnique({ where: { id: (await params).id } })
   if (!rule || rule.coachId !== user.coachProfile.id) {
     return NextResponse.json({ error: 'Availability rule not found' }, { status: 404 })
   }
 
-  await prisma.coachAvailability.delete({ where: { id: params.id } })
+  await prisma.coachAvailability.delete({ where: { id: (await params).id } })
   return NextResponse.json({ ok: true })
 }

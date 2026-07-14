@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { getServerTranslations } from '@/lib/i18n/server'
 import { PrivacyContent } from './PrivacyContent'
 
-export function generateMetadata(): Metadata {
-  const { t } = getServerTranslations()
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslations()
 
   return {
     title: `${t('privacy.title')} — BodyOps`,

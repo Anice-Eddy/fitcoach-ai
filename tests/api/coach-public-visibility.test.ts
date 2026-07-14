@@ -86,7 +86,7 @@ describe('coach public visibility settings', () => {
     })
 
     const res = await getCoach(new Request('http://localhost/api/coaches/coach-user-1') as never, {
-      params: { coachId: 'coach-user-1' },
+      params: Promise.resolve({ coachId: 'coach-user-1' }),
     })
     const json = await res.json()
 

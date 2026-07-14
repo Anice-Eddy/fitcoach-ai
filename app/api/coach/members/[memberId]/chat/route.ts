@@ -40,12 +40,12 @@ async function ensureChat(coachId: string, memberId: string) {
 /** Returns the coach/member chat thread and marks member messages as read by the coach. */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { memberId: string } },
+  { params }: { params: Promise<{ memberId: string }> },
 ) {
-  const { coach, error } = await getCoachAccess(params.memberId)
+  const { coach, error } = await getCoachAccess((await params).memberId)
   if (error) return error
 
-  const chat = await ensureChat(coach!.coachProfile!.id, params.memberId)
+  const chat = await ensureChat(coach!.coachProfile!.id, (await params).memberId)
 
   await prisma.coachChatMessage.updateMany({
     where: { chatId: chat.id, senderUserId: { not: coach!.id }, readAt: null },
@@ -76,15 +76,15 @@ export async function GET(
 /** Sends a coach message to a followed member. */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { memberId: string } },
+  { params }: { params: Promise<{ memberId: string }> },
 ) {
-  const { coach, error } = await getCoachAccess(params.memberId)
+  const { coach, error } = await getCoachAccess((await params).memberId)
   if (error) return error
 
   const parsed = messageSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
-  const chat = await ensureChat(coach!.coachProfile!.id, params.memberId)
+  const chat = await ensureChat(coach!.coachProfile!.id, (await params).memberId)
 
   const message = await prisma.$transaction(async (tx) => {
     const created = await tx.coachChatMessage.create({
@@ -105,7 +105,7 @@ export async function POST(
     await tx.notification.create({
       data: {
         coachId:         coach!.coachProfile!.id,
-        recipientUserId: params.memberId,
+        recipientUserId: (await params).memberId,
         type:            'MESSAGE',
         title:           'New coach message',
         message:         created.content.slice(0, 140),
@@ -116,7 +116,7 @@ export async function POST(
     return created
   })
 
-  emitToUser(params.memberId, { type: 'message:new', chatId: chat.id, messageId: message.id })
+  emitToUser((await params).memberId, { type: 'message:new', chatId: chat.id, messageId: message.id })
 
   return NextResponse.json(message, { status: 201 })
 }

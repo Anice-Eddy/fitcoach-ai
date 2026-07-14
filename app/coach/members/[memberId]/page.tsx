@@ -31,8 +31,9 @@ function Label({ children }: { children: React.ReactNode }) {
 }
 
 /** Server component for the member detail view: fetches member data from the API and renders ProfileEditor and NotesEditor. */
-export default async function MemberDetailPage({ params }: { params: { memberId: string } }) {
-  const { locale, t } = getServerTranslations()
+export default async function MemberDetailPage({ params }: { params: Promise<{ memberId: string }> }) {
+  const { memberId } = await params
+  const { locale, t } = await getServerTranslations()
   const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-US'
   const session = await auth()
   if (!session?.user?.id) redirect('/auth/signin')
@@ -45,12 +46,12 @@ export default async function MemberDetailPage({ params }: { params: { memberId:
 
   // Verify membership
   const membership = await prisma.coachMember.findUnique({
-    where: { coachId_memberId: { coachId: coach.coachProfile.id, memberId: params.memberId } },
+    where: { coachId_memberId: { coachId: coach.coachProfile.id, memberId } },
   })
   if (!membership) notFound()
 
   const member = await prisma.user.findUnique({
-    where: { id: params.memberId },
+    where: { id: memberId },
     include: {
       profile: true,
       bodyMetrics: { orderBy: { date: 'desc' }, take: 1 },
@@ -64,7 +65,7 @@ export default async function MemberDetailPage({ params }: { params: { memberId:
   if (!member) notFound()
 
   const notes = await prisma.coachNote.findMany({
-    where: { coachId: coach.coachProfile.id, memberId: params.memberId },
+    where: { coachId: coach.coachProfile.id, memberId },
     orderBy: { createdAt: 'desc' },
   })
 

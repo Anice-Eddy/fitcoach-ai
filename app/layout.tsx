@@ -19,8 +19,8 @@ const jetbrainsMono = JetBrains_Mono({
   subsets:  ['latin'],
 })
 
-export function generateMetadata(): Metadata {
-  const { locale, t } = getServerTranslations()
+export async function generateMetadata(): Promise<Metadata> {
+  const { locale, t } = await getServerTranslations()
 
   return {
     title:       { default: 'BodyOps', template: '%s - BodyOps' },
@@ -45,8 +45,8 @@ export const viewport: Viewport = {
   userScalable: false,
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = getServerLocale()
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getServerLocale()
 
   return (
     <html lang={locale} className="dark">

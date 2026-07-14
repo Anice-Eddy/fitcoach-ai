@@ -9,7 +9,7 @@ export const runtime = 'nodejs'
 /** Updates the member's own note on an appointment and notifies the coach when the note changes. */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await auth()
   if (!session?.user?.id) {
@@ -17,7 +17,7 @@ export async function PATCH(
   }
 
   const appointment = await prisma.coachAppointment.findUnique({
-    where: { id: params.id },
+    where: { id: (await params).id },
   })
   if (!appointment || appointment.memberId !== session.user.id) {
     return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
@@ -26,7 +26,7 @@ export async function PATCH(
   const { memberNote } = await req.json()
 
   const updated = await prisma.coachAppointment.update({
-    where: { id: params.id },
+    where: { id: (await params).id },
     data:  { memberNote },
     include: {
       coachProfile: {
@@ -44,7 +44,7 @@ export async function PATCH(
         type:            'MESSAGE',
         title:           'Appointment note from member',
         message:         `A member added a note to your appointment "${appointment.title}".`,
-        relatedId:       params.id,
+        relatedId:       (await params).id,
       },
     }).catch(() => {})
   }

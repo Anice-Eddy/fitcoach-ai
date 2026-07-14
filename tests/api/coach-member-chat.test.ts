@@ -72,7 +72,7 @@ describe('coach/member chat API', () => {
       createdAt: new Date(),
     })
 
-    const res = await coachPost(req({ content: 'Salut' }) as never, { params: { memberId: 'member-1' } })
+    const res = await coachPost(req({ content: 'Salut' }) as never, { params: Promise.resolve({ memberId: 'member-1' }) })
 
     expect(res.status).toBe(201)
     expect(prisma.coachChat.upsert).toHaveBeenCalledWith(expect.objectContaining({
@@ -101,7 +101,7 @@ describe('coach/member chat API', () => {
     })
 
     const res = await memberGet(new Request('http://localhost/api/test') as never, {
-      params: { coachProfileId: 'coach-profile' },
+      params: Promise.resolve({ coachProfileId: 'coach-profile' }),
     })
 
     expect(res.status).toBe(200)

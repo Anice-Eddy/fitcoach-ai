@@ -14,7 +14,7 @@ export type AvailableSlot = {
 /** Returns available booking slots for a coach over a date range, excluding already-booked times. */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { coachId: string } },
+  { params }: { params: Promise<{ coachId: string }> },
 ) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
@@ -28,14 +28,14 @@ export async function GET(
   from.setHours(0, 0, 0, 0)
   to.setHours(23, 59, 59, 999)
 
-  const coach = await prisma.coachProfile.findUnique({ where: { id: params.coachId } })
+  const coach = await prisma.coachProfile.findUnique({ where: { id: (await params).coachId } })
   if (!coach) return NextResponse.json({ error: 'Coach not found' }, { status: 404 })
 
   const [rules, appointments] = await Promise.all([
-    prisma.coachAvailability.findMany({ where: { coachId: params.coachId } }),
+    prisma.coachAvailability.findMany({ where: { coachId: (await params).coachId } }),
     prisma.coachAppointment.findMany({
       where: {
-        coachId:     params.coachId,
+        coachId:     (await params).coachId,
         scheduledAt: { gte: from, lte: to },
         status:      { in: ['PENDING', 'PROPOSED', 'CONFIRMED'] },
       },

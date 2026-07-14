@@ -5,8 +5,8 @@ import { PageWrapper } from '@/components/layout/PageWrapper'
 import { getServerTranslations } from '@/lib/i18n/server'
 import { TrainingClient } from './TrainingClient'
 
-export function generateMetadata(): Metadata {
-  const { t } = getServerTranslations()
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslations()
 
   return { title: `${t('training.title')} — BodyOps` }
 }

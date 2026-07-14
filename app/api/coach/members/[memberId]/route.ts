@@ -9,7 +9,7 @@ export const runtime = 'nodejs'
 /** Returns full member data (profile, body metrics, sessions, programs, nutrition plan, coach notes) after verifying coach ownership. */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { memberId: string } },
+  { params }: { params: Promise<{ memberId: string }> },
 ) {
   const session = await auth()
   if (!session?.user?.email) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
@@ -22,12 +22,12 @@ export async function GET(
 
   // Verify the member belongs to this coach
   const membership = await prisma.coachMember.findUnique({
-    where: { coachId_memberId: { coachId: coach.coachProfile.id, memberId: params.memberId } },
+    where: { coachId_memberId: { coachId: coach.coachProfile.id, memberId: (await params).memberId } },
   })
   if (!membership) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
 
   const member = await prisma.user.findUnique({
-    where: { id: params.memberId },
+    where: { id: (await params).memberId },
     include: {
       profile: true,
       bodyMetrics: { orderBy: { date: 'desc' }, take: 30 },
@@ -48,7 +48,7 @@ export async function GET(
   if (!member) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
 
   const notes = await prisma.coachNote.findMany({
-    where: { coachId: coach.coachProfile.id, memberId: params.memberId },
+    where: { coachId: coach.coachProfile.id, memberId: (await params).memberId },
     orderBy: { createdAt: 'desc' },
   })
 
@@ -58,7 +58,7 @@ export async function GET(
 /** Removes the member from the coach's tracked list by deleting the CoachMember record. */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { memberId: string } },
+  { params }: { params: Promise<{ memberId: string }> },
 ) {
   const session = await auth()
   if (!session?.user?.email) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
@@ -70,7 +70,7 @@ export async function DELETE(
   if (!coach?.coachProfile) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
 
   await prisma.coachMember.deleteMany({
-    where: { coachId: coach.coachProfile.id, memberId: params.memberId },
+    where: { coachId: coach.coachProfile.id, memberId: (await params).memberId },
   })
 
   return NextResponse.json({ ok: true })
@@ -79,7 +79,7 @@ export async function DELETE(
 /** Allows the coach to update the member's profile fields (body stats, goals, equipment, etc.) with the same permissions as the member. */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { memberId: string } },
+  { params }: { params: Promise<{ memberId: string }> },
 ) {
   const session = await auth()
   if (!session?.user?.email) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
@@ -91,7 +91,7 @@ export async function PATCH(
   if (!coach?.coachProfile) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
 
   const membership = await prisma.coachMember.findUnique({
-    where: { coachId_memberId: { coachId: coach.coachProfile.id, memberId: params.memberId } },
+    where: { coachId_memberId: { coachId: coach.coachProfile.id, memberId: (await params).memberId } },
   })
   if (!membership) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
 
@@ -109,10 +109,10 @@ export async function PATCH(
   }
 
   const updated = await prisma.profile.upsert({
-    where:  { userId: params.memberId },
+    where:  { userId: (await params).memberId },
     update: profileData,
     create: {
-      userId:      params.memberId,
+      userId:      (await params).memberId,
       firstName:   body.firstName ?? '',
       age:         body.age ?? 18,
       gender:      body.gender ?? 'MALE',

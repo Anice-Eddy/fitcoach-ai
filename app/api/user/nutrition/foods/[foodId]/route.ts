@@ -35,11 +35,11 @@ async function assertOwner(foodId: string, userId: string) {
 }
 
 /** Updates a food only when the authenticated user created it. */
-export async function PATCH(req: Request, { params }: { params: { foodId: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ foodId: string }> }) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const owner = await assertOwner(params.foodId, session.user.id)
+  const owner = await assertOwner((await params).foodId, session.user.id)
   if (owner.error) return owner.error
 
   const parsed = foodPatchSchema.safeParse(await req.json().catch(() => null))
@@ -48,7 +48,7 @@ export async function PATCH(req: Request, { params }: { params: { foodId: string
   const namePatch = parsed.data.name || parsed.data.nameFr || parsed.data.nameEn
 
   const food = await prisma.foodLibraryItem.update({
-    where: { id: params.foodId },
+    where: { id: (await params).foodId },
     data:  {
       ...parsed.data,
       name:  namePatch ?? parsed.data.name,
@@ -62,15 +62,15 @@ export async function PATCH(req: Request, { params }: { params: { foodId: string
 }
 
 /** Soft-deletes a food only for its creator; existing nutrition logs keep their copied macros. */
-export async function DELETE(_req: Request, { params }: { params: { foodId: string } }) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ foodId: string }> }) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const owner = await assertOwner(params.foodId, session.user.id)
+  const owner = await assertOwner((await params).foodId, session.user.id)
   if (owner.error) return owner.error
 
   await prisma.foodLibraryItem.update({
-    where: { id: params.foodId },
+    where: { id: (await params).foodId },
     data:  { deletedAt: new Date() },
   })
 

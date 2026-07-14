@@ -47,13 +47,13 @@ const VALID_EQUIPMENT = new Set([
  * Saves exercise logs for a completed session.
  * Upserts each exercise into the DB by name, then creates/updates ExerciseLog.
  */
-export async function POST(req: NextRequest, { params }: { params: { sessionId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Verify session belongs to user
   const ws = await prisma.workoutSession.findFirst({
-    where: { id: params.sessionId, userId: session.user.id },
+    where: { id: (await params).sessionId, userId: session.user.id },
   })
   if (!ws) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
 
@@ -108,13 +108,13 @@ export async function POST(req: NextRequest, { params }: { params: { sessionId: 
 
     // Delete existing log for this session+exercise (idempotent)
     await prisma.exerciseLog.deleteMany({
-      where: { sessionId: params.sessionId, exerciseId: dbExercise.id },
+      where: { sessionId: (await params).sessionId, exerciseId: dbExercise.id },
     })
 
     // Create the log
     const created = await prisma.exerciseLog.create({
       data: {
-        sessionId:        params.sessionId,
+        sessionId:        (await params).sessionId,
         exerciseId:       dbExercise.id,
         order:            log.order,
         sets:             log.sets,

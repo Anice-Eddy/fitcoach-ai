@@ -10,7 +10,7 @@ import { getServerTranslations } from '@/lib/i18n/server'
 
 /** Coach layout: verifies auth, ensures coachProfile exists (redirects to completion if not), then renders the coach shell with sidebar and header. */
 export default async function CoachLayout({ children }: { children: React.ReactNode }) {
-  const { t } = getServerTranslations()
+  const { t } = await getServerTranslations()
   const session = await auth()
   if (!session?.user?.id) redirect('/auth/signin?callbackUrl=/coach/dashboard')
 

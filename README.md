@@ -6,7 +6,7 @@ Plateforme de coaching sportif et nutritionnel personnalisée avec monétisation
 
 | Couche | Technologie |
 |---|---|
-| Framework | Next.js 14 App Router |
+| Framework | Next.js 15 App Router |
 | Langage | TypeScript strict |
 | UI | Tailwind CSS + shadcn/ui + Framer Motion |
 | État | Zustand |
@@ -17,14 +17,14 @@ Plateforme de coaching sportif et nutritionnel personnalisée avec monétisation
 | Charts | Recharts |
 | Forms | React Hook Form + Zod |
 | PDF | jsPDF |
-| i18n | next-intl (FR / EN) |
-| PWA | next-pwa |
+| i18n | Catalogue JSON BodyOps (FR / EN) |
+| PWA | Manifest web, service worker désactivé |
 | Notifications | Sonner |
 | Déploiement | Vercel |
 
 ## Prérequis
 
-- Node.js 20+
+- Node.js 22+
 - npm 10+
 - Compte [Neon](https://neon.tech) (PostgreSQL gratuit)
 - Compte [Stripe](https://stripe.com) (test mode)
@@ -148,18 +148,18 @@ fitcoach-ai/
 1. Pousser le code sur GitHub
 2. [vercel.com](https://vercel.com) → **Add New Project** → importer le repo
 3. Ajouter toutes les variables du `.env.example` dans les settings Vercel
-4. Créer un Deploy Hook Vercel pour l'environnement Production
-5. Ajouter les secrets GitHub `PRODUCTION_DATABASE_URL` et `VERCEL_DEPLOY_HOOK_URL`
+4. Ajouter les secrets GitHub Environment `Prod` : `PRODUCTION_DATABASE_URL`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+5. Désactiver le déploiement Git automatique Vercel sur `main` pour garder l'ordre CI -> migrations -> déploiement
 6. À chaque push sur `main`, GitHub Actions attend que toute la CI passe
-7. Si la CI est verte, GitHub Actions applique les migrations Prisma puis déclenche le Deploy Hook Vercel
+7. Si la CI est verte, GitHub Actions applique les migrations Prisma puis déploie l'artefact production avec Vercel CLI
 
 Le workflow production refuse les runs issus des pull requests : il exige un événement `push`, la branche `main`, et une conclusion CI `success`.
 
 Les migrations sont séparées du build pour éviter qu'un problème réseau temporaire avec Neon bloque le déploiement Vercel. La commande utilisée par GitHub Actions est `npm run db:migrate:deploy`.
 
-Pour garantir strictement l'ordre `tests -> migrations -> déploiement`, `vercel.json` désactive déjà le déploiement Git automatique sur `main` avec `git.deploymentEnabled.main = false`. Vercel ne part donc pas directement au push sur la branche de production; la production est déclenchée uniquement par le Deploy Hook appelé après les migrations.
+Pour garantir strictement l'ordre `tests -> migrations -> déploiement`, `vercel.json` désactive déjà le déploiement Git automatique sur `main` avec `git.deploymentEnabled.main = false`. Vercel ne part donc pas directement au push sur la branche de production; GitHub Actions lance `vercel pull`, `vercel build --prod`, puis `vercel deploy --prebuilt --prod` après les migrations.
 
-Ne remplace pas cette règle par `github.enabled = false`, car cette ancienne option bloque aussi les Deploy Hooks. Ici on bloque seulement les déploiements déclenchés par commit Git sur `main`.
+Ne remplace pas cette règle par `github.enabled = false`, car cette ancienne option bloque les intégrations Git plus largement. Ici on bloque seulement les déploiements déclenchés automatiquement par commit Git sur `main`.
 
 Les previews peuvent toujours être créées sur les autres branches. Si tu changes le nom de la branche de production, mets à jour la clé `main` dans `vercel.json` et dans `.github/workflows/ci.yml`.
 

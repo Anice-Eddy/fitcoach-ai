@@ -5,8 +5,8 @@ import { Logo } from '@/components/ui/Logo'
 import { PageBackground } from '@/components/landing/PageBackground'
 import { getServerTranslations } from '@/lib/i18n/server'
 
-export function generateMetadata(): Metadata {
-  const { t } = getServerTranslations()
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslations()
 
   return { title: `${t('onboarding.title')} — BodyOps` }
 }

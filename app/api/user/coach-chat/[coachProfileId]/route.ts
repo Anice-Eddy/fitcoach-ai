@@ -35,12 +35,12 @@ async function ensureChat(coachId: string, memberId: string) {
 /** Returns the member's chat thread with one assigned coach and marks coach messages as read. */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { coachProfileId: string } },
+  { params }: { params: Promise<{ coachProfileId: string }> },
 ) {
-  const { memberId, membership, error } = await getMemberAccess(params.coachProfileId)
+  const { memberId, membership, error } = await getMemberAccess((await params).coachProfileId)
   if (error) return error
 
-  const chat = await ensureChat(params.coachProfileId, memberId!)
+  const chat = await ensureChat((await params).coachProfileId, memberId!)
 
   await prisma.coachChatMessage.updateMany({
     where: { chatId: chat.id, senderUserId: { not: memberId }, readAt: null },
@@ -70,15 +70,15 @@ export async function GET(
 /** Sends a member message to one assigned coach. */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { coachProfileId: string } },
+  { params }: { params: Promise<{ coachProfileId: string }> },
 ) {
-  const { memberId, membership, error } = await getMemberAccess(params.coachProfileId)
+  const { memberId, membership, error } = await getMemberAccess((await params).coachProfileId)
   if (error) return error
 
   const parsed = messageSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
-  const chat = await ensureChat(params.coachProfileId, memberId!)
+  const chat = await ensureChat((await params).coachProfileId, memberId!)
 
   const message = await prisma.$transaction(async (tx) => {
     const created = await tx.coachChatMessage.create({
@@ -98,7 +98,7 @@ export async function POST(
     // Notify the coach in the bell; a null recipientUserId targets the coach space.
     await tx.notification.create({
       data: {
-        coachId:         params.coachProfileId,
+        coachId:         (await params).coachProfileId,
         recipientUserId: null,
         type:            'MESSAGE',
         title:           'New member message',

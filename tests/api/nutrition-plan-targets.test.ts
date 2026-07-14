@@ -67,7 +67,7 @@ describe('nutrition plan targets', () => {
       targetProteinG: 180,
       targetCarbsG: 300,
       targetFatG: 75,
-    }) as never, { params: { memberId: 'member-1' } })
+    }) as never, { params: Promise.resolve({ memberId: 'member-1' }) })
 
     expect(res.status).toBe(200)
     expect(prisma.nutritionPlan.update).toHaveBeenCalledWith(expect.objectContaining({
@@ -92,7 +92,7 @@ describe('nutrition plan targets', () => {
       targetProteinG: '160',
       targetCarbsG: '250',
       targetFatG: '65',
-    }) as never, { params: { memberId: 'member-1' } })
+    }) as never, { params: Promise.resolve({ memberId: 'member-1' }) })
 
     expect(res.status).toBe(200)
     expect(prisma.nutritionPlan.create).toHaveBeenCalledWith(expect.objectContaining({

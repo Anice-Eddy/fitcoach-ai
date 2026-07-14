@@ -125,7 +125,7 @@ describe('/api/user/nutrition/foods', () => {
   it('refuses to delete a food created by another user', async () => {
     ;(prisma.foodLibraryItem.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(food({ createdByUserId: 'other-user' }))
 
-    const res = await DELETE(request('DELETE', undefined, '/api/user/nutrition/foods/food-1'), { params: { foodId: 'food-1' } })
+    const res = await DELETE(request('DELETE', undefined, '/api/user/nutrition/foods/food-1'), { params: Promise.resolve({ foodId: 'food-1' }) })
 
     expect(res.status).toBe(403)
     expect(prisma.foodLibraryItem.update).not.toHaveBeenCalled()
@@ -135,7 +135,7 @@ describe('/api/user/nutrition/foods', () => {
     ;(prisma.foodLibraryItem.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(food())
     ;(prisma.foodLibraryItem.update as ReturnType<typeof vi.fn>).mockResolvedValue(food())
 
-    const res = await DELETE(request('DELETE', undefined, '/api/user/nutrition/foods/food-1'), { params: { foodId: 'food-1' } })
+    const res = await DELETE(request('DELETE', undefined, '/api/user/nutrition/foods/food-1'), { params: Promise.resolve({ foodId: 'food-1' }) })
 
     expect(res.status).toBe(200)
     expect(prisma.foodLibraryItem.update).toHaveBeenCalledWith({
@@ -148,7 +148,7 @@ describe('/api/user/nutrition/foods', () => {
     ;(prisma.foodLibraryItem.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(food())
     ;(prisma.foodLibraryItem.update as ReturnType<typeof vi.fn>).mockResolvedValue(food({ nameEn: 'Updated rice' }))
 
-    const res = await PATCH(request('PATCH', { nameEn: 'Updated rice' }, '/api/user/nutrition/foods/food-1'), { params: { foodId: 'food-1' } })
+    const res = await PATCH(request('PATCH', { nameEn: 'Updated rice' }, '/api/user/nutrition/foods/food-1'), { params: Promise.resolve({ foodId: 'food-1' }) })
 
     expect(res.status).toBe(200)
     expect(prisma.foodLibraryItem.update).toHaveBeenCalledWith(expect.objectContaining({

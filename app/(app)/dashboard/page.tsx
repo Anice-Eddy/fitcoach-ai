@@ -7,8 +7,8 @@ import { DashboardClient } from './DashboardClient'
 import { PageSkeleton } from '@/components/ui/LoadingSkeleton'
 import { getServerTranslations } from '@/lib/i18n/server'
 
-export function generateMetadata(): Metadata {
-  const { t } = getServerTranslations()
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslations()
 
   return { title: `${t('dashboard.title')} — BodyOps` }
 }

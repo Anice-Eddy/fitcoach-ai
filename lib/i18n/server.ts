@@ -6,16 +6,18 @@ function isLocale(value: string | undefined): value is Locale {
 }
 
 /** Resolves the UI locale for Server Components from the BodyOps cookie, then Accept-Language, falling back to French. */
-export function getServerLocale(): Locale {
-  const cookieLocale = cookies().get('bodyops:locale')?.value
+export async function getServerLocale(): Promise<Locale> {
+  const cookieStore = await cookies()
+  const cookieLocale = cookieStore.get('bodyops:locale')?.value
   if (isLocale(cookieLocale)) return cookieLocale
 
-  return resolveLocaleFromLanguages(headers().get('accept-language'), 'fr')
+  const headerStore = await headers()
+  return resolveLocaleFromLanguages(headerStore.get('accept-language'), 'fr')
 }
 
 /** Returns a server-side translation helper using the locale available during the request. */
-export function getServerTranslations() {
-  const locale = getServerLocale()
+export async function getServerTranslations() {
+  const locale = await getServerLocale()
   const messages = getMessages(locale)
   return {
     locale,

@@ -14,18 +14,18 @@ const replySchema = z.object({
 /** Returns all replies for the shared note, ordered by creation date ascending; verifies member access. */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { noteId: string } },
+  { params }: { params: Promise<{ noteId: string }> },
 ) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
   // Verify member owns access to this note
   const note = await prisma.coachNote.findFirst({
-    where: { id: params.noteId, memberId: session.user.id, isSharedWithMember: true },
+    where: { id: (await params).noteId, memberId: session.user.id, isSharedWithMember: true },
   })
   if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
-  const replies = await getNormalizedCoachNoteReplies(params.noteId)
+  const replies = await getNormalizedCoachNoteReplies((await params).noteId)
 
   return NextResponse.json(replies)
 }
@@ -33,13 +33,13 @@ export async function GET(
 /** Adds a member reply to the shared coach note and notifies the coach. */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { noteId: string } },
+  { params }: { params: Promise<{ noteId: string }> },
 ) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
   const note = await prisma.coachNote.findFirst({
-    where: { id: params.noteId, memberId: session.user.id, isSharedWithMember: true },
+    where: { id: (await params).noteId, memberId: session.user.id, isSharedWithMember: true },
   })
   if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
@@ -48,7 +48,7 @@ export async function POST(
 
   const reply = await prisma.coachNoteReply.create({
     data: {
-      noteId:   params.noteId,
+      noteId:   (await params).noteId,
       memberId: session.user.id,
       content:  parsed.data.content,
     },
@@ -76,7 +76,7 @@ export async function POST(
 /** Deletes the member's own reply (by replyId in body) from the note. */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { noteId: string } },
+  { params }: { params: Promise<{ noteId: string }> },
 ) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
@@ -85,7 +85,7 @@ export async function DELETE(
   if (!replyId) return NextResponse.json({ error: 'Missing replyId' }, { status: 400 })
 
   const reply = await prisma.coachNoteReply.findFirst({
-    where: { id: replyId, noteId: params.noteId, memberId: session.user.id },
+    where: { id: replyId, noteId: (await params).noteId, memberId: session.user.id },
   })
   if (!reply) return NextResponse.json({ error: 'Reply not found' }, { status: 404 })
 

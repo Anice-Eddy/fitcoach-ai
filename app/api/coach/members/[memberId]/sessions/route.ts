@@ -41,13 +41,13 @@ async function authorizeCoach(memberId: string) {
 /** Returns the 30 most recent workout sessions for the member with full exercise logs. */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { memberId: string } },
+  { params }: { params: Promise<{ memberId: string }> },
 ) {
-  const { error } = await authorizeCoach(params.memberId)
+  const { error } = await authorizeCoach((await params).memberId)
   if (error) return error
 
   const sessions = await prisma.workoutSession.findMany({
-    where:   { userId: params.memberId },
+    where:   { userId: (await params).memberId },
     include: { exerciseLogs: { include: { exercise: true }, orderBy: { order: 'asc' } } },
     orderBy: { createdAt: 'desc' },
     take:    30,
@@ -59,9 +59,9 @@ export async function GET(
 /** Updates a workout session's status, notes, duration, or calories; auto-sets startedAt/completedAt timestamps. */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { memberId: string } },
+  { params }: { params: Promise<{ memberId: string }> },
 ) {
-  const { error } = await authorizeCoach(params.memberId)
+  const { error } = await authorizeCoach((await params).memberId)
   if (error) return error
 
   const parsed = patchSchema.safeParse(await req.json())
@@ -70,7 +70,7 @@ export async function PATCH(
   const { sessionId, status, ...rest } = parsed.data
 
   const session = await prisma.workoutSession.findFirst({
-    where: { id: sessionId, userId: params.memberId },
+    where: { id: sessionId, userId: (await params).memberId },
   })
   if (!session) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
 
@@ -92,9 +92,9 @@ export async function PATCH(
 /** Removes a full session, or one exercise inside it, after verifying coach ownership of the member. */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { memberId: string } },
+  { params }: { params: Promise<{ memberId: string }> },
 ) {
-  const { error } = await authorizeCoach(params.memberId)
+  const { error } = await authorizeCoach((await params).memberId)
   if (error) return error
 
   const parsed = deleteSchema.safeParse(await req.json())
@@ -104,7 +104,7 @@ export async function DELETE(
 
   if (!exerciseLogId) {
     const session = await prisma.workoutSession.findFirst({
-      where:  { id: sessionId, userId: params.memberId },
+      where:  { id: sessionId, userId: (await params).memberId },
       select: { id: true },
     })
     if (!session) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
@@ -115,7 +115,7 @@ export async function DELETE(
   }
 
   const exerciseLog = await prisma.exerciseLog.findFirst({
-    where: { id: exerciseLogId, session: { id: sessionId, userId: params.memberId } },
+    where: { id: exerciseLogId, session: { id: sessionId, userId: (await params).memberId } },
     select: { id: true },
   })
   if (!exerciseLog) return NextResponse.json({ error: 'Exercise not found' }, { status: 404 })
@@ -124,7 +124,7 @@ export async function DELETE(
 
   // Return the refreshed session so the UI keeps exercises synchronized.
   const updatedSession = await prisma.workoutSession.findFirst({
-    where:   { id: sessionId, userId: params.memberId },
+    where:   { id: sessionId, userId: (await params).memberId },
     include: { exerciseLogs: { include: { exercise: true }, orderBy: { order: 'asc' } } },
   })
 
