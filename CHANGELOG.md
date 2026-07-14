@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/Anice-Eddy/fitcoach-ai/compare/v1.0.1...v1.0.2) (2026-07-14)
+
+
+### Bug Fixes
+
+* **stripe:** lazy load webhook client ([06c825d](https://github.com/Anice-Eddy/fitcoach-ai/commit/06c825d4c1e41f440f007761a99dbfc319befaab))
+
 ## [1.0.1](https://github.com/Anice-Eddy/fitcoach-ai/compare/v1.0.0...v1.0.1) (2026-07-14)
 
 
