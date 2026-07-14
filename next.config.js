@@ -6,6 +6,10 @@ if (process.env.NEXT_PHASE === 'phase-production-build') {
     'DATABASE_URL',
     'AUTH_SECRET',
     'NEXT_PUBLIC_APP_URL',
+    'NEXT_PUBLIC_FIREBASE_API_KEY',
+    'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
+    'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+    'NEXT_PUBLIC_FIREBASE_APP_ID',
   ]
   const missing = REQUIRED.filter((k) => !process.env[k])
   if (missing.length > 0) {
