@@ -128,8 +128,8 @@ jobs:
       - name: Pull Vercel production environment
         run: vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
 
-      - name: Build Vercel production artifact
-        run: vercel build --prod --token "$VERCEL_TOKEN"
+      - name: List Vercel production environment names
+        run: vercel env ls production --token "$VERCEL_TOKEN"
 
-      - name: Deploy Vercel production artifact
-        run: vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+      - name: Deploy Vercel production
+        run: vercel deploy --prod --token "$VERCEL_TOKEN"
