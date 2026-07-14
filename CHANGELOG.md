@@ -1,3 +1,10 @@
+## [1.0.4](https://github.com/Anice-Eddy/fitcoach-ai/compare/v1.0.3...v1.0.4) (2026-07-14)
+
+
+### Bug Fixes
+
+* **auth:** require firebase client env in production build ([17afb0f](https://github.com/Anice-Eddy/fitcoach-ai/commit/17afb0f1b6ba96ba1df225deac6e3048c49de886))
+
 ## [1.0.3](https://github.com/Anice-Eddy/fitcoach-ai/compare/v1.0.2...v1.0.3) (2026-07-14)
 
 
