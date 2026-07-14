@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/Anice-Eddy/fitcoach-ai/compare/v1.0.2...v1.0.3) (2026-07-14)
+
+
+### Bug Fixes
+
+* **ui:** move version to footer and limit language picker ([9be330d](https://github.com/Anice-Eddy/fitcoach-ai/commit/9be330d405857dd355a48284b07c14ecba29380e))
+
 ## [1.0.2](https://github.com/Anice-Eddy/fitcoach-ai/compare/v1.0.1...v1.0.2) (2026-07-14)
 
 
