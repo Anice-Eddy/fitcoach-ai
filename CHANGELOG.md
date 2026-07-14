@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/Anice-Eddy/fitcoach-ai/compare/v1.0.0...v1.0.1) (2026-07-14)
+
+
+### Bug Fixes
+
+* **deploy:** harden production release pipeline ([2beb69d](https://github.com/Anice-Eddy/fitcoach-ai/commit/2beb69dfab0f9b71a8fef40e97a00bc85a413883))
+
 # 1.0.0 (2026-07-14)
 
 
