@@ -1,3 +1,10 @@
+## [1.0.5](https://github.com/Anice-Eddy/fitcoach-ai/compare/v1.0.4...v1.0.5) (2026-07-14)
+
+
+### Bug Fixes
+
+* **ci:** deploy production build on vercel ([d57088f](https://github.com/Anice-Eddy/fitcoach-ai/commit/d57088fb586c80af422bd44b62013a4e2c59f07e))
+
 ## [1.0.4](https://github.com/Anice-Eddy/fitcoach-ai/compare/v1.0.3...v1.0.4) (2026-07-14)
 
 
