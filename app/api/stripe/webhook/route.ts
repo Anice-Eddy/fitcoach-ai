@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 // IMPORTANT: the body must be read as a raw buffer, not JSON.parse
 
 import { NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe/client'
+import { getStripe } from '@/lib/stripe/client'
 import {
   handleCheckoutCompleted,
   handleSubscriptionDeleted,
@@ -19,9 +19,14 @@ export async function POST(req: Request) {
 
   if (!signature) return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
 
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+  if (!webhookSecret) {
+    return NextResponse.json({ error: 'Stripe webhook is not configured' }, { status: 503 })
+  }
+
   let event: Stripe.Event
   try {
-    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!)
+    event = getStripe().webhooks.constructEvent(body, signature, webhookSecret)
   } catch {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
