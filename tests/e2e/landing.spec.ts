@@ -33,17 +33,8 @@ test.describe('Landing page', () => {
     await expect(nav.first()).toBeVisible()
   })
 
-  test('lets visitors switch language from the public landing page', async ({ page }) => {
-    await page.evaluate(() => localStorage.setItem('bodyops:locale', 'fr'))
-    await page.reload({ waitUntil: 'domcontentloaded' })
-
-    await expect(page.getByRole('link', { name: /se connecter/i })).toBeVisible()
-
-    await page.getByRole('button', { name: 'EN', description: 'English' }).click()
-
-    await expect(page.getByRole('link', { name: /sign in/i })).toBeVisible()
-    await expect(page.locator('html')).toHaveAttribute('lang', 'en')
-    await expect.poll(() => page.evaluate(() => localStorage.getItem('bodyops:locale'))).toBe('en')
+  test('does not expose the language switcher on the public landing page', async ({ page }) => {
+    await expect(page.locator('[aria-label="Langue"], [aria-label="Language"]')).toHaveCount(0)
   })
 
   test('shows the footer when present', async ({ page }) => {
@@ -80,24 +71,16 @@ test.describe('Landing navigation', () => {
     await expect(page.locator('h1, h2').first()).toBeVisible()
   })
 
-  test('the Pricing page also exposes the language switcher', async ({ page }) => {
+  test('the Pricing page does not expose the public language switcher', async ({ page }) => {
     await page.goto('/pricing', { waitUntil: 'domcontentloaded' })
-    await page.evaluate(() => localStorage.setItem('bodyops:locale', 'fr'))
-    await page.reload({ waitUntil: 'domcontentloaded' })
-
-    await page.getByRole('button', { name: 'EN', description: 'English' }).click()
-    await expect(page.getByRole('link', { name: /sign in/i })).toBeVisible()
-    await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+    await expect(page.locator('[aria-label="Langue"], [aria-label="Language"]')).toHaveCount(0)
   })
 
   for (const path of ['/privacy', '/terms']) {
-    test(`${path} exposes the language switcher`, async ({ page }) => {
+    test(`${path} does not expose the public language switcher`, async ({ page }) => {
       await page.goto(path, { waitUntil: 'domcontentloaded' })
-      await page.evaluate(() => localStorage.setItem('bodyops:locale', 'fr'))
-      await page.reload({ waitUntil: 'domcontentloaded' })
 
-      await page.getByRole('button', { name: 'EN', description: 'English' }).click()
-      await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+      await expect(page.locator('[aria-label="Langue"], [aria-label="Language"]')).toHaveCount(0)
       await expect(page.locator('h1')).toBeVisible()
     })
   }
