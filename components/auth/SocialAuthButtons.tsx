@@ -45,7 +45,7 @@ function providerErrorMessage(error: unknown, t: (key: string) => string) {
   const code = (error as SocialAuthError | null)?.code
   const message = (error as SocialAuthError | null)?.message
   if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return null
-  if (code === 'auth/configuration-not-found') {
+  if (code === 'auth/configuration-not-found' || code === 'auth/client-config-missing') {
     return t('auth.socialErrors.notConfigured')
   }
   if (code === 'auth/operation-not-allowed') {

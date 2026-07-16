@@ -24,8 +24,8 @@ function renderShoppingList(locale: 'fr' | 'en') {
       LocaleProvider,
       {
         initialLocale: locale,
-        children: React.createElement(ShoppingList, { grouped }),
       },
+      React.createElement(ShoppingList, { grouped }),
     ),
   )
 }

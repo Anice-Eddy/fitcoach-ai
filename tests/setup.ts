@@ -1,5 +1,6 @@
 // Global Vitest setup with Jest DOM matchers.
 import '@testing-library/jest-dom'
+import React from 'react'
 import { vi } from 'vitest'
 
 // Mock next/navigation for components that use useRouter/usePathname.
@@ -12,7 +13,6 @@ vi.mock('next/navigation', () => ({
 // Mock next/image with a simplified test render.
 vi.mock('next/image', () => ({
   default: ({ src, alt }: { src: string; alt: string }) => {
-    const React = require('react')
     return React.createElement('img', { src, alt })
   },
 }))

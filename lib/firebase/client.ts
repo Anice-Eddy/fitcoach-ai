@@ -27,6 +27,15 @@ const firebaseConfig = {
   appId:             process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
+class FirebaseClientConfigError extends Error {
+  code = 'auth/client-config-missing'
+
+  constructor() {
+    super('Authentication configuration is unavailable.')
+    this.name = 'FirebaseClientConfigError'
+  }
+}
+
 function assertFirebaseClientConfig() {
   const missing = [
     ['NEXT_PUBLIC_FIREBASE_API_KEY', firebaseConfig.apiKey],
@@ -38,8 +47,10 @@ function assertFirebaseClientConfig() {
     .map(([key]) => key)
 
   if (missing.length > 0) {
-    console.error('[auth-client] Missing client auth config:', missing.join(', '))
-    throw new Error('Missing authentication configuration.')
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('[auth-client] Missing client auth config:', missing.join(', '))
+    }
+    throw new FirebaseClientConfigError()
   }
 }
 

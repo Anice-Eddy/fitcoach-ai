@@ -29,12 +29,6 @@ async function mockFirebaseEmailActionSuccess(page: Page) {
   await page.route('https://identitytoolkit.googleapis.com/**', async (route) => {
     const request = route.request()
     const url = request.url()
-    let body: Record<string, unknown> | null = null
-    try {
-      body = request.postDataJSON() as Record<string, unknown>
-    } catch {
-      body = null
-    }
 
     if (url.includes('accounts:resetPassword')) {
       await route.fulfill({

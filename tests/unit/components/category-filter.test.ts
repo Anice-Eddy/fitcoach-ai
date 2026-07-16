@@ -11,12 +11,12 @@ function renderFilter(locale: 'fr' | 'en') {
       LocaleProvider,
       {
         initialLocale: locale,
-        children: React.createElement(CategoryFilter, {
-          selected: 'ALL',
-          onChange: vi.fn(),
-          counts:   { SUPPLEMENTS: 2 },
-        }),
       },
+      React.createElement(CategoryFilter, {
+        selected: 'ALL',
+        onChange: vi.fn(),
+        counts:   { SUPPLEMENTS: 2 },
+      }),
     ),
   )
 }

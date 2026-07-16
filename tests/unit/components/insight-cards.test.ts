@@ -19,8 +19,8 @@ function renderCards(locale: 'fr' | 'en') {
       LocaleProvider,
       {
         initialLocale: locale,
-        children: React.createElement(InsightCards, { insights }),
       },
+      React.createElement(InsightCards, { insights }),
     ),
   )
 }
@@ -32,8 +32,8 @@ function renderMemory(locale: 'fr' | 'en', memory: InsightMemory) {
       LocaleProvider,
       {
         initialLocale: locale,
-        children: React.createElement(MemoryStrip, { memory }),
       },
+      React.createElement(MemoryStrip, { memory }),
     ),
   )
 }

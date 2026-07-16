@@ -26,7 +26,7 @@ function persistLocale(locale: Locale) {
 }
 
 /** Provides locale state and the t() translation function; the server supplies browser/cookie locale, explicit user changes persist it. */
-export function LocaleProvider({ children, initialLocale = 'fr' }: { children: ReactNode; initialLocale?: Locale }) {
+export function LocaleProvider({ children, initialLocale = 'fr' }: { children?: ReactNode; initialLocale?: Locale }) {
   const [locale,   setLocaleState] = useState<Locale>(initialLocale)
   const [messages, setMessages]    = useState<Messages>(getMessages(initialLocale))
   const setUILanguage = useUIStore(state => state.setLanguage)

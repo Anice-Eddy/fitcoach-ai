@@ -34,7 +34,8 @@ function renderToggle(initialLocale: 'fr' | 'en' = 'fr') {
   return render(
     React.createElement(
       LocaleProvider,
-      { initialLocale, children: React.createElement(LanguageToggle) },
+      { initialLocale },
+      React.createElement(LanguageToggle),
     ),
   )
 }
