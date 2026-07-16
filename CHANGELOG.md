@@ -1,3 +1,13 @@
+## [1.0.6](https://github.com/Anice-Eddy/fitcoach-ai/compare/v1.0.5...v1.0.6) (2026-07-16)
+
+
+### Bug Fixes
+
+* **auth:** harden firebase client config handling ([8551397](https://github.com/Anice-Eddy/fitcoach-ai/commit/85513979b57e0a8443017a7ca2dadcf3c85e0794))
+* **ci:** allow manual ci deployment fallback ([5485555](https://github.com/Anice-Eddy/fitcoach-ai/commit/548555506cb1222cedcb2db9afe02d8891f0f7a3))
+* **ci:** restore automatic production pipeline ([f31186e](https://github.com/Anice-Eddy/fitcoach-ai/commit/f31186ed626974de1a963f95ee570ba509dc2bdb))
+* **ci:** run release migration and deploy after tests ([64ea4c7](https://github.com/Anice-Eddy/fitcoach-ai/commit/64ea4c7730d8655159c5cf81b5d953e47ca413fa))
+
 ## [1.0.5](https://github.com/Anice-Eddy/fitcoach-ai/compare/v1.0.4...v1.0.5) (2026-07-14)
 
 
