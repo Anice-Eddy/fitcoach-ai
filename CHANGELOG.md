@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/Anice-Eddy/fitcoach-ai/compare/v1.0.6...v1.1.0) (2026-09-10)
+
+
+### Features
+
+* harden BodyOps security, validation and performance ([69166f1](https://github.com/Anice-Eddy/fitcoach-ai/commit/69166f15c27dc49e822cb04ca5e1bae261832889))
+
 ## [1.0.6](https://github.com/Anice-Eddy/fitcoach-ai/compare/v1.0.5...v1.0.6) (2026-07-16)
 
 
