@@ -6,7 +6,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getServerTranslations()
 
   return {
-    title: `${t('terms.title')} — BodyOps`,
+    title: t('terms.title'),
     description: t('terms.metaDescription'),
   }
 }

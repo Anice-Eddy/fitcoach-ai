@@ -104,7 +104,7 @@
       },
       "multiDevice": {
         "title": "Multi-appareils",
-        "description": "Application installable, utilisable hors ligne sur mobile et ordinateur."
+        "description": "Application installable sur mobile et ordinateur, avec synchronisation de tes données."
       }
     },
     "testimonials": {

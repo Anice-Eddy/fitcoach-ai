@@ -8,7 +8,7 @@ import { TrainingClient } from './TrainingClient'
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getServerTranslations()
 
-  return { title: `${t('training.title')} — BodyOps` }
+  return { title: t('training.title') }
 }
 
 /** Server component shell for the training page; renders the interactive TrainingClient. */

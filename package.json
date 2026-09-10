@@ -14,12 +14,13 @@
     "test:e2e": "playwright test",
     "test:all": "npm run test:unit && npm run test:e2e",
     "coverage": "vitest run --coverage",
+    "audit:prod": "npm audit --omit=dev --audit-level=high",
     "i18n:audit": "node scripts/i18n-audit.mjs",
     "i18n:audit:fail": "node scripts/i18n-audit.mjs --fail",
     "release": "semantic-release",
     "release:dry-run": "semantic-release --dry-run",
     "verify:static": "prisma validate && npm run type-check && npm run lint && npm run i18n:audit:fail",
-    "verify:ci": "npm run verify:static && npm run test:unit && npm run build && npm run test:e2e",
+    "verify:ci": "npm run verify:static && npm run audit:prod && npm run test:unit && npm run build && npm run test:e2e",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:seed": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
@@ -27,21 +28,21 @@
     "generate": "prisma generate"
   },
   "dependencies": {
-    "@auth/prisma-adapter": "^2.7.2",
+    "@auth/prisma-adapter": "^2.11.3",
     "@hookform/resolvers": "^3.9.1",
     "@prisma/client": "^5.22.0",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
-    "firebase": "^12.14.0",
+    "firebase": "^12.19.0",
     "firebase-admin": "^13.10.0",
     "framer-motion": "^11.13.1",
     "idb": "^8.0.0",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.454.0",
-    "next": "^15.5.20",
-    "next-auth": "^5.0.0-beta.25",
+    "next": "^15.5.25",
+    "next-auth": "^5.0.0-beta.32",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.2",
@@ -53,7 +54,7 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0",
+    "@playwright/test": "^1.63.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/git": "^10.0.1",
@@ -68,26 +69,26 @@
     "@types/react-dom": "^18.3.1",
     "@types/supertest": "^7.2.0",
     "@vitejs/plugin-react": "^6.0.2",
-    "@vitest/coverage-v8": "^4.1.7",
+    "@vitest/coverage-v8": "^4.1.11",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
-    "eslint-config-next": "^15.5.20",
+    "eslint-config-next": "^15.5.25",
     "jsdom": "^29.1.1",
     "msw": "^2.14.6",
-    "postcss": "8.5.16",
+    "postcss": "8.5.28",
     "prisma": "^5.22.0",
     "semantic-release": "^25.0.7",
     "supertest": "^7.2.2",
     "tailwindcss": "^3.4.15",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.11"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "overrides": {
-    "postcss": "8.5.16",
+    "postcss": "8.5.28",
     "uuid": "11.1.1"
   }
 }
