@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
+import { memberAppointmentUpdateSchema } from '@/lib/appointments/validation'
 
 export const runtime = 'nodejs'
 
@@ -23,7 +24,11 @@ export async function PATCH(
     return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
   }
 
-  const { memberNote } = await req.json()
+  const parsed = memberAppointmentUpdateSchema.safeParse(await req.json().catch(() => null))
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
+  }
+  const { memberNote } = parsed.data
 
   const updated = await prisma.coachAppointment.update({
     where: { id: (await params).id },

@@ -8,7 +8,7 @@ import { getServerTranslations } from '@/lib/i18n/server'
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getServerTranslations()
 
-  return { title: `${t('onboarding.title')} — BodyOps` }
+  return { title: t('onboarding.title') }
 }
 
 export default function OnboardingPage() {

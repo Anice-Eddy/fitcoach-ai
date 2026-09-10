@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/stores/userStore'
 import { MetricsGrid }      from '@/components/dashboard/MetricsGrid'
-import { WeightChart }      from '@/components/dashboard/WeightChart'
 import { NutritionSummary } from '@/components/dashboard/NutritionSummary'
 import { QuickActions }     from '@/components/dashboard/QuickActions'
 import Link from 'next/link'
@@ -14,6 +14,14 @@ import { Dumbbell, ArrowRight, UserCheck, Calendar, MapPin, Star, Zap } from 'lu
 import { format } from 'date-fns'
 import { enUS, fr } from 'date-fns/locale'
 import { useLocale } from '@/contexts/LocaleContext'
+
+const WeightChart = dynamic(
+  () => import('@/components/dashboard/WeightChart').then((module) => module.WeightChart),
+  {
+    ssr: false,
+    loading: () => <div aria-hidden="true" className="h-[292px] animate-pulse rounded-2xl border border-zinc-800 bg-zinc-900" />,
+  },
+)
 
 interface WeightPoint { date: string; weight: number }
 interface Metric { id: string; weightKg?: number | null; waterLiters?: number | null; date: string }

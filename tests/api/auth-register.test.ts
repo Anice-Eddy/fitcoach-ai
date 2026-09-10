@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/prisma/client', () => ({
   prisma: {
+    $queryRaw: vi.fn(async () => [{ count: 1 }]),
     user: {
       create:     vi.fn(),
       findUnique: vi.fn(),

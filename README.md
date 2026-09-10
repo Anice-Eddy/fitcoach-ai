@@ -91,7 +91,7 @@ npm run db:seed      # Seed des données de démo
 /settings                  → Profil, unités, abonnement
 /shop                      → Produits affiliés par catégorie
 /pricing                   → Plans tarifaires
-/coach/*                   → Dashboard coach (mocké MVP)
+/coach/*                   → Espace coach (membres, rendez-vous, notes, messages, rapports)
 ```
 
 ## Plans tarifaires
@@ -111,7 +111,7 @@ fitcoach-ai/
 │   ├── (marketing)/   # Landing + pricing (sans sidebar)
 │   ├── (auth)/        # Auth signin
 │   ├── (app)/         # Routes protégées (avec sidebar)
-│   ├── coach/         # Dashboard coach (mocké)
+│   ├── coach/         # Espace coach
 │   ├── onboarding/    # Stepper onboarding
 │   └── api/           # Routes API
 ├── components/        # Composants React
@@ -147,17 +147,17 @@ fitcoach-ai/
 
 1. Pousser le code sur GitHub
 2. [vercel.com](https://vercel.com) → **Add New Project** → importer le repo
-3. Ajouter toutes les variables du `.env.example` dans les settings Vercel
+3. Ajouter les variables utilisées dans les settings Vercel (les intégrations optionnelles peuvent rester vides)
 4. Ajouter les secrets GitHub Environment `Prod` : `PRODUCTION_DATABASE_URL`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
 5. Désactiver le déploiement Git automatique Vercel sur `main` pour garder l'ordre CI -> migrations -> déploiement
 6. À chaque push sur `main`, GitHub Actions attend que toute la CI passe
-7. Si la CI est verte, GitHub Actions applique les migrations Prisma puis déploie l'artefact production avec Vercel CLI
+7. Si la CI est verte, GitHub Actions applique les migrations Prisma puis lance le déploiement de production avec Vercel CLI
 
 Le workflow production refuse les runs issus des pull requests : il exige un événement `push`, la branche `main`, et une conclusion CI `success`.
 
 Les migrations sont séparées du build pour éviter qu'un problème réseau temporaire avec Neon bloque le déploiement Vercel. La commande utilisée par GitHub Actions est `npm run db:migrate:deploy`.
 
-Pour garantir strictement l'ordre `tests -> migrations -> déploiement`, `vercel.json` désactive déjà le déploiement Git automatique sur `main` avec `git.deploymentEnabled.main = false`. Vercel ne part donc pas directement au push sur la branche de production; GitHub Actions lance `vercel pull`, `vercel build --prod`, puis `vercel deploy --prebuilt --prod` après les migrations.
+Pour garantir strictement l'ordre `tests -> migrations -> déploiement`, `vercel.json` désactive déjà le déploiement Git automatique sur `main` avec `git.deploymentEnabled.main = false`. Vercel ne part donc pas directement au push sur la branche de production ; GitHub Actions lance `vercel pull`, puis `vercel deploy --prod` après les migrations.
 
 Ne remplace pas cette règle par `github.enabled = false`, car cette ancienne option bloque les intégrations Git plus largement. Ici on bloque seulement les déploiements déclenchés automatiquement par commit Git sur `main`.
 
@@ -189,11 +189,11 @@ test:     ajout ou modification de tests
 | Nutrition | Complet |
 | Exports PDF/JSON | Complet |
 | Auth Firebase Google/Facebook | Complet |
-| Stripe Pro | Complet |
+| Stripe / abonnements payants | Désactivé temporairement (routes checkout/portal en 503) |
 | Stockage local/cloud | Complet |
 | Intégrations (Garmin/Fitbit/Strava) | Mocké |
-| Dashboard coach B2B | Mocké |
-| Affiliation avancée | Mocké |
+| Espace coach (membres, rendez-vous, notes, messages, rapports) | Fonctionnel |
+| Affiliation (catalogue et suivi des clics) | Fonctionnel, sans automatisation avancée |
 | Dashboard admin | Mocké |
 
 ## Licence

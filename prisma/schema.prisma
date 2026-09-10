@@ -1188,6 +1188,21 @@ model AIUsageDaily {
   @@map("ai_usage_daily")
 }
 
+// Distributed fixed-window limits for authentication and AI endpoints.
+// Identifiers are one-way hashes; raw IP addresses and emails are never stored.
+model RateLimitBucket {
+  id          String   @id @default(cuid())
+  scope       String
+  keyHash     String
+  windowStart DateTime
+  expiresAt   DateTime
+  count       Int      @default(1)
+
+  @@unique([scope, keyHash, windowStart])
+  @@index([expiresAt])
+  @@map("rate_limit_buckets")
+}
+
 model PasswordResetToken {
   id        String   @id @default(cuid())
   userId    String

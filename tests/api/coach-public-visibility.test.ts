@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@/lib/auth/auth', () => ({ auth: vi.fn() }))
 vi.mock('@/lib/prisma/client', () => ({
   prisma: {
+    $queryRaw: vi.fn(async () => [{ count: 1 }]),
     user: {
       findMany:   vi.fn(),
       findUnique: vi.fn(),

@@ -10,7 +10,7 @@ import { getServerTranslations } from '@/lib/i18n/server'
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getServerTranslations()
 
-  return { title: `${t('dashboard.title')} — BodyOps` }
+  return { title: t('dashboard.title') }
 }
 
 /** Server component wrapping the member dashboard with a Suspense skeleton fallback. */

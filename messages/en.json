@@ -104,7 +104,7 @@
       },
       "multiDevice": {
         "title": "Multi-device",
-        "description": "Installable app, available offline on mobile and desktop."
+        "description": "Installable on mobile and desktop, with your data kept in sync."
       }
     },
     "testimonials": {

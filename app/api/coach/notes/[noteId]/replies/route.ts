@@ -8,8 +8,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 const replySchema = z.object({
-  content: z.string().min(1).max(2000),
-})
+  content: z.string().trim().min(1).max(2000),
+}).strict()
+const deleteReplySchema = z.object({ replyId: z.string().min(1).max(128) }).strict()
 
 // Authenticates the session and returns the coachProfile record, or an error response.
 async function getCoachProfile() {
@@ -54,7 +55,7 @@ export async function POST(
   })
   if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
-  const parsed = replySchema.safeParse(await req.json())
+  const parsed = replySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
   const reply = await prisma.coachNoteReply.create({
@@ -94,8 +95,9 @@ export async function DELETE(
   const { coachProfile, error } = await getCoachProfile()
   if (error) return error
 
-  const { replyId } = await req.json()
-  if (!replyId) return NextResponse.json({ error: 'Missing replyId' }, { status: 400 })
+  const parsed = deleteReplySchema.safeParse(await req.json().catch(() => null))
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
+  const { replyId } = parsed.data
 
   const note = await prisma.coachNote.findFirst({
     where: { id: (await params).noteId, coachId: coachProfile!.id },

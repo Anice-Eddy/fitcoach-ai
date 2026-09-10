@@ -1,14 +1,22 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { Header }       from '@/components/layout/Header'
 import { PageWrapper }  from '@/components/layout/PageWrapper'
-import { WeightChart }  from '@/components/dashboard/WeightChart'
 import { useUserStore } from '@/stores/userStore'
 import { toast } from 'sonner'
 import { Plus, Scale, Target, TrendingDown, TrendingUp, Activity, Trash2, Ruler, Footprints, Moon, Droplets, Battery, Brain, Camera, Heart, Wind, Zap, HeartPulse } from 'lucide-react'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { useLocale } from '@/contexts/LocaleContext'
 import { GOAL_LABEL_KEYS } from '@/lib/i18n/profile-label-keys'
+
+const WeightChart = dynamic(
+  () => import('@/components/dashboard/WeightChart').then((module) => module.WeightChart),
+  {
+    ssr: false,
+    loading: () => <div aria-hidden="true" className="h-[292px] animate-pulse rounded-2xl border border-zinc-800 bg-zinc-900" />,
+  },
+)
 
 interface BodyMetric {
   id:               string
