@@ -3,6 +3,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import Credentials from 'next-auth/providers/credentials'
 import { prisma } from '@/lib/prisma/client'
 import { sessionCallback } from '@/lib/auth/session-callbacks'
+import { DUMMY_PASSWORD_HASH } from '@/lib/security/password'
 
 const baseAdapter = PrismaAdapter(prisma)
 
@@ -22,17 +23,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           if (!credentials?.email || !credentials?.password) return null
 
+          const normalizedEmail = String(credentials.email).trim().toLowerCase()
+          const { consumeRateLimit } = await import('@/lib/security/rate-limit')
+          const rateLimit = await consumeRateLimit({
+            scope: 'auth.nextauth.credentials.email',
+            identifier: `email:${normalizedEmail}`,
+            limit: 10,
+            windowMs: 10 * 60 * 1000,
+          })
+          if (!rateLimit.allowed) return null
+
           const user = await prisma.user.findUnique({
-            where:  { email: credentials.email as string },
+            where:  { email: normalizedEmail },
             select: { id: true, email: true, name: true, image: true, password: true },
           })
 
-          if (!user?.password) return null
-
           // Load bcrypt only inside the credentials route to keep middleware Edge-compatible.
           const { compare } = await import('bcryptjs')
-          const valid = await compare(credentials.password as string, user.password)
-          if (!valid) return null
+          const valid = await compare(credentials.password as string, user?.password ?? DUMMY_PASSWORD_HASH)
+          if (!user?.password || !valid) return null
 
           return { id: user.id, email: user.email, name: user.name, image: user.image }
         } catch (err) {

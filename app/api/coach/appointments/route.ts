@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
+import { coachAppointmentCreateSchema } from '@/lib/appointments/validation'
 
 export const runtime = 'nodejs'
 
@@ -64,8 +65,11 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { memberId, title, description, scheduledAt, duration, meetLink, coachNote } =
-      await req.json()
+    const parsed = coachAppointmentCreateSchema.safeParse(await req.json().catch(() => null))
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
+    }
+    const { memberId, title, description, scheduledAt, duration, meetLink, coachNote } = parsed.data
 
     const coach = await prisma.user.findUnique({
       where: { email: session.user.email },
@@ -85,10 +89,10 @@ export async function POST(req: NextRequest) {
         memberId,
         title,
         description,
-        scheduledAt: new Date(scheduledAt),
-        duration: duration || 60,
+        scheduledAt,
+        duration,
         meetLink,
-        coachNote: coachNote?.trim() ? coachNote.trim() : null,
+        coachNote,
       },
       include: { member: { include: { profile: true } } },
     })
@@ -106,7 +110,7 @@ export async function POST(req: NextRequest) {
         recipientUserId: memberId,
         type:            'APPOINTMENT',
         title:           `New appointment: ${title}`,
-        message:         `Your coach scheduled an appointment on ${new Date(scheduledAt).toLocaleDateString('en-US')}`,
+        message:         `Your coach scheduled an appointment on ${scheduledAt.toLocaleDateString('en-US')}`,
         relatedId:       appointment.id,
       },
     })

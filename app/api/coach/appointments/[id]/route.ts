@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
+import { coachAppointmentUpdateSchema } from '@/lib/appointments/validation'
 
 export const runtime = 'nodejs'
 
@@ -31,14 +32,17 @@ export async function PATCH(
     return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
   }
 
-  const body = await req.json()
-  const { status, scheduledAt, duration, meetLink, description, coachNote } = body
+  const parsed = coachAppointmentUpdateSchema.safeParse(await req.json().catch(() => null))
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
+  }
+  const { status, scheduledAt, duration, meetLink, description, coachNote } = parsed.data
 
   const updated = await prisma.coachAppointment.update({
     where: { id: (await params).id },
     data: {
       ...(status      !== undefined && { status }),
-      ...(scheduledAt !== undefined && { scheduledAt: new Date(scheduledAt) }),
+      ...(scheduledAt !== undefined && { scheduledAt }),
       ...(duration    !== undefined && { duration }),
       ...(meetLink    !== undefined && { meetLink }),
       ...(description !== undefined && { description }),

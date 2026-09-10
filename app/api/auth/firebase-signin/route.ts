@@ -8,6 +8,7 @@ import { verifyFirebaseToken } from '@/lib/firebase/verify-token'
 import { findOrCreateUserFromFirebase } from '@/lib/firebase/users'
 import { isLegalAcceptanceComplete, userLegalAcceptanceData } from '@/lib/legal/consent'
 import { optionalLegalAcceptanceSchema } from '@/lib/legal/validation'
+import { rateLimitResponse } from '@/lib/security/rate-limit'
 
 const bodySchema = z.object({
   firebaseToken: z.string().min(20),
@@ -38,6 +39,13 @@ export async function POST(req: NextRequest) {
       error: 'The sign-in service is not configured server-side.',
     }, { status: 503 })
   }
+
+  const limited = await rateLimitResponse(req, {
+    scope: 'auth.firebase-signin.ip',
+    limit: 30,
+    windowMs: 10 * 60 * 1000,
+  })
+  if (limited) return limited
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) {

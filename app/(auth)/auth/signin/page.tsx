@@ -110,31 +110,28 @@ function SignInForm() {
         return
       }
 
-      const provider = await fetch(`/api/auth/check-provider?email=${encodeURIComponent(form.email)}`)
-        .then((r) => r.json())
-        .catch(() => ({ provider: null }))
-
-      if (!provider.provider) {
-        setError(t('auth.errors.emailNotFound'))
-        return
-      }
-
-      if (provider.provider === 'GOOGLE' || provider.provider === 'FACEBOOK') {
-        setError(t('auth.errors.socialProviderRequired'))
-        return
-      }
-
-      const validation = await fetch('/api/auth/validate-credentials', {
+      const validationResponse = await fetch('/api/auth/validate-credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-        .then((r) => r.json())
+        .catch(() => null)
+
+      if (!validationResponse) {
+        setError(t('auth.errors.genericRetry'))
+        return
+      }
+      if (validationResponse.status === 429) {
+        setError(t('auth.errors.tooManyRequests'))
+        return
+      }
+
+      const validation = await validationResponse.json()
         .catch(() => ({ valid: false, reason: 'SERVER_ERROR' }))
 
       if (!validation.valid) {
-        setError(validation.reason === 'EMAIL_NOT_FOUND'
-          ? t('auth.errors.emailNotFound')
+        setError(validation.reason === 'SERVER_ERROR'
+          ? t('auth.errors.genericRetry')
           : t('auth.errors.wrongPassword'))
         return
       }

@@ -9,21 +9,23 @@ export const runtime = 'nodejs'
 
 const noteSchema = z.object({
   memberId: z.string().min(1),
-  title: z.string().min(2).max(120),
-  content: z.string().min(2).max(5000),
-  category: z.string().optional().nullable(),
+  title: z.string().trim().min(2).max(120),
+  content: z.string().trim().min(2).max(5000),
+  category: z.string().trim().max(40).optional().nullable(),
   status: z.enum(['OPEN', 'IN_PROGRESS', 'DONE']).default('OPEN'),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).default('MEDIUM'),
-  tags: z.array(z.string().min(1).max(24)).max(8).default([]),
+  tags: z.array(z.string().trim().min(1).max(24)).max(8).default([]),
   followUpAt: z.string().datetime().optional().nullable(),
   isPinned: z.boolean().default(false),
   isSharedWithMember: z.boolean().default(false),
   isImportant: z.boolean().optional(),
-})
+}).strict()
 
 const updateNoteSchema = noteSchema.partial().extend({
   noteId: z.string().min(1),
-})
+}).strict()
+
+const deleteNoteSchema = z.object({ noteId: z.string().min(1).max(128) }).strict()
 
 // Authenticates the session and returns the coach user with coachProfile, or an error response.
 async function getCoach() {
@@ -99,7 +101,7 @@ export async function POST(req: NextRequest) {
     const { coach, error } = await getCoach()
     if (error) return error
 
-    const parsed = noteSchema.safeParse(await req.json())
+    const parsed = noteSchema.safeParse(await req.json().catch(() => null))
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 422 })
     }
@@ -161,7 +163,7 @@ export async function PATCH(req: NextRequest) {
     const { coach, error } = await getCoach()
     if (error) return error
 
-    const parsed = updateNoteSchema.safeParse(await req.json())
+    const parsed = updateNoteSchema.safeParse(await req.json().catch(() => null))
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 422 })
     }
@@ -203,8 +205,9 @@ export async function DELETE(req: NextRequest) {
     const { coach, error } = await getCoach()
     if (error) return error
 
-    const { noteId } = await req.json()
-    if (!noteId) return NextResponse.json({ error: 'Missing noteId' }, { status: 400 })
+    const parsed = deleteNoteSchema.safeParse(await req.json().catch(() => null))
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
+    const { noteId } = parsed.data
 
     const note = await prisma.coachNote.findFirst({
       where: { id: noteId, coachId: coach!.coachProfile!.id },

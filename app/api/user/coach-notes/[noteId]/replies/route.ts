@@ -8,8 +8,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 const replySchema = z.object({
-  content: z.string().min(1).max(2000),
-})
+  content: z.string().trim().min(1).max(2000),
+}).strict()
+const deleteReplySchema = z.object({ replyId: z.string().min(1).max(128) }).strict()
 
 /** Returns all replies for the shared note, ordered by creation date ascending; verifies member access. */
 export async function GET(
@@ -43,7 +44,7 @@ export async function POST(
   })
   if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 })
 
-  const parsed = replySchema.safeParse(await req.json())
+  const parsed = replySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
   const reply = await prisma.coachNoteReply.create({
@@ -81,8 +82,9 @@ export async function DELETE(
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
-  const { replyId } = await req.json()
-  if (!replyId) return NextResponse.json({ error: 'Missing replyId' }, { status: 400 })
+  const parsed = deleteReplySchema.safeParse(await req.json().catch(() => null))
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
+  const { replyId } = parsed.data
 
   const reply = await prisma.coachNoteReply.findFirst({
     where: { id: replyId, noteId: (await params).noteId, memberId: session.user.id },

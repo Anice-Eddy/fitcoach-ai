@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma/client'
 import { isLegalAcceptanceComplete, userLegalAcceptanceData } from '@/lib/legal/consent'
 import { optionalLegalAcceptanceSchema } from '@/lib/legal/validation'
+import { rateLimitResponse } from '@/lib/security/rate-limit'
 
 const schema = z.object({
   name:            z.string().min(2, 'Name must be at least 2 characters'),
@@ -32,8 +33,7 @@ const schema = z.object({
 
 /** Registers a new coach-only account with full profile data (bio, specialties, certifications, etc.); hashes the password and returns 201 on success. */
 export async function POST(req: Request) {
-
-  const body   = await req.json()
+  const body   = await req.json().catch(() => null)
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 422 })
@@ -66,6 +66,22 @@ export async function POST(req: Request) {
     discoveryCallDuration,
     showDiscoveryCall,
   } = parsed.data
+
+  const ipLimit = await rateLimitResponse(req, {
+    scope: 'auth.register-coach.ip',
+    limit: 10,
+    windowMs: 15 * 60 * 1000,
+  })
+  if (ipLimit) return ipLimit
+
+  const emailLimit = await rateLimitResponse(req, {
+    scope: 'auth.register-coach.email',
+    identifier: `email:${email.trim().toLowerCase()}`,
+    limit: 3,
+    windowMs: 60 * 60 * 1000,
+  })
+  if (emailLimit) return emailLimit
+
   const legalAcceptance = userLegalAcceptanceData(parsed.data.legalAcceptance)
 
   const existing = await prisma.user.findUnique({

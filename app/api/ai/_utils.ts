@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/lib/auth/auth'
 import { resolveMemberAccess } from '@/lib/ai/context'
+import { consumeRateLimit } from '@/lib/security/rate-limit'
 
 export const agentSchema = z.enum(['TRAINING', 'NUTRITION', 'PROGRESSION', 'MOTIVATION', 'COACH_REPORT'])
 
@@ -10,6 +11,21 @@ export async function getAIAccess(memberId?: string | null) {
   const session = await auth()
   if (!session?.user?.id) {
     return { error: NextResponse.json({ error: 'Unauthenticated' }, { status: 401 }) }
+  }
+
+  const rateLimit = await consumeRateLimit({
+    scope: 'ai.user.burst',
+    identifier: `user:${session.user.id}`,
+    limit: 30,
+    windowMs: 60 * 1000,
+  })
+  if (!rateLimit.allowed) {
+    return {
+      error: NextResponse.json(
+        { error: 'Too many AI requests. Please try again shortly.' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } },
+      ),
+    }
   }
 
   const access = await resolveMemberAccess(session.user.id, memberId)

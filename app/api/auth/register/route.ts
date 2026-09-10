@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma/client'
 import { isLegalAcceptanceComplete, userLegalAcceptanceData } from '@/lib/legal/consent'
 import { optionalLegalAcceptanceSchema } from '@/lib/legal/validation'
+import { rateLimitResponse } from '@/lib/security/rate-limit'
 
 const registerSchema = z.object({
   name:              z.string().min(2, 'Name must be at least 2 characters'),
@@ -43,8 +44,7 @@ function splitList(value?: string) {
 
 /** Registers a new member or coach account; validates extra coach fields, rejects duplicate emails, hashes the password, and persists the new user with optional coach profile. */
 export async function POST(req: Request) {
-
-  const body   = await req.json()
+  const body   = await req.json().catch(() => null)
   const parsed = registerSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 422 })
@@ -57,6 +57,22 @@ export async function POST(req: Request) {
   }
 
   const { name, email, password, accountType } = parsed.data
+
+  const ipLimit = await rateLimitResponse(req, {
+    scope: 'auth.register.ip',
+    limit: 10,
+    windowMs: 15 * 60 * 1000,
+  })
+  if (ipLimit) return ipLimit
+
+  const emailLimit = await rateLimitResponse(req, {
+    scope: 'auth.register.email',
+    identifier: `email:${email}`,
+    limit: 3,
+    windowMs: 60 * 60 * 1000,
+  })
+  if (emailLimit) return emailLimit
+
   const isCoach = accountType === 'COACH'
   const legalAcceptance = userLegalAcceptanceData(parsed.data.legalAcceptance)
 

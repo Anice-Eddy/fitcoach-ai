@@ -6,9 +6,17 @@ import { requireFirebaseUser } from '@/lib/firebase/server-auth'
 import { prisma } from '@/lib/prisma/client'
 import { isLegalAcceptanceComplete, userLegalAcceptanceData } from '@/lib/legal/consent'
 import { legalAcceptanceBodySchema } from '@/lib/legal/validation'
+import { rateLimitResponse } from '@/lib/security/rate-limit'
 
 /** Verifies a Firebase ID token and links/creates the matching BodyOps user. */
 export async function POST(req: NextRequest) {
+
+  const limited = await rateLimitResponse(req, {
+    scope: 'auth.firebase-session.ip',
+    limit: 30,
+    windowMs: 10 * 60 * 1000,
+  })
+  if (limited) return limited
 
   const result = await requireFirebaseUser(req)
   if (result.error) return result.error

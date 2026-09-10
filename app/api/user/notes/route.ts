@@ -8,14 +8,15 @@ import { z } from 'zod'
 export const runtime = 'nodejs'
 
 const createSchema = z.object({
-  title:    z.string().min(1).max(150),
-  content:  z.string().min(1).max(10000),
-  category: z.string().nullable().optional(),
-  tags:     z.array(z.string().max(30)).max(10).default([]),
+  title:    z.string().trim().min(1).max(150),
+  content:  z.string().trim().min(1).max(10000),
+  category: z.string().trim().max(40).nullable().optional(),
+  tags:     z.array(z.string().trim().min(1).max(30)).max(10).default([]),
   isPinned: z.boolean().default(false),
-})
+}).strict()
 
-const updateSchema = createSchema.partial().extend({ id: z.string().min(1) })
+const updateSchema = createSchema.partial().extend({ id: z.string().min(1).max(128) }).strict()
+const deleteSchema = z.object({ id: z.string().min(1).max(128) }).strict()
 
 // Authenticates the session and returns userId, or an error response.
 async function getUser() {
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
   const { userId, error } = await getUser()
   if (error) return error
 
-  const parsed = createSchema.safeParse(await req.json())
+  const parsed = createSchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
   const note = await prisma.userNote.create({
@@ -57,7 +58,7 @@ export async function PATCH(req: NextRequest) {
   const { userId, error } = await getUser()
   if (error) return error
 
-  const parsed = updateSchema.safeParse(await req.json())
+  const parsed = updateSchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
   const { id, ...data } = parsed.data
@@ -76,8 +77,9 @@ export async function DELETE(req: NextRequest) {
   const { userId, error } = await getUser()
   if (error) return error
 
-  const { id } = await req.json()
-  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  const parsed = deleteSchema.safeParse(await req.json().catch(() => null))
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
+  const { id } = parsed.data
 
   const existing = await prisma.userNote.findUnique({ where: { id } })
   if (!existing || existing.userId !== userId) {

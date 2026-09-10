@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma/client'
+import { rateLimitResponse } from '@/lib/security/rate-limit'
 
 const schema = z.object({
   email: z.string().email(),
@@ -11,50 +11,27 @@ const schema = z.object({
 
 /** Validates that a Firebase password reset can be requested for this BodyOps account. */
 export async function POST(req: Request) {
-
-  const body   = await req.json()
+  const body   = await req.json().catch(() => null)
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid email' }, { status: 422 })
   }
 
   const { email, intent } = parsed.data
-
-  const user = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true, password: true, provider: true, authProvider: true },
+  const ipLimit = await rateLimitResponse(req, {
+    scope: 'auth.password-reset.ip',
+    limit: 10,
+    windowMs: 15 * 60 * 1000,
   })
+  if (ipLimit) return ipLimit
 
-  if (!user) {
-    return NextResponse.json(
-      {
-        ok: false,
-        reason: 'EMAIL_NOT_FOUND',
-        message: "No account exists for this email address.",
-      },
-      { status: 404 },
-    )
-  }
-
-  const socialProvider = user.provider === 'GOOGLE'
-    ? 'Google'
-    : user.provider === 'FACEBOOK'
-      ? 'Facebook'
-      : user.authProvider === 'APPLE'
-        ? 'Apple'
-        : null
-
-  if (socialProvider) {
-    return NextResponse.json(
-      {
-        ok: false,
-        reason: 'SOCIAL_PROVIDER',
-        provider: socialProvider,
-        message: `You are signed in with ${socialProvider}. Please update your password from your ${socialProvider} account.`,
-      },
-      { status: 409 },
-    )
-  }
+  const emailLimit = await rateLimitResponse(req, {
+    scope: 'auth.password-reset.email',
+    identifier: `email:${email.trim().toLowerCase()}`,
+    limit: 3,
+    windowMs: 60 * 60 * 1000,
+  })
+  if (emailLimit) return emailLimit
 
   if (intent === 'firebase') {
     return NextResponse.json({ ok: true, method: 'firebase-client-email' })

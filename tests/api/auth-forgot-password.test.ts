@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/prisma/client', () => ({
   prisma: {
+    $queryRaw: vi.fn(async () => [{ count: 1 }]),
     user: {
       findUnique: vi.fn(),
     },
@@ -39,7 +40,7 @@ describe('POST /api/auth/forgot-password', () => {
     expect(json.method).toBe('firebase-client-email')
   })
 
-  it('rejects social accounts because their password is managed by the provider', async () => {
+  it('returns the same response for social accounts to prevent account enumeration', async () => {
     ;(prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
       id:           'user-1',
       password:     null,
@@ -50,8 +51,7 @@ describe('POST /api/auth/forgot-password', () => {
     const res = await POST(makeRequest({ email: 'eddy@example.com', intent: 'firebase' }))
     const json = await res.json()
 
-    expect(res.status).toBe(409)
-    expect(json.reason).toBe('SOCIAL_PROVIDER')
-    expect(json.provider).toBe('Google')
+    expect(res.status).toBe(200)
+    expect(json).toEqual({ ok: true, method: 'firebase-client-email' })
   })
 })

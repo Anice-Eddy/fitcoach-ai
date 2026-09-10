@@ -22,6 +22,16 @@ const RANGES = [
   { days: 90 },
 ]
 
+function CustomTooltip({ active, payload, label }: WeightTooltipProps) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
+      <p className="text-zinc-400 text-xs">{label}</p>
+      <p className="text-white font-bold">{payload[0].value} kg</p>
+    </div>
+  )
+}
+
 /** Renders a Recharts line chart of weight progression with 7/30/90-day range toggle and an optional target-weight reference line. */
 export function WeightChart({ data, targetWeight }: Props) {
   const { locale, t } = useLocale()
@@ -37,16 +47,6 @@ export function WeightChart({ data, targetWeight }: Props) {
         description={t('dashboard.noWeightDataDescription')}
         action={{ label: t('dashboard.addMeasurement'), href: '/progress' }}
       />
-    )
-  }
-
-  const CustomTooltip = ({ active, payload, label }: WeightTooltipProps) => {
-    if (!active || !payload?.length) return null
-    return (
-      <div className="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
-        <p className="text-zinc-400 text-xs">{label}</p>
-        <p className="text-white font-bold">{payload[0].value} kg</p>
-      </div>
     )
   }
 

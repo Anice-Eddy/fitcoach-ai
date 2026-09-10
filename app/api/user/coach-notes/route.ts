@@ -4,8 +4,11 @@ import { auth } from '@/lib/auth/auth'
 import { prisma } from '@/lib/prisma/client'
 import { getNormalizedCoachNoteReplies } from '@/lib/notes/replies'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
 export const runtime = 'nodejs'
+
+const deleteNoteSchema = z.object({ noteId: z.string().min(1).max(128) }).strict()
 
 /** Returns coach notes shared with the authenticated member, including coach info and replies. */
 export async function GET() {
@@ -70,8 +73,9 @@ export async function DELETE(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
-  const { noteId } = await req.json()
-  if (!noteId) return NextResponse.json({ error: 'Missing noteId' }, { status: 400 })
+  const parsed = deleteNoteSchema.safeParse(await req.json().catch(() => null))
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
+  const { noteId } = parsed.data
 
   const note = await prisma.coachNote.findFirst({
     where: { id: noteId, memberId: session.user.id, isSharedWithMember: true },
