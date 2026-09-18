@@ -53,15 +53,6 @@ export async function PATCH(
     },
   })
 
-  // Auto-add member to coach's list when appointment is confirmed
-  if (status === 'CONFIRMED' && updated.member?.id) {
-    await prisma.coachMember.upsert({
-      where:  { coachId_memberId: { coachId: coach.coachProfile.id, memberId: updated.member.id } },
-      update: {},
-      create: { coachId: coach.coachProfile.id, memberId: updated.member.id },
-    }).catch((err) => console.error('[coachMember upsert]', err))
-  }
-
   // Notify member if status changed to CONFIRMED/PROPOSED or a note was added
   const notifyMember = status === 'CONFIRMED' || status === 'PROPOSED'
     || (coachNote !== undefined && coachNote !== appointment.coachNote)

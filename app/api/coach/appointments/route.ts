@@ -83,6 +83,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const membership = await prisma.coachMember.findUnique({
+      where: { coachId_memberId: { coachId: coach.coachProfile.id, memberId } },
+      select: { id: true },
+    })
+    if (!membership) {
+      return NextResponse.json({ error: 'Member not found' }, { status: 404 })
+    }
+
     const appointment = await prisma.coachAppointment.create({
       data: {
         coachId: coach.coachProfile.id,
@@ -96,13 +104,6 @@ export async function POST(req: NextRequest) {
       },
       include: { member: { include: { profile: true } } },
     })
-
-    // Create coach-member relationship as soon as a coach schedules an appointment
-    await prisma.coachMember.upsert({
-      where:  { coachId_memberId: { coachId: coach.coachProfile.id, memberId } },
-      update: {},
-      create: { coachId: coach.coachProfile.id, memberId },
-    }).catch((err) => console.error('[coachMember upsert on coach POST appt]', err))
 
     await prisma.notification.create({
       data: {
