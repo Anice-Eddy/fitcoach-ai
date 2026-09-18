@@ -11,7 +11,10 @@ export async function GET(req: Request) {
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
-  const limit = Math.min(parseInt(searchParams.get('limit') ?? '90'), 365)
+  const requestedLimit = Number.parseInt(searchParams.get('limit') ?? '90', 10)
+  const limit = Number.isFinite(requestedLimit)
+    ? Math.min(Math.max(requestedLimit, 1), 365)
+    : 90
 
   const metrics = await prisma.bodyMetric.findMany({
     where:   { userId: session.user.id },
