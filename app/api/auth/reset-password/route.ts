@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/prisma/client'
+import { rateLimitResponse } from '@/lib/security/rate-limit'
 
 const schema = z.object({
   token:    z.string().min(1),
@@ -12,6 +13,12 @@ const schema = z.object({
 
 /** Validates a password-reset token, updates the user's hashed password, and deletes the used token; returns 400 on invalid or expired token. */
 export async function POST(req: Request) {
+  const limited = await rateLimitResponse(req, {
+    scope: 'auth.legacy-password-reset.ip',
+    limit: 10,
+    windowMs: 15 * 60 * 1000,
+  })
+  if (limited) return limited
 
   const body   = await req.json()
   const parsed = schema.safeParse(body)
